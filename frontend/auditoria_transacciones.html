@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POS CATE - Auditoria de Transacciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <script src="cierre_caja_normalizer.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: Inter, sans-serif;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-100 text-slate-800 h-screen flex overflow-hidden">
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+      <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+        <div
+          class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden"
+        >
+          <img
+            src="club_lin_logo.jpg"
+            alt="Club Lin"
+            class="w-full h-full object-contain"
+          />
+        </div>
+        <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+      </div>
+      <nav
+        class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide"
+      ></nav>
+      <div
+        class="p-4 border-t border-slate-800 flex justify-between items-center bg-slate-950"
+      >
+        <div class="leading-tight">
+          <p class="text-sm font-bold text-white" id="user-name">Cargando...</p>
+          <p class="text-xs text-slate-400" id="user-role">...</p>
+        </div>
+        <button
+          onclick="AuditoriaTransaccionesModule.cerrarSesion()"
+          class="text-red-400 hover:text-red-300 transition p-2 rounded-lg hover:bg-slate-800"
+          title="Cerrar sesión"
+          aria-label="Cerrar sesión"
+        >
+          <i class="fa-solid fa-right-from-bracket text-xl"></i>
+        </button>
+      </div>
+    </aside>
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+      <header
+        class="bg-white p-6 shadow-sm flex justify-between items-center z-10"
+      >
+        <div>
+          <h2 class="text-2xl font-black text-slate-800 tracking-tight">
+            Auditoria de Transacciones
+          </h2>
+          <p class="text-slate-500 text-sm flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span
+            >Software operativo de control completo
+          </p>
+        </div>
+        <div class="text-right hidden md:block">
+          <p class="text-sm font-bold text-slate-800" id="header-admin-name">
+            Admin
+          </p>
+          <p class="text-xs text-orange-500 font-black uppercase">Software</p>
+        </div>
+      </header>
+      <div class="flex-1 overflow-y-auto p-8 bg-slate-100 space-y-6">
+        <section
+          class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden flex flex-col min-h-[720px]"
+        >
+          <div
+            class="p-6 border-b border-slate-100 bg-slate-50/60 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+          >
+            <div>
+              <h3
+                class="text-lg font-black text-slate-800 flex items-center gap-2"
+              >
+                <i class="fa-solid fa-shield-halved text-orange-500"></i>
+                Auditoria de Transacciones Completa
+              </h3>
+              <p class="text-sm text-slate-500">
+                Consulta completa por fecha, sucursal, estado, metodo de pago y
+                detalle de productos.
+              </p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 w-full xl:w-auto">
+              <div>
+                <label
+                  class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1"
+                  >Fecha</label
+                ><input
+                  type="date"
+                  id="fecha"
+                  class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1"
+                  >Sucursal</label
+                ><select
+                  id="sucursal"
+                  class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold"
+                >
+                  <option value="">Todas</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1"
+                  >Estado</label
+                ><select
+                  id="estado"
+                  onchange="AuditoriaTransaccionesModule.render()"
+                  class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold"
+                >
+                  <option value="">Todos</option>
+                  <option value="pagado">Pagado</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="anulado">Anulado</option>
+                  <option value="rechazado">Rechazado</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1"
+                  >Metodo</label
+                ><select
+                  id="metodo"
+                  onchange="AuditoriaTransaccionesModule.render()"
+                  class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold"
+                >
+                  <option value="">Todos</option>
+                  <option>Efectivo</option>
+                  <option>Tarjeta</option>
+                  <option>Transferencia</option>
+                  <option>Mixto</option>
+                  <option>Credito</option>
+                </select>
+              </div>
+              <button
+                onclick="AuditoriaTransaccionesModule.cargar()"
+                class="self-end bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-black shadow-sm transition"
+              >
+                <i class="fa-solid fa-rotate"></i> Actualizar
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4">
+            <div class="rounded-2xl bg-slate-50 p-4 border">
+              <p
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+              >
+                Tickets
+              </p>
+              <p id="kpi-cantidad" class="text-2xl font-black">0</p>
+            </div>
+            <div
+              class="rounded-2xl bg-emerald-50 p-4 border border-emerald-100"
+            >
+              <p
+                class="text-[10px] font-black uppercase tracking-widest text-emerald-600"
+              >
+                Pagado
+              </p>
+              <p id="kpi-pagado" class="text-2xl font-black text-emerald-700">
+                Gs. 0
+              </p>
+            </div>
+            <div class="rounded-2xl bg-amber-50 p-4 border border-amber-100">
+              <p
+                class="text-[10px] font-black uppercase tracking-widest text-amber-600"
+              >
+                Pendiente
+              </p>
+              <p id="kpi-pendiente" class="text-2xl font-black text-amber-700">
+                Gs. 0
+              </p>
+            </div>
+            <div class="rounded-2xl bg-red-50 p-4 border border-red-100">
+              <p
+                class="text-[10px] font-black uppercase tracking-widest text-red-600"
+              >
+                Anulado/Rechazado
+              </p>
+              <p id="kpi-anulado" class="text-2xl font-black text-red-700">
+                Gs. 0
+              </p>
+            </div>
+          </div>
+          <div class="flex-1 overflow-auto">
+            <table class="w-full text-left">
+              <thead
+                class="bg-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider sticky top-0 z-10"
+              >
+                <tr>
+                  <th class="p-4">Hora</th>
+                  <th class="p-4">Ticket</th>
+                  <th class="p-4">Sucursal</th>
+                  <th class="p-4">Cliente</th>
+                  <th class="p-4">Estado</th>
+                  <th class="p-4">Metodo</th>
+                  <th class="p-4 text-right">Total</th>
+                  <th class="p-4 text-center">Detalle</th>
+                </tr>
+              </thead>
+              <tbody id="tabla" class="divide-y divide-slate-100 text-sm">
+                <tr>
+                  <td
+                    colspan="8"
+                    class="p-8 text-center text-slate-400 font-bold"
+                  >
+                    Cargando auditoria...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <div
+          id="modal"
+          class="fixed inset-0 hidden items-center justify-center bg-slate-900/80 z-[80] p-4"
+        >
+          <div
+            class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl"
+          >
+            <div class="p-5 bg-slate-900 text-white flex justify-between">
+              <h3 id="modal-title" class="font-black">Detalle</h3>
+              <button onclick="AuditoriaTransaccionesModule.cerrarModal()">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div id="modal-body" class="p-5 max-h-[70vh] overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script src="admin_sidebar.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+      import {
+        initializeFirestore,
+        collection,
+        query,
+        where,
+        orderBy,
+        limit,
+        onSnapshot,
+        getDocs,
+      } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+      import {
+        getAuth,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+      const __app_id = "erp_lingroup";
+      const __initial_auth_token = "admin_master_001";
+      const firebaseConfig = {
+        apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+        authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+        projectId: "sys-pos-erp-lingroup",
+        storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+        messagingSenderId: "1084603889746",
+        appId: "1:1084603889746:web:9ae1fdf5f6fa602cb2078b",
+      };
+      const app = initializeApp(firebaseConfig);
+      const db = initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+        useFetchStreams: false,
+      });
+      const auth = getAuth(app);
+      window.AuditoriaTransaccionesModule = {
+        ventas: [],
+        unsub: null,
+        init() {
+          const s = JSON.parse(localStorage.getItem("__pos_session") || "null");
+          if (!s || s.rol !== "admin") {
+            location.replace("index.html");
+            return;
+          }
+          document.getElementById("user-name").innerText = s.nombre || "Admin";
+          document.getElementById("header-admin-name").innerText =
+            s.nombre || "Admin";
+          document.getElementById("user-role").innerText = "Rol: ADMIN";
+          document.getElementById("fecha").value = this.fechaKey(new Date());
+          this.cargarSucursales();
+          this.cargar();
+        },
+        cerrarSesion() {
+          localStorage.clear();
+          signOut(auth).finally(() => (location.href = "index.html"));
+        },
+        fecha(v) {
+          if (!v) return new Date(0);
+          if (typeof v.toDate === "function") return v.toDate();
+          const d = new Date(v);
+          return Number.isNaN(d.getTime()) ? new Date(0) : d;
+        },
+        fechaKey(v) {
+          const d = v instanceof Date ? v : this.fecha(v);
+          if (d.getTime() === 0) return "";
+          return (
+            d.getFullYear() +
+            "-" +
+            String(d.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(d.getDate()).padStart(2, "0")
+          );
+        },
+        moneda(n) {
+          return Number(n || 0).toLocaleString("es-PY");
+        },
+        esc(t) {
+          return String(t || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;");
+        },
+        norm(t) {
+          return String(t || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toLowerCase();
+        },
+        sucursalesBase() {
+          return typeof CierreCajaNormalizer.obtenerSucursalesAuditadas === "function"
+            ? CierreCajaNormalizer.obtenerSucursalesAuditadas()
+            : [
+                { id: "cafeteria_chicolin", nombre: "Cafetería Chicolín" },
+                { id: "mr_lin_restaurante", nombre: "San Benito" },
+              ];
+        },
+        renderSucursales(items = []) {
+          const unicas = Array.from(new Map(items.map((item) => [item.id, item])).values())
+            .filter((item) => item.id)
+            .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+          document.getElementById("sucursal").innerHTML =
+            '<option value="">Todas</option>' +
+            unicas
+              .map(
+                (item) =>
+                  '<option value="' +
+                  this.esc(item.id) +
+                  '">' +
+                  this.esc(item.nombre) +
+                  "</option>"
+              )
+              .join("");
+        },
+        async cargarSucursales() {
+          const a = this.sucursalesBase();
+          this.renderSucursales(a);
+          const snap = await getDocs(collection(db, "branches"));
+          snap.forEach((d) => {
+            const x = d.data() || {},
+              n = x.nombre || x.name || x.branchName || d.id;
+            const normalizada = CierreCajaNormalizer.normalizarSucursal(x.sucursalId || x.branchId || d.id || n);
+            const porNombre = normalizada.id ? normalizada : CierreCajaNormalizer.normalizarSucursal(n);
+            if (porNombre.id) a.push({ id: porNombre.id, nombre: porNombre.nombre });
+          });
+          this.renderSucursales(a);
+        },
+        cargar() {
+          if (this.unsub) this.unsub();
+          const f =
+              document.getElementById("fecha").value ||
+              this.fechaKey(new Date()),
+            ini = new Date(f + "T00:00:00"),
+            fin = new Date(ini);
+          fin.setDate(fin.getDate() + 1);
+          const ruta =
+            "artifacts/" +
+            __app_id +
+            "/users/" +
+            __initial_auth_token +
+            "/sales";
+          const q = query(
+            collection(db, ruta),
+            where("fecha", ">=", ini),
+            where("fecha", "<", fin),
+            orderBy("fecha", "desc"),
+            limit(1000)
+          );
+          this.unsub = onSnapshot(
+            q,
+            (s) => {
+              this.ventas = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+              this.render();
+            },
+            (e) => {
+              console.error(e);
+              document.getElementById("tabla").innerHTML =
+                '<tr><td colspan="8" class="p-8 text-center text-red-500 font-bold">No se pudo cargar auditoria.</td></tr>';
+            }
+          );
+        },
+        filtradas() {
+          const suc = this.norm(document.getElementById("sucursal").value),
+            est = this.norm(document.getElementById("estado").value),
+            met = this.norm(document.getElementById("metodo").value);
+          return this.ventas.filter(
+            (v) =>
+              (!suc || CierreCajaNormalizer.obtenerSucursalRegistro(v).id === suc || this.norm(v.sucursal) === suc) &&
+              (!est || this.norm(v.estadoPago || v.estado) === est) &&
+              (!met || this.norm(v.metodoPago) === met)
+          );
+        },
+        render() {
+          const rows = this.filtradas();
+          let pag = 0,
+            pen = 0,
+            anu = 0;
+          rows.forEach((v) => {
+            const t = Number(v.total || 0),
+              e = this.norm(v.estadoPago || v.estado);
+            if (e === "pagado") pag += t;
+            else if (e === "anulado" || e === "rechazado") anu += t;
+            else pen += t;
+          });
+          document.getElementById("kpi-cantidad").innerText = rows.length;
+          document.getElementById("kpi-pagado").innerText =
+            "Gs. " + this.moneda(pag);
+          document.getElementById("kpi-pendiente").innerText =
+            "Gs. " + this.moneda(pen);
+          document.getElementById("kpi-anulado").innerText =
+            "Gs. " + this.moneda(anu);
+          const tb = document.getElementById("tabla");
+          if (!rows.length) {
+            tb.innerHTML =
+              '<tr><td colspan="8" class="p-8 text-center text-slate-400 font-bold">No hay transacciones para el filtro seleccionado.</td></tr>';
+            return;
+          }
+          tb.innerHTML = rows
+            .map((v) => {
+              const f = this.fecha(v.fecha),
+                estado = this.esc(v.estadoPago || v.estado || "pendiente");
+              return (
+                '<tr class="hover:bg-slate-50"><td class="p-4 font-mono text-xs font-bold">' +
+                  DateTime24.formatTime24(f) +
+                '</td><td class="p-4 font-mono text-xs font-bold">' +
+                this.esc(v.ticket_id || v.id) +
+                '</td><td class="p-4 font-bold">' +
+                this.esc(v.sucursal || "") +
+                '</td><td class="p-4">' +
+                this.esc(v.nombreCliente || "Cliente Ocasional") +
+                '</td><td class="p-4"><span class="px-3 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-black uppercase">' +
+                estado +
+                '</span></td><td class="p-4 font-bold">' +
+                this.esc(v.metodoPago || "") +
+                '</td><td class="p-4 text-right font-black">Gs. ' +
+                this.moneda(v.total) +
+                '</td><td class="p-4 text-center"><button onclick="AuditoriaTransaccionesModule.abrirModal(\'' +
+                v.id +
+                '\')" class="w-8 h-8 bg-white border border-slate-200 rounded-lg hover:border-orange-500 hover:text-orange-500"><i class="fa-solid fa-eye"></i></button></td></tr>'
+              );
+            })
+            .join("");
+        },
+        abrirModal(id) {
+          const v = this.ventas.find((x) => x.id === id);
+          if (!v) return;
+          document.getElementById("modal-title").innerText =
+            "Ticket " + (v.ticket_id || v.id);
+          const items = Array.isArray(v.items) ? v.items : [];
+          document.getElementById("modal-body").innerHTML =
+            '<div class="grid grid-cols-2 gap-3 text-sm mb-4"><div><b>Sucursal:</b> ' +
+            this.esc(v.sucursal || "") +
+            "</div><div><b>Cliente:</b> " +
+            this.esc(v.nombreCliente || "") +
+            "</div><div><b>Pago:</b> " +
+            this.esc(v.metodoPago || "") +
+            "</div><div><b>Total:</b> Gs. " +
+            this.moneda(v.total) +
+            '</div></div><div class="space-y-2">' +
+            (items.length
+              ? items
+                  .map(
+                    (i) =>
+                      '<div class="flex justify-between rounded-xl border p-3"><div><p class="font-black">' +
+                      this.esc(i.nombre || i.name || "Producto") +
+                      '</p><p class="text-xs text-slate-500">Cantidad: ' +
+                      Number(i.cantidad || 1) +
+                      '</p></div><p class="font-black">Gs. ' +
+                      this.moneda(
+                        Number(i.precio || 0) * Number(i.cantidad || 1)
+                      ) +
+                      "</p></div>"
+                  )
+                  .join("")
+              : '<p class="text-slate-400 font-bold">Sin items guardados.</p>') +
+            "</div>";
+          document.getElementById("modal").classList.remove("hidden");
+          document.getElementById("modal").classList.add("flex");
+        },
+        cerrarModal() {
+          document.getElementById("modal").classList.add("hidden");
+          document.getElementById("modal").classList.remove("flex");
+        },
+      };
+      document.addEventListener("DOMContentLoaded", () =>
+        AuditoriaTransaccionesModule.init()
+      );
+    </script>
+  </body>
+</html>

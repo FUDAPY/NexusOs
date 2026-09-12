@@ -1,0 +1,14 @@
+{
+  "appId": "com.lingroup.clublin",
+  "appName": "Club Lin",
+  "webDir": "../frontend",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css"
+    }
+  }
+}

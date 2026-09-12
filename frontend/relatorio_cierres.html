@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS CATE - Relatorio de Cierres de Caja</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:Inter,sans-serif}
+        .scrollbar-hide::-webkit-scrollbar{display:none}
+        .scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex overflow-hidden">
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain">
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide"></nav>
+        <div class="p-4 border-t border-slate-800 flex justify-between items-center bg-slate-950">
+            <div class="leading-tight">
+                <p class="text-sm font-bold text-white" id="user-name">Cargando...</p>
+                <p class="text-xs text-slate-400" id="user-role">...</p>
+            </div>
+            <button onclick="RelatorioCierresModule.cerrarSesion()" class="text-red-400 hover:text-red-300 transition p-2 rounded-lg hover:bg-slate-800" title="Cerrar sesión" aria-label="Cerrar sesión">
+                <i class="fa-solid fa-right-from-bracket text-xl"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="bg-white p-6 shadow-sm flex justify-between items-center z-10">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Relatorio de Cierres de Caja</h2>
+                <p class="text-slate-500 text-sm flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    Control diario de diferencias por sucursal
+                </p>
+            </div>
+            <div class="text-right hidden md:block">
+                <p class="text-sm font-bold text-slate-800" id="header-admin-name">Admin</p>
+                <p class="text-xs text-orange-500 font-black uppercase">Software</p>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 bg-slate-100 space-y-6">
+            <section class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 bg-slate-50/60 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-scale-balanced text-red-600"></i> Relatorio de cierres de caja
+                        </h3>
+                        <p class="text-sm text-slate-500">Diferencias entre lo detectado por el sistema y lo declarado en cada cierre.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 w-full xl:w-auto">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Desde</label>
+                            <input type="date" id="fecha-desde" onchange="RelatorioCierresModule.cargar()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Hasta</label>
+                            <input type="date" id="fecha-hasta" onchange="RelatorioCierresModule.cargar()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Sucursal</label>
+                            <select id="sucursal" onchange="RelatorioCierresModule.render()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <button onclick="RelatorioCierresModule.cargar()" class="self-end bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-black shadow-sm transition">
+                            <i class="fa-solid fa-rotate"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4">
+                    <div class="rounded-2xl border bg-slate-50 p-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Cierres</p>
+                        <p id="kpi-cierres" class="text-2xl font-black">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600">Sobrante</p>
+                        <p id="kpi-sobrante" class="text-2xl font-black text-emerald-700">Gs. 0</p>
+                    </div>
+                    <div class="rounded-2xl border border-red-100 bg-red-50 p-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-red-600">Faltante</p>
+                        <p id="kpi-faltante" class="text-2xl font-black text-red-700">Gs. 0</p>
+                    </div>
+                    <div class="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-amber-700">Diferencia neta</p>
+                        <p id="kpi-neto" class="text-2xl font-black text-amber-800">Gs. 0</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-y text-xs text-slate-400 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4">Fecha</th>
+                                <th class="p-4">Sucursal</th>
+                                <th class="p-4">Cajero</th>
+                                <th class="p-4 text-right">Efectivo</th>
+                                <th class="p-4 text-right">POS</th>
+                                <th class="p-4 text-right">Transferencia</th>
+                                <th class="p-4 text-right">Total</th>
+                                <th class="p-4 text-center">Tickets</th>
+                                <th class="p-4 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla" class="divide-y divide-slate-100 text-sm">
+                            <tr><td colspan="9" class="p-8 text-center text-slate-400 font-bold">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="modal-editar-cierre" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden">
+            <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-black">Corregir cierre de caja</h3>
+                    <p id="editar-cierre-subtitulo" class="text-xs text-slate-300 font-bold mt-1">--</p>
+                </div>
+                <button onclick="RelatorioCierresModule.cerrarEditor()" class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="RelatorioCierresModule.guardarCorreccion(event)" class="p-6 space-y-5">
+                <input type="hidden" id="editar-cierre-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Fondo inicial</label>
+                        <input id="editar-fondo" oninput="RelatorioCierresModule.formatearMonedaInput(this)" inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-right font-black outline-none focus:ring-4 focus:ring-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-green-600 mb-1">Efectivo declarado</label>
+                        <input id="editar-efectivo" oninput="RelatorioCierresModule.formatearMonedaInput(this)" inputmode="numeric" class="w-full bg-green-50 border border-green-100 rounded-xl px-4 py-3 text-right font-black outline-none focus:ring-4 focus:ring-green-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-blue-600 mb-1">POS declarado</label>
+                        <input id="editar-tarjeta" oninput="RelatorioCierresModule.formatearMonedaInput(this)" inputmode="numeric" class="w-full bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-right font-black outline-none focus:ring-4 focus:ring-blue-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-purple-600 mb-1">Transferencia declarada</label>
+                        <input id="editar-transferencia" oninput="RelatorioCierresModule.formatearMonedaInput(this)" inputmode="numeric" class="w-full bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 text-right font-black outline-none focus:ring-4 focus:ring-purple-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-red-600 mb-1">Gastos declarados</label>
+                        <input id="editar-gastos" oninput="RelatorioCierresModule.formatearMonedaInput(this)" inputmode="numeric" class="w-full bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-right font-black outline-none focus:ring-4 focus:ring-red-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Motivo de correccion</label>
+                        <input id="editar-motivo" required maxlength="180" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold outline-none focus:ring-4 focus:ring-amber-100" placeholder="Ej: cajero cargo mal POS">
+                    </div>
+                </div>
+                <div id="editar-preview" class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm"></div>
+                <div class="flex justify-end gap-3 border-t pt-4">
+                    <button type="button" onclick="RelatorioCierresModule.cerrarEditor()" class="px-5 py-3 rounded-xl font-black text-slate-600 hover:bg-slate-100">Cancelar</button>
+                    <button id="btn-guardar-correccion" class="px-5 py-3 rounded-xl font-black bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-lg flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar correccion
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 translate-x-[120%] transition-transform duration-300 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl z-[80] font-bold">
+        <i id="toast-icon" class="fa-solid fa-check text-emerald-400 mr-2"></i><span id="toast-message">Listo</span>
+    </div>
+
+    <script src="admin_sidebar.js"></script>
+    <script src="cierre_caja_normalizer.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { initializeFirestore, collection, query, where, orderBy, getDocs, updateDoc, addDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+            messagingSenderId: "1084603889746",
+            appId: "1:1084603889746:web:9ae1fdf5f6fa602cb2078b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = initializeFirestore(app, { experimentalForceLongPolling: true, useFetchStreams: false });
+        const auth = getAuth(app);
+
+        window.RelatorioCierresModule = {
+            cierres: [],
+            cierreEditando: null,
+            usuarioActual: null,
+
+            init() {
+                const sesion = JSON.parse(localStorage.getItem('__pos_session') || 'null');
+                if (!sesion || sesion.rol !== 'admin') {
+                    location.replace('index.html');
+                    return;
+                }
+                this.usuarioActual = sesion;
+                document.getElementById('user-name').innerText = sesion.nombre || 'Admin';
+                document.getElementById('header-admin-name').innerText = sesion.nombre || 'Admin';
+                document.getElementById('user-role').innerText = 'Rol: ADMIN';
+                const hoy = this.fechaKey(new Date());
+                document.getElementById('fecha-desde').value = hoy;
+                document.getElementById('fecha-hasta').value = hoy;
+                this.cargarSucursales();
+                this.cargar();
+            },
+
+            cerrarSesion() {
+                localStorage.clear();
+                signOut(auth).finally(() => location.href = 'index.html');
+            },
+
+            fecha(valor) {
+                if (!valor) return new Date(0);
+                if (typeof valor.toDate === 'function') return valor.toDate();
+                const date = new Date(valor);
+                return Number.isNaN(date.getTime()) ? new Date(0) : date;
+            },
+
+            fechaKey(valor) {
+                const date = valor instanceof Date ? valor : this.fecha(valor);
+                if (date.getTime() === 0) return '';
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            },
+
+            fechaLocalDesdeInput(valor, finDelDia = false) {
+                const partes = String(valor || '').split('-').map(Number);
+                if (partes.length !== 3 || partes.some(numero => !Number.isFinite(numero))) return null;
+                const [anio, mes, dia] = partes;
+                return finDelDia
+                    ? new Date(anio, mes - 1, dia, 23, 59, 59, 999)
+                    : new Date(anio, mes - 1, dia, 0, 0, 0, 0);
+            },
+
+            obtenerRangoSeleccionado() {
+                const desdeKey = document.getElementById('fecha-desde').value;
+                const hastaKey = document.getElementById('fecha-hasta').value;
+                const desde = this.fechaLocalDesdeInput(desdeKey, false);
+                const hasta = this.fechaLocalDesdeInput(hastaKey, true);
+                if (!desde || !hasta || desde > hasta) return null;
+                return { desdeKey, hastaKey, desde, hasta };
+            },
+
+            moneda(valor) {
+                return Number(valor || 0).toLocaleString('es-PY');
+            },
+
+            limpiarMoneda(valor) {
+                return parseInt(String(valor || '').replace(/\D/g, ''), 10) || 0;
+            },
+
+            esc(valor) {
+                return String(valor ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+            },
+
+            sucursalesBase() {
+                return typeof CierreCajaNormalizer.obtenerSucursalesAuditadas === 'function'
+                    ? CierreCajaNormalizer.obtenerSucursalesAuditadas()
+                    : [
+                        { id: 'cafeteria_chicolin', nombre: 'Cafetería Chicolín' },
+                        { id: 'mr_lin_restaurante', nombre: 'San Benito' }
+                    ];
+            },
+
+            renderSucursales(sucursales = []) {
+                const unicas = Array.from(new Map(sucursales.map((item) => [item.id, item])).values())
+                    .filter(item => item.id)
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+                document.getElementById('sucursal').innerHTML = '<option value="">Todas</option>' + unicas.map(item => `<option value="${this.esc(item.id)}">${this.esc(item.nombre)}</option>`).join('');
+            },
+
+            fmt(valor) {
+                const n = Number(valor || 0);
+                return `${n > 0 ? '+' : n < 0 ? '-' : ''}Gs. ${this.moneda(Math.abs(n))}`;
+            },
+
+            cls(valor) {
+                const n = Number(valor || 0);
+                if (n > 0) return 'text-emerald-700';
+                if (n < 0) return 'text-red-700';
+                return 'text-slate-600';
+            },
+
+            diff(cierre) {
+                return CierreCajaNormalizer.normalizarCierreCaja(cierre, cierre.id)?.diferenciaTotal || 0;
+            },
+
+            diffCaja(cierre) {
+                return CierreCajaNormalizer.normalizarCierreCaja(cierre, cierre.id)?.diferenciaCaja || 0;
+            },
+
+            async cargarSucursales() {
+                const sucursales = this.sucursalesBase();
+                this.renderSucursales(sucursales);
+                const snap = await getDocs(collection(db, 'branches'));
+                snap.forEach(d => {
+                    const data = d.data();
+                    const nombre = data.nombre || data.branchName || d.id;
+                    const normalizada = CierreCajaNormalizer.normalizarSucursal(data.sucursalId || data.branchId || d.id || nombre);
+                    const porNombre = normalizada.id ? normalizada : CierreCajaNormalizer.normalizarSucursal(nombre);
+                    if (porNombre.id) sucursales.push({ id: porNombre.id, nombre: porNombre.nombre });
+                });
+                this.renderSucursales(sucursales);
+            },
+
+            async cargar() {
+                const tbody = document.getElementById('tabla');
+                tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400 font-bold">Cargando relatorio...</td></tr>';
+                const rango = this.obtenerRangoSeleccionado();
+                if (!rango) {
+                    this.cierres = [];
+                    this.render();
+                    this.toast('La fecha Desde no puede ser posterior a la fecha Hasta.', 'error');
+                    return;
+                }
+                try {
+                    const desdeConsulta = new Date(rango.desde);
+                    desdeConsulta.setDate(desdeConsulta.getDate() - 2);
+                    const hastaConsulta = new Date(rango.hasta);
+                    hastaConsulta.setDate(hastaConsulta.getDate() + 2);
+                    const snap = await getDocs(query(
+                        collection(db, 'cierresCaja'),
+                        where('fechaCierre', '>=', desdeConsulta),
+                        where('fechaCierre', '<=', hastaConsulta),
+                        orderBy('fechaCierre', 'desc')
+                    ));
+                    this.cierres = snap.docs
+                        .map(d => ({ id: d.id, ...d.data() }))
+                        .filter(cierre => CierreCajaNormalizer.esSucursalAuditada(cierre.sucursal));
+                    this.render();
+                } catch (error) {
+                    console.error(error);
+                    tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-red-500 font-bold">No se pudo cargar el relatorio.</td></tr>';
+                }
+            },
+
+            render() {
+                const rango = this.obtenerRangoSeleccionado();
+                const sucursalFiltro = CierreCajaNormalizer.normalizarSucursal(document.getElementById('sucursal').value).id;
+                const rows = this.cierres.filter(c => {
+                    const normalizado = CierreCajaNormalizer.normalizarCierreCaja(c, c.id);
+                    const fechaCierreKey = c.fechaCierreKey || this.fechaKey(c.fechaCierre) || normalizado?.fecha;
+                    const fechaOperacionKey = c.fechaOperacionKey || normalizado?.fecha || '';
+                    const coincideFecha = !rango ||
+                        (fechaCierreKey >= rango.desdeKey && fechaCierreKey <= rango.hastaKey) ||
+                        (fechaOperacionKey >= rango.desdeKey && fechaOperacionKey <= rango.hastaKey);
+                    const coincideSucursal = !sucursalFiltro || normalizado?.sucursalId === sucursalFiltro;
+                    return coincideFecha && coincideSucursal;
+                });
+                let sobrante = 0;
+                let faltante = 0;
+                let neto = 0;
+                rows.forEach(c => {
+                    const d = this.diffCaja(c);
+                    neto += d;
+                    if (d > 0) sobrante += d;
+                    if (d < 0) faltante += Math.abs(d);
+                });
+                document.getElementById('kpi-cierres').innerText = rows.length;
+                document.getElementById('kpi-sobrante').innerText = `Gs. ${this.moneda(sobrante)}`;
+                document.getElementById('kpi-faltante').innerText = `Gs. ${this.moneda(faltante)}`;
+                document.getElementById('kpi-neto').innerText = `${neto > 0 ? '+' : neto < 0 ? '-' : ''}Gs. ${this.moneda(Math.abs(neto))}`;
+
+                const tbody = document.getElementById('tabla');
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400 font-bold">No hay cierres para el filtro seleccionado.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.map(c => {
+                    const normalizado = CierreCajaNormalizer.normalizarCierreCaja(c, c.id);
+                    const fecha = this.fecha(c.fechaCierre);
+                    const fechaTxt = fecha.getTime() ? DateTime24.formatDateTime24(fecha) : (c.fechaCierreKey || '--');
+                    const forzado = c.cierreForzado ? '<span class="ml-2 bg-red-100 text-red-700 border border-red-200 px-2 py-1 rounded-full text-[10px] font-black uppercase">Forzado</span>' : '';
+                    const corregido = c.correccionAdmin ? '<span class="ml-2 bg-amber-100 text-amber-700 border border-amber-200 px-2 py-1 rounded-full text-[10px] font-black uppercase">Corregido</span>' : '';
+                    return `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 font-bold whitespace-nowrap">${fechaTxt}</td>
+                            <td class="p-4 font-black">${this.esc(c.sucursal || 'Sucursal')}${forzado}${corregido}</td>
+                            <td class="p-4 text-slate-600">${this.esc(c.cajero || c.creadoPorNombre || 'Sistema')}</td>
+                            <td class="p-4 text-right font-black ${this.cls(normalizado.diferenciaCaja)}">${this.fmt(normalizado.diferenciaCaja)}</td>
+                            <td class="p-4 text-right font-black ${this.cls(normalizado.diferenciaPosTarjeta)}">${this.fmt(normalizado.diferenciaPosTarjeta)}</td>
+                            <td class="p-4 text-right font-black ${this.cls(normalizado.diferenciaTransferencia)}">${this.fmt(normalizado.diferenciaTransferencia)}</td>
+                            <td class="p-4 text-right font-black ${this.cls(normalizado.diferenciaTotal)}">${this.fmt(normalizado.diferenciaTotal)}</td>
+                            <td class="p-4 text-center font-black">${Number(c.ticketsContados || c.ticketsIds?.length || c.ticketsTurnoIds?.length || 0)}</td>
+                            <td class="p-4 text-center">
+                                <button onclick="RelatorioCierresModule.abrirEditor('${c.id}')" class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-500 hover:text-slate-950 transition" title="Corregir cierre">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            setMoneda(id, valor) {
+                const input = document.getElementById(id);
+                if (input) input.value = this.moneda(valor);
+            },
+
+            abrirEditor(id) {
+                const cierre = this.cierres.find(c => c.id === id);
+                if (!cierre) return;
+                this.cierreEditando = cierre;
+                const declaracion = cierre.declaracion || {};
+                document.getElementById('editar-cierre-id').value = id;
+                document.getElementById('editar-cierre-subtitulo').innerText = `${cierre.sucursal || 'Sucursal'} · ${cierre.fechaOperacionKey || cierre.fechaCierreKey || ''}`;
+                this.setMoneda('editar-fondo', cierre.fondoInicial || 0);
+                this.setMoneda('editar-efectivo', declaracion.efectivo || 0);
+                this.setMoneda('editar-tarjeta', declaracion.tarjeta || 0);
+                this.setMoneda('editar-transferencia', declaracion.transferencia || 0);
+                this.setMoneda('editar-gastos', declaracion.gastos || 0);
+                document.getElementById('editar-motivo').value = '';
+                ['editar-fondo', 'editar-efectivo', 'editar-tarjeta', 'editar-transferencia', 'editar-gastos'].forEach(idInput => {
+                    document.getElementById(idInput).oninput = () => {
+                        this.formatearMonedaInput(document.getElementById(idInput));
+                        this.actualizarPreviewEditor();
+                    };
+                });
+                this.actualizarPreviewEditor();
+                document.getElementById('modal-editar-cierre').classList.remove('hidden');
+                document.getElementById('modal-editar-cierre').classList.add('flex');
+            },
+
+            cerrarEditor() {
+                this.cierreEditando = null;
+                document.getElementById('modal-editar-cierre').classList.add('hidden');
+                document.getElementById('modal-editar-cierre').classList.remove('flex');
+            },
+
+            formatearMonedaInput(input) {
+                const valor = this.limpiarMoneda(input.value);
+                input.value = valor ? this.moneda(valor) : '';
+            },
+
+            calcularCorreccionDesdeFormulario() {
+                const cierre = this.cierreEditando;
+                const sistemaBase = cierre?.sistema || {};
+                const fondoInicial = this.limpiarMoneda(document.getElementById('editar-fondo').value);
+                const efectivo = this.limpiarMoneda(document.getElementById('editar-efectivo').value);
+                const tarjeta = this.limpiarMoneda(document.getElementById('editar-tarjeta').value);
+                const transferencia = this.limpiarMoneda(document.getElementById('editar-transferencia').value);
+                const gastos = this.limpiarMoneda(document.getElementById('editar-gastos').value);
+                const ventasEfectivo = Number(sistemaBase.ventasEfectivo || 0);
+                const ventasTarjeta = Number(sistemaBase.ventasTarjeta || 0);
+                const ventasTransferencia = Number(sistemaBase.ventasTransferencia || 0);
+                const totalEsperadoEfectivo = ventasEfectivo + fondoInicial - gastos;
+                const totalSistemaEsperado = totalEsperadoEfectivo + ventasTarjeta + ventasTransferencia;
+                const totalCaja = efectivo + tarjeta + transferencia;
+                const diferenciaCaja = efectivo - totalEsperadoEfectivo;
+                return {
+                    fondoInicial,
+                    declaracion: { efectivo, gastos, tarjeta, transferencia, totalCaja },
+                    sistema: {
+                        ...sistemaBase,
+                        ventasEfectivo,
+                        ventasTarjeta,
+                        ventasTransferencia,
+                        totalEsperadoEfectivo,
+                        totalEsperado: totalSistemaEsperado,
+                        totalVendido: ventasEfectivo + ventasTarjeta + ventasTransferencia,
+                        diferenciaEfectivo: diferenciaCaja,
+                        diferenciaTarjeta: tarjeta - ventasTarjeta,
+                        diferenciaTransferencia: transferencia - ventasTransferencia,
+                        diferenciaTotal: totalCaja - totalSistemaEsperado
+                    },
+                    resumenFinanciero: {
+                        efectivoPos: ventasEfectivo,
+                        efectivoDeclarado: efectivo,
+                        efectivoEsperado: totalEsperadoEfectivo,
+                        posTarjeta: ventasTarjeta,
+                        transferencia: ventasTransferencia,
+                        credito: Number(sistemaBase.ventasCredito || 0),
+                        gastos,
+                        diferenciaCaja,
+                        sobrante: Math.max(diferenciaCaja, 0),
+                        faltante: Math.max(-diferenciaCaja, 0)
+                    }
+                };
+            },
+
+            actualizarPreviewEditor() {
+                if (!this.cierreEditando) return;
+                const calc = this.calcularCorreccionDesdeFormulario();
+                const preview = document.getElementById('editar-preview');
+                preview.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div><p class="text-[10px] font-black uppercase text-slate-400">Esperado efectivo</p><p class="font-black">Gs. ${this.moneda(calc.sistema.totalEsperadoEfectivo)}</p></div>
+                        <div><p class="text-[10px] font-black uppercase text-slate-400">Diferencia efectivo</p><p class="font-black ${this.cls(calc.sistema.diferenciaEfectivo)}">${this.fmt(calc.sistema.diferenciaEfectivo)}</p></div>
+                        <div><p class="text-[10px] font-black uppercase text-slate-400">Diferencia POS/Transf.</p><p class="font-black ${this.cls(calc.sistema.diferenciaTarjeta + calc.sistema.diferenciaTransferencia)}">${this.fmt(calc.sistema.diferenciaTarjeta + calc.sistema.diferenciaTransferencia)}</p></div>
+                        <div><p class="text-[10px] font-black uppercase text-slate-400">Diferencia total</p><p class="font-black ${this.cls(calc.sistema.diferenciaTotal)}">${this.fmt(calc.sistema.diferenciaTotal)}</p></div>
+                    </div>
+                `;
+            },
+
+            generarHtmlTicketCierre(cierre, calc) {
+                const fecha = this.fecha(cierre.fechaCierre);
+                return `
+                    <div style="font-family: monospace; max-width: 280px; margin: 0 auto; color: #000;">
+                        <div style="text-align:center;font-weight:900;">CIERRE DE CAJA</div>
+                        <div style="text-align:center;font-size:11px;">${this.esc(cierre.sucursal || '')}</div>
+                        <hr>
+                        <div>Fecha: ${fecha.getTime() ? DateTime24.formatDateTime24(fecha) : (cierre.fechaCierreKey || '')}</div>
+                        <div>Cajero: ${this.esc(cierre.cajero || cierre.creadoPorNombre || '')}</div>
+                        <div>Correccion admin: ${this.esc(this.usuarioActual?.nombre || 'Admin')}</div>
+                        <hr>
+                        <div>Fondo: Gs. ${this.moneda(calc.fondoInicial)}</div>
+                        <div>Efectivo declarado: Gs. ${this.moneda(calc.declaracion.efectivo)}</div>
+                        <div>POS declarado: Gs. ${this.moneda(calc.declaracion.tarjeta)}</div>
+                        <div>Transferencia declarada: Gs. ${this.moneda(calc.declaracion.transferencia)}</div>
+                        <div>Gastos: Gs. ${this.moneda(calc.declaracion.gastos)}</div>
+                        <hr>
+                        <div>Dif. efectivo: ${this.fmt(calc.sistema.diferenciaEfectivo)}</div>
+                        <div>Dif. POS: ${this.fmt(calc.sistema.diferenciaTarjeta)}</div>
+                        <div>Dif. transf.: ${this.fmt(calc.sistema.diferenciaTransferencia)}</div>
+                        <div style="font-weight:900;">DIF TOTAL: ${this.fmt(calc.sistema.diferenciaTotal)}</div>
+                    </div>
+                `;
+            },
+
+            async guardarCorreccion(event) {
+                event.preventDefault();
+                if (!this.cierreEditando) return;
+                const motivo = String(document.getElementById('editar-motivo').value || '').trim();
+                if (!motivo) return this.toast('Carga el motivo de la correccion.', 'error');
+                const btn = document.getElementById('btn-guardar-correccion');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+                try {
+                    const cierre = this.cierreEditando;
+                    const calc = this.calcularCorreccionDesdeFormulario();
+                    const antes = {
+                        fondoInicial: cierre.fondoInicial || 0,
+                        declaracion: cierre.declaracion || {},
+                        sistema: cierre.sistema || {}
+                    };
+                    const htmlTicket = this.generarHtmlTicketCierre(cierre, calc);
+                    await updateDoc(doc(db, 'cierresCaja', cierre.id), {
+                        fondoInicial: calc.fondoInicial,
+                        declaracion: calc.declaracion,
+                        sistema: calc.sistema,
+                        resumenFinanciero: calc.resumenFinanciero,
+                        versionEsquemaFinanciero: 2,
+                        htmlTicket,
+                        correccionAdmin: true,
+                        corregidoPor: this.usuarioActual?.nombre || 'Admin',
+                        corregidoPorId: this.usuarioActual?.uid || null,
+                        corregidoAt: serverTimestamp(),
+                        motivoCorreccion: motivo
+                    });
+                    await addDoc(collection(db, 'auditoria'), {
+                        tipo: 'correccion_cierre_caja',
+                        cierreId: cierre.id,
+                        sucursal: cierre.sucursal || '',
+                        motivo,
+                        antes,
+                        despues: calc,
+                        usuario: this.usuarioActual?.nombre || 'Admin',
+                        usuarioId: this.usuarioActual?.uid || null,
+                        fecha: serverTimestamp()
+                    });
+                    this.toast('Cierre corregido y auditado.');
+                    this.cerrarEditor();
+                    await this.cargar();
+                } catch (error) {
+                    console.error(error);
+                    this.toast('No se pudo guardar la correccion.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar correccion';
+                }
+            },
+
+            toast(message, type = 'success') {
+                document.getElementById('toast-message').innerText = message;
+                document.getElementById('toast-icon').className = type === 'error' ? 'fa-solid fa-triangle-exclamation text-red-300 mr-2' : 'fa-solid fa-check text-emerald-400 mr-2';
+                const toast = document.getElementById('toast');
+                toast.classList.remove('translate-x-[120%]');
+                setTimeout(() => toast.classList.add('translate-x-[120%]'), 2800);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => RelatorioCierresModule.init());
+    </script>
+</body>
+</html>

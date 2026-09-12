@@ -1,0 +1,519 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee POS ERP - KDS (Monitor de Cocina)</title>
+    <link rel="icon" href="favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        .kds-scroll {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+        .kds-card {
+            min-height: 0;
+            max-height: calc(100vh - 6.5rem);
+        }
+        .kds-items {
+            scrollbar-width: none;
+        }
+        .kds-items::-webkit-scrollbar {
+            display: none;
+        }
+        .kds-product-name {
+            white-space: normal;
+            overflow: visible;
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+        @media (min-width: 1536px) {
+            #kds-grid {
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 h-screen overflow-hidden flex flex-col font-sans text-slate-200 opacity-0 transition-opacity duration-500" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-slate-800/95 border border-slate-700 px-3 py-1.5 text-[10px] font-black text-slate-200 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-300 hover:text-orange-200 underline">Otelax Dev</a>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-50 flex items-center p-4 mb-4 text-white rounded-lg shadow-2xl bg-orange-600 border border-orange-500">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20">
+            <i id="toast-icon" class="fa-solid fa-bell-concierge text-white"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Nuevo pedido</div>
+    </div>
+
+    <header class="bg-slate-950 px-4 py-3 shadow-md flex justify-between items-center z-10 border-b border-slate-800">
+        <div class="flex items-center gap-4">
+            <div class="bg-orange-500 p-2 rounded-lg shadow-inner"><i class="fa-solid fa-fire-burner text-white text-xl"></i></div>
+            <div>
+                <h2 class="text-lg font-black text-white tracking-wide leading-tight">Monitor de Cocina (KDS)</h2>
+                <p class="text-orange-400 text-xs font-bold uppercase tracking-widest" id="lbl-sucursal">Sucursal</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <span id="kds-status" class="bg-slate-800 text-slate-400 px-4 py-2 rounded-xl text-sm font-bold border border-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-spinner fa-spin"></i> Conectando...
+            </span>
+            
+            <button onclick="KdsModule.cerrarSesion()" class="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2 rounded-xl transition font-bold border border-red-500/20 shadow-sm flex items-center gap-2" title="Cerrar sesion">
+                <i class="fa-solid fa-power-off"></i> <span class="hidden md:inline">Salir</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 p-2 overflow-y-auto relative kds-scroll">
+        
+        <div id="empty-state" class="hidden flex-col items-center justify-center h-full text-slate-600">
+            <i class="fa-solid fa-check-circle text-8xl mb-6 opacity-20"></i>
+            <h3 class="text-3xl font-black tracking-widest uppercase opacity-50">Todo Listo</h3>
+            <p class="text-lg font-bold opacity-50">Esperando nuevas comandas...</p>
+        </div>
+
+        <div id="kds-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-2 items-start">
+            </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
+
+        // Configuracion Firebase
+        const __app_id = "erp_lingroup"; 
+        const __initial_auth_token = "admin_master_001";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const functions = getFunctions(app, "us-central1");
+
+        window.KdsModule = {
+            sesion: null,
+            pedidosEnPantalla: [],
+            snapshotInicializado: false,
+
+            normalizarFecha: function(valor) {
+                if (!valor) return new Date(0);
+                if (typeof valor.toDate === 'function') return valor.toDate();
+                const fecha = new Date(valor);
+                return Number.isNaN(fecha.getTime()) ? new Date(0) : fecha;
+            },
+
+            normalizarTexto: function(valor) {
+                return String(valor || '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .trim()
+                    .toLowerCase();
+            },
+
+            itemVaACocina: function(item) {
+                const categoria = this.normalizarTexto(item?.categoria || item?.rubro || '');
+                return categoria !== 'bebida' && categoria !== 'bebidas';
+            },
+
+            obtenerItemsCocina: function(pedido) {
+                return Array.isArray(pedido?.items) ? pedido.items.filter(item => this.itemVaACocina(item)) : [];
+            },
+
+            obtenerImagenItem: function(item = {}) {
+                if (Array.isArray(item.imagenes) && item.imagenes.length) return item.imagenes[0];
+                if (Array.isArray(item.images) && item.images.length) return item.images[0];
+                return item.imagen || item.imagenUrl || item.imageUrl || item.fotoUrl || item.foto || item.urlImagen || item.photoURL || item.thumbnailUrl || '';
+            },
+
+            pedidoDebeMostrarseEnKDS: function(data) {
+                const esTipoValido = data.tipoTransaccion === 'venta_comida' || data.tipoTransaccion === 'app_delivery';
+                const estadoCocina = this.normalizarTexto(data.estadoCocina || 'pendiente');
+                const estadoDelivery = this.normalizarTexto(data.estadoDelivery || 'preparando');
+                const sigueVisibleEnCocina = data.tipoTransaccion === 'app_delivery'
+                    ? ['pendiente', 'preparando', 'listo'].includes(estadoCocina) && !['en_camino', 'entregado'].includes(estadoDelivery)
+                    : Boolean(data.estadoCocina) && estadoCocina !== 'listo' && estadoCocina !== 'anulado' && estadoCocina !== 'despachado';
+                return esTipoValido && sigueVisibleEnCocina && this.obtenerItemsCocina(data).length > 0;
+            },
+
+            init: function() {
+                const sesionStr = localStorage.getItem('__pos_session');
+                if (!sesionStr) return window.location.replace('index.html');
+                
+                this.sesion = JSON.parse(sesionStr);
+                if (!['cocina', 'produccion'].includes(this.sesion.rol)) return window.location.replace('index.html');
+                
+                document.getElementById('lbl-sucursal').innerText = this.sesion.sucursal;
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        document.getElementById('app-body').classList.remove('opacity-0');
+                        this.conectarFirebaseEnVivo();
+                    } else {
+                        window.location.replace('index.html');
+                    }
+                });
+            },
+
+            conectarFirebaseEnVivo: function() {
+                const statusEl = document.getElementById('kds-status');
+                statusEl.innerHTML = `<i class="fa-solid fa-satellite-dish text-green-400 animate-pulse"></i> <span class="text-green-400">En Vivo</span>`;
+                statusEl.classList.replace('bg-slate-800', 'bg-green-900/30');
+                statusEl.classList.replace('border-slate-700', 'border-green-800/50');
+                
+                const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+
+                // Filtramos por la sucursal del cocinero
+                const q = query(collection(db, rutaPrivada), 
+                    where("sucursal", "==", this.sesion.sucursal)
+                );
+
+                onSnapshot(q, (snapshot) => {
+                    let nuevosPedidos = [];
+                    let alertasEntrantes = [];
+                    
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        
+                        if (this.pedidoDebeMostrarseEnKDS(data)) {
+                            nuevosPedidos.push({ id: doc.id, ...data });
+                        }
+                    });
+
+                    // Ordenar: los mas viejos primero (FIFO)
+                    // Ordenar: los mas viejos primero (FIFO)
+
+                    if (this.snapshotInicializado) {
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type !== 'added') return;
+                            const data = change.doc.data();
+                            if (this.pedidoDebeMostrarseEnKDS(data)) {
+                                alertasEntrantes.push({ id: change.doc.id, ...data });
+                            }
+                        });
+                    }
+
+                    nuevosPedidos.sort((a, b) => this.normalizarFecha(a.fecha) - this.normalizarFecha(b.fecha));
+                    this.pedidosEnPantalla = nuevosPedidos;
+                    this.renderizarKDS();
+                    alertasEntrantes.forEach((pedido) => this.mostrarAlertaNuevoPedido(pedido));
+                    this.snapshotInicializado = true;
+                }, (error) => {
+                    console.error("Error en KDS:", error);
+                    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500"></i> <span class="text-red-400">Desconectado</span>`;
+                    statusEl.classList.replace('bg-green-900/30', 'bg-red-900/30');
+                    statusEl.classList.replace('border-green-800/50', 'border-red-800/50');
+                });
+            },
+
+            mostrarAlertaNuevoPedido: function(pedido = null) {
+                const toast = document.getElementById('toast');
+                const texto = document.getElementById('toast-message');
+                if (texto) {
+                    texto.innerText = pedido?.tipoTransaccion === 'app_delivery'
+                        ? 'Nuevo delivery de la app'
+                        : 'Nuevo pedido';
+                }
+                toast.classList.remove('translate-x-full');
+                
+                // Sonido KDS de cocina (Doble tono corto tipo 'Check')
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Primer Tono
+                    const osc1 = ctx.createOscillator();
+                    osc1.connect(ctx.destination);
+                    osc1.frequency.value = 800; 
+                    osc1.type = 'triangle';
+                    osc1.start();
+                    setTimeout(() => osc1.stop(), 100);
+
+                    // Segundo tono mas alto
+                    setTimeout(() => {
+                        const osc2 = ctx.createOscillator();
+                        osc2.connect(ctx.destination);
+                        osc2.frequency.value = 1200;
+                        osc2.type = 'triangle';
+                        osc2.start();
+                        setTimeout(() => osc2.stop(), 150);
+                    }, 150);
+                } catch(e) {}
+
+                setTimeout(() => toast.classList.add('translate-x-full'), 4000);
+            },
+
+            notificarClienteEstado: async function(pedido, titulo, mensaje) {
+                if (!pedido?.cliente || pedido.cliente === 'ocasional' || !titulo || !mensaje) return;
+                try {
+                    const callable = httpsCallable(functions, "notificarEstadoPedidoCliente");
+                    await callable({
+                        clienteId: pedido.cliente,
+                        saleId: pedido.id,
+                        titulo,
+                        mensaje
+                    });
+                } catch (error) {
+                    console.error("No se pudo notificar al cliente desde KDS", error);
+                }
+            },
+
+            calcularTiempoEspera: function(fechaISO) {
+                const inicio = this.normalizarFecha(fechaISO);
+                const ahora = new Date();
+                const diffMs = ahora - inicio;
+                const minutos = Math.floor(diffMs / 60000);
+                return Math.max(0, minutos);
+            },
+
+            renderizarKDS: function() {
+                const grid = document.getElementById('kds-grid');
+                const empty = document.getElementById('empty-state');
+
+                if (this.pedidosEnPantalla.length === 0) {
+                    grid.innerHTML = '';
+                    empty.classList.remove('hidden');
+                    empty.classList.add('flex');
+                    return;
+                }
+
+                empty.classList.add('hidden');
+                empty.classList.remove('flex');
+
+                grid.innerHTML = this.pedidosEnPantalla.map(pedido => {
+                    const estadoCocinaNormalizado = this.normalizarTexto(pedido.estadoCocina || 'pendiente');
+                    const esPreparando = estadoCocinaNormalizado === 'preparando';
+                    const esDelivery = pedido.tipoTransaccion === 'app_delivery';
+                    const esperandoSalida = esDelivery && estadoCocinaNormalizado === 'listo';
+                    
+                    // Colores Base de Tarjeta
+                    let bgClase = 'bg-slate-800';
+                    let borderClase = 'border-slate-700';
+                    let headerClase = 'bg-slate-700';
+                    let parpadeoClase = '';
+                    
+                    let iconoTipo = '<i class="fa-solid fa-utensils text-slate-400"></i>';
+                    let textoTipo = 'Mesa / Salon';
+
+                    // Si es Delivery, aplicamos azul base
+                    if (esDelivery) {
+                        bgClase = 'bg-blue-900/10';
+                        borderClase = 'border-blue-500';
+                        headerClase = 'bg-blue-600';
+                        iconoTipo = '<i class="fa-solid fa-motorcycle text-white animate-bounce"></i>';
+                        textoTipo = 'DELIVERY';
+                    }
+
+                    // --- REGLA DE TIEMPOS (SEMAFORO KDS) ---
+                    const minEspera = this.calcularTiempoEspera(pedido.fecha);
+                    const fechaPedido = this.normalizarFecha(pedido.fecha);
+                    const horaPedido = DateTime24.formatTime24(fechaPedido);
+                    const textoMinutos = minEspera === 1 ? '1 min' : `${minEspera} min`;
+                    
+                    if (minEspera >= 10) {
+                        // Nivel 3: critico (>10 min) -> tarjeta roja, cabecera parpadeante
+                        bgClase = 'bg-red-900/30';
+                        borderClase = 'border-red-600';
+                        headerClase = 'bg-red-600';
+                        parpadeoClase = 'animate-pulse';
+                    } 
+                    else if (minEspera >= 7) {
+                        // Nivel 2: RETRASO (>7 min) -> Cabecera roja oscuro
+                        headerClase = 'bg-red-800';
+                        borderClase = 'border-red-800';
+                    } 
+                    else if (minEspera >= 3) {
+                        // Nivel 1: precaucion (>3 min) -> cabecera naranja
+                        headerClase = 'bg-orange-600';
+                        borderClase = 'border-orange-500';
+                    } 
+                    // (De 0 a 2 minutos se mantiene el color base negro o azul)
+                    
+                    const colorMinutos = minEspera >= 10 ? 'text-white' : (minEspera >= 3 ? 'text-yellow-200' : 'text-slate-300');
+
+                    const itemsCocina = this.obtenerItemsCocina(pedido);
+                    const itemsVisibles = itemsCocina.slice(0, 7);
+                    const itemsOcultos = Math.max(0, itemsCocina.length - itemsVisibles.length);
+                    const itemsHtml = itemsVisibles.map(item => {
+                        const esCanje = item.esCanje === true || item.obsProd === 'CANJEADO';
+                        const obsTexto = item.obsProd && item.obsProd !== 'CANJEADO' ? item.obsProd : '';
+                        const imagenItem = this.obtenerImagenItem(item);
+                        const badgeCanje = esCanje ? `<span class="inline-flex items-center gap-1 bg-yellow-500/20 text-yellow-200 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-yellow-400/40"><i class="fa-solid fa-gift"></i> CANJE${item.puntosCanje ? ` ${item.puntosCanje} PTS` : ''}</span>` : '';
+                        const badgeBogo = (item.descuentoBogo || 0) > 0 ? `<span class="inline-flex items-center gap-1 bg-purple-500/20 text-purple-200 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-purple-400/40"><i class="fa-solid fa-tags"></i> 2x1</span>` : '';
+                        return `
+                        <li class="py-2.5 border-b border-slate-700/50 last:border-0">
+                            <div class="flex items-start gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-slate-950 border border-slate-700 overflow-hidden flex items-center justify-center text-slate-500 shrink-0">
+                                    ${imagenItem ? `<img src="${imagenItem}" alt="${item.nombre || 'Producto'}" class="w-full h-full object-cover" loading="lazy" decoding="async">` : `<i class="fa-solid ${item.icono || 'fa-utensils'} text-base"></i>`}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex justify-between items-start gap-2">
+                                        <span class="kds-product-name font-black text-[15px] 2xl:text-base text-white leading-tight">${item.nombre}</span>
+                                        <span class="bg-slate-950 text-orange-300 font-black px-2.5 py-1.5 rounded-xl text-base border border-orange-500/40 shadow-inner shrink-0">x${item.cantidad}</span>
+                                    </div>
+                                    ${(badgeCanje || badgeBogo) ? `<div class="flex flex-wrap gap-1.5 mt-1">${badgeCanje}${badgeBogo}</div>` : ''}
+                                    ${obsTexto ? `<div class="bg-yellow-500/20 border-l-4 border-yellow-400 pl-2 py-1 mt-1 rounded-r-lg">
+                                        <p class="text-yellow-100 text-sm font-black italic leading-tight">Obs: "${obsTexto}"</p>
+                                    </div>` : ''}
+                                </div>
+                            </div>
+                        </li>
+                    `}).join('');
+                    const masItemsHtml = itemsOcultos > 0
+                        ? `<div class="mt-2 rounded-xl border border-orange-400/30 bg-orange-500/10 px-3 py-2 text-orange-100 text-xs font-black text-center">+${itemsOcultos} item${itemsOcultos > 1 ? 's' : ''} adicional${itemsOcultos > 1 ? 'es' : ''}</div>`
+                        : '';
+
+                    // Nombre del cliente o Mesa
+                    let nombreVisual = pedido.aliasReferencia || pedido.nombreCliente || 'Ocasional';
+                    const badgePago = pedido.estadoPago === 'pagado'
+                        ? `<span class="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-200 text-[10px] font-black px-2 py-1 rounded-lg border border-emerald-400/40"><i class="fa-solid fa-circle-dollar-to-slot"></i> Pagado</span>`
+                        : `<span class="inline-flex items-center gap-1 bg-amber-500/20 text-amber-200 text-[10px] font-black px-2 py-1 rounded-lg border border-amber-400/40"><i class="fa-solid fa-hourglass-half"></i> Por cobrar</span>`;
+
+                    // Observacion del POS (el cajero escribe, cocina lee)
+                    let observacionHtml = pedido.observacion ? `
+                        <div class="mt-4 bg-yellow-500 text-slate-900 p-3 rounded-xl border-[3px] border-yellow-400 shadow-lg flex gap-3 items-start animate-pulse">
+                            <i class="fa-solid fa-circle-exclamation text-xl mt-0.5"></i>
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">Observacion</p>
+                                <p class="text-base font-black leading-tight uppercase">"${pedido.observacion}"</p>
+                            </div>
+                        </div>` : '';
+
+                    // Notas extra de la App de Delivery (Si las hubiera)
+                    let notasAppHtml = pedido.notasCliente ? `
+                        <div class="mt-3 bg-slate-700/50 p-3 rounded-lg flex gap-2 items-start border border-slate-600">
+                            <i class="fa-solid fa-comment-dots text-slate-400 mt-0.5"></i>
+                            <p class="text-sm text-slate-300 font-bold italic">"${pedido.notasCliente}"</p>
+                        </div>` : '';
+
+                    // Botones logicos
+                    const btnPreparar = !esPreparando && !esperandoSalida
+                        ? `<button onclick="KdsModule.cambiarEstado('${pedido.id}', 'preparando')" class="w-full bg-slate-700 hover:bg-orange-500 hover:text-white text-slate-300 font-black py-3 rounded-xl transition shadow-lg uppercase tracking-widest flex justify-center items-center gap-2 border border-slate-600 hover:border-orange-400 text-xs"><i class="fa-solid fa-fire-burner"></i> Empezar</button>`
+                        : '';
+                    
+                    const btnListo = esperandoSalida
+                        ? `<button onclick="KdsModule.cambiarEstado('${pedido.id}', 'despachado', true)" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl transition shadow-xl uppercase tracking-widest flex justify-center items-center gap-2 text-xs"><i class="fa-solid fa-person-walking-arrow-right"></i> Salida</button>`
+                        : `<button onclick="KdsModule.cambiarEstado('${pedido.id}', 'listo', ${esDelivery})" class="w-full bg-green-600 hover:bg-green-500 text-white font-black py-3 rounded-xl transition shadow-xl shadow-green-900/50 uppercase tracking-widest flex justify-center items-center gap-2 text-xs"><i class="fa-solid fa-check-double"></i> ${esDelivery ? 'Empacado' : 'Listo'}</button>`;
+
+                    return `
+                        <div class="${bgClase} kds-card rounded-2xl border-2 ${borderClase} overflow-hidden shadow-2xl flex flex-col animate-fade-in-up h-full relative">
+                            
+                            <div class="${headerClase} ${parpadeoClase} p-3 flex justify-between items-center text-white shadow-md relative z-10 transition-colors duration-500">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <div class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg shrink-0">${iconoTipo}</div>
+                                    <div>
+                                        <p class="text-[9px] font-black uppercase tracking-widest opacity-80 leading-none mb-1">${textoTipo}</p>
+                                        <h3 class="text-base font-black leading-none truncate w-24 md:w-28" title="${nombreVisual}">${nombreVisual}</h3>
+                                        <div class="mt-2">${badgePago}</div>
+                                    </div>
+                                </div>
+                                <div class="text-right bg-black/20 px-2 py-1 rounded-lg">
+                                    <p class="text-[9px] font-black uppercase tracking-widest opacity-80 leading-none mb-1 text-center">Espera</p>
+                                    <p class="text-2xl font-black leading-none ${colorMinutos}">${minEspera}</p>
+                                    <p class="text-[9px] font-black uppercase tracking-widest opacity-80 mt-1">${textoMinutos}</p>
+                                    <p class="text-[9px] font-bold opacity-70 mt-0.5">${horaPedido}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="p-2.5 flex-1 overflow-y-auto kds-items max-h-[430px]">
+                                <ul class="space-y-0">
+                                    ${itemsHtml}
+                                </ul>
+                                ${masItemsHtml}
+                                ${observacionHtml}
+                                ${notasAppHtml}
+                            </div>
+                            
+                            <div class="p-3 bg-slate-950/80 flex flex-col gap-2 border-t border-slate-700/50 mt-auto">
+                                ${btnPreparar}
+                                ${btnListo}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            cambiarEstado: async function(idTicket, nuevoEstadoCocina, esDelivery = false) {
+                try {
+                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                    const ticketRef = doc(db, rutaPrivada, idTicket);
+                    const pedido = this.pedidosEnPantalla.find(x => x.id === idTicket);
+                    
+                    let dataAActualizar = { estadoCocina: nuevoEstadoCocina };
+                    if (esDelivery && nuevoEstadoCocina === 'despachado') {
+                        dataAActualizar.estadoDelivery = 'en_camino';
+                    }
+                    
+                    await updateDoc(ticketRef, dataAActualizar);
+
+                    if (esDelivery && pedido) {
+                        if (nuevoEstadoCocina === 'preparando') {
+                            await this.notificarClienteEstado(pedido, "Pedido en cocina", "Tu pedido ya esta siendo preparado.");
+                        } else if (nuevoEstadoCocina === 'listo') {
+                            await this.notificarClienteEstado(pedido, "Pedido listo", "Tu pedido ya esta listo para despacho.");
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error("Error al actualizar estado:", error);
+                    alert("Error de conexion. No se pudo actualizar el pedido.");
+                }
+            },
+
+            cerrarSesion: async function() {
+                await signOut(auth);
+                localStorage.removeItem('__pos_session');
+                window.location.replace('index.html');
+            }
+        };
+
+        // Reloj interno para actualizar los minutos de espera sin recargar la base de datos
+        setInterval(() => {
+            if (KdsModule.pedidosEnPantalla.length > 0) {
+                KdsModule.renderizarKDS();
+            }
+        }, 30000);
+
+        document.addEventListener('DOMContentLoaded', () => KdsModule.init());
+    </script>
+    
+    <style>
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+        
+        /* Scrollbar robusto y oscuro */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #0f172a; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; border: 2px solid #0f172a; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</body>
+</html>
+
+
+

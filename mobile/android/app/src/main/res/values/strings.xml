@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Club Lin</string>
+    <string name="title_activity_main">Club Lin</string>
+    <string name="package_name">com.lingroup.clublin</string>
+    <string name="custom_url_scheme">com.lingroup.clublin</string>
+</resources>

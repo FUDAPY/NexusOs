@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee POS ERP - Centro de Notificaciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+</head>
+
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800 opacity-0 transition-opacity duration-500" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-50 flex items-center p-4 mb-4 text-white rounded-lg shadow-xl bg-slate-800 border border-slate-700">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20">
+            <i id="toast-icon" class="fa-solid fa-paper-plane"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje enviado</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-mug-hot text-orange-500\'></i>'">
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide">
+            <a href="dashboard.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-house text-lg w-6"></i><span>Panel Principal</span>
+            </a>
+
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Administracion</p>
+            <a href="sucursales.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-store text-lg w-6"></i><span>Sucursales</span>
+            </a>
+            
+            <a href="stock.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-warehouse text-lg w-6"></i><span>Stock</span>
+            </a>
+            <a href="usuarios.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-user-shield text-lg w-6"></i><span>Personal</span>
+            </a>
+            <a href="produccion.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-burger text-lg w-6"></i><span>Produccion</span>
+            </a>
+            <button class="w-full flex items-center gap-4 bg-orange-500 text-white p-3 rounded-xl font-semibold shadow-md transition">
+                <i class="fa-solid fa-bell text-lg w-6"></i><span>Notificaciones</span>
+            </button>
+
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Operaciones</p>
+            <a href="clientes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-gem text-lg w-6"></i><span>Clientes CRM</span>
+            </a>
+            <a href="kds.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-fire-burner text-lg w-6"></i><span>Monitor Cocina</span>
+            </a>
+
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Finanzas</p>
+            <a href="caja.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-vault text-lg w-6"></i><span>Arqueo de Caja</span>
+            </a>
+            <a href="reportes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-chart-line text-lg w-6"></i><span>Reportes</span>
+            </a>
+            <a href="monitor_problemas.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-triangle-exclamation text-lg w-6"></i><span>Monitor Problemas</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="bg-white p-6 shadow-sm flex justify-between items-center z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 p-1.5 shadow-sm overflow-hidden flex items-center justify-center">
+                    <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-bell text-orange-500\'></i>'">
+                </div>
+                <div>
+                <h2 class="text-2xl font-bold text-slate-800">Marketing y Avisos</h2>
+                <p class="text-slate-500 text-sm">Envia notificaciones push a la app de tus clientes.</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 p-8 overflow-y-auto bg-slate-50">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-md border border-slate-200">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-nib text-orange-500"></i> Redactar Mensaje
+                        </h3>
+
+                        <form id="form-notif" onsubmit="NotifModule.enviarNotificacion(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Titulo (Corto y llamativo)</label>
+                                <input type="text" id="input-titulo" oninput="NotifModule.actualizarPreview()" required maxlength="30" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold text-slate-800 placeholder-slate-400" placeholder="Ej: 2x1 en Pizzas">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mensaje (Detalle)</label>
+                                <textarea id="input-mensaje" oninput="NotifModule.actualizarPreview()" required maxlength="100" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-slate-600 h-24 resize-none" placeholder="Solo por hoy, disfruta de nuestra promo..."></textarea>
+                                <p class="text-right text-[10px] text-slate-400 mt-1"><span id="char-count">0</span>/100</p>
+                            </div>
+
+                            <button type="submit" id="btn-enviar" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg transition flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> ENVIAR AHORA
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-slate-800 p-6 rounded-[2.5rem] shadow-2xl border-4 border-slate-700 relative max-w-[300px] mx-auto">
+                        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-6 bg-slate-700 rounded-b-xl"></div>
+                        <p class="text-center text-slate-500 text-[10px] font-mono mb-4 mt-2">VISTA PREVIA APP</p>
+
+                        <div class="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/10 animate-pulse" id="preview-box">
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                                    <i class="fa-solid fa-bell"></i>
+                                </div>
+                                <div>
+                                    <p class="text-white font-bold text-sm leading-tight" id="preview-titulo">Titulo del aviso</p>
+                                    <p class="text-slate-300 text-xs mt-1 leading-tight" id="preview-mensaje">Aqui aparecera el texto de tu promocion...</p>
+                                    <p class="text-slate-500 text-[9px] mt-2">Ahora mismo</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden flex flex-col h-full max-h-[80vh]">
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 class="font-bold text-slate-800"><i class="fa-solid fa-clock-rotate-left mr-2 text-slate-400"></i>Historial de Envios</h3>
+                            <span class="bg-blue-100 text-blue-600 text-xs font-bold px-3 py-1 rounded-full" id="contador-historial">0 enviados</span>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-6 space-y-4" id="lista-historial">
+                            <div class="text-center py-10 text-slate-400">
+                                <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+                                <p class="mt-2 text-sm">Sincronizando historial...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, limit, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+            messagingSenderId: "1084603889746",
+            appId: "1:1084603889746:web:822ce55a070dc146b2078b",
+            measurementId: "G-1LZVQ05T2E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        function formatearFecha(fecha) {
+            if (!fecha) return "-";
+            const parsed = new Date(fecha);
+            if (Number.isNaN(parsed.getTime())) return "-";
+            return DateTime24.formatDateTime24(parsed);
+        }
+
+        window.NotifModule = {
+            usuarioActual: null,
+
+            init: function() {
+                onAuthStateChanged(auth, (user) => {
+                    if (!user) {
+                        window.location.replace("index.html");
+                        return;
+                    }
+
+                    const sesion = JSON.parse(localStorage.getItem("__pos_session"));
+                    if (sesion && (sesion.rol === "admin" || sesion.rol === "cajero")) {
+                        this.usuarioActual = sesion;
+                        document.getElementById("app-body").classList.remove("opacity-0");
+                        this.cargarHistorial();
+                        this.actualizarPreview();
+                        return;
+                    }
+
+                    window.location.replace("index.html");
+                });
+            },
+
+            actualizarPreview: function() {
+                const titulo = document.getElementById("input-titulo").value || "Titulo del aviso";
+                const mensaje = document.getElementById("input-mensaje").value || "Aqui aparecera el texto de tu promocion...";
+
+                document.getElementById("preview-titulo").innerText = titulo;
+                document.getElementById("preview-mensaje").innerText = mensaje;
+                document.getElementById("char-count").innerText = mensaje.length;
+            },
+
+            enviarNotificacion: async function(e) {
+                e.preventDefault();
+                const btn = document.getElementById("btn-enviar");
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ENVIANDO...`;
+
+                const titulo = document.getElementById("input-titulo").value.trim();
+                const mensaje = document.getElementById("input-mensaje").value.trim();
+
+                try {
+                    const token = await auth.currentUser.getIdToken();
+                    const response = await fetch("https://us-central1-sys-pos-erp-lingroup.cloudfunctions.net/enviarNotificacionPushHttp", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                        titulo,
+                        mensaje,
+                        autor: this.usuarioActual?.nombre || "Sistema"
+                        })
+                    });
+                    const result = await response.json();
+                    if (!response.ok || result.ok !== true) {
+                        throw new Error(result.message || "No se pudo enviar la notificacion.");
+                    }
+                    const enviados = Number(result.pushEnviados || 0);
+                    const total = Number(result.totalTokens || 0);
+                    const mensajeToast = total > 0
+                        ? `Push enviado a ${enviados} de ${total} dispositivos.`
+                        : "Notificacion guardada. Aun no hay dispositivos registrados.";
+                    this.mostrarToast(mensajeToast);
+                    document.getElementById("form-notif").reset();
+                    this.actualizarPreview();
+                } catch (error) {
+                    console.error(error);
+                    const detalle = error?.code ? `${error.code}: ${error.message || "Error al enviar."}` : (error?.message || "Error al enviar.");
+                    this.mostrarToast(detalle, "error");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ENVIAR AHORA`;
+                }
+            },
+
+            cargarHistorial: function() {
+                const q = query(collection(db, "notifications"), orderBy("fecha", "desc"), limit(20));
+
+                onSnapshot(q, (snapshot) => {
+                    const lista = document.getElementById("lista-historial");
+                    const contador = document.getElementById("contador-historial");
+                    contador.innerText = `${snapshot.size} enviados`;
+
+                    if (snapshot.empty) {
+                        lista.innerHTML = `<div class="text-center py-10 text-slate-400"><i class="fa-regular fa-paper-plane text-4xl mb-2"></i><p>Aun no has enviado notificaciones.</p></div>`;
+                        return;
+                    }
+
+                    lista.innerHTML = "";
+                    snapshot.forEach((notifDoc) => {
+                        const n = notifDoc.data() || {};
+                        const fecha = formatearFecha(n.fecha);
+                        const enviados = Number(n.pushEnviados || 0);
+                        const total = Number(n.totalTokens || 0);
+
+                        const item = document.createElement("div");
+                        item.className = "bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-start hover:shadow-sm transition group";
+                        item.innerHTML = `
+                            <div class="flex gap-4">
+                                <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-orange-500 shadow-sm border border-slate-100">
+                                    <i class="fa-solid fa-bullhorn"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-lg leading-tight">${n.titulo || "Sin titulo"}</h4>
+                                    <p class="text-slate-600 text-sm mt-1">${n.mensaje || ""}</p>
+                                    <div class="flex flex-wrap gap-3 mt-2 text-[10px] text-slate-400 font-mono uppercase">
+                                        <span><i class="fa-regular fa-clock"></i> ${fecha}</span>
+                                        <span><i class="fa-solid fa-user-pen"></i> ${n.autor || "Sistema"}</span>
+                                        <span><i class="fa-solid fa-mobile-screen"></i> ${enviados}/${total || enviados} push</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="NotifModule.eliminar('${notifDoc.id}')" class="text-slate-300 hover:text-red-500 p-2 transition opacity-0 group-hover:opacity-100" title="Borrar del historial">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        `;
+                        lista.appendChild(item);
+                    });
+                });
+            },
+
+            eliminar: async function(id) {
+                if (!confirm("Borrar esta notificacion del historial? Desaparecera de la app de los clientes.")) return;
+                try {
+                    await deleteDoc(doc(db, "notifications", id));
+                    this.mostrarToast("Mensaje eliminado.");
+                } catch (error) {
+                    console.error(error);
+                    this.mostrarToast("Error al eliminar.", "error");
+                }
+            },
+
+            mostrarToast: function(msg, tipo = "success") {
+                const toast = document.getElementById("toast");
+                const icon = document.getElementById("toast-icon");
+                document.getElementById("toast-message").innerText = msg;
+
+                if (tipo === "error") {
+                    toast.classList.replace("bg-slate-800", "bg-red-500");
+                    icon.className = "fa-solid fa-triangle-exclamation";
+                } else {
+                    toast.classList.replace("bg-red-500", "bg-slate-800");
+                    icon.className = "fa-solid fa-paper-plane";
+                }
+
+                toast.classList.remove("translate-x-full");
+                setTimeout(() => toast.classList.add("translate-x-full"), 3000);
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => NotifModule.init());
+    </script>
+</body>
+
+</html>

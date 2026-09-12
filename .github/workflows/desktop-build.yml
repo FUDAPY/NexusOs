@@ -1,0 +1,60 @@
+name: Desktop Builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "desktop-v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            command: npm run build:win
+            artifacts: |
+              dist/*.exe
+              dist/*.exe.blockmap
+              dist/latest*.yml
+          - os: ubuntu-latest
+            platform: linux
+            command: npm run build:linux
+            artifacts: |
+              dist/*.AppImage
+              dist/*.deb
+              dist/latest*.yml
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Linux USB dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev libusb-1.0-0-dev
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build desktop package
+        run: ${{ matrix.command }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: coffee-pos-${{ matrix.platform }}
+          path: ${{ matrix.artifacts }}
+          if-no-files-found: error
+          retention-days: 30

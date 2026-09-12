@@ -1,0 +1,679 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================
+    // FUNCIONES DE VERIFICACIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN (El cerebro de la seguridad)
+    // =========================================================
+    
+    // FunciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n para leer los datos del usuario que estÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ intentando hacer algo
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // FunciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n para verificar si el usuario tiene un rol especÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­fico (ej: 'admin')
+    function hasRole(role) {
+      return getUserData().rol == role;
+    }
+    
+    // FunciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n para verificar si es parte del Staff de confianza (Admin o Cajero)
+    function isStaff() {
+      return hasRole('admin') || hasRole('cajero');
+    }
+
+    function solicitudPremiumValida(data) {
+      return !('solicitudPremium' in data) ||
+        (
+          data.solicitudPremium is map &&
+          (!('nombreCompleto' in data.solicitudPremium) || data.solicitudPremium.nombreCompleto is string) &&
+          (!('cedulaIdentidad' in data.solicitudPremium) || data.solicitudPremium.cedulaIdentidad is string) &&
+          (!('fechaNacimiento' in data.solicitudPremium) || data.solicitudPremium.fechaNacimiento is string) &&
+          (!('direccionExacta' in data.solicitudPremium) || data.solicitudPremium.direccionExacta is string) &&
+          (!('barrioCiudad' in data.solicitudPremium) || data.solicitudPremium.barrioCiudad is string) &&
+          (!('telefono' in data.solicitudPremium) || data.solicitudPremium.telefono is string) &&
+          (!('correoElectronico' in data.solicitudPremium) || data.solicitudPremium.correoElectronico is string) &&
+          (!('lugarTrabajoActividad' in data.solicitudPremium) || data.solicitudPremium.lugarTrabajoActividad is string) &&
+          (!('referencias' in data.solicitudPremium) ||
+            (data.solicitudPremium.referencias is list && data.solicitudPremium.referencias.size() <= 2))
+        );
+    }
+
+    // =========================================================
+    // REGLAS DE COLECCIONES (Permisos por Carpeta)
+    // =========================================================
+
+    // 1. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE USUARIOS (Clientes, Cajeros, Delivery)
+    match /users/{userId} {
+      // LEER: Cualquiera logueado puede leer (necesario para login y busquedas)
+      allow read: if request.auth != null &&
+        (
+          !hasRole('cobrador') ||
+          request.auth.uid == userId ||
+          resource.data.rol == 'cliente'
+        );
+      
+      // CREAR (LA CORRECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN ESTÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â AQUÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â): 
+      // Un usuario nuevo puede crear su registro (Google) O el Staff puede crear cuentas.
+      allow create: if (request.auth.uid == userId || isStaff()) &&
+        // Validar campos requeridos
+        request.resource.data.nombre is string &&
+        request.resource.data.nombre.size() > 0 &&
+        request.resource.data.rol is string &&
+        (isStaff() || !('tipoCliente' in request.resource.data) || request.resource.data.tipoCliente == 'fiel') &&
+        // Nuevos campos - Descuentos VIP
+        (!('descuentoVip' in request.resource.data) || 
+         (request.resource.data.descuentoVip is number && request.resource.data.descuentoVip >= 0 && request.resource.data.descuentoVip <= 100)) &&
+        (!('descuentoVipConfigurado' in request.resource.data) ||
+         request.resource.data.descuentoVipConfigurado is bool) &&
+        // Nuevos campos - RFID
+        (!('rfid' in request.resource.data) || 
+         request.resource.data.rfid is string) &&
+        // Sucursales con credito libre
+        (!('sucursalesCreditoLibre' in request.resource.data) ||
+         request.resource.data.sucursalesCreditoLibre is list) &&
+        (!('solicitarPinCredito' in request.resource.data) ||
+         request.resource.data.solicitarPinCredito is bool) &&
+        (!('creditoPinConfigurado' in request.resource.data) ||
+         request.resource.data.creditoPinConfigurado is bool) &&
+        solicitudPremiumValida(request.resource.data) &&
+        (!('solicitudPremiumActualizadaAt' in request.resource.data) ||
+         request.resource.data.solicitudPremiumActualizadaAt is timestamp) &&
+        // Puntos no negativos
+        (!('puntos' in request.resource.data) || 
+         (request.resource.data.puntos is number && request.resource.data.puntos >= 0)) &&
+        // Deuda no negativa
+        (!('deuda' in request.resource.data) || 
+         (request.resource.data.deuda is number && request.resource.data.deuda >= 0));
+
+      // ACTUALIZAR (Modificar datos):
+      allow update: if 
+        // El Staff (Admin/Cajero) puede editar cualquier usuario (para corregir errores)
+        isStaff() 
+        || 
+        // El cobrador puede aprobar o rechazar solicitudes premium pendientes, sin tocar finanzas.
+        (hasRole('cobrador') &&
+         resource.data.rol == 'cliente' &&
+         ('estadoBeneficios' in resource.data) &&
+         resource.data.estadoBeneficios == 'pendiente' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tipoCliente', 'estadoBeneficios']) &&
+         (
+           (
+             request.resource.data.tipoCliente == 'premium' &&
+             request.resource.data.estadoBeneficios == 'activo'
+           ) ||
+           (
+             request.resource.data.tipoCliente == 'fiel' &&
+             request.resource.data.estadoBeneficios == 'rechazado'
+           )
+         ))
+        ||
+        // El Delivery solo puede editar su propio perfil operativo.
+        (hasRole('delivery') &&
+         request.auth.uid == userId &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['puntos', 'deuda', 'rol', 'tipoCliente', 'estadoBeneficios', 'descuentoVip', 'descuentoVipConfigurado', 'sucursalesCreditoLibre', 'solicitarPinCredito', 'creditoPinConfigurado', 'playTesterStatus', 'playTesterRequestedAt', 'playTesterProcessedAt', 'playTesterGroupEmail', 'playStoreUrl'])) 
+        ||
+        // Produccion solo puede editar su propio perfil basico.
+        (hasRole('produccion') &&
+         request.auth.uid == userId &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['puntos', 'deuda', 'rol', 'tipoCliente', 'estadoBeneficios', 'descuentoVip', 'descuentoVipConfigurado', 'sucursalesCreditoLibre', 'solicitarPinCredito', 'creditoPinConfigurado', 'playTesterStatus', 'playTesterRequestedAt', 'playTesterProcessedAt', 'playTesterGroupEmail', 'playStoreUrl']))
+        ||
+        // El propio Cliente puede editar sus datos, con una unica excepcion para solicitar premium.
+        (request.auth.uid == userId &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['puntos', 'deuda', 'rol', 'tipoCliente', 'descuentoVip', 'descuentoVipConfigurado', 'sucursalesCreditoLibre', 'solicitarPinCredito', 'creditoPinConfigurado', 'playTesterStatus', 'playTesterRequestedAt', 'playTesterProcessedAt', 'playTesterGroupEmail', 'playStoreUrl']) &&
+         (
+           // Edicion normal: no toca estadoBeneficios
+           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['estadoBeneficios'])
+           ||
+           // Excepcion controlada: puede pedir revision premium junto con sus datos basicos
+           (
+             request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+               'nombre',
+               'email',
+               'telefono',
+               'direccion',
+               'estadoBeneficios',
+               'solicitudPremium',
+               'solicitudPremiumActualizadaAt'
+             ]) &&
+             (
+               (
+                 request.resource.data.estadoBeneficios == 'pendiente' &&
+                 (!('estadoBeneficios' in resource.data) ||
+                  resource.data.estadoBeneficios == 'inactivo' ||
+                  resource.data.estadoBeneficios == 'rechazado' ||
+                  resource.data.estadoBeneficios == 'pendiente')
+               ) ||
+               (
+                 request.resource.data.estadoBeneficios == 'activo' &&
+                 ('estadoBeneficios' in resource.data) &&
+                 resource.data.estadoBeneficios == 'activo'
+               )
+             )
+           )
+         )) &&
+        // ValidaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n de rangos para campos numÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©ricos
+        ((!('descuentoVip' in request.resource.data) || 
+         (request.resource.data.descuentoVip is number && request.resource.data.descuentoVip >= 0 && request.resource.data.descuentoVip <= 100))) &&
+        ((!('descuentoVipConfigurado' in request.resource.data) ||
+         request.resource.data.descuentoVipConfigurado is bool)) &&
+        ((!('puntos' in request.resource.data) || 
+         (request.resource.data.puntos is number && request.resource.data.puntos >= 0))) &&
+        ((!('deuda' in request.resource.data) || 
+         (request.resource.data.deuda is number && request.resource.data.deuda >= 0))) &&
+        // RFID debe ser string
+        ((!('rfid' in request.resource.data) || 
+         request.resource.data.rfid is string)) &&
+        // Sucursales con credito libre deben ser lista
+        ((!('sucursalesCreditoLibre' in request.resource.data) ||
+         request.resource.data.sucursalesCreditoLibre is list)) &&
+        ((!('solicitarPinCredito' in request.resource.data) ||
+         request.resource.data.solicitarPinCredito is bool)) &&
+        ((!('creditoPinConfigurado' in request.resource.data) ||
+         request.resource.data.creditoPinConfigurado is bool)) &&
+        solicitudPremiumValida(request.resource.data) &&
+        ((!('solicitudPremiumActualizadaAt' in request.resource.data) ||
+         request.resource.data.solicitudPremiumActualizadaAt is timestamp));
+
+      // BORRAR:
+      // Solo el ADMIN puede eliminar perfiles de clientes/usuarios.
+      allow delete: if hasRole('admin');
+    }
+
+    // 2. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE PRODUCTOS (El MenÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âº)
+    match /products/{productId} {
+      // Todo el mundo puede ver el menÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âº (PÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºblico)
+      allow read: if true;
+      
+      // Solo el Staff (Admin/Cajero) puede crear, editar o borrar productos
+      allow create: if isStaff() &&
+        // Validar campos requeridos
+        request.resource.data.nombre is string &&
+        request.resource.data.nombre.size() > 0 &&
+        request.resource.data.precio is number &&
+        request.resource.data.precio >= 0 &&
+        // Nuevos campos - Descuentos por Producto
+        (!('descuento' in request.resource.data) || 
+         (request.resource.data.descuento is number && request.resource.data.descuento >= 0 && request.resource.data.descuento <= 100)) &&
+        // Nuevos campos - PromociÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n BOGO
+        (!('promocionBogo' in request.resource.data) || 
+         request.resource.data.promocionBogo is bool) &&
+        (!('permiteProductoGratis' in request.resource.data) ||
+         request.resource.data.permiteProductoGratis is bool) &&
+        (!('usaProduccionCarne' in request.resource.data) ||
+         request.resource.data.usaProduccionCarne is bool) &&
+        (!('medallonesPorUnidad' in request.resource.data) ||
+         (request.resource.data.medallonesPorUnidad is number && request.resource.data.medallonesPorUnidad >= 0)) &&
+        (!('usaProduccionPan' in request.resource.data) ||
+         request.resource.data.usaProduccionPan is bool) &&
+        (!('panesPorUnidad' in request.resource.data) ||
+         (request.resource.data.panesPorUnidad is number && request.resource.data.panesPorUnidad >= 0)) &&
+        (!('usaProduccionPapa' in request.resource.data) ||
+         request.resource.data.usaProduccionPapa is bool) &&
+        (!('papasPorUnidad' in request.resource.data) ||
+         (request.resource.data.papasPorUnidad is number && request.resource.data.papasPorUnidad >= 0)) &&
+        (!('usaProduccionCarneSalteado' in request.resource.data) ||
+         request.resource.data.usaProduccionCarneSalteado is bool) &&
+        (!('carneSalteadoPorUnidad' in request.resource.data) ||
+         (request.resource.data.carneSalteadoPorUnidad is number && request.resource.data.carneSalteadoPorUnidad >= 0)) &&
+        (!('usaProduccionCarneLomito' in request.resource.data) ||
+         request.resource.data.usaProduccionCarneLomito is bool) &&
+        (!('carneLomitoPorUnidad' in request.resource.data) ||
+         (request.resource.data.carneLomitoPorUnidad is number && request.resource.data.carneLomitoPorUnidad >= 0)) &&
+        (!('usaProduccionPanLomito' in request.resource.data) ||
+         request.resource.data.usaProduccionPanLomito is bool) &&
+        (!('panLomitoPorUnidad' in request.resource.data) ||
+         (request.resource.data.panLomitoPorUnidad is number && request.resource.data.panLomitoPorUnidad >= 0)) &&
+        // Stock debe ser >= 0
+        (!('stock' in request.resource.data) || 
+         (request.resource.data.stock is number && request.resource.data.stock >= 0)) &&
+        // Campo controlado debe ser booleano
+        (!('controlado' in request.resource.data) || 
+         request.resource.data.controlado is bool) &&
+        // RFID code
+        (!('codigo' in request.resource.data) || 
+         request.resource.data.codigo is string) &&
+        (!('imagen' in request.resource.data) ||
+         request.resource.data.imagen is string) &&
+        (!('puntosCanje' in request.resource.data) ||
+         (request.resource.data.puntosCanje is number && request.resource.data.puntosCanje >= 0));
+      
+      // Actualizar productos
+      allow update: if isStaff() &&
+        // Si existe un campo id embebido, debe seguir siendo consistente; si no existe, no bloquea la ediciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n.
+        (!('id' in request.resource.data) || request.resource.data.id == productId) &&
+        // Descuentos entre 0-100
+        (!('descuento' in request.resource.data) || 
+         (request.resource.data.descuento is number && request.resource.data.descuento >= 0 && request.resource.data.descuento <= 100)) &&
+        // Stock no negativo
+        (!('stock' in request.resource.data) || 
+         (request.resource.data.stock is number && request.resource.data.stock >= 0)) &&
+        // Precio no negativo
+        (!('precio' in request.resource.data) || 
+         (request.resource.data.precio is number && request.resource.data.precio >= 0)) &&
+        (!('imagen' in request.resource.data) ||
+         request.resource.data.imagen is string) &&
+        // PromociÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n BOGO debe ser booleano
+        (!('promocionBogo' in request.resource.data) || 
+         request.resource.data.promocionBogo is bool) &&
+        (!('permiteProductoGratis' in request.resource.data) ||
+         request.resource.data.permiteProductoGratis is bool) &&
+        (!('usaProduccionCarne' in request.resource.data) ||
+         request.resource.data.usaProduccionCarne is bool) &&
+        (!('medallonesPorUnidad' in request.resource.data) ||
+         (request.resource.data.medallonesPorUnidad is number && request.resource.data.medallonesPorUnidad >= 0)) &&
+        (!('usaProduccionPan' in request.resource.data) ||
+         request.resource.data.usaProduccionPan is bool) &&
+        (!('panesPorUnidad' in request.resource.data) ||
+         (request.resource.data.panesPorUnidad is number && request.resource.data.panesPorUnidad >= 0)) &&
+        (!('usaProduccionPapa' in request.resource.data) ||
+         request.resource.data.usaProduccionPapa is bool) &&
+        (!('papasPorUnidad' in request.resource.data) ||
+         (request.resource.data.papasPorUnidad is number && request.resource.data.papasPorUnidad >= 0)) &&
+        (!('usaProduccionCarneSalteado' in request.resource.data) ||
+         request.resource.data.usaProduccionCarneSalteado is bool) &&
+        (!('carneSalteadoPorUnidad' in request.resource.data) ||
+         (request.resource.data.carneSalteadoPorUnidad is number && request.resource.data.carneSalteadoPorUnidad >= 0)) &&
+        (!('usaProduccionCarneLomito' in request.resource.data) ||
+         request.resource.data.usaProduccionCarneLomito is bool) &&
+        (!('carneLomitoPorUnidad' in request.resource.data) ||
+         (request.resource.data.carneLomitoPorUnidad is number && request.resource.data.carneLomitoPorUnidad >= 0)) &&
+        (!('usaProduccionPanLomito' in request.resource.data) ||
+         request.resource.data.usaProduccionPanLomito is bool) &&
+        (!('panLomitoPorUnidad' in request.resource.data) ||
+         (request.resource.data.panLomitoPorUnidad is number && request.resource.data.panLomitoPorUnidad >= 0)) &&
+        // Nombre no puede estar vacÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­o
+        (!('nombre' in request.resource.data) || 
+         (request.resource.data.nombre is string && request.resource.data.nombre.size() > 0));
+      
+      // Borrar productos
+      allow delete: if hasRole('admin');
+    }
+
+    // 3. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE SUCURSALES
+    match /inventoryMovements/{movementId} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+      allow update, delete: if hasRole('admin');
+    }
+
+    match /branches/{branchId} {
+      // Todo el mundo puede ver las sucursales
+      allow read: if true;
+      
+      // Solo el ADMIN puede crear o editar sucursales (Cajeros no)
+      allow write: if hasRole('admin');
+    }
+
+    match /publicGoals/{branchId} {
+      // Vista publica de metas comerciales por sucursal.
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    match /linTickets/{ticketId} {
+      allow read: if true;
+      allow create, update, delete: if hasRole('admin');
+    }
+
+    match /linTicketClaims/{claimId} {
+      allow read: if isStaff() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow create, update, delete: if hasRole('admin');
+    }
+
+    match /playTesterRequests/{requestId} {
+      allow read: if hasRole('admin') || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow create, update, delete: if hasRole('admin');
+    }
+
+    match /deliveryRatings/{ratingId} {
+      allow read: if isStaff();
+      allow create: if request.auth != null &&
+        request.resource.data.cliente == request.auth.uid &&
+        request.resource.data.pedidoId is string &&
+        request.resource.data.estrellas is number &&
+        request.resource.data.estrellas >= 1 &&
+        request.resource.data.estrellas <= 5;
+      allow update, delete: if hasRole('admin');
+    }
+    
+    // 4. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE NOTIFICACIONES (Para la App)
+    match /notifications/{notifId} {
+        // Todo el mundo puede leer las notificaciones
+        allow read: if true;
+        
+        // Solo el Staff puede enviar notificaciones nuevas
+        allow write: if isStaff();
+    }
+
+    // 5. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE VENTAS / PEDIDOS (Tickets)
+    // Esta es la ruta especÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­fica donde guardamos las ventas
+    match /artifacts/erp_lingroup/users/admin_master_001/sales/{ticketId} {
+      
+      // LEER (Ver pedidos):
+      allow read: if 
+        isStaff() ||               // Admin y Cajero ven todo
+        hasRole('cobrador') ||     // Cobrador revisa historiales y cobros pendientes
+        hasRole('cocina') ||       // Cocina ve todo
+        hasRole('delivery') ||     // Delivery ve todo
+        // El cliente SOLO puede ver SUS propios pedidos (Privacidad)
+        (request.auth != null && resource.data.cliente == request.auth.uid);
+
+      // CREAR (Hacer un pedido nuevo):
+      allow create: if 
+        (
+          (
+            (isStaff() ||
+             (request.auth != null && request.resource.data.cliente == request.auth.uid)) &&
+            request.resource.data.total is number &&
+            request.resource.data.total >= 0 &&
+            request.resource.data.fecha is timestamp &&
+            request.resource.data.items is list &&
+            request.resource.data.items.size() > 0 &&
+            request.resource.data.items[0].cantidad is number &&
+            request.resource.data.items[0].precio is number &&
+            request.resource.data.items[0].precio >= 0 &&
+            (!('descuento' in request.resource.data.items[0]) ||
+             (request.resource.data.items[0].descuento is number && request.resource.data.items[0].descuento >= 0 && request.resource.data.items[0].descuento <= 100)) &&
+            (!('descuentoVip' in request.resource.data.items[0]) ||
+             (request.resource.data.items[0].descuentoVip is number && request.resource.data.items[0].descuentoVip >= 0 && request.resource.data.items[0].descuentoVip <= 100)) &&
+            (!('descuentoBogo' in request.resource.data.items[0]) ||
+             (request.resource.data.items[0].descuentoBogo is number && request.resource.data.items[0].descuentoBogo >= 0))
+          ) ||
+          (
+            (isStaff() || hasRole('cobrador')) &&
+            request.resource.data.tipoTransaccion == 'abono_deuda' &&
+            request.resource.data.total is number &&
+            request.resource.data.total > 0 &&
+            request.resource.data.fecha is timestamp &&
+            request.resource.data.metodoPago is string &&
+            request.resource.data.cliente is string
+          )
+        );
+
+      // ACTUALIZAR (Cambiar estado, cobrar, cocinar, arquear):
+      allow update: if 
+        hasRole('admin') ||
+        (hasRole('cajero') &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'estadoPago',
+           'metodoPago',
+           'puntosOtorgados',
+           'puntosCanjeados',
+           'cajeroCobro',
+           'items',
+           'subtotal',
+           'subtotalOriginal',
+           'total',
+           'premiumDiscountApplied',
+           'premiumDiscountPercent',
+           'discountAmount',
+           'observacion',
+           'creditoLibreSucursal',
+           'sucursalCreditoLibre',
+           'creditoProcesado',
+           'origenCuentaPendiente',
+           'estadoCocina',
+           'detallesPago',
+           'detalleEfectivo',
+           'totalPYG',
+           'paymentCurrency',
+           'exchangeRate',
+           'totalInSelectedCurrency',
+           'amountReceivedCurrency',
+           'changePYG',
+            'paymentMethod',
+            'creditoPinRequerido',
+            'creditoPinValidado',
+            'creditoPinValidadoAt',
+            'creditoPinValidadoPor',
+            'arqueado',
+           'fechaArqueo',
+           'turnoId',
+           'fechaAperturaTurno',
+           'motivoAnulacion',
+           'fechaAnulacion',
+           'anuladoPor',
+           'anuladoPorNombre',
+           'origenAnulacion',
+           'autorizadoPorRfid',
+           'stockDevueltoAnulacion',
+            'requiereConfirmacionCaja',
+            'confirmadoPorCaja',
+            'fechaConfirmacionCaja',
+            'fechaMetaPublica',
+            'metaPublicaRegistrada',
+            'noAfectaCaja',
+            'movimientoGratuito',
+            'tipoTransaccion',
+            'motivoNoAfectaCaja'
+          ])) ||
+        ((hasRole('cocina') || hasRole('produccion')) &&
+         (
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estadoCocina']) ||
+           (
+             resource.data.tipoTransaccion == 'app_delivery' &&
+             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estadoCocina', 'estadoDelivery']) &&
+             request.resource.data.estadoCocina == 'despachado' &&
+             request.resource.data.estadoDelivery == 'en_camino'
+           )
+         )) ||   // Cocina cambia estados de cocina y puede dar salida a delivery
+        (hasRole('delivery') &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'estadoDelivery',
+           'repartidor_id',
+           'repartidor_nombre',
+           'estadoPago',
+           'puntosOtorgados',
+           'fechaEntrega',
+           'estadoCocina',
+           'requiereConfirmacionCaja',
+           'confirmadoPorCaja',
+           'fechaConfirmacionCaja'
+         ]) &&
+         (!('repartidor_id' in resource.data) || resource.data.repartidor_id == null || resource.data.repartidor_id == request.auth.uid || request.resource.data.repartidor_id == request.auth.uid));   // Delivery toma y entrega su propio pedido
+
+      // BORRAR (Anular Ticket Definitivamente):
+      // Solo el ADMIN puede borrar. El Cajero NO tiene permiso de borrar.
+      allow delete: if hasRole('admin');
+    }
+
+    // 6. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE CONFIGURACIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN (Divisas, LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­mites, Descuentos)
+    match /config/{docId} {
+      // Todos pueden leer configuraciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n
+      allow read: if request.auth != null;
+      
+      // Solo admin puede actualizar configuraciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n
+      allow write: if hasRole('admin');
+    }
+
+    // 7. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE PAGOS (DivisiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n de cuentas, mÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©todos de pago)
+    match /pagos/{pagoId} {
+      // Staff y el cliente pueden leer sus pagos
+      allow read: if isStaff() || (request.auth != null && resource.data.usuario == request.auth.uid);
+      
+      // Staff puede crear pagos
+      allow create: if isStaff();
+      
+      // Solo admin puede actualizar o borrar
+      allow update, delete: if hasRole('admin');
+    }
+
+    // 7.1 COLECCION DE CIERRES DE CAJA
+    match /cierresCaja/{cierreId} {
+      allow read: if isStaff();
+      allow create: if hasRole('admin') || hasRole('cajero');
+      allow update, delete: if hasRole('admin');
+    }
+
+    match /cashFlows/{turnoId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    match /cashFlowContributions/{saleId} {
+      allow read: if hasRole('admin');
+      allow write: if false;
+    }
+
+    match /cashFlowAudits/{auditId} {
+      allow read: if hasRole('admin');
+      allow write: if false;
+    }
+
+    // 8. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE VENTAS PENDIENTES (Mesas sin cobrar)
+    match /ventasPendientes/{ventaId} {
+      // Staff puede leer todas, clientes ven solo las suyas
+      allow read: if isStaff() || (request.auth != null && resource.data.cliente == request.auth.uid);
+      
+      // Staff puede crear
+      allow create: if isStaff();
+      
+      // Staff puede actualizar
+      allow update: if isStaff();
+      
+      // Solo admin puede borrar
+      allow delete: if hasRole('admin');
+    }
+
+    // 9. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE AUDITORÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂA (QuiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©n hizo quÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© cuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ndo)
+    match /auditoria/{registroId} {
+      // Solo admin puede leer auditorÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­a
+      allow read: if hasRole('admin');
+      
+      // Cualquiera logueado puede crear (registro automÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡tico)
+      allow create: if request.auth != null;
+      
+      // Solo admin puede actualizar/borrar
+      allow update, delete: if hasRole('admin');
+    }
+
+    // 10. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE CANJEO DE PUNTOS
+    match /canjesDeProductos/{canjeId} {
+      // Staff y dueÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±o del canaje pueden leer
+      allow read: if isStaff() || (request.auth != null && resource.data.usuario == request.auth.uid);
+      
+      // Usuarios autenticados pueden crear canjes
+      allow create: if request.auth != null &&
+        // Validar estructura
+        request.resource.data.usuario is string &&
+        request.resource.data.usuario == request.auth.uid &&
+        request.resource.data.puntosGastados is number &&
+        request.resource.data.puntosGastados > 0 &&
+        request.resource.data.productos is list &&
+        request.resource.data.productos.size() > 0 &&
+        request.resource.data.fecha is timestamp;
+      
+      // Solo admin puede actualizar/borrar
+      allow update, delete: if hasRole('admin');
+    }
+
+    // 13. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE ANALYTICS (Para Reportes Avanzados)
+    match /analytics/{analysisId} {
+      // Solo staff puede leer anÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lisis (datos sensibles)
+      allow read: if isStaff();
+      
+      // Sistema automÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡tico crea anÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lisis (Cloud Function)
+      allow create: if request.auth == null || isStaff();
+      
+      // Solo admin puede actualizar/borrar
+      allow update, delete: if hasRole('admin');
+    }
+
+    // 14. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE SINCRONIZACIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN (Control multi-terminal)
+    match /syncLog/{logId} {
+      // Staff puede leer logs de sincronizaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n
+      allow read: if isStaff();
+      
+      // Sistema registra automÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ticamente
+      allow create: if request.auth != null &&
+        request.resource.data.timestamp is timestamp &&
+        request.resource.data.tipo is string &&
+        request.resource.data.coleccion is string;
+      
+      // Solo admin puede borrar logs
+      allow delete: if hasRole('admin');
+    }
+
+    match /systemAlerts/{alertId} {
+      allow read: if hasRole('admin') || hasRole('cajero') || hasRole('produccion');
+      allow create: if false;
+      allow update, delete: if hasRole('admin');
+    }
+
+    match /health/{docId} {
+      allow read: if hasRole('admin') || hasRole('cajero') || hasRole('produccion');
+      allow create, update, delete: if false;
+    }
+
+    // 11. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE PRODUCTOS (Actualizada con imÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡genes)
+    match /productos/{productoId} {
+      // Todos pueden leer productos
+      allow read: if true;
+      
+      // Solo staff puede crear/actualizar/borrar productos
+      allow write: if isStaff();
+    }
+
+    // 12. COLECCIÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN DE CLIENTES (Con campos de crÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©dito)
+    match /produccionConfig/{configId} {
+      allow read: if hasRole('admin') || hasRole('produccion') || hasRole('cajero');
+      allow create, update: if hasRole('admin') || hasRole('produccion') || hasRole('cajero');
+      allow delete: if hasRole('admin');
+    }
+
+    match /produccionLotes/{loteId} {
+      allow read: if hasRole('admin') || hasRole('produccion');
+      allow create: if (hasRole('admin') || hasRole('produccion')) &&
+        request.resource.data.sucursal is string &&
+        request.resource.data.sucursalKey is string &&
+        request.resource.data.tipoInsumo is string &&
+        request.resource.data.cantidadIngresada is number &&
+        request.resource.data.cantidadIngresada > 0;
+      allow update: if hasRole('admin');
+      allow delete: if hasRole('admin');
+    }
+
+    match /clientes/{clienteId} {
+      // Staff ve todos, cliente ve solo el suyo
+      allow read: if isStaff() || request.auth.uid == clienteId;
+      
+      // Staff puede crear
+      allow create: if isStaff();
+      
+      // Staff puede actualizar crÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©dito/deuda, cliente solo sus datos personales
+      allow update: if 
+        isStaff() || 
+        (request.auth.uid == clienteId && 
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deuda', 'puntos']));
+      
+      // Solo admin puede borrar
+      allow delete: if hasRole('admin');
+    }
+
+    match /creditPins/{clienteId} {
+      allow read: if hasRole('admin');
+      allow create, update: if hasRole('admin') &&
+        request.resource.data.clienteId == clienteId &&
+        request.resource.data.pinHash is string &&
+        request.resource.data.pinHash.size() == 64;
+      allow delete: if hasRole('admin');
+    }
+
+    match /creditPinAttempts/{attemptId} {
+      allow read: if hasRole('admin');
+      allow create, update, delete: if false;
+    }
+
+    match /passwordResetOtps/{requestId} {
+      allow read, write: if false;
+    }
+
+    match /passwordResetRateLimits/{requestId} {
+      allow read, write: if false;
+    }
+  }
+}
+
+
+
+

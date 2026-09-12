@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Club Lin | Solicitud Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#1f1814">
+    <style>
+        :root {
+            --ink: #211d1a;
+            --gold: #d8ab37;
+            --gold-dark: #9d6d12;
+            --paper: #f7efe2;
+            --line: rgba(157, 109, 18, 0.18);
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(216,171,55,0.2), transparent 38%),
+                linear-gradient(180deg, #241d18 0%, #f2eadb 28%, #f6efe3 100%);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.86);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--line);
+            box-shadow: 0 18px 42px rgba(67, 43, 12, 0.10);
+        }
+        .gold-input {
+            border: 2px solid rgba(216, 171, 55, 0.22);
+            background: rgba(255,255,255,0.94);
+        }
+        .gold-input:focus {
+            border-color: var(--gold);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(216, 171, 55, 0.14);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-800">
+    <div id="toast" class="fixed top-6 left-1/2 z-50 hidden -translate-x-1/2 rounded-2xl bg-slate-900 px-5 py-4 text-sm font-bold text-white shadow-2xl"></div>
+
+    <main class="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-6 sm:px-6">
+        <div class="mb-4 flex items-center justify-between gap-3">
+            <button onclick="window.location.href='app_cliente.html'" class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-black text-white shadow-lg backdrop-blur">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </button>
+            <p class="text-[10px] font-black uppercase tracking-[0.28em] text-white/75">Club Lin Premium</p>
+        </div>
+
+        <section class="glass-card overflow-hidden rounded-[32px]">
+            <div class="relative overflow-hidden bg-[#221b17] px-6 py-7 text-white">
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_42%)]"></div>
+                <div class="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-[11px] font-black uppercase tracking-[0.28em] text-amber-200/90">Solicitud Premium</p>
+                        <h1 class="mt-2 text-3xl font-black leading-none">Tarjeta Club Lin</h1>
+                        <p class="mt-3 max-w-xl text-sm font-bold text-white/70">Completa tu ficha para que el equipo revise tu solicitud. Tus datos quedaran visibles en CRM para evaluación administrativa.</p>
+                        <p class="mt-2 max-w-xl text-xs font-black uppercase tracking-[0.2em] text-amber-200/80">Puedes usar esta pagina aunque no tengas instalada la app.</p>
+                    </div>
+                    <div class="rounded-[28px] border border-white/15 bg-white/10 px-5 py-4 text-center shadow-lg backdrop-blur">
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">Estado actual</p>
+                        <p id="estado-beneficio" class="mt-2 text-lg font-black text-amber-200">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mensaje-exito" class="hidden px-5 py-8 sm:px-6">
+                <div class="rounded-[30px] border border-emerald-200 bg-emerald-50 px-6 py-8 text-center shadow-sm">
+                    <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-inner">
+                        <i class="fa-solid fa-circle-check text-4xl"></i>
+                    </div>
+                    <p class="mt-6 text-[11px] font-black uppercase tracking-[0.28em] text-emerald-700">Solicitud enviada</p>
+                    <h2 class="mt-3 text-3xl font-black text-slate-800">Muchas gracias</h2>
+                    <p class="mt-4 text-base font-bold leading-relaxed text-slate-600">Tu solicitud fue enviada correctamente. Muchas gracias por formar parte de la GRAN FAMILIA DE CLUB LIN.</p>
+                    <p class="mt-4 text-sm font-bold text-slate-500">Nuestro equipo revisara tus datos y te contactara en caso de necesitar confirmacion adicional.</p>
+                    <button type="button" onclick="window.location.reload()" class="mt-8 rounded-2xl border border-emerald-200 bg-white px-6 py-3 text-sm font-black text-emerald-700 shadow-sm transition hover:bg-emerald-50">
+                        Enviar otra solicitud
+                    </button>
+                </div>
+            </div>
+
+            <form id="form-solicitud" class="space-y-6 p-5 sm:p-6">
+                <section id="bloque-cuenta" class="rounded-[28px] border border-amber-100 bg-white/75 p-5 shadow-sm">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-amber-300">
+                            <i class="fa-solid fa-user-lock text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-800">Cuenta Club Lin</h2>
+                            <p class="text-xs font-bold text-slate-500">Si ya tienes cuenta, usa tu mismo correo y contrasena. Si no existe, la creamos desde aqui.</p>
+                        </div>
+                    </div>
+                    <div id="estado-cuenta" class="mb-4 hidden rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700"></div>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Correo para tu cuenta</label>
+                            <input id="sol-cuenta-email" required type="email" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="correo@ejemplo.com">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Contrasena</label>
+                            <input id="sol-cuenta-pass" required minlength="6" type="password" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Minimo 6 caracteres">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Confirmar contrasena</label>
+                            <input id="sol-cuenta-pass-confirm" required minlength="6" type="password" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Repite tu contrasena">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-[28px] border border-amber-100 bg-white/75 p-5 shadow-sm">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                            <i class="fa-solid fa-user-pen text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-800">Datos del cliente</h2>
+                            <p class="text-xs font-bold text-slate-500">Estos datos alimentan la ficha del CRM para revisión.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Nombre completo</label>
+                            <input id="sol-nombre-completo" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Tu nombre y apellido">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Cedula de identidad</label>
+                            <input id="sol-cedula" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Ej. 1234567">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Fecha de nacimiento</label>
+                            <input id="sol-fecha-nacimiento" required type="date" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Direccion exacta</label>
+                            <input id="sol-direccion" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Calle, numero, referencia">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Barrio / Ciudad</label>
+                            <input id="sol-barrio-ciudad" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Ej. Centro / Asuncion">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Telefono</label>
+                            <input id="sol-telefono" required type="tel" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Ej. 0981 123 456">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Correo electronico</label>
+                            <input id="sol-correo" required type="email" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="correo@ejemplo.com">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Lugar de trabajo / actividad</label>
+                            <input id="sol-trabajo" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Empresa, rubro o actividad">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-[28px] border border-amber-100 bg-white/75 p-5 shadow-sm">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-amber-300">
+                            <i class="fa-solid fa-address-book text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-800">Referencias personales</h2>
+                            <p class="text-xs font-bold text-slate-500">Cargaremos dos referencias para completar la evaluación.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="rounded-[24px] border border-slate-200 bg-slate-50/90 p-4">
+                            <p class="mb-3 text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">Referencia 1</p>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <div class="sm:col-span-2">
+                                    <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Nombre</label>
+                                    <input id="sol-ref1-nombre" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700">
+                                </div>
+                                <div>
+                                    <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Telefono</label>
+                                    <input id="sol-ref1-telefono" required type="tel" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700">
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Relacion con el cliente</label>
+                                    <input id="sol-ref1-relacion" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Amigo, familiar, companero de trabajo...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rounded-[24px] border border-slate-200 bg-slate-50/90 p-4">
+                            <p class="mb-3 text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">Referencia 2</p>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <div class="sm:col-span-2">
+                                    <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Nombre</label>
+                                    <input id="sol-ref2-nombre" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700">
+                                </div>
+                                <div>
+                                    <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Telefono</label>
+                                    <input id="sol-ref2-telefono" required type="tel" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700">
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label class="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Relacion con el cliente</label>
+                                    <input id="sol-ref2-relacion" required type="text" class="gold-input w-full rounded-2xl px-4 py-3 text-sm font-bold text-slate-700" placeholder="Amigo, familiar, companero de trabajo...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="rounded-[28px] border border-amber-200 bg-amber-50 px-5 py-4">
+                    <p class="text-xs font-black uppercase tracking-[0.24em] text-amber-700">Importante</p>
+                    <p class="mt-2 text-sm font-bold text-amber-900">Al enviar esta ficha, tu solicitud queda marcada como pendiente para revisión del equipo Club Lin. Puedes volver luego y actualizar los datos si hace falta.</p>
+                </div>
+
+                <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    <button type="button" onclick="window.location.href='app_cliente.html'" class="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-600 shadow-sm transition hover:bg-slate-50">
+                        Cancelar
+                    </button>
+                    <button id="btn-enviar-solicitud" type="submit" class="rounded-2xl bg-[#1f1814] px-6 py-3 text-sm font-black uppercase tracking-[0.18em] text-white shadow-lg transition hover:bg-[#30241e]">
+                        Enviar solicitud
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, browserLocalPersistence, setPersistence, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        window.SolicitudPremium = {
+            sesion: null,
+            usuarioActual: null,
+            perfilActual: null,
+            perfilInicializado: false,
+
+            mostrarPantallaExito: function() {
+                const form = document.getElementById('form-solicitud');
+                const exito = document.getElementById('mensaje-exito');
+                if (form) form.classList.add('hidden');
+                if (exito) exito.classList.remove('hidden');
+            },
+
+            mostrarToast: function(mensaje, tipo = 'success') {
+                const toast = document.getElementById('toast');
+                toast.innerText = mensaje;
+                toast.className = `fixed top-6 left-1/2 z-50 -translate-x-1/2 rounded-2xl px-5 py-4 text-sm font-bold text-white shadow-2xl ${tipo === 'error' ? 'bg-red-500' : 'bg-slate-900'}`;
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3200);
+            },
+
+            obtenerEstadoLabel: function(estado = 'inactivo') {
+                if (estado === 'activo') return 'Activa';
+                if (estado === 'pendiente') return 'Pendiente de revision';
+                if (estado === 'rechazado') return 'Rechazada';
+                return 'Sin solicitud';
+            },
+
+            cargarFormulario: function(data = {}) {
+                const solicitud = data.solicitudPremium || {};
+                const referencias = Array.isArray(solicitud.referencias) ? solicitud.referencias : [];
+                document.getElementById('estado-beneficio').innerText = this.obtenerEstadoLabel(data.estadoBeneficios);
+                document.getElementById('sol-cuenta-email').value = data.email || this.sesion?.email || '';
+                document.getElementById('sol-nombre-completo').value = solicitud.nombreCompleto || data.nombre || this.sesion?.nombre || '';
+                document.getElementById('sol-cedula').value = solicitud.cedulaIdentidad || '';
+                document.getElementById('sol-fecha-nacimiento').value = solicitud.fechaNacimiento || '';
+                document.getElementById('sol-direccion').value = solicitud.direccionExacta || data.direccion || '';
+                document.getElementById('sol-barrio-ciudad').value = solicitud.barrioCiudad || '';
+                document.getElementById('sol-telefono').value = solicitud.telefono || data.telefono || '';
+                document.getElementById('sol-correo').value = solicitud.correoElectronico || data.email || this.sesion?.email || '';
+                document.getElementById('sol-trabajo').value = solicitud.lugarTrabajoActividad || '';
+                document.getElementById('sol-ref1-nombre').value = referencias[0]?.nombre || '';
+                document.getElementById('sol-ref1-telefono').value = referencias[0]?.telefono || '';
+                document.getElementById('sol-ref1-relacion').value = referencias[0]?.relacion || '';
+                document.getElementById('sol-ref2-nombre').value = referencias[1]?.nombre || '';
+                document.getElementById('sol-ref2-telefono').value = referencias[1]?.telefono || '';
+                document.getElementById('sol-ref2-relacion').value = referencias[1]?.relacion || '';
+            },
+
+            actualizarEstadoCuentaUI: function() {
+                const bloque = document.getElementById('bloque-cuenta');
+                const estado = document.getElementById('estado-cuenta');
+                const email = document.getElementById('sol-cuenta-email');
+                const pass = document.getElementById('sol-cuenta-pass');
+                const passConfirm = document.getElementById('sol-cuenta-pass-confirm');
+                if (!bloque || !estado) return;
+
+                if (this.usuarioActual && this.perfilActual?.rol === 'cliente') {
+                    estado.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i>Cuenta vinculada a ${this.perfilActual?.email || this.usuarioActual.email || 'tu correo'}. Puedes enviar la solicitud directamente.`;
+                    estado.classList.remove('hidden');
+                    email.required = false;
+                    pass.required = false;
+                    passConfirm.required = false;
+                    email.disabled = true;
+                    pass.disabled = true;
+                    passConfirm.disabled = true;
+                    bloque.classList.add('opacity-80');
+                } else {
+                    estado.classList.add('hidden');
+                    email.required = true;
+                    pass.required = true;
+                    passConfirm.required = true;
+                    email.disabled = false;
+                    pass.disabled = false;
+                    passConfirm.disabled = false;
+                    bloque.classList.remove('opacity-80');
+                }
+            },
+
+            sincronizarSesionLocal: function(data = {}, user = this.usuarioActual) {
+                if (!user) return;
+                const sesion = {
+                    uid: user.uid,
+                    email: data.email || user.email || '',
+                    nombre: data.nombre || 'Cliente',
+                    rol: data.rol || 'cliente'
+                };
+                localStorage.setItem('__pos_session', JSON.stringify(sesion));
+                this.sesion = sesion;
+            },
+
+            asegurarCuentaCliente: async function(emailFormulario) {
+                if (this.usuarioActual && this.perfilActual?.rol === 'cliente') return this.usuarioActual;
+
+                const email = (emailFormulario || document.getElementById('sol-cuenta-email').value || '').trim();
+                const pass = document.getElementById('sol-cuenta-pass').value;
+                const passConfirm = document.getElementById('sol-cuenta-pass-confirm').value;
+
+                if (!email || !pass || !passConfirm) {
+                    throw new Error('Completa correo y contrasena para continuar.');
+                }
+                if (pass !== passConfirm) {
+                    throw new Error('Las contrasenas no coinciden.');
+                }
+
+                await setPersistence(auth, browserLocalPersistence);
+
+                try {
+                    const cred = await signInWithEmailAndPassword(auth, email, pass);
+                    this.usuarioActual = cred.user;
+                    return cred.user;
+                } catch (error) {
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                        this.usuarioActual = cred.user;
+                        await setDoc(doc(db, 'users', cred.user.uid), {
+                            nombre: document.getElementById('sol-nombre-completo').value.trim() || 'Cliente Club Lin',
+                            email: email,
+                            telefono: document.getElementById('sol-telefono').value.trim(),
+                            rol: 'cliente',
+                            estadoBeneficios: 'inactivo',
+                            puntos: 0,
+                            deuda: 0,
+                            direccion: document.getElementById('sol-direccion').value.trim(),
+                            fechaRegistro: new Date().toISOString()
+                        });
+                        return cred.user;
+                    }
+                    if (error.code === 'auth/wrong-password') {
+                        throw new Error('La contrasena no coincide con la cuenta existente.');
+                    }
+                    if (error.code === 'auth/email-already-in-use') {
+                        throw new Error('Ese correo ya existe. Usa la misma contrasena de tu cuenta.');
+                    }
+                    throw error;
+                }
+            },
+
+            cargarPerfil: async function(user) {
+                const snap = await getDoc(doc(db, 'users', user.uid));
+                if (!snap.exists()) {
+                    throw new Error('No encontramos tu perfil en el sistema.');
+                }
+                this.perfilActual = snap.data();
+                this.sincronizarSesionLocal(this.perfilActual, user);
+                this.cargarFormulario(this.perfilActual);
+                this.actualizarEstadoCuentaUI();
+            },
+
+            obtenerPayload: function() {
+                return {
+                    nombreCompleto: document.getElementById('sol-nombre-completo').value.trim(),
+                    cedulaIdentidad: document.getElementById('sol-cedula').value.trim(),
+                    fechaNacimiento: document.getElementById('sol-fecha-nacimiento').value,
+                    direccionExacta: document.getElementById('sol-direccion').value.trim(),
+                    barrioCiudad: document.getElementById('sol-barrio-ciudad').value.trim(),
+                    telefono: document.getElementById('sol-telefono').value.trim(),
+                    correoElectronico: document.getElementById('sol-correo').value.trim(),
+                    lugarTrabajoActividad: document.getElementById('sol-trabajo').value.trim(),
+                    referencias: [
+                        {
+                            nombre: document.getElementById('sol-ref1-nombre').value.trim(),
+                            telefono: document.getElementById('sol-ref1-telefono').value.trim(),
+                            relacion: document.getElementById('sol-ref1-relacion').value.trim()
+                        },
+                        {
+                            nombre: document.getElementById('sol-ref2-nombre').value.trim(),
+                            telefono: document.getElementById('sol-ref2-telefono').value.trim(),
+                            relacion: document.getElementById('sol-ref2-relacion').value.trim()
+                        }
+                    ]
+                };
+            },
+
+            guardarSolicitud: async function(event) {
+                event.preventDefault();
+
+                const payload = this.obtenerPayload();
+                const campos = [
+                    payload.nombreCompleto,
+                    payload.cedulaIdentidad,
+                    payload.fechaNacimiento,
+                    payload.direccionExacta,
+                    payload.barrioCiudad,
+                    payload.telefono,
+                    payload.correoElectronico,
+                    payload.lugarTrabajoActividad,
+                    ...payload.referencias.flatMap(ref => [ref.nombre, ref.telefono, ref.relacion])
+                ];
+
+                if (campos.some(valor => !valor)) {
+                    this.mostrarToast('Completa todos los campos antes de enviar la solicitud.', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('btn-enviar-solicitud');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Enviando...';
+
+                try {
+                    const user = await this.asegurarCuentaCliente(payload.correoElectronico);
+                    await this.cargarPerfil(user);
+                    await updateDoc(doc(db, 'users', this.usuarioActual.uid), {
+                        nombre: payload.nombreCompleto,
+                        email: payload.correoElectronico,
+                        telefono: payload.telefono,
+                        direccion: payload.direccionExacta
+                    });
+                    await updateDoc(doc(db, 'users', this.usuarioActual.uid), {
+                        estadoBeneficios: this.perfilActual?.estadoBeneficios === 'activo' ? 'activo' : 'pendiente',
+                        solicitudPremium: payload,
+                        solicitudPremiumActualizadaAt: serverTimestamp()
+                    });
+                    this.perfilActual = {
+                        ...(this.perfilActual || {}),
+                        nombre: payload.nombreCompleto,
+                        email: payload.correoElectronico,
+                        telefono: payload.telefono,
+                        direccion: payload.direccionExacta,
+                        estadoBeneficios: this.perfilActual?.estadoBeneficios === 'activo' ? 'activo' : 'pendiente',
+                        solicitudPremium: payload
+                    };
+                    this.sincronizarSesionLocal(this.perfilActual);
+                    document.getElementById('estado-beneficio').innerText = this.perfilActual?.estadoBeneficios === 'activo' ? 'Activa' : 'Pendiente de revision';
+                    this.mostrarToast('Solicitud enviada correctamente.');
+                    this.actualizarEstadoCuentaUI();
+                    this.mostrarPantallaExito();
+                } catch (error) {
+                    console.error('Error guardando solicitud premium', error);
+                    this.mostrarToast(error?.message || 'No se pudo enviar la solicitud. Intenta nuevamente.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = 'Enviar solicitud';
+                }
+            },
+
+            init: async function(user) {
+                if (this.perfilInicializado) return;
+                const sesionStr = localStorage.getItem('__pos_session');
+                this.sesion = sesionStr ? JSON.parse(sesionStr) : null;
+                this.usuarioActual = user || null;
+
+                if (!user) {
+                    this.actualizarEstadoCuentaUI();
+                    this.perfilInicializado = true;
+                    return;
+                }
+
+                try {
+                    await this.cargarPerfil(user);
+                } catch (error) {
+                    console.error('Error cargando perfil para solicitud premium', error);
+                    if (this.sesion?.rol && this.sesion.rol !== 'cliente') {
+                        await signOut(auth);
+                        localStorage.removeItem('__pos_session');
+                        this.sesion = null;
+                        this.usuarioActual = null;
+                        this.perfilActual = null;
+                        this.actualizarEstadoCuentaUI();
+                        this.mostrarToast('Usa un correo de cliente o crea tu cuenta aqui para completar la solicitud.', 'error');
+                    } else {
+                        this.mostrarToast('No se pudo cargar tu perfil.', 'error');
+                    }
+                } finally {
+                    this.perfilInicializado = true;
+                }
+            }
+        };
+
+        document.getElementById('form-solicitud').addEventListener('submit', (event) => SolicitudPremium.guardarSolicitud(event));
+        onAuthStateChanged(auth, (user) => SolicitudPremium.init(user));
+    </script>
+</body>
+
+</html>

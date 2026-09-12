@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metas Públicas | Club Lin</title>
+    <link rel="icon" href="favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="date_time_utils.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: rgba(15, 23, 42, 0.09);
+            --success: #059669;
+            --warning: #f97316;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Manrope', sans-serif;
+            background:
+                linear-gradient(135deg, rgba(16, 185, 129, 0.13), transparent 28%),
+                linear-gradient(225deg, rgba(249, 115, 22, 0.12), transparent 32%),
+                linear-gradient(180deg, #f7faf9 0%, #eef3f0 48%, #f8f7f2 100%);
+            color: var(--ink);
+        }
+
+        .shell {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 34px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(16px);
+        }
+
+        .soft-panel {
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 8px;
+            background: rgba(248, 250, 252, 0.88);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+            gap: 24px;
+            align-items: end;
+            padding: 28px;
+        }
+
+        .eyebrow {
+            color: #0f766e;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        .title {
+            max-width: 760px;
+            margin: 8px 0 0;
+            font-size: clamp(30px, 5vw, 54px);
+            line-height: 1.02;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            max-width: 760px;
+            margin: 14px 0 0;
+            color: var(--muted);
+            font-size: clamp(14px, 2vw, 17px);
+            font-weight: 700;
+            line-height: 1.6;
+        }
+
+        .selector-wrap {
+            padding: 18px;
+        }
+
+        .selector-label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .branch-select {
+            width: 100%;
+            min-height: 54px;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            border-radius: 8px;
+            background: white;
+            color: var(--ink);
+            font: inherit;
+            font-weight: 800;
+            padding: 0 44px 0 16px;
+            outline: none;
+            appearance: none;
+            background-image:
+                linear-gradient(45deg, transparent 50%, #0f172a 50%),
+                linear-gradient(135deg, #0f172a 50%, transparent 50%);
+            background-position:
+                calc(100% - 23px) 24px,
+                calc(100% - 17px) 24px;
+            background-size: 6px 6px, 6px 6px;
+            background-repeat: no-repeat;
+        }
+
+        .branch-select:focus {
+            border-color: #0f766e;
+            box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+        }
+
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            border-radius: 999px;
+            padding: 0 12px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: normal;
+        }
+
+        .pill-success {
+            border: 1px solid rgba(5, 150, 105, 0.2);
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .pill-progress {
+            border: 1px solid rgba(249, 115, 22, 0.22);
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr);
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .detail-stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .summary {
+            padding: 22px;
+        }
+
+        .summary.achieved {
+            border-color: rgba(5, 150, 105, 0.22);
+            background:
+                linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(255, 255, 255, 0.92) 38%),
+                rgba(255, 255, 255, 0.92);
+        }
+
+        .summary-head {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+        .branch-name {
+            margin: 8px 0 0;
+            font-size: clamp(24px, 4vw, 36px);
+            line-height: 1.08;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .metric-value {
+            margin: 14px 0 0;
+            font-size: clamp(32px, 7vw, 56px);
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .metric-caption {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 14px;
+            margin-top: 18px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #f97316, #10b981);
+            transition: width 650ms ease;
+        }
+
+        .summary.achieved .progress-fill {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .stat {
+            min-width: 0;
+            padding: 14px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            margin-top: 8px;
+            font-size: 24px;
+            line-height: 1.12;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .motivation {
+            margin-top: 18px;
+            border-left: 4px solid #0f766e;
+            padding: 12px 14px;
+            color: #164e63;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.5;
+        }
+
+        .dates-card,
+        .chart-card {
+            padding: 20px;
+        }
+
+        .section-title {
+            margin: 0;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .dates-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .date-chip {
+            border: 1px solid rgba(5, 150, 105, 0.18);
+            border-radius: 999px;
+            background: #ecfdf5;
+            color: #047857;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .empty-copy {
+            margin: 14px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.6;
+        }
+
+        .chart-frame {
+            height: clamp(260px, 38vw, 430px);
+            margin-top: 14px;
+        }
+
+        .state-card {
+            margin-top: 18px;
+            padding: 28px;
+            text-align: center;
+            color: var(--muted);
+            font-weight: 800;
+        }
+
+        .loader-dots {
+            display: inline-flex;
+            gap: 6px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .loader-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #0f766e;
+            animation: pulse 900ms ease-in-out infinite;
+        }
+
+        .loader-dots span:nth-child(2) {
+            animation-delay: 120ms;
+        }
+
+        .loader-dots span:nth-child(3) {
+            animation-delay: 240ms;
+        }
+
+        .celebration {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .spark {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            opacity: 0;
+            animation: firework 1.4s ease-out forwards;
+        }
+
+        .float-word {
+            position: absolute;
+            left: 50%;
+            top: 54%;
+            transform: translate(-50%, -50%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.88);
+            color: white;
+            padding: 10px 14px;
+            font-size: clamp(13px, 3vw, 18px);
+            font-weight: 800;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.24);
+            opacity: 0;
+            white-space: nowrap;
+            animation: floatWord 3.4s ease-out forwards;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateY(0); opacity: 0.45; }
+            50% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        @keyframes firework {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(0.7);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--tx), var(--ty)) scale(1.1);
+            }
+        }
+
+        @keyframes floatWord {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, 12px) scale(0.94);
+            }
+            16%, 72% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--drift)), -130px) scale(1);
+            }
+        }
+
+        @media (max-width: 860px) {
+            .shell {
+                width: min(100% - 24px, 680px);
+                padding-top: 14px;
+            }
+
+            .hero,
+            .grid-dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                padding: 20px;
+            }
+
+            .selector-wrap {
+                padding: 14px;
+            }
+
+            .summary,
+            .dates-card,
+            .chart-card {
+                padding: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-frame {
+                height: 260px;
+            }
+        }
+
+        @media (max-width: 430px) {
+            .shell {
+                width: min(100% - 18px, 420px);
+            }
+
+            .title {
+                font-size: 30px;
+            }
+
+            .metric-value {
+                font-size: 36px;
+            }
+
+            .pill {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <header class="card hero">
+            <div>
+                <p class="eyebrow">Club Lin</p>
+                <h1 class="title">Metas públicas por sucursal</h1>
+                <p class="subtitle">
+                    Vista comercial en tiempo real para que cada equipo siga su avance mensual,
+                    los días destacados y la venta diaria contra la meta.
+                </p>
+            </div>
+
+            <section class="soft-panel selector-wrap" id="branch-selector"></section>
+        </header>
+
+        <section id="app-state" class="card state-card">
+            <span class="loader-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+            Cargando metas públicas...
+        </section>
+
+        <section id="dashboard" class="grid-dashboard hidden" aria-live="polite">
+            <article id="summary-card" class="card summary"></article>
+
+            <div class="detail-stack">
+                <article id="dates-card" class="card dates-card"></article>
+                <article id="chart-card" class="card chart-card"></article>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, doc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const BRANCHES = [
+            { id: "cafeteria_chicolin", name: "Cafeteria Chicolin", aliases: ["cafeteria-chicolin", "Cafeteria Chicolin", "CAFETERIA CHICOLIN"] },
+            { id: "mr_lin_restaurante", name: "Mr Lin Restaurante", aliases: ["mr-lin-restaurante", "Mr Lin Restaurante"] }
+        ];
+
+        const moneyFormatter = new Intl.NumberFormat("es-PY");
+        const dateFormatter = new Intl.DateTimeFormat("es-PY", { day: "2-digit", month: "2-digit" });
+
+        const formatMoney = (value = 0) => `Gs. ${moneyFormatter.format(Number(value || 0))}`;
+
+        const escapeHTML = (value = "") => String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+        const formatDate = (value) => {
+            if (!value) return "";
+            const rawDate = typeof value?.toDate === "function" ? value.toDate() : new Date(`${value}T12:00:00`);
+            if (Number.isNaN(rawDate.getTime())) return String(value);
+            return dateFormatter.format(rawDate);
+        };
+
+        const getUpdatedLabel = (updatedAt) => {
+            if (!updatedAt) return "Esperando primera actualización";
+            const date = typeof updatedAt?.toDate === "function" ? updatedAt.toDate() : new Date(updatedAt);
+            if (Number.isNaN(date.getTime())) return "Actualizado recientemente";
+            return `Actualizado: ${DateTime24.formatDateTime24(date)}`;
+        };
+
+        const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+        const normalizeText = (value = "") => String(value)
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "")
+            .toLowerCase();
+
+        const BranchSelector = {
+            render(target, selectedBranchId) {
+                target.innerHTML = `
+                    <label class="selector-label" for="branch-select">Seleccionar sucursal</label>
+                    <select class="branch-select" id="branch-select" aria-label="Seleccionar sucursal">
+                        ${BRANCHES.map((branch) => `
+                            <option value="${branch.id}" ${branch.id === selectedBranchId ? "selected" : ""}>
+                                ${escapeHTML(branch.name)}
+                            </option>
+                        `).join("")}
+                    </select>
+                    <div class="status-row">
+                        <span class="pill pill-progress" id="live-status">Conectando en tiempo real</span>
+                    </div>
+                `;
+            }
+        };
+
+        const GoalSummaryCard = {
+            render(target, goal) {
+                const progress = goal.todayProgress;
+                const isClose = progress >= 85 && progress < 100;
+                const motivation = goal.todayReached
+                    ? "Meta diaria alcanzada hoy. Excelente trabajo del equipo, mantengan el ritmo comercial."
+                    : isClose
+                        ? "Estan cerca de alcanzar la meta diaria. Cada venta cuenta para cerrar la jornada arriba."
+                        : "Buen avance. Mantengan el foco diario y conviertan cada jornada en una oportunidad.";
+
+                target.className = `card summary ${goal.todayReached ? "achieved" : ""}`;
+                target.innerHTML = `
+                    <div class="summary-head">
+                        <div>
+                            <p class="eyebrow">Sucursal</p>
+                            <h2 class="branch-name">${escapeHTML(goal.branchName)}</h2>
+                        </div>
+                        <span class="pill ${goal.todayReached ? "pill-success" : "pill-progress"}">
+                            ${goal.todayReached ? "Meta alcanzada hoy" : "Meta en proceso hoy"}
+                        </span>
+                    </div>
+
+                    <p class="metric-value">${Math.round(progress)}%</p>
+                    <p class="metric-caption">Avance de hoy hacia la meta diaria de referencia.</p>
+
+                    <div class="progress-track" aria-label="Progreso porcentual de ventas de hoy">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <p class="metric-caption">${Math.round(progress)}% completado hacia el objetivo de 2.000.000.</p>
+
+                    <div class="stats-grid">
+                        <div class="soft-panel stat">
+                            <p class="stat-label">Objetivo diario</p>
+                            <p class="stat-value">100%</p>
+                        </div>
+                        <div class="soft-panel stat">
+                            <p class="stat-label">Dias sobre meta</p>
+                            <p class="stat-value">${goal.achievedDays}</p>
+                        </div>
+                    </div>
+
+                    <div class="motivation">${motivation}</div>
+                    <p class="metric-caption">${getUpdatedLabel(goal.updatedAt)}</p>
+                `;
+            }
+        };
+
+        const DatesCard = {
+            render(target, goal) {
+                const dates = goal.achievedDates.map(formatDate).filter(Boolean);
+                target.innerHTML = `
+                    <p class="section-title">Fechas del mes con meta diaria superada</p>
+                    ${dates.length
+                        ? `<div class="dates-list">${dates.map((date) => `<span class="date-chip">${escapeHTML(date)}</span>`).join("")}</div>`
+                        : `<p class="empty-copy">Todavía no hay días registrados por encima de la meta diaria para esta sucursal.</p>`
+                    }
+                `;
+            }
+        };
+
+        const SalesChart = {
+            instance: null,
+
+            destroy() {
+                if (this.instance) {
+                    this.instance.destroy();
+                    this.instance = null;
+                }
+            },
+
+            render(target, goal) {
+                this.destroy();
+                target.innerHTML = `
+                    <p class="section-title">Avance diario</p>
+                    <div class="chart-frame">
+                        <canvas id="daily-sales-chart"></canvas>
+                    </div>
+                `;
+
+                const canvas = document.getElementById("daily-sales-chart");
+                const labels = goal.dailySales.map((item) => String(item.day));
+                const amounts = goal.dailySales.map((item) => Number(item.amount || 0));
+                const percentages = amounts.map((value) => goal.dailyGoal > 0 ? clamp((value / goal.dailyGoal) * 100, 0, 140) : 0);
+
+                this.instance = new Chart(canvas, {
+                    type: "bar",
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: "Avance diario",
+                                data: percentages,
+                                backgroundColor: amounts.map((value) => value >= goal.dailyGoal ? "rgba(16, 185, 129, 0.82)" : "rgba(249, 115, 22, 0.78)"),
+                                borderColor: amounts.map((value) => value >= goal.dailyGoal ? "#059669" : "#ea580c"),
+                                borderWidth: 1,
+                                borderRadius: 7,
+                                borderSkipped: false,
+                                maxBarThickness: 28
+                            },
+                            {
+                                label: "Meta diaria",
+                                data: labels.map(() => 100),
+                                type: "line",
+                                borderColor: "rgba(15, 23, 42, 0.72)",
+                                borderDash: [7, 6],
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                tension: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 550 },
+                        interaction: { intersect: false, mode: "index" },
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 10,
+                                    color: "#334155",
+                                    font: { family: "Manrope", weight: "800" }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: "rgba(15, 23, 42, 0.92)",
+                                padding: 12,
+                                callbacks: {
+                                    label: (context) => {
+                                        if (context.dataset.label === "Meta diaria") {
+                                            return "Meta diaria: 100%";
+                                        }
+                                        const reached = amounts[context.dataIndex] >= goal.dailyGoal;
+                                        return `Avance: ${Math.round(context.parsed.y)}% | ${reached ? "Meta alcanzada" : "Meta en proceso"}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    color: "#64748b",
+                                    maxRotation: 0,
+                                    autoSkip: true,
+                                    maxTicksLimit: window.innerWidth < 520 ? 8 : 16,
+                                    font: { family: "Manrope", weight: "800" }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                suggestedMax: 110,
+                                grid: { color: "rgba(15, 23, 42, 0.07)" },
+                                ticks: {
+                                    color: "#64748b",
+                                    callback: (value) => `${value}%`,
+                                    font: { family: "Manrope", weight: "700" }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        };
+
+        const GoalCelebration = {
+            words: [
+                "¡Meta alcanzada!",
+                "Excelente equipo",
+                "Vamos por más",
+                "Sucursal destacada",
+                "Objetivo cumplido"
+            ],
+
+            maybeRun(goal) {
+                if (!goal.todayReached) return;
+
+                const key = `public-goals-celebrated:${goal.id}`;
+                if (sessionStorage.getItem(key) === "true") return;
+                sessionStorage.setItem(key, "true");
+                this.run();
+            },
+
+            run() {
+                const layer = document.createElement("div");
+                layer.className = "celebration";
+                document.body.appendChild(layer);
+
+                const colors = ["#10b981", "#f97316", "#0f766e", "#facc15", "#38bdf8"];
+                const bursts = [
+                    { x: 24, y: 22 },
+                    { x: 72, y: 26 },
+                    { x: 48, y: 42 },
+                    { x: 82, y: 58 },
+                    { x: 18, y: 62 }
+                ];
+
+                bursts.forEach((burst, burstIndex) => {
+                    for (let i = 0; i < 24; i += 1) {
+                        const angle = (Math.PI * 2 * i) / 24;
+                        const distance = 70 + Math.random() * 80;
+                        const spark = document.createElement("span");
+                        spark.className = "spark";
+                        spark.style.left = `${burst.x}%`;
+                        spark.style.top = `${burst.y}%`;
+                        spark.style.background = colors[(i + burstIndex) % colors.length];
+                        spark.style.setProperty("--tx", `${Math.cos(angle) * distance}px`);
+                        spark.style.setProperty("--ty", `${Math.sin(angle) * distance}px`);
+                        spark.style.animationDelay = `${burstIndex * 120}ms`;
+                        layer.appendChild(spark);
+                    }
+                });
+
+                this.words.forEach((word, index) => {
+                    const floating = document.createElement("span");
+                    floating.className = "float-word";
+                    floating.textContent = word;
+                    floating.style.top = `${50 + (index % 2) * 8}%`;
+                    floating.style.setProperty("--drift", `${(index - 2) * 34}px`);
+                    floating.style.animationDelay = `${index * 360}ms`;
+                    layer.appendChild(floating);
+                });
+
+                window.setTimeout(() => layer.remove(), 5200);
+            }
+        };
+
+        const PublicGoalsPage = {
+            selectedBranchId: BRANCHES[0].id,
+            unsubscribe: null,
+            fallbackTimer: null,
+            fallbackKickoff: null,
+
+            init() {
+                BranchSelector.render(document.getElementById("branch-selector"), this.selectedBranchId);
+                document.getElementById("branch-select").addEventListener("change", (event) => {
+                    this.selectedBranchId = event.target.value;
+                    this.subscribe();
+                });
+                this.subscribe();
+            },
+
+            subscribe() {
+                if (this.unsubscribe) {
+                    this.unsubscribe();
+                    this.unsubscribe = null;
+                }
+                this.stopFallbackTimers();
+
+                this.setLiveStatus("Conectando en tiempo real", "progress");
+                this.showLoading();
+                SalesChart.destroy();
+
+                const branchRef = doc(db, "publicGoals", this.selectedBranchId);
+                this.unsubscribe = onSnapshot(branchRef, (snapshot) => {
+                    if (!snapshot.exists()) {
+                        this.loadFallback();
+                        return;
+                    }
+
+                    const goal = this.normalizeGoal(snapshot.id, snapshot.data());
+                    this.render(goal);
+                    this.setLiveStatus("Datos en vivo", goal.todayReached ? "success" : "progress");
+                    GoalCelebration.maybeRun(goal);
+                    this.loadAuthoritativeMetrics({ silent: true });
+                    this.startFallbackRefresh();
+                }, (error) => {
+                    console.error("Error escuchando publicGoals", error);
+                    this.loadFallback();
+                });
+
+                this.fallbackKickoff = window.setTimeout(() => {
+                    if (document.getElementById("dashboard").classList.contains("hidden")) {
+                        this.loadFallback();
+                    }
+                }, 1200);
+            },
+
+            async loadFallback() {
+                try {
+                    this.setLiveStatus("Buscando datos publicados", "progress");
+                    const loadedFromMetrics = await this.loadAuthoritativeMetrics({ silent: false });
+                    if (loadedFromMetrics) {
+                        this.startFallbackRefresh();
+                        return;
+                    }
+
+                    const snapshot = await getDocs(collection(db, "publicGoals"));
+                    const branch = this.findFallbackBranchFromSnapshot(snapshot);
+                    if (!branch?.data) {
+                        this.showEmpty();
+                        this.setLiveStatus("Sin datos para la sucursal", "progress");
+                        return;
+                    }
+
+                    const goal = this.normalizeGoal(this.selectedBranchId, branch.data);
+                    if (this.fallbackKickoff) {
+                        window.clearTimeout(this.fallbackKickoff);
+                        this.fallbackKickoff = null;
+                    }
+                    this.render(goal);
+                    this.setLiveStatus("Datos actualizados", goal.todayReached ? "success" : "progress");
+                    GoalCelebration.maybeRun(goal);
+                    this.startFallbackRefresh();
+                } catch (error) {
+                    console.error("Error cargando respaldo de metas", error);
+                    this.showError("No se pudieron cargar las metas publicas. Verifica que exista el documento publicado de la sucursal.");
+                    this.setLiveStatus("Conexion interrumpida", "progress");
+                }
+            },
+
+            async loadAuthoritativeMetrics({ silent = false } = {}) {
+                try {
+                    const response = await fetch(`https://us-central1-sys-pos-erp-lingroup.cloudfunctions.net/publicGoalMetrics?month=${encodeURIComponent(this.getCurrentMonth())}`, {
+                        cache: "no-store"
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const payload = await response.json();
+                    if (!payload?.ok) throw new Error(payload?.error || "metricas_invalidas");
+                    const branch = this.findFallbackBranch(Array.isArray(payload.branches) ? payload.branches : []);
+                    if (!branch) return false;
+
+                    const goal = this.normalizeFallbackGoal(branch, payload);
+                    if (this.fallbackKickoff) {
+                        window.clearTimeout(this.fallbackKickoff);
+                        this.fallbackKickoff = null;
+                    }
+                    this.render(goal);
+                    this.setLiveStatus("Ventas diarias actualizadas", goal.todayReached ? "success" : "progress");
+                    GoalCelebration.maybeRun(goal);
+                    return true;
+                } catch (error) {
+                    if (!silent) console.error("Error cargando metricas recalculadas", error);
+                    return false;
+                }
+            },
+
+            startFallbackRefresh() {
+                if (this.fallbackTimer) {
+                    window.clearInterval(this.fallbackTimer);
+                }
+                this.fallbackTimer = window.setInterval(() => this.loadAuthoritativeMetrics({ silent: true }), 30000);
+            },
+
+            stopFallbackTimers() {
+                if (this.fallbackTimer) {
+                    window.clearInterval(this.fallbackTimer);
+                    this.fallbackTimer = null;
+                }
+                if (this.fallbackKickoff) {
+                    window.clearTimeout(this.fallbackKickoff);
+                    this.fallbackKickoff = null;
+                }
+            },
+
+            getCurrentMonth() {
+                const now = new Date();
+                return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+            },
+
+            getTodayDateKey() {
+                const now = new Date();
+                const parts = new Intl.DateTimeFormat("en-CA", {
+                    timeZone: "America/Asuncion",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit"
+                }).formatToParts(now);
+                const year = parts.find((part) => part.type === "year")?.value || String(now.getFullYear());
+                const month = parts.find((part) => part.type === "month")?.value || String(now.getMonth() + 1).padStart(2, "0");
+                const day = parts.find((part) => part.type === "day")?.value || String(now.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+            },
+
+            findFallbackBranch(branches) {
+                const selected = BRANCHES.find((branch) => branch.id === this.selectedBranchId);
+                const acceptedKeys = new Set([this.selectedBranchId, ...(selected?.aliases || [])].map(normalizeText));
+                return branches.find((branch) => {
+                    const keys = [branch.id, branch.name, branch.branchName].map(normalizeText);
+                    return keys.some((key) => acceptedKeys.has(key));
+                });
+            },
+
+            findFallbackBranchFromSnapshot(snapshot) {
+                const selected = BRANCHES.find((branch) => branch.id === this.selectedBranchId);
+                const acceptedKeys = new Set([this.selectedBranchId, ...(selected?.aliases || [])].map(normalizeText));
+                let result = null;
+
+                snapshot.forEach((docSnap) => {
+                    if (result) return;
+                    const data = docSnap.data() || {};
+                    const keys = [docSnap.id, data.id, data.branchId, data.name, data.branchName].map(normalizeText);
+                    if (keys.some((key) => acceptedKeys.has(key))) {
+                        result = {
+                            id: docSnap.id,
+                            data: {
+                                ...data,
+                                branchName: data.branchName || data.name || selected?.name || "Sucursal"
+                            }
+                        };
+                    }
+                });
+
+                return result;
+            },
+
+            normalizeFallbackGoal(branch, payload) {
+                const dailyGoal = Number(payload.goalAmount || 2000000);
+                const dailySales = Array.isArray(branch.days)
+                    ? branch.days.map((item) => ({
+                        date: item.date || "",
+                        day: Number(item.day || 0),
+                        amount: Number(item.total || item.amount || 0)
+                    }))
+                    : [];
+
+                return this.buildGoalFromDailySales({
+                    id: this.selectedBranchId,
+                    branchName: branch.name || branch.branchName || BRANCHES.find((item) => item.id === this.selectedBranchId)?.name || "Sucursal",
+                    dailyGoal,
+                    dailySales,
+                    achievedDates: Array.isArray(branch.reachedDates) ? branch.reachedDates : [],
+                    updatedAt: payload.generatedAt,
+                    month: payload.month || this.getCurrentMonth()
+                });
+            },
+
+            normalizeGoal(id, data) {
+                const dailySalesByKey = new Map();
+                const putSale = (date, day, amount, prefer = false) => {
+                    const parsedDay = Number(day || String(date || "").slice(-2));
+                    if (!Number.isFinite(parsedDay) || parsedDay <= 0) return;
+                    const key = date || String(parsedDay).padStart(2, "0");
+                    const current = dailySalesByKey.get(key);
+                    if (!current || prefer) {
+                        dailySalesByKey.set(key, {
+                            date: date || "",
+                            day: parsedDay,
+                            amount: Number(amount || 0)
+                        });
+                    }
+                };
+
+                if (Array.isArray(data.dailySales)) {
+                    data.dailySales.forEach((item) => putSale(item.date || "", item.day, item.amount, false));
+                }
+
+                if (data.dailyTotals && typeof data.dailyTotals === "object") {
+                    Object.entries(data.dailyTotals).forEach(([date, amount]) => putSale(date, Number(String(date).slice(-2)), amount, true));
+                }
+
+                const dailyGoal = Number(data.dailyGoal || 2000000);
+
+                return this.buildGoalFromDailySales({
+                    id,
+                    branchName: data.branchName || BRANCHES.find((branch) => branch.id === id)?.name || "Sucursal",
+                    dailyGoal,
+                    dailySales: Array.from(dailySalesByKey.values()),
+                    achievedDates: Array.isArray(data.achievedDates) ? data.achievedDates : [],
+                    updatedAt: data.updatedAt,
+                    month: data.month || this.getCurrentMonth()
+                });
+            },
+
+            getDaysInMonth(month) {
+                const match = String(month || "").match(/^(\d{4})-(\d{2})$/);
+                if (!match) return 31;
+                return new Date(Number(match[1]), Number(match[2]), 0).getDate();
+            },
+
+            buildGoalFromDailySales({ id, branchName, dailyGoal, dailySales, achievedDates, updatedAt, month }) {
+                const daysInMonth = this.getDaysInMonth(month);
+                const salesByDay = new Map();
+
+                (dailySales || []).forEach((item) => {
+                    const day = Number(item.day || 0);
+                    if (!Number.isFinite(day) || day <= 0) return;
+                    salesByDay.set(day, {
+                        date: item.date || "",
+                        day,
+                        amount: Number(item.amount || 0)
+                    });
+                });
+
+                const filledDailySales = Array.from({ length: daysInMonth }, (_, index) => {
+                    const day = index + 1;
+                    return salesByDay.get(day) || {
+                        date: month ? month + "-" + String(day).padStart(2, "0") : "",
+                        day,
+                        amount: 0
+                    };
+                });
+
+                const monthlyTotal = filledDailySales.reduce((sum, item) => sum + item.amount, 0);
+                const reachedSales = filledDailySales.filter((item) => item.amount >= dailyGoal);
+                const computedAchievedDates = reachedSales.map((item) => item.date || String(item.day).padStart(2, "0"));
+                const bestDailySale = filledDailySales.reduce((max, item) => Math.max(max, item.amount), 0);
+                const bestProgress = dailyGoal > 0 ? clamp((bestDailySale / dailyGoal) * 100, 0, 100) : 0;
+                const todayKey = this.getTodayDateKey();
+                const todaySale = filledDailySales.find((item) => item.date === todayKey)?.amount || 0;
+                const todayProgress = dailyGoal > 0 ? clamp((todaySale / dailyGoal) * 100, 0, 100) : 0;
+
+                return {
+                    id,
+                    branchName,
+                    month,
+                    monthlyGoal: dailyGoal,
+                    dailyGoal,
+                    monthlyTotal,
+                    bestDailySale,
+                    bestProgress,
+                    todaySale,
+                    todayProgress,
+                    todayReached: todaySale >= dailyGoal,
+                    monthlyReached: reachedSales.length > 0,
+                    achievedDays: reachedSales.length,
+                    achievedDates: computedAchievedDates.length ? computedAchievedDates : achievedDates,
+                    dailySales: filledDailySales,
+                    updatedAt
+                };
+            },
+
+            render(goal) {
+                document.getElementById("app-state").classList.add("hidden");
+                document.getElementById("dashboard").classList.remove("hidden");
+                GoalSummaryCard.render(document.getElementById("summary-card"), goal);
+                DatesCard.render(document.getElementById("dates-card"), goal);
+                SalesChart.render(document.getElementById("chart-card"), goal);
+            },
+
+            showLoading() {
+                const state = document.getElementById("app-state");
+                state.className = "card state-card";
+                state.innerHTML = `
+                    <span class="loader-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                    Cargando metas públicas...
+                `;
+                document.getElementById("dashboard").classList.add("hidden");
+            },
+
+            showEmpty() {
+                const selectedBranch = BRANCHES.find((branch) => branch.id === this.selectedBranchId);
+                const state = document.getElementById("app-state");
+                state.className = "card state-card";
+                state.innerHTML = `No existen datos publicados para ${escapeHTML(selectedBranch?.name || "esta sucursal")}.`;
+                document.getElementById("dashboard").classList.add("hidden");
+            },
+
+            showError(message) {
+                const state = document.getElementById("app-state");
+                state.className = "card state-card";
+                state.textContent = message;
+                document.getElementById("dashboard").classList.add("hidden");
+            },
+
+            setLiveStatus(text, tone) {
+                const status = document.getElementById("live-status");
+                if (!status) return;
+                status.textContent = text;
+                status.className = `pill ${tone === "success" ? "pill-success" : "pill-progress"}`;
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => PublicGoalsPage.init());
+    </script>
+</body>
+</html>

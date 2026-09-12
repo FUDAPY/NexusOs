@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee POS ERP - Reportes Financieros</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <script src="print_utils.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+    <script src="cierre_caja_normalizer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800 opacity-0 transition-opacity duration-500" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-50 flex items-center p-4 mb-4 text-white rounded-lg shadow-xl bg-slate-800">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20"><i id="toast-icon" class="fa-solid fa-bell text-blue-400"></i></div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3"><div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden"><img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-mug-hot text-orange-500\'></i>'"></div><h1 class="text-xl font-bold tracking-wide">POS CATE</h1></div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide">
+            <a href="dashboard.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-house text-lg w-6"></i><span>Panel Principal</span></a>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Administracion</p>
+            <a href="sucursales.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-store text-lg w-6"></i><span>Sucursales</span></a>
+            
+            <a href="stock.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-warehouse text-lg w-6"></i><span>Stock</span>
+            </a>
+            <a href="usuarios.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-user-shield text-lg w-6"></i><span>Personal</span></a>
+            <a href="produccion.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-burger text-lg w-6"></i><span>Produccion</span></a>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Operaciones</p>
+            <a href="clientes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-gem text-lg w-6"></i><span>Clientes CRM</span></a>
+            <a href="kds.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-fire-burner text-lg w-6"></i><span>Monitor Cocina</span></a>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Finanzas</p>
+            <a href="caja.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-vault text-lg w-6"></i><span>Arqueo de Caja</span></a>
+            <button class="w-full flex items-center gap-4 bg-orange-500 text-white p-3 rounded-xl font-semibold shadow-md transition"><i class="fa-solid fa-chart-line text-lg w-6"></i><span>Reportes</span></button>
+            <a href="monitor_problemas.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-triangle-exclamation text-lg w-6"></i><span>Monitor Problemas</span></a>
+        </nav>
+        <div class="p-4 border-t border-slate-800 flex justify-between items-center bg-slate-950">
+            <div class="leading-tight">
+                <p class="text-sm font-bold text-white" id="user-name">Cargando...</p>
+                <p class="text-xs text-slate-400" id="user-role">...</p>
+            </div>
+            <button onclick="ReportesModule.cerrarSesion()" class="text-red-400 hover:text-red-300 transition p-2 rounded-lg hover:bg-slate-800" title="Cerrar sesión" aria-label="Cerrar sesión">
+                <i class="fa-solid fa-power-off text-xl"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="bg-white p-4 shadow-sm border-b border-slate-200 z-10 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3"><div class="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 p-1.5 shadow-sm overflow-hidden flex items-center justify-center"><img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-chart-line text-orange-500\'></i>'"></div><div><h2 class="text-2xl font-bold text-slate-800">Analisis Financiero</h2><p class="text-slate-500 text-sm">Prioriza cierres de caja guardados; usa ventas directas solo donde no exista cierre.</p><p id="fuente-financiera" class="text-[11px] font-black uppercase tracking-wider text-amber-600 mt-1">Fuente: verificando cierres...</p></div></div>
+                <div class="flex gap-3">
+                    <button onclick="ReportesModule.cargarDatos()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 border border-slate-300"><i class="fa-solid fa-rotate"></i> Actualizar</button>
+                    <button onclick="ReportesModule.abrirModalCierreCaja()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2"><i class="fa-solid fa-receipt"></i> Reimprimir Cierre</button>
+                    <button onclick="ReportesModule.abrirModalExtracto()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2"><i class="fa-solid fa-file-pdf"></i> Extracto Mensual</button>
+                    <button onclick="ReportesModule.imprimirReporte()" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2"><i class="fa-solid fa-print"></i> Imprimir</button>
+                </div>
+            </div>
+
+            <!-- FILTROS -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">Periodo</label>
+                    <select id="selector-periodo" onchange="ReportesModule.aplicarFiltros()" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                        <option value="hoy">Hoy</option>
+                        <option value="ayer">Ayer</option>
+                        <option value="semana">Esta Semana</option>
+                        <option value="mes" selected>Este Mes</option>
+                        <option value="personalizado">Personalizado</option>
+                    </select>
+                </div>
+                
+                <div id="div-fecha-inicio" class="hidden">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Fecha Inicio</label>
+                    <input type="date" id="fecha-inicio" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                </div>
+                
+                <div id="div-fecha-fin" class="hidden">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Fecha Fin</label>
+                    <input type="date" id="fecha-fin" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">Sucursal</label>
+                    <select id="selector-sucursal" onchange="ReportesModule.aplicarFiltros()" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">&nbsp;</label>
+                    <button onclick="ReportesModule.aplicarFiltros()" class="w-full mt-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg font-bold transition"><i class="fa-solid fa-filter"></i> Filtrar</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 bg-slate-50 relative">
+            <div id="loading-spinner" class="absolute inset-0 bg-slate-50/90 z-20 hidden flex-col justify-center items-center backdrop-blur-sm"><i class="fa-solid fa-chart-line fa-bounce text-5xl text-orange-500 mb-4"></i><p class="font-black text-xl text-slate-700">Analizando Datos Financieros...</p></div>
+
+            <!-- KPIs -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center gap-3 border-l-4 border-l-blue-500 hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <div><p class="text-slate-500 text-xs font-bold uppercase tracking-wide">Facturacion</p><p class="text-2xl font-black text-slate-800" id="kpi-total">Gs. 0</p></div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center gap-3 border-l-4 border-l-orange-500 hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-receipt"></i></div>
+                    <div><p class="text-slate-500 text-xs font-bold uppercase tracking-wide">Tickets</p><p class="text-2xl font-black text-slate-800" id="kpi-tickets">0</p></div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center gap-3 border-l-4 border-l-green-500 hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                    <div><p class="text-slate-500 text-xs font-bold uppercase tracking-wide">Promedio</p><p class="text-2xl font-black text-slate-800" id="kpi-promedio">Gs. 0</p></div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center gap-3 border-l-4 border-l-purple-500 hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div><p class="text-slate-500 text-xs font-bold uppercase tracking-wide">Descuentos</p><p class="text-2xl font-black text-slate-800" id="kpi-descuentos">Gs. 0</p></div>
+                </div>
+            </div>
+
+            <section class="mb-4 border-y border-slate-200 bg-white py-5">
+                <div class="flex flex-col gap-2 px-4 mb-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h3 class="font-black text-slate-800"><i class="fa-solid fa-scale-balanced text-amber-500 mr-2"></i>Auditoría de cierres POS</h3>
+                        <p class="text-xs text-slate-500 mt-1">Datos normalizados desde cierresCaja. Positivo significa sobrante; negativo significa faltante.</p>
+                    </div>
+                    <p id="auditoria-cierres-estado" class="text-[11px] font-black uppercase tracking-wider text-slate-500">Sin cierres en el filtro</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 px-4">
+                    <div class="border-l-4 border-emerald-500 bg-emerald-50 p-3"><p class="text-[10px] font-black uppercase text-emerald-700">Efectivo POS</p><p id="audit-efectivo-pos" class="text-lg font-black text-emerald-800">Gs. 0</p></div>
+                    <div class="border-l-4 border-green-600 bg-green-50 p-3"><p class="text-[10px] font-black uppercase text-green-700">Efectivo declarado</p><p id="audit-efectivo-declarado" class="text-lg font-black text-green-800">Gs. 0</p></div>
+                    <div class="border-l-4 border-blue-500 bg-blue-50 p-3"><p class="text-[10px] font-black uppercase text-blue-700">POS / Tarjeta</p><p id="audit-tarjeta" class="text-lg font-black text-blue-800">Gs. 0</p></div>
+                    <div class="border-l-4 border-purple-500 bg-purple-50 p-3"><p class="text-[10px] font-black uppercase text-purple-700">Transferencias</p><p id="audit-transferencia" class="text-lg font-black text-purple-800">Gs. 0</p></div>
+                    <div class="border-l-4 border-amber-500 bg-amber-50 p-3"><p class="text-[10px] font-black uppercase text-amber-700">Créditos</p><p id="audit-credito" class="text-lg font-black text-amber-800">Gs. 0</p></div>
+                    <div class="border-l-4 border-red-400 bg-red-50 p-3"><p class="text-[10px] font-black uppercase text-red-700">Gastos cierre</p><p id="audit-gastos" class="text-lg font-black text-red-800">Gs. 0</p></div>
+                    <div class="border-l-4 border-teal-500 bg-teal-50 p-3"><p class="text-[10px] font-black uppercase text-teal-700">Sobrantes</p><p id="audit-sobrante" class="text-lg font-black text-teal-800">Gs. 0</p></div>
+                    <div class="border-l-4 border-rose-600 bg-rose-50 p-3"><p class="text-[10px] font-black uppercase text-rose-700">Faltantes</p><p id="audit-faltante" class="text-lg font-black text-rose-800">Gs. 0</p></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 px-4 mt-4">
+                    <div class="bg-slate-50 border border-slate-200 p-4 text-xs text-slate-600 leading-relaxed">
+                        <p><b>Resultado POS:</b> Efectivo POS + sobrantes - faltantes - gastos del Sistema Financiero.</p>
+                        <p><b>Resultado Financiero:</b> Efectivo Financiero + sobrantes - faltantes - POS/Tarjeta - transferencias - gastos financieros.</p>
+                        <p><b>Comparativa:</b> Resultado Financiero - Resultado POS.</p>
+                        <p class="mt-2 text-slate-500">El Sistema Financiero debe aportar sus propios valores de efectivo y gastos; este panel entrega automáticamente los componentes auditados del POS.</p>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 p-4">
+                        <p class="text-[10px] font-black uppercase text-slate-500">Diferencia neta de efectivo</p>
+                        <p id="audit-diferencia" class="text-2xl font-black text-slate-800 mt-1">Gs. 0</p>
+                        <div class="relative h-28 mt-2"><canvas id="chartDiferenciasCaja"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GRAFICOS PRINCIPALES -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                    <h3 class="font-bold text-slate-700 mb-3"><i class="fa-solid fa-store mr-2 text-orange-500"></i>Facturacion por Sucursal</h3>
+                    <div class="relative h-64"><canvas id="chartSucursales"></canvas></div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                    <h3 class="font-bold text-slate-700 mb-3"><i class="fa-solid fa-clock mr-2 text-blue-500"></i>Ventas por Hora</h3>
+                    <div class="relative h-64"><canvas id="chartVentasHora"></canvas></div>
+                </div>
+            </div>
+
+            <!-- FILA 2 DE GRAFICOS -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                    <h3 class="font-bold text-slate-700 mb-3"><i class="fa-solid fa-credit-card mr-2 text-green-500"></i>Medios de Pago</h3>
+                    <div class="relative h-64 flex justify-center"><canvas id="chartPagos"></canvas></div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                    <h3 class="font-bold text-slate-700 mb-3"><i class="fa-solid fa-user mr-2 text-red-500"></i>Top Cajeros/Vendedores</h3>
+                    <div class="relative h-64"><canvas id="chartCajeros"></canvas></div>
+                </div>
+            </div>
+
+            <!-- TOP 10 PRODUCTOS -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-4">
+                <h3 class="font-bold text-slate-700 mb-3"><i class="fa-solid fa-award mr-2 text-yellow-500"></i>Top 10 Productos Vendidos</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="text-left px-4 py-2 font-bold text-slate-600">#</th>
+                                <th class="text-left px-4 py-2 font-bold text-slate-600">Producto</th>
+                                <th class="text-center px-4 py-2 font-bold text-slate-600">Cantidad</th>
+                                <th class="text-right px-4 py-2 font-bold text-slate-600">Ingresos</th>
+                                <th class="text-right px-4 py-2 font-bold text-slate-600">% Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-top-productos">
+                            <tr><td colspan="5" class="text-center py-4 text-slate-400">Cargando datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL EXTRACTO MENSUAL -->
+    <div id="modal-extracto-mensual" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white">
+                <h2 class="text-2xl font-bold text-slate-800">Extracto Mensual</h2>
+                <button onclick="ReportesModule.cerrarModalExtracto()" class="text-slate-400 hover:text-slate-600 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Mes</label>
+                        <input type="month" id="input-mes-extracto" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Sucursal</label>
+                        <select id="select-sucursal-extracto" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                            <option value="">Todas las Sucursales</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="ReportesModule.generarExtractoMensual()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-pdf"></i> Generar PDF
+                    </button>
+                    <button onclick="ReportesModule.imprimirExtractoMensual()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-print"></i> Imprimir
+                    </button>
+                </div>
+
+                <div id="extracto-preview" class="mt-6 p-6 bg-slate-50 rounded-xl border border-slate-200" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Se llenara al hacer clic en Generar -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cierre-caja" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Reimprimir Cierre de Caja</h2>
+                    <p class="text-sm text-slate-500 mt-1">Elegi la fecha de apertura u operacion y la sucursal para recuperar el cierre guardado del cajero.</p>
+                </div>
+                <button onclick="ReportesModule.cerrarModalCierreCaja()" class="text-slate-400 hover:text-slate-600 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-[380px,1fr] gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Fecha de Apertura / Operacion</label>
+                        <input type="date" id="input-fecha-cierre" onchange="ReportesModule.cargarCierreCajaGuardado()" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Sucursal</label>
+                        <select id="select-sucursal-cierre" onchange="ReportesModule.cargarCierreCajaGuardado()" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-amber-500 outline-none">
+                            <option value="">Todas las Sucursales</option>
+                        </select>
+                    </div>
+                    <div id="estado-cierre-guardado" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"></div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Fondo Inicial</label>
+                        <input type="text" id="input-cierre-fondo" oninput="ReportesModule.formatearMontoCierre(this)" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-black text-right focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Efectivo Declarado</label>
+                        <input type="text" id="input-cierre-dec-efectivo" oninput="ReportesModule.formatearMontoCierre(this)" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-black text-right focus:ring-2 focus:ring-green-500 outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">POS Declarado</label>
+                        <input type="text" id="input-cierre-dec-tarjeta" oninput="ReportesModule.formatearMontoCierre(this)" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-black text-right focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Transferencia Declarada</label>
+                        <input type="text" id="input-cierre-dec-transferencia" oninput="ReportesModule.formatearMontoCierre(this)" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-black text-right focus:ring-2 focus:ring-purple-500 outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Gastos Extraidos</label>
+                        <input type="text" id="input-cierre-dec-gastos" oninput="ReportesModule.formatearMontoCierre(this)" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-black text-right focus:ring-2 focus:ring-red-500 outline-none" placeholder="0">
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="ReportesModule.generarTicketCierreHistorico()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-eye"></i> Generar Ticket
+                        </button>
+                        <button onclick="ReportesModule.imprimirCierreHistorico()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white px-4 py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-print"></i> Imprimir
+                        </button>
+                    </div>
+                </div>
+
+                <div id="preview-cierre-caja" class="bg-slate-100 border border-slate-200 rounded-2xl p-6 min-h-[420px] overflow-y-auto flex items-start justify-center">
+                    <div class="text-center text-slate-400 font-bold mt-20">Genera un ticket para ver la vista previa.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const __app_id = "erp_lingroup"; const __initial_auth_token = "admin_master_001"; 
+        const firebaseConfig = { apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg", authDomain: "sys-pos-erp-lingroup.firebaseapp.com", projectId: "sys-pos-erp-lingroup", storageBucket: "sys-pos-erp-lingroup.firebasestorage.app" };
+        const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
+        const normalizarMetodoPago = (valor) => String(valor || '')
+            .replaceAll('ÃƒÂ¡', 'a')
+            .replaceAll('ÃƒÂ©', 'e')
+            .replaceAll('ÃƒÂ­', 'i')
+            .replaceAll('ÃƒÂ³', 'o')
+            .replaceAll('ÃƒÂº', 'u')
+            .replaceAll('ÃƒÂ±', 'n')
+            .replaceAll('ÃƒÂ', 'a')
+            .replaceAll('Ãƒâ€°', 'e')
+            .replaceAll('ÃƒÂ', 'i')
+            .replaceAll('Ãƒâ€œ', 'o')
+            .replaceAll('ÃƒÅ¡', 'u')
+            .replaceAll('Ãƒâ€˜', 'n')
+            .replaceAll('Ã‚', '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase();
+        const esMetodoCredito = (valor) => normalizarMetodoPago(valor) === 'credito';
+
+        window.ReportesModule = {
+            graficoSucursales: null, graficoPagos: null, graficoVentasHora: null, graficoCajeros: null, graficoDiferenciasCaja: null,
+            ventasFiltradasCache: [],
+            sucursalesDisponibles: [],
+            htmlCierreCajaMemoria: "",
+            cierreCajaSeleccionado: null,
+
+            init: function() {
+                const sesionStr = localStorage.getItem('__pos_session');
+                if(!sesionStr) return window.location.replace('index.html');
+                const sesion = JSON.parse(sesionStr);
+                if(sesion.rol !== 'admin') { window.location.replace('index.html'); return; }
+                document.getElementById('user-name').innerText = sesion.nombre || 'Administrador';
+                document.getElementById('user-role').innerText = `Rol: ${(sesion.rol || 'admin').toUpperCase()}`;
+                
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        document.getElementById('app-body').classList.remove('opacity-0');
+                        Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+                        Chart.defaults.color = '#64748b';
+                        this.cargarSucursales();
+                        this.cargarDatos();
+                    } else { window.location.replace('index.html'); }
+                });
+            },
+
+            cargarSucursales: async function() {
+                try {
+                    this.sucursalesDisponibles = typeof CierreCajaNormalizer.obtenerSucursalesAuditadas === 'function'
+                        ? CierreCajaNormalizer.obtenerSucursalesAuditadas()
+                        : [
+                            { id: 'cafeteria_chicolin', nombre: 'Cafetería Chicolín' },
+                            { id: 'mr_lin_restaurante', nombre: 'San Benito' }
+                        ];
+                    this.renderSelectoresSucursales();
+                    const snapSucursales = await getDocs(collection(db, "branches"));
+                    snapSucursales.forEach(doc => {
+                        const nombre = doc.data().nombre || doc.data().branchName || doc.id;
+                        const normalizada = CierreCajaNormalizer.normalizarSucursal(nombre);
+                        if (normalizada.id && !this.sucursalesDisponibles.some(item => item.id === normalizada.id)) {
+                            this.sucursalesDisponibles.push({ id: normalizada.id, nombre: normalizada.nombre });
+                        }
+                    });
+                    
+                    this.renderSelectoresSucursales();
+                } catch(e) { console.error('Error cargando sucursales:', e); }
+            },
+
+            renderSelectoresSucursales: function() {
+                const unicas = Array.from(new Map(this.sucursalesDisponibles.map(s => [s.id, s])).values())
+                    .filter(s => s.id)
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+                this.sucursalesDisponibles = unicas;
+                const select1 = document.getElementById('selector-sucursal');
+                const select2 = document.getElementById('select-sucursal-extracto');
+                const select3 = document.getElementById('select-sucursal-cierre');
+                const html = unicas.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+                if (select1) select1.innerHTML = '<option value="">Todas</option>' + html;
+                if (select2) select2.innerHTML = '<option value="">Todas las Sucursales</option>' + html;
+                if (select3) select3.innerHTML = '<option value="">Todas las Sucursales</option>' + html;
+            },
+
+            aplicarFiltros: function() {
+                const periodo = document.getElementById('selector-periodo').value;
+                const divInicio = document.getElementById('div-fecha-inicio');
+                const divFin = document.getElementById('div-fecha-fin');
+                const inputInicio = document.getElementById('fecha-inicio');
+                const inputFin = document.getElementById('fecha-fin');
+
+                // Mostrar/ocultar inputs de fecha personalizada
+                if(periodo === 'personalizado') {
+                    divInicio.classList.remove('hidden');
+                    divFin.classList.remove('hidden');
+                } else {
+                    divInicio.classList.add('hidden');
+                    divFin.classList.add('hidden');
+                }
+
+                this.cargarDatos();
+            },
+
+            getRangoFechas: function() {
+                const periodo = document.getElementById('selector-periodo').value;
+                const hoy = new Date();
+                let inicio, fin;
+
+                switch(periodo) {
+                    case 'hoy':
+                        inicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+                        fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
+                        break;
+                    case 'ayer':
+                        inicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
+                        fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+                        break;
+                    case 'semana':
+                        const primerDiaSemana = new Date(hoy);
+                        primerDiaSemana.setDate(hoy.getDate() - hoy.getDay());
+                        inicio = primerDiaSemana;
+                        fin = new Date();
+                        break;
+                    case 'mes':
+                        inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                        fin = new Date();
+                        break;
+                    case 'personalizado':
+                        const strInicio = document.getElementById('fecha-inicio').value;
+                        const strFin = document.getElementById('fecha-fin').value;
+                        if(!strInicio || !strFin) {
+                            this.mostrarToast('Selecciona ambas fechas', 'error');
+                            return null;
+                        }
+                        inicio = new Date(strInicio);
+                        fin = new Date(strFin);
+                        fin.setDate(fin.getDate() + 1);
+                        break;
+                }
+                return { inicio, fin };
+            },
+
+            mostrarToast: function(mensaje, tipo = 'info') {
+                const toast = document.getElementById('toast'); document.getElementById('toast-message').innerText = mensaje;
+                if(tipo === 'success') document.getElementById('toast-icon').className = 'fa-solid fa-check text-green-400';
+                else document.getElementById('toast-icon').className = 'fa-solid fa-triangle-exclamation text-white';
+                toast.classList.remove('translate-x-full'); setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+            },
+            
+            formatoMoneda: (num) => num.toLocaleString('es-PY'),
+            limpiarMoneda: (txt) => parseInt(String(txt).replace(/\D/g, '')) || 0,
+            normalizarFecha: function(valor) {
+                if (!valor) return null;
+                if (typeof valor?.toDate === 'function') return valor.toDate();
+                const fecha = new Date(valor);
+                return Number.isNaN(fecha.getTime()) ? null : fecha;
+            },
+            esVentaReportable: function(venta) {
+                if (!venta) return false;
+                if (venta.tipoTransaccion === 'abono_deuda') return false;
+                if (venta.tipoTransaccion === 'producto_gratis' || venta.noAfectaCaja === true || venta.metodoPago === 'Gratis') return false;
+                if (venta.estadoPago !== 'pagado') return false;
+                return true;
+            },
+            obtenerDistribucionPago: function(venta) {
+                const monto = Number(venta?.total || 0);
+                const metodo = String(venta?.metodoPago || '');
+                if (metodo === 'Mixto' && venta?.detallesPago) {
+                    return {
+                        efectivo: Number(venta.detallesPago.efectivo || 0),
+                        tarjeta: Number(venta.detallesPago.tarjeta || 0),
+                        transferencia: Number(venta.detallesPago.transferencia || 0),
+                        credito: 0
+                    };
+                }
+                if (metodo === 'Efectivo') return { efectivo: monto, tarjeta: 0, transferencia: 0, credito: 0 };
+                if (metodo === 'Tarjeta') return { efectivo: 0, tarjeta: monto, transferencia: 0, credito: 0 };
+                if (metodo === 'Transferencia') return { efectivo: 0, tarjeta: 0, transferencia: monto, credito: 0 };
+                if (esMetodoCredito(metodo)) return { efectivo: 0, tarjeta: 0, transferencia: 0, credito: monto };
+                return { efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0 };
+            },
+            obtenerFechaTurnoVenta: function(venta) {
+                const fechaTurno = this.normalizarFecha(venta?.fechaAperturaTurno);
+                if (fechaTurno && fechaTurno.getTime() > 0) return fechaTurno;
+                return this.normalizarFecha(venta?.fecha);
+            },
+            formatearMontoCierre: function(input) {
+                const valor = this.limpiarMoneda(input.value);
+                input.value = valor === 0 ? '' : this.formatoMoneda(valor);
+            },
+            mismaFecha: function(fechaA, fechaB) {
+                return fechaA && fechaB &&
+                    fechaA.getFullYear() === fechaB.getFullYear() &&
+                    fechaA.getMonth() === fechaB.getMonth() &&
+                    fechaA.getDate() === fechaB.getDate();
+            },
+            obtenerFechaKey: function(valor) {
+                const fecha = valor instanceof Date ? valor : new Date(valor);
+                if (Number.isNaN(fecha.getTime())) return '';
+                const yyyy = fecha.getFullYear();
+                const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+                const dd = String(fecha.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            },
+            fechaKeyEnRango: function(fechaKey, inicio, fin) {
+                if (!fechaKey) return false;
+                const fecha = new Date(`${fechaKey}T00:00:00`);
+                return !Number.isNaN(fecha.getTime()) && fecha >= inicio && fecha < fin;
+            },
+            obtenerClavesFechaCierre: function(cierre = {}, normalizado = null) {
+                return Array.from(new Set([
+                    normalizado?.fecha,
+                    cierre.fechaOperacionKey,
+                    cierre.fechaCierreKey,
+                    this.obtenerFechaKey(cierre.fechaCierre),
+                    this.obtenerFechaKey(cierre.creadoEn)
+                ].filter(Boolean)));
+            },
+            crearAnalisisFinancieroVacio: function() {
+                const datosPorHora = {};
+                for (let i = 0; i < 24; i++) datosPorHora[i] = 0;
+                return {
+                    totalIngresos: 0,
+                    totalTickets: 0,
+                    totalDescuentos: 0,
+                    datosPorSucursal: {},
+                    datosPorPago: {},
+                    datosPorHora,
+                    datosPorCajero: {},
+                    datosPorProducto: {},
+                    ventasFallback: [],
+                    cierresUsados: [],
+                    cierresNormalizados: [],
+                    diasConCierre: new Set(),
+                    diasDesdeSales: new Set()
+                };
+            },
+            sumarEnMapa: function(mapa, clave, monto) {
+                const key = clave || 'Sin clasificar';
+                mapa[key] = (mapa[key] || 0) + Number(monto || 0);
+            },
+            agregarProductoAnalisis: function(analisis, nombre, cantidad, ingresos) {
+                const prodName = nombre || 'Producto';
+                if (!analisis.datosPorProducto[prodName]) analisis.datosPorProducto[prodName] = { cant: 0, ingresos: 0 };
+                analisis.datosPorProducto[prodName].cant += Number(cantidad || 0);
+                analisis.datosPorProducto[prodName].ingresos += Number(ingresos || 0);
+            },
+            obtenerCanalVendedor: function(origen = {}) {
+                const texto = `${origen.origenPedido || ''} ${origen.tipoTransaccion || ''} ${origen.cajero || ''} ${origen.cajeroCobro || ''}`.toLowerCase();
+                if (texto.includes('app_cliente') || texto.includes('app delivery') || texto.includes('auto (app cliente)')) return 'App Club Lin';
+                return origen.cajero || origen.cajeroCobro || origen.creadoPorNombre || 'Desconocido';
+            },
+            agregarVendedorDesdeVenta: function(analisis, venta) {
+                const vendedor = this.obtenerCanalVendedor(venta);
+                const monto = Number(venta?.total || 0);
+                if (!analisis.datosPorCajero[vendedor]) analisis.datosPorCajero[vendedor] = { tickets: 0, ingresos: 0 };
+                analisis.datosPorCajero[vendedor].tickets++;
+                analisis.datosPorCajero[vendedor].ingresos += monto;
+            },
+            agregarVentaAAnalisis: function(analisis, venta, docId = null) {
+                const fechaOperacion = this.obtenerFechaTurnoVenta(venta) || this.normalizarFecha(venta.fecha);
+                const fechaVenta = this.normalizarFecha(venta.fecha) || fechaOperacion || new Date();
+                const sucursal = CierreCajaNormalizer.normalizarSucursal(venta.sucursal).nombre || "Desconocida";
+                const monto = Number(venta.total || 0);
+                const hora = fechaVenta.getHours();
+
+                analisis.ventasFallback.push({ ...venta, docId });
+                analisis.totalIngresos += monto;
+                analisis.totalTickets++;
+                this.sumarEnMapa(analisis.datosPorSucursal, sucursal, monto);
+                analisis.datosPorHora[hora] = (analisis.datosPorHora[hora] || 0) + monto;
+
+                const pago = this.obtenerDistribucionPago(venta);
+                if (pago.efectivo > 0) this.sumarEnMapa(analisis.datosPorPago, 'Efectivo', pago.efectivo);
+                if (pago.tarjeta > 0) this.sumarEnMapa(analisis.datosPorPago, 'Tarjeta', pago.tarjeta);
+                if (pago.transferencia > 0) this.sumarEnMapa(analisis.datosPorPago, 'Transferencia', pago.transferencia);
+                if (pago.credito > 0) this.sumarEnMapa(analisis.datosPorPago, 'Credito', pago.credito);
+
+                if (Array.isArray(venta.items)) {
+                    venta.items.forEach(item => {
+                        const cantidad = Number(item.cantidad || 1);
+                        const precioBase = Number(item.precio || 0) * cantidad;
+                        const descuentoProdMonto = precioBase * ((Number(item.descuento || 0)) / 100);
+                        const postProd = precioBase - descuentoProdMonto;
+                        const descuentoVipMonto = postProd * ((Number(item.descuentoVip || 0)) / 100);
+                        const descuentoBogoMonto = Number(item.descuentoBogo || 0);
+                        const totalItem = Math.max(postProd - descuentoVipMonto - descuentoBogoMonto, 0);
+                        analisis.totalDescuentos += descuentoProdMonto + descuentoVipMonto + descuentoBogoMonto;
+                        this.agregarProductoAnalisis(analisis, item.nombre, cantidad, totalItem);
+                    });
+                }
+            },
+            agregarCierreAAnalisis: function(analisis, cierre, normalizado = null) {
+                const cierreNormalizado = normalizado || CierreCajaNormalizer.normalizarCierreCaja(cierre, cierre.id);
+                if (!cierreNormalizado) return;
+                const productos = cierre.productosVendidos || {};
+                const sucursal = cierreNormalizado.sucursal;
+                const fechaCierre = this.normalizarFecha(cierre.fechaCierre) || this.normalizarFecha(cierre.creadoEn) || new Date();
+                const hora = fechaCierre.getHours();
+                const efectivo = cierreNormalizado.efectivoPos;
+                const tarjeta = cierreNormalizado.posTarjeta;
+                const transferencia = cierreNormalizado.transferencia;
+                const credito = cierreNormalizado.credito;
+                const totalCierre = efectivo + tarjeta + transferencia + credito;
+                const tickets = cierreNormalizado.ticketsContados;
+
+                analisis.cierresUsados.push(cierre);
+                analisis.cierresNormalizados.push(cierreNormalizado);
+                analisis.totalIngresos += totalCierre;
+                analisis.totalTickets += tickets;
+                this.sumarEnMapa(analisis.datosPorSucursal, sucursal, totalCierre);
+                if (efectivo > 0) this.sumarEnMapa(analisis.datosPorPago, 'Efectivo', efectivo);
+                if (tarjeta > 0) this.sumarEnMapa(analisis.datosPorPago, 'Tarjeta', tarjeta);
+                if (transferencia > 0) this.sumarEnMapa(analisis.datosPorPago, 'Transferencia', transferencia);
+                if (credito > 0) this.sumarEnMapa(analisis.datosPorPago, 'Credito', credito);
+                analisis.datosPorHora[hora] = (analisis.datosPorHora[hora] || 0) + totalCierre;
+
+                Object.entries(productos).forEach(([nombre, data]) => {
+                    this.agregarProductoAnalisis(analisis, nombre, Number(data?.cant || 0), Number(data?.total || 0));
+                });
+            },
+            cargarFuenteFinanciera: async function(rangos, sucursalFiltro = '') {
+                const analisis = this.crearAnalisisFinancieroVacio();
+                const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                const inicioConsultaVentas = new Date(rangos.inicio);
+                inicioConsultaVentas.setDate(inicioConsultaVentas.getDate() - 1);
+                const finConsultaVentas = new Date(rangos.fin);
+                finConsultaVentas.setDate(finConsultaVentas.getDate() + 1);
+                const inicioConsultaCierres = new Date(rangos.inicio);
+                inicioConsultaCierres.setDate(inicioConsultaCierres.getDate() - 2);
+                const finConsultaCierres = new Date(rangos.fin);
+                finConsultaCierres.setDate(finConsultaCierres.getDate() + 2);
+                const [cierreSnap, ventasSnap] = await Promise.all([
+                    getDocs(query(
+                        collection(db, 'cierresCaja'),
+                        where('fechaCierre', '>=', inicioConsultaCierres),
+                        where('fechaCierre', '<', finConsultaCierres),
+                        orderBy('fechaCierre', 'desc')
+                    )),
+                    getDocs(query(
+                        collection(db, rutaPrivada),
+                        where('fecha', '>=', inicioConsultaVentas),
+                        where('fecha', '<', finConsultaVentas),
+                        orderBy('fecha', 'desc')
+                    ))
+                ]);
+                const ventas = ventasSnap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                const ventasPorId = new Map(ventas.map(venta => [venta.id, venta]));
+                const cierres = cierreSnap.docs.map(docSnap => {
+                    const cierre = { id: docSnap.id, ...docSnap.data() };
+                    const ids = Array.isArray(cierre.ticketsTurnoIds) ? cierre.ticketsTurnoIds : (Array.isArray(cierre.ticketsIds) ? cierre.ticketsIds : []);
+                    const creditoCalculadoDesdeVentas = ids.reduce((total, ventaId) => {
+                        const venta = ventasPorId.get(ventaId);
+                        return total + (venta && esMetodoCredito(venta.metodoPago) ? Number(venta.total || 0) : 0);
+                    }, 0);
+                    return { ...cierre, creditoCalculadoDesdeVentas };
+                });
+                const cierresPorId = new Map(cierres.map(cierre => [cierre.id, cierre]));
+                const sucursalFiltroId = CierreCajaNormalizer.normalizarSucursal(sucursalFiltro).id;
+                const cierresAplicables = CierreCajaNormalizer.deduplicarCierres(cierres).filter(cierre => {
+                    if (sucursalFiltroId && cierre.sucursalId !== sucursalFiltroId) return false;
+                    return this.obtenerClavesFechaCierre(cierresPorId.get(cierre.cierreId) || cierre, cierre)
+                        .some(fechaKey => this.fechaKeyEnRango(fechaKey, rangos.inicio, rangos.fin));
+                });
+                cierresAplicables.forEach(cierreNormalizado => {
+                    const cierreOriginal = cierresPorId.get(cierreNormalizado.cierreId) || cierreNormalizado;
+                    this.obtenerClavesFechaCierre(cierreOriginal, cierreNormalizado)
+                        .forEach(fechaKey => analisis.diasConCierre.add(`${fechaKey}::${cierreNormalizado.sucursalId}`));
+                    this.agregarCierreAAnalisis(analisis, cierreOriginal, cierreNormalizado);
+                });
+
+                ventas.forEach((venta) => {
+                    if (!this.esVentaReportable(venta)) return;
+                    const fechaOperacion = this.obtenerFechaTurnoVenta(venta) || this.normalizarFecha(venta.fecha);
+                    if (!fechaOperacion || fechaOperacion < rangos.inicio || fechaOperacion >= rangos.fin) return;
+                    const sucursalNormalizada = CierreCajaNormalizer.normalizarSucursal(venta.sucursal);
+                    if (!sucursalNormalizada.id) return;
+                    if (sucursalFiltroId && sucursalNormalizada.id !== sucursalFiltroId) return;
+                    this.agregarVendedorDesdeVenta(analisis, venta);
+                    const fechaKey = this.obtenerFechaKey(fechaOperacion);
+                    const claveCierre = `${fechaKey}::${sucursalNormalizada.id}`;
+                    if (analisis.diasConCierre.has(claveCierre)) return;
+                    analisis.diasDesdeSales.add(claveCierre);
+                    this.agregarVentaAAnalisis(analisis, venta, venta.id);
+                });
+                console.info('Auditoría financiera POS', {
+                    cierresLeidos: cierres.length,
+                    cierresAplicados: analisis.cierresNormalizados.length,
+                    diasReconstruidosDesdeVentas: analisis.diasDesdeSales.size,
+                    sucursal: sucursalFiltroId || 'todas'
+                });
+                return analisis;
+            },
+             
+            cargarDatos: async function() {
+                const spinner = document.getElementById('loading-spinner'); spinner.classList.remove('hidden'); spinner.classList.add('flex');
+                try {
+                    const rangos = this.getRangoFechas();
+                    if(!rangos) { spinner.classList.add('hidden'); spinner.classList.remove('flex'); return; }
+                     
+                    const sucursalFiltro = document.getElementById('selector-sucursal').value;
+                    const analisis = await this.cargarFuenteFinanciera(rangos, sucursalFiltro);
+                    this.ventasFiltradasCache = analisis.ventasFallback;
+
+                    let ticketPromedio = analisis.totalTickets > 0 ? (analisis.totalIngresos / analisis.totalTickets) : 0;
+                    document.getElementById('kpi-total').innerText = `Gs. ${this.formatoMoneda(Math.round(analisis.totalIngresos))}`;
+                    document.getElementById('kpi-tickets').innerText = analisis.totalTickets.toLocaleString('es-PY');
+                    document.getElementById('kpi-promedio').innerText = `Gs. ${this.formatoMoneda(Math.round(ticketPromedio))}`;
+                    document.getElementById('kpi-descuentos').innerText = `Gs. ${this.formatoMoneda(Math.round(analisis.totalDescuentos))}`;
+                    this.renderAuditoriaCierres(analisis.cierresNormalizados);
+                    const fuenteEl = document.getElementById('fuente-financiera');
+                    if (fuenteEl) {
+                        fuenteEl.innerText = `Fuente: ${analisis.cierresUsados.length} cierre(s) de caja · ${analisis.diasDesdeSales.size} dia/sucursal reconstruido(s) desde ventas`;
+                    }
+
+                    this.dibujarGraficoSucursales(analisis.datosPorSucursal); 
+                    this.dibujarGraficoPagos(analisis.datosPorPago);
+                    this.dibujarGraficoVentasHora(analisis.datosPorHora);
+                    this.dibujarGraficoCajeros(analisis.datosPorCajero);
+                    this.mostrarTopProductos(analisis.datosPorProducto, analisis.totalIngresos);
+                     
+                    this.mostrarToast("Datos sincronizados.", "success");
+                } catch (error) { console.error("Error:", error); this.mostrarToast("Error procesando datos.", "error"); } 
+                finally { spinner.classList.add('hidden'); spinner.classList.remove('flex'); }
+            },
+
+            renderAuditoriaCierres: function(cierres = []) {
+                const totales = CierreCajaNormalizer.agregarCierres(cierres);
+                const asignarMonto = (id, valor) => {
+                    const elemento = document.getElementById(id);
+                    if (elemento) elemento.innerText = `Gs. ${this.formatoMoneda(Math.round(valor || 0))}`;
+                };
+                asignarMonto('audit-efectivo-pos', totales.efectivoPos);
+                asignarMonto('audit-efectivo-declarado', totales.efectivoDeclarado);
+                asignarMonto('audit-tarjeta', totales.posTarjeta);
+                asignarMonto('audit-transferencia', totales.transferencia);
+                asignarMonto('audit-credito', totales.credito);
+                asignarMonto('audit-gastos', totales.gastos);
+                asignarMonto('audit-sobrante', totales.sobrante);
+                asignarMonto('audit-faltante', totales.faltante);
+
+                const diferencia = document.getElementById('audit-diferencia');
+                if (diferencia) {
+                    const signo = totales.diferenciaCaja > 0 ? '+' : totales.diferenciaCaja < 0 ? '-' : '';
+                    diferencia.innerText = `${signo}Gs. ${this.formatoMoneda(Math.abs(Math.round(totales.diferenciaCaja)))}`;
+                    diferencia.className = `text-2xl font-black mt-1 ${totales.diferenciaCaja > 0 ? 'text-emerald-700' : totales.diferenciaCaja < 0 ? 'text-red-700' : 'text-slate-800'}`;
+                }
+                const estado = document.getElementById('auditoria-cierres-estado');
+                if (estado) estado.innerText = `${totales.cierres} cierre(s) normalizado(s) · diferencia = declarado - esperado`;
+
+                const porSucursal = cierres.reduce((mapa, cierre) => {
+                    mapa[cierre.sucursal] = (mapa[cierre.sucursal] || 0) + Number(cierre.diferenciaCaja || 0);
+                    return mapa;
+                }, {});
+                const ctx = document.getElementById('chartDiferenciasCaja')?.getContext('2d');
+                if (!ctx) return;
+                if (this.graficoDiferenciasCaja) this.graficoDiferenciasCaja.destroy();
+                const etiquetas = Object.keys(porSucursal);
+                const valores = Object.values(porSucursal);
+                this.graficoDiferenciasCaja = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: etiquetas.length ? etiquetas : ['Sin cierres'],
+                        datasets: [{
+                            data: valores.length ? valores : [0],
+                            backgroundColor: (valores.length ? valores : [0]).map(valor => valor >= 0 ? '#10b981' : '#e11d48'),
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { ticks: { callback: valor => `Gs. ${Number(valor).toLocaleString('es-PY')}` } } }
+                    }
+                });
+            },
+
+            dibujarGraficoSucursales: function(datosAgrupados) {
+                const ctx = document.getElementById('chartSucursales').getContext('2d');
+                if (this.graficoSucursales) this.graficoSucursales.destroy();
+                const etiquetas = Object.keys(datosAgrupados); const valores = Object.values(datosAgrupados); 
+                this.graficoSucursales = new Chart(ctx, { 
+                    type: 'bar', 
+                    data: { 
+                        labels: etiquetas, 
+                        datasets: [{ 
+                            label: 'Facturacion (Gs)', 
+                            data: valores, 
+                            backgroundColor: 'rgba(249, 115, 22, 0.85)', 
+                            borderColor: 'rgb(249, 115, 22)', 
+                            borderWidth: 1, 
+                            borderRadius: 6 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { legend: { display: false } }, 
+                        scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return 'Gs ' + (value/1000).toFixed(0) + 'k'; } } } } 
+                    } 
+                });
+            },
+
+            dibujarGraficoPagos: function(datosAgrupados) {
+                const ctx = document.getElementById('chartPagos').getContext('2d');
+                if (this.graficoPagos) this.graficoPagos.destroy();
+                const etiquetas = Object.keys(datosAgrupados); const valores = Object.values(datosAgrupados);
+                this.graficoPagos = new Chart(ctx, { 
+                    type: 'doughnut', 
+                    data: { 
+                        labels: etiquetas, 
+                        datasets: [{ 
+                            data: valores, 
+                            backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#a855f7'], 
+                            borderWidth: 2, 
+                            borderColor: '#ffffff' 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        cutout: '65%', 
+                        plugins: { legend: { position: 'right' } } 
+                    } 
+                });
+            },
+
+            dibujarGraficoVentasHora: function(datosAgrupados) {
+                const ctx = document.getElementById('chartVentasHora').getContext('2d');
+                if (this.graficoVentasHora) this.graficoVentasHora.destroy();
+                const etiquetas = Array.from({length: 24}, (_, i) => `${i}h`);
+                const valores = Object.values(datosAgrupados);
+                this.graficoVentasHora = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: etiquetas,
+                        datasets: [{
+                            label: 'Facturacion (Gs)',
+                            data: valores,
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointBackgroundColor: 'rgb(59, 130, 246)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true } },
+                        scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return 'Gs ' + (value/1000).toFixed(0) + 'k'; } } } }
+                    }
+                });
+            },
+
+            dibujarGraficoCajeros: function(datosAgrupados) {
+                const ctx = document.getElementById('chartCajeros').getContext('2d');
+                if (this.graficoCajeros) this.graficoCajeros.destroy();
+                const entradas = Object.entries(datosAgrupados).sort((a, b) => b[1].ingresos - a[1].ingresos).slice(0, 5);
+                const etiquetas = entradas.map(e => e[0]); 
+                const valores = entradas.map(e => e[1].ingresos);
+                this.graficoCajeros = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: etiquetas,
+                        datasets: [{
+                            label: 'Ingresos (Gs)',
+                            data: valores,
+                            backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                            borderColor: 'rgb(239, 68, 68)',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true, ticks: { callback: function(value) { return 'Gs ' + (value/1000).toFixed(0) + 'k'; } } } }
+                    }
+                });
+            },
+
+            mostrarTopProductos: function(datosPorProducto, totalIngresos) {
+                const tablaBody = document.getElementById('tabla-top-productos');
+                const top10 = Object.entries(datosPorProducto)
+                    .sort((a, b) => b[1].ingresos - a[1].ingresos)
+                    .slice(0, 10);
+
+                if(top10.length === 0) {
+                    tablaBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">Sin datos</td></tr>';
+                    return;
+                }
+
+                tablaBody.innerHTML = top10.map((([producto, datos], idx) => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                        <td class="px-4 py-3 font-bold text-slate-600">${idx + 1}</td>
+                        <td class="px-4 py-3 text-slate-700">${producto}</td>
+                        <td class="text-center px-4 py-3 font-semibold text-slate-700">${datos.cant} unid</td>
+                        <td class="text-right px-4 py-3 font-bold text-slate-800">Gs. ${this.formatoMoneda(Math.round(datos.ingresos))}</td>
+                        <td class="text-right px-4 py-3 font-bold text-orange-500">${((datos.ingresos / totalIngresos) * 100).toFixed(1)}%</td>
+                    </tr>
+                `)).join('');
+            },
+
+            abrirModalCierreCaja: function() {
+                const modal = document.getElementById('modal-cierre-caja');
+                const inputFecha = document.getElementById('input-fecha-cierre');
+                const selectSucursal = document.getElementById('select-sucursal-cierre');
+                const selectorPrincipal = document.getElementById('selector-sucursal');
+                const estado = document.getElementById('estado-cierre-guardado');
+                const ayer = new Date();
+                ayer.setDate(ayer.getDate() - 1);
+                if (inputFecha && !inputFecha.value) inputFecha.value = ayer.toISOString().slice(0, 10);
+                if (selectSucursal && selectorPrincipal) selectSucursal.value = selectorPrincipal.value || '';
+                ['input-cierre-fondo', 'input-cierre-dec-efectivo', 'input-cierre-dec-tarjeta', 'input-cierre-dec-transferencia', 'input-cierre-dec-gastos'].forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) input.value = '';
+                });
+                document.getElementById('preview-cierre-caja').innerHTML = `<div class="text-center text-slate-400 font-bold mt-20">Genera un ticket para ver la vista previa.</div>`;
+                this.cierreCajaSeleccionado = null;
+                this.htmlCierreCajaMemoria = "";
+                if (estado) {
+                    estado.className = 'hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700';
+                    estado.innerText = '';
+                }
+                document.getElementById('preview-cierre-caja').innerHTML = `<div class="text-center text-slate-400 font-bold mt-20">Genera un ticket para ver la vista previa.</div>`;
+                modal.classList.remove('hidden');
+                this.cargarCierreCajaGuardado();
+            },
+
+            cerrarModalCierreCaja: function() {
+                document.getElementById('modal-cierre-caja').classList.add('hidden');
+                document.getElementById('preview-cierre-caja').innerHTML = `<div class="text-center text-slate-400 font-bold mt-20">Genera un ticket para ver la vista previa.</div>`;
+            },
+
+            obtenerDatosCierreHistorico: async function(fechaStr, sucursalFiltro) {
+                const fechaObjetivo = new Date(`${fechaStr}T00:00:00`);
+                const sucursalFiltroId = CierreCajaNormalizer.normalizarSucursal(sucursalFiltro).id;
+                const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                const snapshot = await getDocs(query(collection(db, rutaPrivada)));
+
+                const ventasArqueadas = [];
+                const ventasDelDia = [];
+                const idsCierreGuardado = new Set(Array.isArray(this.cierreCajaSeleccionado?.ticketsTurnoIds) ? this.cierreCajaSeleccionado.ticketsTurnoIds : []);
+                const turnoCierreGuardado = String(this.cierreCajaSeleccionado?.turnoId || '').trim();
+                const ventasPorCierreGuardado = [];
+
+                snapshot.forEach((doc) => {
+                    const venta = doc.data();
+                    if (sucursalFiltroId && CierreCajaNormalizer.normalizarSucursal(venta.sucursal).id !== sucursalFiltroId) return;
+                    if (idsCierreGuardado.has(doc.id) || (turnoCierreGuardado && String(venta.turnoId || '').trim() === turnoCierreGuardado)) {
+                        ventasPorCierreGuardado.push(venta);
+                        return;
+                    }
+
+                    const fechaVenta = this.normalizarFecha(venta.fecha);
+                    const fechaAperturaTurno = this.normalizarFecha(venta.fechaAperturaTurno);
+                    if (
+                        (fechaAperturaTurno && this.mismaFecha(fechaAperturaTurno, fechaObjetivo)) ||
+                        (fechaVenta && this.mismaFecha(fechaVenta, fechaObjetivo))
+                    ) {
+                        ventasDelDia.push(venta);
+                    }
+
+                    if (venta.arqueado === true && venta.fechaArqueo) {
+                        const fechaArqueo = this.normalizarFecha(venta.fechaArqueo);
+                        if (fechaArqueo && this.mismaFecha(fechaArqueo, fechaObjetivo)) {
+                            ventasArqueadas.push(venta);
+                        }
+                    }
+                });
+
+                const baseVentas = ventasPorCierreGuardado.length > 0
+                    ? ventasPorCierreGuardado.filter((venta) => this.esVentaReportable(venta))
+                    : ventasArqueadas.length > 0
+                    ? ventasArqueadas.filter((venta) => this.esVentaReportable(venta))
+                    : ventasDelDia.filter((venta) => this.esVentaReportable(venta));
+                baseVentas.sort((a, b) => this.obtenerFechaTurnoVenta(a) - this.obtenerFechaTurnoVenta(b));
+
+                let datosMemoria = { vEfe: 0, aEfe: 0, vTar: 0, vTrans: 0, vCre: 0 };
+                let productosVendidos = {};
+                let totalSistemaVendido = 0;
+                let primerMovimiento = null;
+                let ultimoArqueo = null;
+                let ticketsContados = 0;
+
+                baseVentas.forEach((venta) => {
+                    ticketsContados++;
+                    const fechaVenta = this.normalizarFecha(venta.fecha);
+                    const fechaCierreRef = venta.arqueado === true && venta.fechaArqueo ? this.normalizarFecha(venta.fechaArqueo) : fechaVenta;
+                    const fechaAperturaTurno = this.normalizarFecha(venta.fechaAperturaTurno);
+                    const fechaInicioRef = fechaAperturaTurno || fechaVenta;
+                    if (fechaInicioRef && (!primerMovimiento || fechaInicioRef < primerMovimiento)) primerMovimiento = fechaInicioRef;
+                    if (fechaCierreRef && (!ultimoArqueo || fechaCierreRef > ultimoArqueo)) ultimoArqueo = fechaCierreRef;
+
+                    const monto = Number(venta.total || 0);
+                    const pago = this.obtenerDistribucionPago(venta);
+                    datosMemoria.vEfe += pago.efectivo;
+                    datosMemoria.vTar += pago.tarjeta;
+                    datosMemoria.vTrans += pago.transferencia;
+                    datosMemoria.vCre += pago.credito;
+                    totalSistemaVendido += pago.efectivo + pago.tarjeta + pago.transferencia + pago.credito;
+
+                    if (venta.items && Array.isArray(venta.items) && venta.estadoPago === 'pagado') {
+                        venta.items.forEach(item => {
+                            const nombre = item.nombre || 'Producto';
+                            const cantidad = Number(item.cantidad || 0);
+                            const subtotal = Number(item.precio || item.precioAplicado || 0) * cantidad;
+                            if (!productosVendidos[nombre]) productosVendidos[nombre] = { cant: 0, total: 0 };
+                            productosVendidos[nombre].cant += cantidad;
+                            productosVendidos[nombre].total += subtotal;
+                        });
+                    }
+                });
+
+                const modoReconstruido = ventasPorCierreGuardado.length === 0 && ventasArqueadas.length === 0;
+                return { datosMemoria, productosVendidos, totalSistemaVendido, primerMovimiento, ultimoArqueo, ticketsContados, modoReconstruido };
+            },
+
+            buscarCierreCajaGuardado: async function(fechaStr, sucursalFiltro) {
+                const snap = await getDocs(query(collection(db, 'cierresCaja'), orderBy('fechaCierre', 'desc')));
+                const sucursalFiltroId = CierreCajaNormalizer.normalizarSucursal(sucursalFiltro).id;
+                const cierresOperacion = [];
+                const cierresPorCierre = [];
+                snap.forEach((docSnap) => {
+                    const data = docSnap.data() || {};
+                    if (sucursalFiltroId && CierreCajaNormalizer.normalizarSucursal(data.sucursal).id !== sucursalFiltroId) return;
+                    const cierre = { id: docSnap.id, ...data };
+                    if (data.fechaOperacionKey === fechaStr) cierresOperacion.push(cierre);
+                    else if (data.fechaCierreKey === fechaStr) cierresPorCierre.push(cierre);
+                });
+                return cierresOperacion[0] || cierresPorCierre[0] || null;
+            },
+
+            aplicarCierreCajaGuardado: function(cierre) {
+                this.cierreCajaSeleccionado = cierre || null;
+                const declaracion = cierre?.declaracion || {};
+                const setValor = (id, valor) => {
+                    const input = document.getElementById(id);
+                    if (input) input.value = Number(valor || 0) > 0 ? this.formatoMoneda(Number(valor || 0)) : '';
+                };
+
+                setValor('input-cierre-fondo', cierre?.fondoInicial || 0);
+                setValor('input-cierre-dec-efectivo', declaracion.efectivo || 0);
+                setValor('input-cierre-dec-tarjeta', declaracion.tarjeta || 0);
+                setValor('input-cierre-dec-transferencia', declaracion.transferencia || 0);
+                setValor('input-cierre-dec-gastos', declaracion.gastos || 0);
+
+                if (cierre?.htmlTicket) {
+                    this.htmlCierreCajaMemoria = cierre.htmlTicket;
+                    document.getElementById('preview-cierre-caja').innerHTML = cierre.htmlTicket;
+                }
+
+                const estado = document.getElementById('estado-cierre-guardado');
+                if (estado && cierre) {
+                    estado.className = 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700';
+                    estado.innerText = `Cierre guardado encontrado: ${cierre.sucursal || 'Sucursal'} | Apertura ${cierre.fechaAperturaTexto || 'No registrada'} | Cierre ${cierre.fechaCierreTexto || 'No registrado'}`;
+                }
+            },
+
+            cargarCierreCajaGuardado: async function() {
+                const fechaStr = document.getElementById('input-fecha-cierre')?.value;
+                if (!fechaStr) return;
+                const sucursal = document.getElementById('select-sucursal-cierre')?.value || '';
+                const estado = document.getElementById('estado-cierre-guardado');
+
+                try {
+                    const cierre = await this.buscarCierreCajaGuardado(fechaStr, sucursal);
+                    if (cierre) {
+                        this.aplicarCierreCajaGuardado(cierre);
+                        return;
+                    }
+                    this.cierreCajaSeleccionado = null;
+                    this.htmlCierreCajaMemoria = "";
+                    if (estado) {
+                        estado.className = 'rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700';
+                        estado.innerText = 'No encontre un cierre guardado para esa fecha y sucursal. Puedes reconstruirlo manualmente si es un cierre viejo.';
+                    }
+                    document.getElementById('preview-cierre-caja').innerHTML = `<div class="text-center text-slate-400 font-bold mt-20">Genera un ticket para ver la vista previa.</div>`;
+                } catch (error) {
+                    console.error('Error cargando cierre guardado:', error);
+                    if (estado) {
+                        estado.className = 'rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700';
+                        estado.innerText = 'No se pudo leer el cierre guardado.';
+                    }
+                }
+            },
+
+            abrirModalCierreCaja: function() {
+                const modal = document.getElementById('modal-cierre-caja');
+                const inputFecha = document.getElementById('input-fecha-cierre');
+                const selectSucursal = document.getElementById('select-sucursal-cierre');
+                const selectorPrincipal = document.getElementById('selector-sucursal');
+                const estado = document.getElementById('estado-cierre-guardado');
+                const ayer = new Date();
+                ayer.setDate(ayer.getDate() - 1);
+                if (inputFecha && !inputFecha.value) inputFecha.value = this.obtenerFechaKey(ayer);
+                if (selectSucursal && selectorPrincipal) selectSucursal.value = selectorPrincipal.value || '';
+                ['input-cierre-fondo', 'input-cierre-dec-efectivo', 'input-cierre-dec-tarjeta', 'input-cierre-dec-transferencia', 'input-cierre-dec-gastos'].forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) input.value = '';
+                });
+                const labelGastos = document.querySelector('label[for="input-cierre-dec-gastos"]') || document.getElementById('input-cierre-dec-gastos')?.parentElement?.querySelector('label');
+                if (labelGastos) labelGastos.innerText = 'Gastos Extraidos';
+                this.cierreCajaSeleccionado = null;
+                this.htmlCierreCajaMemoria = "";
+                if (estado) {
+                    estado.className = 'hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700';
+                    estado.innerText = '';
+                }
+                document.getElementById('preview-cierre-caja').innerHTML = `<div class="text-center text-slate-400 font-bold mt-20">Genera un ticket para ver la vista previa.</div>`;
+                modal.classList.remove('hidden');
+                this.cargarCierreCajaGuardado();
+            },
+
+            cerrarModalCierreCaja: function() {
+                document.getElementById('modal-cierre-caja').classList.add('hidden');
+                document.getElementById('preview-cierre-caja').innerHTML = `<div class="text-center text-slate-400 font-bold mt-20">Genera un ticket para ver la vista previa.</div>`;
+                const estado = document.getElementById('estado-cierre-guardado');
+                if (estado) {
+                    estado.className = 'hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700';
+                    estado.innerText = '';
+                }
+                this.cierreCajaSeleccionado = null;
+                this.htmlCierreCajaMemoria = "";
+            },
+
+            generarHTMLCierreCaja: function(resumen, declaracion) {
+                const espEfeVentas = resumen.datosMemoria.vEfe;
+                const totalEsperadoEfectivo = (espEfeVentas + declaracion.fondoInicial) - declaracion.gastos;
+                const espTar = resumen.datosMemoria.vTar;
+                const espTrans = resumen.datosMemoria.vTrans;
+                const espCredito = resumen.datosMemoria.vCre;
+                const totalSistema = totalEsperadoEfectivo + espTar + espTrans;
+                const totalCajaDeclarado = declaracion.efectivo + declaracion.tarjeta + declaracion.transferencia;
+                const difEfe = declaracion.efectivo - totalEsperadoEfectivo;
+                const difTar = declaracion.tarjeta - espTar;
+                const difTrans = declaracion.transferencia - espTrans;
+                const difTotal = totalCajaDeclarado - totalSistema;
+                const totalVendido = espEfeVentas + espTar + espTrans + espCredito;
+                const fmtDif = (valor) => {
+                    if (valor === 0) return "Gs. 0";
+                    return valor > 0
+                        ? '+ Gs. ' + this.formatoMoneda(valor) + ' (SOBRA)'
+                        : '- Gs. ' + this.formatoMoneda(Math.abs(valor)) + ' (FALTA)';
+                };
+
+                let listaProdHTML = '';
+                for (const [nombre, data] of Object.entries(resumen.productosVendidos)) {
+                    listaProdHTML += `<tr><td style="width: 15%; text-align: left;">${data.cant}x</td><td style="width: 55%; text-align: left;">${nombre}</td><td style="width: 30%; text-align: right;">${this.formatoMoneda(data.total)}</td></tr>`;
+                }
+                if (listaProdHTML === '') listaProdHTML = '<tr><td colspan="3" class="center">Sin ventas registradas</td></tr>';
+
+                const fechaApertura = resumen.primerMovimiento ? DateTime24.formatDateTime24(resumen.primerMovimiento) : 'No disponible';
+                const fechaCierre = resumen.ultimoArqueo ? DateTime24.formatDateTime24(resumen.ultimoArqueo) : 'No disponible';
+                const sucursal = document.getElementById('select-sucursal-cierre').value || 'Todas las Sucursales';
+                const notaModo = resumen.modoReconstruido
+                    ? `<div class="center" style="font-size: 8px; font-weight: 900; margin-top: 2px;">CIERRE RECONSTRUIDO DESDE VENTAS DEL DIA</div>`
+                    : '';
+
+                return `
+                    <html><head><style>
+                        @page { margin: 0; }
+                        body { margin: 0; padding: 5px 8px; font-family: 'Arial', sans-serif; font-size: 10px; font-weight: 900; width: 100%; max-width: 58mm; color: #000; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+                        td { padding: 2px 0; font-weight: 900; vertical-align: top; line-height: 1.1; }
+                        .center { text-align: center; }
+                        .right { text-align: right; }
+                        hr { border: 0; border-top: 1px dashed black; margin: 5px 0; }
+                        .subtitle { text-transform: uppercase; border-bottom: 1px dotted black; padding-bottom: 2px; margin-bottom: 2px; font-size: 11px; }
+                        .productos-table td { font-size: 8px !important; }
+                    </style></head><body>
+                        <div class="center" style="font-size:13px; font-weight: 900; border-bottom:2px solid black; padding-bottom: 3px; margin-bottom: 5px;">REPORTE Z (CIERRE)</div>
+                        ${notaModo}
+                        <div><span style="font-size: 9px;">Apertura: ${fechaApertura}</span></div>
+                        <div><span style="font-size: 9px;">Cierre: &nbsp;&nbsp;${fechaCierre}</span></div>
+                        <div><span style="font-size: 9px;">Sucursal: ${sucursal}</span></div>
+                        <div><span style="font-size: 9px;">Tickets: &nbsp;&nbsp;${resumen.ticketsContados}</span></div>
+                        <hr>
+
+                        <div class="subtitle">PRODUCTOS VENDIDOS:</div>
+                        <table class="productos-table" style="margin-bottom: 2px;">${listaProdHTML}</table>
+                        <div class="right" style="font-size: 8.5px; font-weight: 900; margin-top: 3px;">VENDIDOS TOTAL: Gs. ${this.formatoMoneda(totalVendido)}</div>
+                        <hr>
+
+                        <div class="subtitle">SISTEMA ESPERADO:</div>
+                        <table>
+                            <tr><td>Fondo Inicial</td><td class="right">+${this.formatoMoneda(declaracion.fondoInicial)}</td></tr>
+                            <tr><td>Ventas Efectivo</td><td class="right">+${this.formatoMoneda(espEfeVentas)}</td></tr>
+                            <tr><td>Gastos</td><td class="right">-${this.formatoMoneda(declaracion.gastos)}</td></tr>
+                            <tr style="border-top: 1px dashed black;"><td style="font-size: 10px;">Total Esp. Efectivo</td><td class="right" style="font-size: 10px;">${this.formatoMoneda(totalEsperadoEfectivo)}</td></tr>
+                            <tr><td style="padding-top: 3px;">Total Tarjeta POS</td><td class="right" style="padding-top: 3px;">${this.formatoMoneda(espTar)}</td></tr>
+                            <tr><td>Total Transf.</td><td class="right">${this.formatoMoneda(espTrans)}</td></tr>
+                            <tr><td>Ventas Crédito (no caja)</td><td class="right">${this.formatoMoneda(espCredito)}</td></tr>
+                            <tr style="border-top: 2px solid black;"><td style="font-size: 11px;">TOTAL ESPERADO</td><td class="right" style="font-size: 11px;">${this.formatoMoneda(totalSistema)}</td></tr>
+                        </table>
+                        <hr>
+
+                        <div class="subtitle">CAJA DECLARADO:</div>
+                        <table>
+                            <tr><td>Efectivo Fisico</td><td class="right">${this.formatoMoneda(declaracion.efectivo)}</td></tr>
+                            <tr><td>Tarjeta POS</td><td class="right">${this.formatoMoneda(declaracion.tarjeta)}</td></tr>
+                            <tr><td>Transferencia</td><td class="right">${this.formatoMoneda(declaracion.transferencia)}</td></tr>
+                            <tr style="border-top: 2px solid black;"><td style="font-size: 11px;">TOTAL EN CAJA</td><td class="right" style="font-size: 11px;">${this.formatoMoneda(totalCajaDeclarado)}</td></tr>
+                        </table>
+                        <hr>
+
+                        <div class="subtitle">DIFERENCIA FINAL:</div>
+                        <table>
+                            <tr><td style="font-size: 10px;">Dif. Efectivo</td><td class="right" style="font-size: 10px;">${fmtDif(difEfe)}</td></tr>
+                            <tr><td style="font-size: 10px;">Dif. Tarjeta</td><td class="right" style="font-size: 10px;">${fmtDif(difTar)}</td></tr>
+                            <tr><td style="font-size: 10px;">Dif. Transf.</td><td class="right" style="font-size: 10px;">${fmtDif(difTrans)}</td></tr>
+                            <tr style="border-top: 2px solid black;"><td style="font-size: 12px;">DIF TOTAL</td><td class="right" style="font-size: 12px;">${fmtDif(difTotal)}</td></tr>
+                        </table>
+                        <hr><br><div class="center">____________________</div><div class="center">Firma del Cajero</div>
+                    </body></html>
+                `;
+            },
+
+            generarTicketCierreHistoricoLegacyNoUsar: async function() {
+                const fechaStr = document.getElementById('input-fecha-cierre').value;
+                const sucursal = document.getElementById('select-sucursal-cierre').value;
+                if (!fechaStr) return this.mostrarToast('Selecciona la fecha del cierre.', 'error');
+
+                const resumen = await this.obtenerDatosCierreHistorico(fechaStr, sucursal);
+                if (resumen.ticketsContados === 0) {
+                    return this.mostrarToast('No encontre movimientos para esa fecha.', 'error');
+                }
+
+                const declaracion = {
+                    fondoInicial: this.limpiarMoneda(document.getElementById('input-cierre-fondo').value),
+                    efectivo: this.limpiarMoneda(document.getElementById('input-cierre-dec-efectivo').value),
+                    tarjeta: this.limpiarMoneda(document.getElementById('input-cierre-dec-tarjeta').value),
+                    transferencia: this.limpiarMoneda(document.getElementById('input-cierre-dec-transferencia').value),
+                    gastos: this.limpiarMoneda(document.getElementById('input-cierre-dec-gastos').value)
+                };
+
+                const html = this.generarHTMLCierreCaja(resumen, declaracion);
+                this.htmlCierreCajaMemoria = html;
+                document.getElementById('preview-cierre-caja').innerHTML = html;
+                this.mostrarToast('Ticket de cierre generado.', 'success');
+            },
+
+            generarTicketCierreHistorico: async function() {
+                const fechaStr = document.getElementById('input-fecha-cierre').value;
+                const sucursal = document.getElementById('select-sucursal-cierre').value;
+                if (!fechaStr) return this.mostrarToast('Selecciona la fecha del cierre.', 'error');
+
+                await this.cargarCierreCajaGuardado();
+                if (this.cierreCajaSeleccionado?.htmlTicket) {
+                    document.getElementById('preview-cierre-caja').innerHTML = this.cierreCajaSeleccionado.htmlTicket;
+                    this.htmlCierreCajaMemoria = this.cierreCajaSeleccionado.htmlTicket;
+                    this.mostrarToast('Ticket de cierre cargado desde el cierre guardado.', 'success');
+                    return;
+                }
+
+                const resumen = await this.obtenerDatosCierreHistorico(fechaStr, sucursal);
+                if (resumen.ticketsContados === 0) {
+                    return this.mostrarToast('No encontre movimientos para esa fecha.', 'error');
+                }
+
+                const declaracion = {
+                    fondoInicial: this.limpiarMoneda(document.getElementById('input-cierre-fondo').value),
+                    efectivo: this.limpiarMoneda(document.getElementById('input-cierre-dec-efectivo').value),
+                    tarjeta: this.limpiarMoneda(document.getElementById('input-cierre-dec-tarjeta').value),
+                    transferencia: this.limpiarMoneda(document.getElementById('input-cierre-dec-transferencia').value),
+                    gastos: this.limpiarMoneda(document.getElementById('input-cierre-dec-gastos').value)
+                };
+
+                const html = this.generarHTMLCierreCaja(resumen, declaracion);
+                this.htmlCierreCajaMemoria = html;
+                document.getElementById('preview-cierre-caja').innerHTML = html;
+                this.mostrarToast('Ticket de cierre generado.', 'success');
+            },
+
+            imprimirCierreHistorico: function() {
+                if (!this.htmlCierreCajaMemoria) return this.mostrarToast('Genera primero el ticket de cierre.', 'error');
+                PrintUtils.printHtml(this.htmlCierreCajaMemoria);
+            },
+
+            abrirModalExtracto: function() {
+                const modal = document.getElementById('modal-extracto-mensual');
+                const hoy = new Date();
+                const mesActual = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+                document.getElementById('input-mes-extracto').value = mesActual;
+                modal.classList.remove('hidden');
+            },
+
+            cerrarModalExtracto: function() {
+                const modal = document.getElementById('modal-extracto-mensual');
+                modal.classList.add('hidden');
+                document.getElementById('extracto-preview').innerHTML = '';
+            },
+
+            generarExtractoMensual: async function() {
+                const mesStr = document.getElementById('input-mes-extracto').value;
+                const sucursal = document.getElementById('select-sucursal-extracto').value;
+                if(!mesStr) { this.mostrarToast('Selecciona un mes', 'error'); return; }
+
+                const [anio, mes] = mesStr.split('-').map(Number);
+                const inicio = new Date(anio, mes - 1, 1);
+                const fin = new Date(anio, mes, 1);
+
+                try {
+                    const analisis = await this.cargarFuenteFinanciera({ inicio, fin }, sucursal);
+                    const totalIngresos = analisis.totalIngresos;
+                    const totalTickets = analisis.totalTickets;
+                    const datosPagos = analisis.datosPorPago;
+                    const datosProductos = analisis.datosPorProducto;
+
+                    const horaActual = DateTime24.formatDateTime24(new Date());
+                    const empresa = 'COFFEE POS';
+                    
+                    let html = `
+                        <div style="font-family: Arial, sans-serif; text-align: center;">
+                            <h1 style="font-size: 24px; font-weight: bold; margin: 10px 0; text-transform: uppercase;">${empresa}</h1>
+                            <h2 style="font-size: 18px; color: #666; margin: 5px 0;">EXTRACTO MENSUAL DE VENTAS</h2>
+                            <p style="font-size: 14px; color: #999;">Mes de ${inicio.toLocaleString('es-PY', {month: 'long', year: 'numeric'})}</p>
+                            <p style="font-size: 12px; color: #999;">Impreso: ${horaActual}</p>
+                            ${sucursal ? `<p style="font-size: 12px; color: #666; margin-top: 8px;"><strong>SUCURSAL: ${sucursal}</strong></p>` : ''}
+                            <hr style="border: none; border-top: 2px dashed #ccc; margin: 15px 0;">
+
+                            <div style="text-align: left; margin: 15px 0;">
+                                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">RESUMEN:</h3>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr style="border-bottom: 1px solid #ddd; padding: 8px 0;">
+                                        <td style="padding: 8px;">Total Ingresos:</td>
+                                        <td style="text-align: right; font-weight: bold;">Gs. ${this.formatoMoneda(Math.round(totalIngresos))}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #ddd;">
+                                        <td style="padding: 8px;">Cantidad Tickets:</td>
+                                        <td style="text-align: right; font-weight: bold;">${totalTickets}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px;">Ticket Promedio:</td>
+                                        <td style="text-align: right; font-weight: bold;">Gs. ${this.formatoMoneda(Math.round(totalIngresos / Math.max(totalTickets, 1)))}</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div style="text-align: left; margin: 15px 0;">
+                                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">MEDIOS DE PAGO:</h3>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                    ${Object.entries(datosPagos).sort((a, b) => b[1] - a[1]).map(([pago, monto]) => `
+                                        <tr style="border-bottom: 1px solid #ddd;">
+                                            <td style="padding: 6px;">${pago}:</td>
+                                            <td style="text-align: right; font-weight: bold;">Gs. ${this.formatoMoneda(Math.round(monto))}</td>
+                                        </tr>
+                                    `).join('')}
+                                </table>
+                            </div>
+
+                            <div style="text-align: left; margin: 15px 0;">
+                                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">TOP 10 PRODUCTOS:</h3>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                                    <thead style="background-color: #f0f0f0;">
+                                        <tr>
+                                            <th style="padding: 6px; text-align: left;">Producto</th>
+                                            <th style="padding: 6px; text-align: center;">Cant</th>
+                                            <th style="padding: 6px; text-align: right;">Ingresos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${Object.entries(datosProductos).sort((a, b) => b[1].ingresos - a[1].ingresos).slice(0, 10).map(([prod, datos]) => `
+                                            <tr style="border-bottom: 1px solid #eee;">
+                                                <td style="padding: 6px;">${prod}</td>
+                                                <td style="padding: 6px; text-align: center;">${datos.cant}</td>
+                                                <td style="padding: 6px; text-align: right; font-weight: bold;">Gs. ${this.formatoMoneda(Math.round(datos.ingresos))}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <hr style="border: none; border-top: 2px dashed #ccc; margin: 15px 0;">
+                            <p style="font-size: 11px; color: #999; margin-top: 15px;">--------------------------------------------</p>
+                            <p style="font-size: 11px; color: #999;">Documento generado automaticamente por el sistema</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('extracto-preview').innerHTML = html;
+                    this.extractoHTMLMemoria = html;
+                    this.mostrarToast("Extracto generado correctamente", "success");
+                } catch(e) {
+                    console.error("Error generando extracto:", e);
+                    this.mostrarToast("Error generando extracto", "error");
+                }
+            },
+
+            imprimirExtractoMensual: function() {
+                if(!this.extractoHTMLMemoria) {
+                    this.mostrarToast("Genera el extracto primero", "error");
+                    return;
+                }
+                
+                PrintUtils.printHtml(`
+                    <html>
+                    <head>
+                        <style>
+                            @page { margin: 15mm; }
+                            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                        </style>
+                    </head>
+                    <body>${this.extractoHTMLMemoria}</body>
+                    </html>
+                `);
+            },
+
+            cerrarSesion: async function() {
+                await signOut(auth);
+                localStorage.removeItem('__pos_session');
+                window.location.replace('index.html');
+            },
+            imprimirReporte: function() { PrintUtils.printElement(document.querySelector('main'), { title: 'Reporte financiero' }); }
+        };
+        document.addEventListener('DOMContentLoaded', () => ReportesModule.init());
+    </script>
+    
+
+

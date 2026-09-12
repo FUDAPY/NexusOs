@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testers Google Play | Club Lin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="admin_sidebar.js" defer></script>
+</head>
+<body class="bg-slate-100 text-slate-900 h-screen flex overflow-hidden opacity-0 transition-opacity" id="app-body">
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain">
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2"></nav>
+        <div class="p-4 border-t border-slate-800 flex justify-between items-center bg-slate-950">
+            <div class="leading-tight">
+                <p class="text-sm font-bold text-white" id="user-name">Admin</p>
+                <p class="text-xs text-slate-400">Rol: ADMIN</p>
+            </div>
+            <button onclick="PlayTestersModule.cerrarSesion()" class="text-red-400 hover:text-red-300 transition p-2 rounded-lg hover:bg-slate-800">
+                <i class="fa-solid fa-right-from-bracket text-xl"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white px-7 py-5 border-b border-slate-200 flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-black tracking-tight">Testers Google Play</h2>
+                <p class="text-sm text-slate-500">Solicitudes para habilitar acceso a la prueba cerrada de Club Lin.</p>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2">
+                <button onclick="PlayTestersModule.copiarCorreosPendientes()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-black shadow-sm transition">
+                    <i class="fa-solid fa-copy mr-2"></i> Copiar pendientes
+                </button>
+                <a href="https://play.google.com/store/apps/details?id=com.lingroup.clublin" target="_blank" rel="noopener" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl font-black shadow-sm transition">
+                    <i class="fa-brands fa-google-play mr-2"></i> Abrir Play Store
+                </a>
+            </div>
+        </header>
+
+        <section class="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Pendientes</p>
+                <p id="kpi-pending" class="text-3xl font-black text-amber-600">0</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Procesando</p>
+                <p id="kpi-processing" class="text-3xl font-black text-blue-600">0</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Habilitados</p>
+                <p id="kpi-added" class="text-3xl font-black text-emerald-600">0</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Revision/error</p>
+                <p id="kpi-review" class="text-3xl font-black text-red-600">0</p>
+            </div>
+        </section>
+
+        <section class="px-6 pb-6 flex-1 overflow-hidden">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm h-full flex flex-col overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                    <div>
+                        <h3 class="text-lg font-black">Solicitudes</h3>
+                        <p class="text-xs font-bold text-slate-500">Grupo objetivo: <span class="font-mono">club-lin-testers@googlegroups.com</span></p>
+                        <p class="text-xs font-bold text-blue-600 mt-1">Usa "Copiar pendientes" y pega los correos en Play Console > Prueba cerrada > Testers > TESTERS.</p>
+                    </div>
+                    <select id="filter-status" onchange="PlayTestersModule.render()" class="border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-black bg-white">
+                        <option value="">Todos los estados</option>
+                        <option value="pending">pending</option>
+                        <option value="processing">processing</option>
+                        <option value="added_to_google_group">added_to_google_group</option>
+                        <option value="failed">failed</option>
+                        <option value="manual_review_required">manual_review_required</option>
+                        <option value="link_sent">link_sent</option>
+                    </select>
+                </div>
+                <div class="flex-1 overflow-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-widest sticky top-0">
+                            <tr>
+                                <th class="p-4">Usuario</th>
+                                <th class="p-4">Correo</th>
+                                <th class="p-4">Estado</th>
+                                <th class="p-4">Grupo</th>
+                                <th class="p-4">Fecha</th>
+                                <th class="p-4 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-body" class="divide-y divide-slate-100 text-sm">
+                            <tr><td colspan="6" class="p-8 text-center text-slate-400 font-bold">Cargando solicitudes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="fixed bottom-6 right-6 translate-x-[130%] transition-transform bg-slate-950 text-white rounded-2xl px-5 py-4 shadow-2xl font-bold z-[80]"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { initializeFirestore, collection, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+            messagingSenderId: "1084603889746",
+            appId: "1:1084603889746:web:822ce55a070dc146b2078b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = initializeFirestore(app, { experimentalForceLongPolling: true, useFetchStreams: false });
+        const auth = getAuth(app);
+        const functions = getFunctions(app, "us-central1");
+
+        window.PlayTestersModule = {
+            requests: [],
+            unsubscribe: null,
+            init() {
+                const sesion = JSON.parse(localStorage.getItem('__pos_session') || 'null');
+                if (!sesion || sesion.rol !== 'admin') {
+                    location.replace('index.html');
+                    return;
+                }
+                document.getElementById('user-name').innerText = sesion.nombre || 'Admin';
+                document.getElementById('app-body').classList.remove('opacity-0');
+                this.escuchar();
+            },
+            escuchar() {
+                const qRequests = query(collection(db, "playTesterRequests"), orderBy("updatedAt", "desc"));
+                this.unsubscribe = onSnapshot(qRequests, (snapshot) => {
+                    this.requests = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+                    this.render();
+                }, (error) => {
+                    console.error(error);
+                    this.toast('No se pudieron cargar testers.', 'error');
+                });
+            },
+            fecha(value) {
+                if (!value) return '--';
+                const date = typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
+                return DateTime24.formatDateTime24(date);
+            },
+            escape(value) {
+                return String(value || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+            },
+            badge(status) {
+                const map = {
+                    pending: 'bg-amber-50 text-amber-700 border-amber-200',
+                    processing: 'bg-blue-50 text-blue-700 border-blue-200',
+                    added_to_google_group: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    failed: 'bg-red-50 text-red-700 border-red-200',
+                    manual_review_required: 'bg-orange-50 text-orange-700 border-orange-200',
+                    link_sent: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                };
+                return `<span class="inline-flex px-3 py-1 rounded-full border text-[10px] font-black uppercase ${map[status] || 'bg-slate-100 text-slate-600 border-slate-200'}">${this.escape(status || 'pending')}</span>`;
+            },
+            render() {
+                const filter = document.getElementById('filter-status').value;
+                const rows = this.requests.filter((item) => !filter || item.status === filter);
+                document.getElementById('kpi-pending').innerText = this.requests.filter(r => r.status === 'pending').length;
+                document.getElementById('kpi-processing').innerText = this.requests.filter(r => r.status === 'processing').length;
+                document.getElementById('kpi-added').innerText = this.requests.filter(r => r.status === 'added_to_google_group').length;
+                document.getElementById('kpi-review').innerText = this.requests.filter(r => ['failed', 'manual_review_required'].includes(r.status)).length;
+                const body = document.getElementById('requests-body');
+                if (!rows.length) {
+                    body.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-bold">Sin solicitudes para este filtro.</td></tr>`;
+                    return;
+                }
+                body.innerHTML = rows.map((item) => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-4 font-black text-slate-800">${this.escape(item.displayName || item.uid || 'Cliente')}</td>
+                        <td class="p-4 font-mono text-xs text-slate-600">${this.escape(item.email)}</td>
+                        <td class="p-4">${this.badge(item.status)}${item.errorMessage ? `<p class="text-[11px] text-red-500 font-bold mt-1 max-w-xs">${this.escape(item.errorMessage)}</p>` : ''}</td>
+                        <td class="p-4 font-mono text-[11px] text-slate-500">${this.escape(item.groupEmail || 'club-lin-testers@googlegroups.com')}</td>
+                        <td class="p-4 text-xs font-bold text-slate-500">${this.fecha(item.updatedAt || item.createdAt)}</td>
+                        <td class="p-4">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="PlayTestersModule.copiarLink('${encodeURIComponent(item.playStoreUrl || 'https://play.google.com/store/apps/details?id=com.lingroup.clublin')}')" class="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 font-black hover:bg-slate-200" title="Copiar link"><i class="fa-solid fa-link"></i></button>
+                                <button onclick="PlayTestersModule.reintentar('${encodeURIComponent(item.uid || '')}','${encodeURIComponent(item.email || '')}','${encodeURIComponent(item.displayName || '')}')" class="px-3 py-2 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700" title="Reintentar"><i class="fa-solid fa-rotate"></i></button>
+                                <button onclick="PlayTestersModule.marcarManual('${encodeURIComponent(item.uid || '')}','${encodeURIComponent(item.email || '')}','${encodeURIComponent(item.displayName || '')}')" class="px-3 py-2 rounded-xl bg-emerald-600 text-white font-black hover:bg-emerald-700" title="Marcar agregado"><i class="fa-solid fa-check"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            },
+            async copiarLink(link) {
+                await navigator.clipboard.writeText(decodeURIComponent(link));
+                this.toast('Link copiado.');
+            },
+            obtenerCorreosPendientes() {
+                const estadosPendientes = new Set(['pending', 'processing', 'failed', 'manual_review_required', 'link_sent']);
+                const correos = this.requests
+                    .filter((item) => item.email && estadosPendientes.has(item.status || 'pending'))
+                    .map((item) => String(item.email || '').trim().toLowerCase())
+                    .filter(Boolean);
+                return Array.from(new Set(correos)).sort();
+            },
+            async copiarCorreosPendientes() {
+                const correos = this.obtenerCorreosPendientes();
+                if (!correos.length) {
+                    this.toast('No hay correos pendientes para copiar.');
+                    return;
+                }
+                await navigator.clipboard.writeText(correos.join('\n'));
+                this.toast(`${correos.length} correo(s) copiados para Play Console.`);
+            },
+            async reintentar(uid, email, displayName) {
+                try {
+                    const fn = httpsCallable(functions, "reintentarPlayTesterRequest");
+                    const result = await fn({ uid: decodeURIComponent(uid), email: decodeURIComponent(email), displayName: decodeURIComponent(displayName) });
+                    this.toast(result.data?.status === 'added_to_google_group' ? 'Tester habilitado.' : 'Solicitud reprocesada.');
+                } catch (error) {
+                    console.error(error);
+                    this.toast(error.message || 'No se pudo reintentar.', 'error');
+                }
+            },
+            async marcarManual(uid, email, displayName) {
+                if (!confirm('Marcar este correo como agregado manualmente al Google Group?')) return;
+                try {
+                    const fn = httpsCallable(functions, "marcarPlayTesterAgregadoManual");
+                    await fn({ uid: decodeURIComponent(uid), email: decodeURIComponent(email), displayName: decodeURIComponent(displayName) });
+                    this.toast('Marcado como agregado.');
+                } catch (error) {
+                    console.error(error);
+                    this.toast(error.message || 'No se pudo marcar.', 'error');
+                }
+            },
+            toast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                toast.className = `fixed bottom-6 right-6 transition-transform rounded-2xl px-5 py-4 shadow-2xl font-bold z-[80] ${type === 'error' ? 'bg-red-600 text-white' : 'bg-slate-950 text-white'}`;
+                toast.textContent = message;
+                toast.classList.remove('translate-x-[130%]');
+                setTimeout(() => toast.classList.add('translate-x-[130%]'), 2800);
+            },
+            cerrarSesion() {
+                localStorage.clear();
+                signOut(auth).finally(() => location.href = 'index.html');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => PlayTestersModule.init());
+    </script>
+</body>
+</html>

@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <link rel="icon" href="club_lin_logo.jpg">
+    <link rel="apple-touch-icon" href="club_lin_logo.jpg">
+    
+    <title>Coffee POS ERP - Acceso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+            --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+        }
+        .fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .grid-overlay {
+            background-image:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: radial-gradient(circle at center, black 35%, transparent 90%);
+        }
+        .card-shine {
+            background:
+                radial-gradient(circle at top right, rgba(249, 115, 22, 0.22), transparent 34%),
+                linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+        }
+        .role-pill {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .input-shell:focus-within {
+            border-color: rgba(249, 115, 22, 0.8);
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+        }
+        .session-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 260;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: max(1.25rem, var(--safe-top)) 1.25rem max(1.25rem, var(--safe-bottom));
+            background:
+                radial-gradient(circle at 50% 18%, rgba(217, 145, 61, 0.2), transparent 34%),
+                linear-gradient(180deg, #130f0c 0%, #241811 48%, #0f0d0b 100%);
+            overflow: hidden;
+            transition: opacity 260ms ease, visibility 260ms ease;
+        }
+        .session-splash.is-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .session-splash::before,
+        .session-splash::after {
+            content: "";
+            position: absolute;
+            width: 42vw;
+            max-width: 220px;
+            height: 3px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, transparent, rgba(250, 204, 21, 0.92), rgba(255,255,255,0.8), transparent);
+            animation: borderRunA 4.8s linear infinite;
+        }
+        .session-splash::after {
+            animation-name: borderRunB;
+            animation-delay: -2.4s;
+        }
+        .session-splash-card {
+            position: relative;
+            width: min(100%, 340px);
+            border: 1px solid rgba(245, 194, 83, 0.28);
+            background: rgba(16, 12, 10, 0.64);
+            box-shadow: 0 24px 80px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.08);
+            border-radius: 32px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            backdrop-filter: blur(18px);
+        }
+        .session-splash-card img {
+            width: 132px;
+            height: 132px;
+            object-fit: contain;
+            margin: 0 auto 1.25rem;
+            border-radius: 28px;
+        }
+        .equalizer {
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 0.4rem;
+            height: 34px;
+            margin-top: 1.25rem;
+        }
+        .equalizer span {
+            width: 5px;
+            height: 12px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #fff8d6, #d9913d);
+            animation: equalize 950ms ease-in-out infinite;
+        }
+        .equalizer span:nth-child(2) { animation-delay: 110ms; }
+        .equalizer span:nth-child(3) { animation-delay: 220ms; }
+        .equalizer span:nth-child(4) { animation-delay: 330ms; }
+        .equalizer span:nth-child(5) { animation-delay: 440ms; }
+        @keyframes equalize { 0%, 100% { height: 10px; opacity: 0.58; } 45% { height: 32px; opacity: 1; } }
+        @keyframes borderRunA {
+            0% { top: 0.75rem; left: -45vw; transform: rotate(0deg); }
+            25% { top: 0.75rem; left: calc(100vw - 6rem); transform: rotate(0deg); }
+            26% { top: 0.75rem; left: calc(100vw - 6rem); transform: rotate(90deg); }
+            50% { top: calc(100vh - 1rem); left: calc(100vw - 6rem); transform: rotate(90deg); }
+            51% { top: calc(100vh - 1rem); left: calc(100vw - 6rem); transform: rotate(180deg); }
+            75% { top: calc(100vh - 1rem); left: -45vw; transform: rotate(180deg); }
+            76% { top: calc(100vh - 1rem); left: -45vw; transform: rotate(270deg); }
+            100% { top: 0.75rem; left: -45vw; transform: rotate(270deg); }
+        }
+        @keyframes borderRunB {
+            0% { bottom: 0.75rem; right: -45vw; transform: rotate(180deg); }
+            25% { bottom: 0.75rem; right: calc(100vw - 6rem); transform: rotate(180deg); }
+            26% { bottom: 0.75rem; right: calc(100vw - 6rem); transform: rotate(270deg); }
+            50% { bottom: calc(100vh - 1rem); right: calc(100vw - 6rem); transform: rotate(270deg); }
+            51% { bottom: calc(100vh - 1rem); right: calc(100vw - 6rem); transform: rotate(0deg); }
+            75% { bottom: calc(100vh - 1rem); right: -45vw; transform: rotate(0deg); }
+            76% { bottom: calc(100vh - 1rem); right: -45vw; transform: rotate(90deg); }
+            100% { bottom: 0.75rem; right: -45vw; transform: rotate(90deg); }
+        }
+        html, body {
+            min-height: 100%;
+        }
+        body {
+            padding-top: max(1rem, var(--safe-top));
+            padding-bottom: max(1rem, var(--safe-bottom));
+        }
+        body.keyboard-open {
+            align-items: flex-start;
+        }
+        body.keyboard-open #auth-card {
+            margin-top: max(1rem, var(--safe-top));
+            margin-bottom: max(1rem, var(--safe-bottom));
+        }
+        @media (max-height: 760px) {
+            #auth-card {
+                padding: 1.25rem;
+                border-radius: 1.6rem;
+            }
+            #auth-card h1 {
+                font-size: 1.7rem;
+            }
+        }
+        @media (max-width: 380px) {
+            #auth-card {
+                padding: 1.1rem;
+                border-radius: 1.4rem;
+            }
+            #auth-card .w-24.h-24 {
+                width: 5rem;
+                height: 5rem;
+            }
+            #auth-card h1 {
+                font-size: 1.55rem;
+            }
+            #auth-card .role-pill {
+                padding: 0.45rem 0.7rem;
+                letter-spacing: 0.18em;
+            }
+        }
+        @media (orientation: landscape) and (max-height: 560px) {
+            body {
+                align-items: flex-start;
+            }
+            #auth-card {
+                margin-top: max(0.8rem, var(--safe-top));
+                margin-bottom: max(0.8rem, var(--safe-bottom));
+                padding: 1.1rem;
+            }
+            #auth-card .mb-8 {
+                margin-bottom: 1rem;
+            }
+            #auth-card .w-24.h-24 {
+                width: 4.75rem;
+                height: 4.75rem;
+                margin-bottom: 0.75rem;
+            }
+            #auth-card h1 {
+                font-size: 1.45rem;
+            }
+            #auth-card #login-status,
+            #auth-card .flex.flex-wrap.justify-center.gap-2.mt-4 {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#110d0b] min-h-screen w-full flex items-start sm:items-center justify-center font-sans selection:bg-orange-500 selection:text-white relative overflow-y-auto overflow-x-hidden px-4 py-6 sm:py-10">
+    <div id="session-splash" class="session-splash" role="status" aria-live="polite">
+        <div class="session-splash-card">
+            <img src="splash-loader.gif" alt="Cargando Club Lin">
+            <h2 class="text-white text-xl font-black tracking-tight">Verificando tu cuenta...</h2>
+            <p class="text-amber-100/70 text-sm font-bold mt-2">Estamos preparando tu experiencia en Club Lin</p>
+            <div class="equalizer" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-[max(0.75rem,var(--safe-bottom))] right-4 z-[120] rounded-full bg-white/90 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg backdrop-blur-sm">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),transparent_38%),linear-gradient(180deg,#110d0b_0%,#1e1714_48%,#120f0d_100%)]"></div>
+    <div class="absolute inset-0 grid-overlay opacity-60"></div>
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-orange-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-amber-200 rounded-full mix-blend-multiply filter blur-[128px] opacity-10 animate-pulse" style="animation-delay: 2s;"></div>
+
+    <div id="toast" class="fixed top-10 left-1/2 transform -translate-x-1/2 -translate-y-[150%] transition-transform duration-300 z-[200] flex items-center p-4 text-white rounded-2xl shadow-2xl bg-red-600 border border-red-500 w-11/12 max-w-sm">
+        <i class="fa-solid fa-triangle-exclamation mr-3 text-xl"></i>
+        <div id="toast-message" class="text-sm font-bold">Mensaje</div>
+    </div>
+
+    <div id="auth-card" class="w-full max-w-xl card-shine backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] shadow-2xl border border-white/15 z-10 relative fade-in overflow-hidden my-auto mb-[max(1rem,var(--safe-bottom))]">
+        <div class="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent"></div>
+
+        <div class="flex flex-col items-center mb-8">
+            <div class="w-24 h-24 bg-white p-2 rounded-[1.6rem] shadow-xl flex items-center justify-center mb-4 overflow-hidden ring-4 ring-white/10">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-mug-hot text-4xl text-orange-500\'></i>'">
+            </div>
+            <div class="role-pill text-[10px] font-black uppercase tracking-[0.32em] text-orange-200 px-4 py-2 rounded-full mb-4">
+                Club Lin • Acceso seguro
+            </div>
+            <h1 class="text-3xl font-black text-white tracking-tight text-center" id="titulo-form">Iniciar Sesión</h1>
+            <p class="text-slate-300/80 text-sm mt-2 text-center max-w-sm" id="subtitulo-form">Ingresa tus credenciales para continuar</p>
+            <p id="login-status" class="text-[11px] text-orange-100/85 font-bold text-center mt-4">Tu sesion quedara abierta hasta cerrar sesion manualmente.</p>
+        </div>
+
+        <form id="form-login" onsubmit="AuthModule.iniciarSesion(event)" class="space-y-5">
+            <div>
+                <label class="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Correo Electrónico</label>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500"></i>
+                    <input type="email" id="login-email" required autocomplete="email" autocapitalize="none" spellcheck="false" class="w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500" placeholder="tu@correo.com">
+                </div>
+            </div>
+            <div>
+                <label class="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Contraseña</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500"></i>
+                    <input type="password" id="login-pass" required autocomplete="current-password" class="w-full pl-11 pr-12 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500" placeholder="••••••••">
+                    <button type="button" onclick="AuthModule.togglePassword('login-pass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-300 transition" aria-label="Mostrar contraseña">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+                <div class="flex justify-end mt-2">
+                    <button type="button" id="btn-recuperar-password" onclick="AuthModule.recuperarPassword()" class="text-xs font-bold text-orange-300 hover:text-orange-200 transition">Olvide mi contrasena</button>
+                </div>
+            </div>
+            
+            <button type="submit" id="btn-login" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl shadow-[0_0_15px_rgba(249,115,22,0.3)] transition transform active:scale-95 flex justify-center items-center gap-2 mt-2">
+                INGRESAR AL SISTEMA <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            
+            <div class="text-center pt-4 border-t border-slate-700/50 mt-4">
+                <p class="text-slate-400 text-sm">¿Eres nuevo aquí? <button type="button" onclick="AuthModule.cambiarModo('registro')" class="text-orange-400 font-bold hover:text-orange-300 transition">Crear cuenta</button></p>
+            </div>
+        </form>
+
+        <form id="form-registro" onsubmit="AuthModule.registrarUsuario(event)" class="space-y-4 hidden">
+            <div class="grid grid-cols-3 gap-2 text-[10px] font-black uppercase tracking-wider text-center">
+                <span id="reg-step-badge-1" class="rounded-full bg-orange-500 text-white py-2">Datos</span>
+                <span id="reg-step-badge-2" class="rounded-full bg-slate-800 text-slate-400 py-2">Acceso</span>
+                <span id="reg-step-badge-3" class="rounded-full bg-slate-800 text-slate-400 py-2">Confirmar</span>
+            </div>
+
+            <div data-reg-step="1" class="space-y-3">
+                <div>
+                    <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Nombre Completo</label>
+                    <input type="text" id="reg-nombre" required class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="Ej. Juan Perez">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Cedula</label>
+                        <input type="text" id="reg-cedula" required class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="Nro. de CI">
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Nacimiento</label>
+                        <input type="date" id="reg-nacimiento" required class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Telefono / WhatsApp</label>
+                    <input type="tel" id="reg-telefono" required class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="09XX XXX XXX">
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Direccion exacta</label>
+                    <input type="text" id="reg-direccion" required class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="Calle, numero, referencia">
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Barrio / Ciudad</label>
+                    <input type="text" id="reg-barrio" required class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="Barrio y ciudad">
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Trabajo / Actividad</label>
+                    <input type="text" id="reg-trabajo" required class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="Lugar de trabajo o actividad">
+                </div>
+            </div>
+
+            <div data-reg-step="2" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Correo Electronico</label>
+                    <input type="email" id="reg-email" required class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="tu@correo.com">
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Contrasena Nueva</label>
+                    <div class="relative">
+                        <input type="password" id="reg-pass" required minlength="6" class="w-full px-4 pr-12 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="Minimo 6 caracteres">
+                        <button type="button" onclick="AuthModule.togglePassword('reg-pass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-300 transition" aria-label="Mostrar contrasena"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">Confirmar Contrasena</label>
+                    <div class="relative">
+                        <input type="password" id="reg-pass-confirm" required minlength="6" class="w-full px-4 pr-12 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white outline-none focus:border-orange-500 focus:bg-slate-800 transition placeholder-slate-500 text-sm" placeholder="Repite la contrasena">
+                        <button type="button" onclick="AuthModule.togglePassword('reg-pass-confirm', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-300 transition" aria-label="Mostrar contrasena"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div data-reg-step="3" class="space-y-4 hidden">
+                <div class="rounded-2xl border border-orange-400/30 bg-orange-500/10 p-4">
+                    <p class="text-orange-200 text-[10px] font-black uppercase tracking-wider mb-2">Confirmacion</p>
+                    <div id="reg-resumen" class="text-sm text-slate-200 space-y-1"></div>
+                </div>
+                <label class="flex items-start gap-3 text-xs text-slate-300">
+                    <input type="checkbox" id="reg-acepta-terminos" class="mt-1 h-4 w-4 accent-orange-500" required>
+                    <span>Acepto los <a href="terminos.html" target="_blank" class="text-orange-300 font-bold underline">terminos y condiciones</a> y autorizo la revision de mis datos para beneficios Premium y acceso de prueba en Google Play.</span>
+                </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button type="button" id="btn-reg-atras" onclick="AuthModule.cambiarPasoRegistro(-1)" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-300 font-black py-3 rounded-xl transition">ATRAS</button>
+                <button type="button" id="btn-reg-siguiente" onclick="AuthModule.cambiarPasoRegistro(1)" class="col-span-2 bg-orange-500 hover:bg-orange-600 text-white font-black py-3 rounded-xl transition">SIGUIENTE</button>
+                <button type="submit" id="btn-registro" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.3)] transition transform active:scale-95 justify-center items-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> CREAR CUENTA
+                </button>
+            </div>
+
+            <div class="text-center pt-3 border-t border-slate-700/50 mt-2">
+                <p class="text-slate-400 text-xs">¿Ya tienes cuenta? <button type="button" onclick="AuthModule.cambiarModo('login')" class="text-blue-400 font-bold hover:text-blue-300 transition">Inicia sesion</button></p>
+            </div>
+        </form>
+
+    </div>
+
+    <div id="modal-recuperar-password" class="hidden fixed inset-0 z-[250] items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="recuperar-password-titulo">
+        <div class="w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] border border-orange-400/25 bg-slate-950 p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div class="flex items-start justify-between gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <img src="club_lin_logo.jpg" alt="Club Lin" class="h-12 w-12 rounded-xl border border-orange-400/30 bg-black object-contain">
+                    <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.28em] text-orange-400">Acceso seguro</p>
+                    <h2 id="recuperar-password-titulo" class="text-2xl font-black text-white mt-1">Cambiar contrasena</h2>
+                    <p class="text-sm text-slate-400 mt-2">Te enviaremos un codigo numerico valido por 15 minutos.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="AuthModule.cerrarRecuperacionPassword()" class="w-10 h-10 shrink-0 rounded-full bg-slate-800 text-slate-300 hover:text-white" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="recuperacion-paso-email" onsubmit="AuthModule.solicitarCodigoRecuperacion(event)" class="space-y-4">
+                <div>
+                    <label for="recuperacion-email" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Correo electronico</label>
+                    <input id="recuperacion-email" type="email" required autocomplete="email" autocapitalize="none" spellcheck="false" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3.5 text-white outline-none focus:border-orange-500" placeholder="tu@correo.com">
+                </div>
+                <button id="btn-enviar-codigo" type="submit" class="w-full rounded-xl bg-orange-500 py-3.5 font-black text-white hover:bg-orange-600 disabled:opacity-60">ENVIAR CODIGO</button>
+            </form>
+
+            <form id="recuperacion-paso-codigo" onsubmit="AuthModule.confirmarNuevaPassword(event)" class="hidden space-y-4">
+                <div class="rounded-xl border border-orange-400/20 bg-orange-400/10 px-4 py-3 text-sm text-orange-100">
+                    Codigo enviado a <strong id="recuperacion-email-destino"></strong>.
+                    <span id="recuperacion-cuenta-regresiva" class="block mt-1 text-xs text-orange-300"></span>
+                </div>
+                <div>
+                    <label for="recuperacion-codigo" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Codigo de 6 digitos</label>
+                    <input id="recuperacion-codigo" type="text" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3.5 text-center text-2xl font-black tracking-[0.4em] text-white outline-none focus:border-orange-500" placeholder="000000">
+                </div>
+                <div>
+                    <label for="recuperacion-nueva-password" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Nueva contrasena</label>
+                    <input id="recuperacion-nueva-password" type="password" required autocomplete="new-password" minlength="8" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3.5 text-white outline-none focus:border-orange-500" placeholder="Minimo 8 caracteres">
+                </div>
+                <div>
+                    <label for="recuperacion-confirmar-password" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Confirmar contrasena</label>
+                    <input id="recuperacion-confirmar-password" type="password" required autocomplete="new-password" minlength="8" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3.5 text-white outline-none focus:border-orange-500" placeholder="Repite la contrasena">
+                </div>
+                <button id="btn-confirmar-password" type="submit" class="w-full rounded-xl bg-orange-500 py-3.5 font-black text-white hover:bg-orange-600 disabled:opacity-60">CAMBIAR CONTRASENA</button>
+                <button type="button" onclick="AuthModule.volverAEnviarCodigo()" class="w-full py-2 text-xs font-bold text-orange-300 hover:text-orange-200">Solicitar otro codigo</button>
+            </form>
+            <p id="recuperacion-estado" class="mt-4 min-h-5 text-center text-xs font-bold text-slate-400" role="status" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, browserLocalPersistence, setPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+            messagingSenderId: "1084603889746",
+            appId: "1:1084603889746:web:822ce55a070dc146b2078b",
+            measurementId: "G-1LZVQ05T2E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const cloudFunctions = getFunctions(app, "us-central1");
+        const db = initializeFirestore(app, {
+            experimentalForceLongPolling: true,
+            useFetchStreams: false
+        });
+
+        window.AuthModule = {
+            autoRedirectEnCurso: false,
+            ultimoBackLogin: 0,
+            registroPasoActual: 1,
+            recuperacionEmail: '',
+            recuperacionExpiraAt: 0,
+            recuperacionTimer: null,
+
+            ocultarSplashSesion: function() {
+                const splash = document.getElementById('session-splash');
+                if (!splash) return;
+                splash.classList.add('is-hidden');
+                setTimeout(() => splash.remove(), 320);
+            },
+
+            cambiarModo: function(modo) {
+                const formLogin = document.getElementById('form-login');
+                const formReg = document.getElementById('form-registro');
+                const titulo = document.getElementById('titulo-form');
+                const subtitulo = document.getElementById('subtitulo-form');
+
+                if (modo === 'registro') {
+                    formLogin.classList.add('hidden');
+                    formReg.classList.remove('hidden');
+                    formReg.classList.add('fade-in');
+                    titulo.innerText = "Crear Cuenta";
+                    subtitulo.innerText = "Completa tus datos para Club Lin, beneficios Premium y prueba Google Play";
+                    this.mostrarPasoRegistro(1);
+                } else {
+                    formReg.classList.add('hidden');
+                    formLogin.classList.remove('hidden');
+                    formLogin.classList.add('fade-in');
+                    titulo.innerText = "Iniciar Sesión";
+                    subtitulo.innerText = "Ingresa tus credenciales para continuar";
+                }
+            },
+
+            mostrarPasoRegistro: function(paso) {
+                this.registroPasoActual = Math.max(1, Math.min(3, Number(paso || 1)));
+                document.querySelectorAll('[data-reg-step]').forEach((el) => {
+                    el.classList.toggle('hidden', Number(el.dataset.regStep) !== this.registroPasoActual);
+                });
+                for (let i = 1; i <= 3; i++) {
+                    const badge = document.getElementById(`reg-step-badge-${i}`);
+                    if (!badge) continue;
+                    badge.className = i === this.registroPasoActual
+                        ? 'rounded-full bg-orange-500 text-white py-2'
+                        : 'rounded-full bg-slate-800 text-slate-400 py-2';
+                }
+                const btnAtras = document.getElementById('btn-reg-atras');
+                const btnSiguiente = document.getElementById('btn-reg-siguiente');
+                const btnRegistro = document.getElementById('btn-registro');
+                if (btnAtras) btnAtras.classList.toggle('hidden', this.registroPasoActual === 1);
+                if (btnSiguiente) {
+                    btnSiguiente.classList.toggle('hidden', this.registroPasoActual === 3);
+                    btnSiguiente.classList.toggle('col-span-2', this.registroPasoActual === 1);
+                }
+                if (btnRegistro) {
+                    btnRegistro.classList.toggle('hidden', this.registroPasoActual !== 3);
+                    btnRegistro.classList.toggle('flex', this.registroPasoActual === 3);
+                }
+                if (this.registroPasoActual === 3) this.actualizarResumenRegistro();
+            },
+
+            validarPasoRegistro: function(paso) {
+                const contenedor = document.querySelector(`[data-reg-step="${paso}"]`);
+                if (!contenedor) return true;
+                const campos = Array.from(contenedor.querySelectorAll('input[required]'));
+                for (const campo of campos) {
+                    if (!campo.checkValidity()) {
+                        campo.reportValidity();
+                        return false;
+                    }
+                }
+                if (paso === 2) {
+                    const pass = document.getElementById('reg-pass').value;
+                    const passConfirm = document.getElementById('reg-pass-confirm').value;
+                    if (pass !== passConfirm) {
+                        this.mostrarError("Las contraseñas no coinciden.");
+                        return false;
+                    }
+                }
+                return true;
+            },
+
+            cambiarPasoRegistro: function(delta) {
+                if (delta > 0 && !this.validarPasoRegistro(this.registroPasoActual)) return;
+                this.mostrarPasoRegistro(this.registroPasoActual + delta);
+            },
+
+            obtenerSolicitudPremiumRegistro: function() {
+                return {
+                    nombreCompleto: document.getElementById('reg-nombre').value.trim(),
+                    cedulaIdentidad: document.getElementById('reg-cedula').value.trim(),
+                    fechaNacimiento: document.getElementById('reg-nacimiento').value,
+                    direccionExacta: document.getElementById('reg-direccion').value.trim(),
+                    barrioCiudad: document.getElementById('reg-barrio').value.trim(),
+                    telefono: document.getElementById('reg-telefono').value.trim(),
+                    correoElectronico: document.getElementById('reg-email').value.trim(),
+                    lugarTrabajoActividad: document.getElementById('reg-trabajo').value.trim()
+                };
+            },
+
+            actualizarResumenRegistro: function() {
+                const solicitud = this.obtenerSolicitudPremiumRegistro();
+                const resumen = document.getElementById('reg-resumen');
+                if (!resumen) return;
+                resumen.innerHTML = `
+                    <p><b>Nombre:</b> ${solicitud.nombreCompleto || '-'}</p>
+                    <p><b>CI:</b> ${solicitud.cedulaIdentidad || '-'}</p>
+                    <p><b>Correo:</b> ${solicitud.correoElectronico || '-'}</p>
+                    <p><b>Telefono:</b> ${solicitud.telefono || '-'}</p>
+                    <p><b>Direccion:</b> ${solicitud.direccionExacta || '-'}</p>
+                    <p class="text-orange-200 font-bold pt-2">Tu solicitud quedara pendiente de revision administrativa.</p>
+                `;
+            },
+
+            togglePassword: function(inputId, btn) {
+                const input = document.getElementById(inputId);
+                if (!input || !btn) return;
+                const icon = btn.querySelector('i');
+                const visible = input.type === 'text';
+                input.type = visible ? 'password' : 'text';
+                if (icon) icon.className = visible ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
+            },
+
+            actualizarEstadoLogin: function(mensaje) {
+                const label = document.getElementById('login-status');
+                if (label) label.innerText = mensaje;
+            },
+
+            esAppNativa: function() {
+                return Boolean(window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() !== 'web');
+            },
+
+            prepararLayoutMovil: function() {
+                const ajustarViewport = () => {
+                    const viewport = window.visualViewport;
+                    const tecladoAbierto = viewport ? (window.innerHeight - viewport.height) > 140 : false;
+                    document.body.classList.toggle('keyboard-open', tecladoAbierto);
+                };
+
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', ajustarViewport);
+                    window.visualViewport.addEventListener('scroll', ajustarViewport);
+                }
+
+                document.addEventListener('focusin', (event) => {
+                    const target = event.target;
+                    if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLTextAreaElement)) return;
+                    setTimeout(() => {
+                        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        ajustarViewport();
+                    }, 180);
+                });
+
+                document.addEventListener('focusout', () => {
+                    setTimeout(ajustarViewport, 120);
+                });
+
+                if (this.esAppNativa()) {
+                    history.replaceState({ authRoot: true }, '', window.location.href);
+                    history.pushState({ authGuard: true }, '', window.location.href);
+                    window.addEventListener('popstate', () => {
+                        const formRegistroVisible = !document.getElementById('form-registro').classList.contains('hidden');
+                        const activo = document.activeElement;
+                        const campoActivo = activo instanceof HTMLInputElement || activo instanceof HTMLTextAreaElement || activo instanceof HTMLSelectElement;
+
+                        if (campoActivo) {
+                            activo.blur();
+                            history.pushState({ authGuard: true }, '', window.location.href);
+                            return;
+                        }
+
+                        if (formRegistroVisible) {
+                            this.cambiarModo('login');
+                            history.pushState({ authGuard: true }, '', window.location.href);
+                            return;
+                        }
+
+                        const ahora = Date.now();
+                        if (ahora - this.ultimoBackLogin < 1600) return;
+                        this.ultimoBackLogin = ahora;
+                        this.mostrarError('Vuelve a tocar atras para salir de la app.');
+                        history.pushState({ authGuard: true }, '', window.location.href);
+                    });
+                }
+
+                ajustarViewport();
+            },
+
+            prepararSesionPersistente: async function() {
+                try {
+                    await setPersistence(auth, browserLocalPersistence);
+                } catch (error) {
+                    console.error("No se pudo fijar persistencia local", error);
+                }
+            },
+
+            observarSesionGuardada: function() {
+                onAuthStateChanged(auth, async (user) => {
+                    if (this.autoRedirectEnCurso) return;
+
+                    if (!user) {
+                        this.actualizarEstadoLogin("Tu sesion quedara abierta hasta cerrar sesion manualmente.");
+                        this.ocultarSplashSesion();
+                        return;
+                    }
+
+                    this.actualizarEstadoLogin("Sesion detectada. Redirigiendo...");
+                    await this.enrutarUsuario(user.uid, user.email || "");
+                });
+            },
+
+            mostrarError: function(mensaje) {
+                const t = document.getElementById('toast');
+                document.getElementById('toast-message').innerText = mensaje;
+                t.classList.remove('-translate-y-[150%]'); 
+                t.classList.add('translate-y-0');
+                setTimeout(() => { 
+                    t.classList.remove('translate-y-0'); 
+                    t.classList.add('-translate-y-[150%]'); 
+                }, 4000);
+            },
+
+            actualizarEstadoRecuperacion: function(mensaje, tipo = 'info') {
+                const estado = document.getElementById('recuperacion-estado');
+                if (!estado) return;
+                estado.textContent = mensaje || '';
+                estado.className = `mt-4 min-h-5 text-center text-xs font-bold ${tipo === 'error' ? 'text-red-300' : (tipo === 'success' ? 'text-emerald-300' : 'text-slate-400')}`;
+            },
+
+            mensajeErrorRecuperacion: function(error, accion) {
+                const code = String(error?.code || '').replace(/^functions\//, '');
+                const reason = String(error?.details?.reason || '');
+                const detail = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+                if (detail.includes('err_blocked_by_client') || detail.includes('blocked by client')) {
+                    console.warn('El navegador bloqueo una solicitud. Prueba sin AdBlock, Brave Shields o proteccion web del antivirus.', error);
+                    return 'El navegador bloqueo la conexion. Desactiva temporalmente el bloqueador para este sitio.';
+                }
+                const byReason = {
+                    invalid: 'El codigo es incorrecto.',
+                    expired: 'El codigo vencio, solicita uno nuevo.',
+                    blocked: 'Se alcanzo el limite de intentos. Solicita un codigo nuevo.',
+                    consumed: 'Este codigo ya fue utilizado.',
+                    processing: 'La actualizacion ya esta en proceso. Espera un momento.',
+                    invalid_password: 'La nueva contrasena no cumple los requisitos de seguridad.',
+                    auth_permission: 'El servicio no tiene permiso para actualizar la cuenta.',
+                    network: 'No se pudo conectar con Firebase Authentication.'
+                };
+                if (byReason[reason]) return byReason[reason];
+                if (code === 'deadline-exceeded') return 'El codigo vencio, solicita uno nuevo.';
+                if (code === 'resource-exhausted') return accion === 'send'
+                    ? (error?.message || 'Demasiadas solicitudes. Espera antes de volver a intentar.')
+                    : 'Se alcanzo el limite de intentos. Solicita un codigo nuevo.';
+                if (code === 'already-exists') return 'Este codigo ya fue utilizado.';
+                if (code === 'failed-precondition') return error?.message || 'El codigo no es valido.';
+                if (code === 'invalid-argument') return error?.message || 'Revisa los datos ingresados.';
+                if (code === 'permission-denied') return 'No fue posible autorizar el cambio de contrasena.';
+                if (['unavailable', 'deadline-exceeded', 'network-request-failed'].includes(code)) return 'No se pudo conectar con el servidor. Revisa internet e intenta nuevamente.';
+                return error?.message || 'No pudimos completar la recuperacion de contrasena.';
+            },
+
+            ejecutarRecuperacionConTimeout: function(promesa, timeoutMs = 30000) {
+                return Promise.race([
+                    promesa,
+                    new Promise((_, reject) => setTimeout(() => reject({ code: 'functions/unavailable', message: 'Tiempo de espera agotado.' }), timeoutMs))
+                ]);
+            },
+
+            recuperarPassword: function() {
+                const emailInput = document.getElementById('login-email');
+                const email = String(emailInput?.value || '').trim().toLowerCase();
+                const modal = document.getElementById('modal-recuperar-password');
+                document.getElementById('recuperacion-email').value = email;
+                document.getElementById('recuperacion-paso-email').classList.remove('hidden');
+                document.getElementById('recuperacion-paso-codigo').classList.add('hidden');
+                this.actualizarEstadoRecuperacion('');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => document.getElementById('recuperacion-email').focus(), 80);
+            },
+
+            cerrarRecuperacionPassword: function() {
+                const modal = document.getElementById('modal-recuperar-password');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                if (this.recuperacionTimer) clearInterval(this.recuperacionTimer);
+                this.recuperacionTimer = null;
+            },
+
+            actualizarCuentaRegresiva: function() {
+                const label = document.getElementById('recuperacion-cuenta-regresiva');
+                const restante = Math.max(0, this.recuperacionExpiraAt - Date.now());
+                const minutos = Math.floor(restante / 60000);
+                const segundos = Math.floor((restante % 60000) / 1000);
+                label.textContent = restante > 0
+                    ? `Valido por ${minutos}:${String(segundos).padStart(2, '0')} minutos.`
+                    : 'El codigo vencio. Solicita uno nuevo.';
+                if (!restante && this.recuperacionTimer) {
+                    clearInterval(this.recuperacionTimer);
+                    this.recuperacionTimer = null;
+                }
+            },
+
+            iniciarCuentaRegresiva: function(seconds) {
+                if (this.recuperacionTimer) clearInterval(this.recuperacionTimer);
+                this.recuperacionExpiraAt = Date.now() + Number(seconds || 900) * 1000;
+                this.actualizarCuentaRegresiva();
+                this.recuperacionTimer = setInterval(() => this.actualizarCuentaRegresiva(), 1000);
+            },
+
+            solicitarCodigoRecuperacion: async function(event) {
+                event.preventDefault();
+                const emailInput = document.getElementById('recuperacion-email');
+                const email = String(emailInput.value || '').trim().toLowerCase();
+                const btn = document.getElementById('btn-enviar-codigo');
+                if (!email || !emailInput.checkValidity()) {
+                    this.mostrarError('Ingresa un correo electronico valido.');
+                    emailInput.focus();
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = 'ENVIANDO...';
+                this.actualizarEstadoRecuperacion('Enviando codigo...');
+                try {
+                    const solicitarCodigo = httpsCallable(cloudFunctions, 'solicitarCodigoRecuperacion');
+                    const response = await this.ejecutarRecuperacionConTimeout(solicitarCodigo({ email }));
+                    this.recuperacionEmail = email;
+                    document.getElementById('recuperacion-email-destino').textContent = email;
+                    document.getElementById('recuperacion-paso-email').classList.add('hidden');
+                    document.getElementById('recuperacion-paso-codigo').classList.remove('hidden');
+                    document.getElementById('recuperacion-codigo').value = '';
+                    document.getElementById('recuperacion-nueva-password').value = '';
+                    document.getElementById('recuperacion-confirmar-password').value = '';
+                    this.iniciarCuentaRegresiva(response.data?.expiresInSeconds || 900);
+                    setTimeout(() => document.getElementById('recuperacion-codigo').focus(), 80);
+                    this.actualizarEstadoRecuperacion('Codigo enviado. Revisa tambien la carpeta Spam.', 'success');
+                    this.mostrarError('Si el correo esta registrado, recibiras el codigo. Revisa tambien Spam.');
+                } catch (error) {
+                    console.error('Error al solicitar codigo', error);
+                    const mensaje = this.mensajeErrorRecuperacion(error, 'send');
+                    this.actualizarEstadoRecuperacion(mensaje, 'error');
+                    this.mostrarError(mensaje);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'ENVIAR CODIGO';
+                }
+            },
+
+            volverAEnviarCodigo: function() {
+                if (this.recuperacionTimer) clearInterval(this.recuperacionTimer);
+                this.recuperacionTimer = null;
+                document.getElementById('recuperacion-paso-codigo').classList.add('hidden');
+                document.getElementById('recuperacion-paso-email').classList.remove('hidden');
+                document.getElementById('recuperacion-email').value = this.recuperacionEmail;
+                this.actualizarEstadoRecuperacion('Solicita un codigo nuevo.');
+                setTimeout(() => document.getElementById('recuperacion-email').focus(), 80);
+            },
+
+            confirmarNuevaPassword: async function(event) {
+                event.preventDefault();
+                const code = String(document.getElementById('recuperacion-codigo').value || '').replace(/\D/g, '').slice(0, 6);
+                const newPassword = document.getElementById('recuperacion-nueva-password').value;
+                const confirmPassword = document.getElementById('recuperacion-confirmar-password').value;
+                const btn = document.getElementById('btn-confirmar-password');
+                if (!/^\d{6}$/.test(code)) {
+                    this.mostrarError('Ingresa el codigo completo de 6 digitos.');
+                    return;
+                }
+                if (newPassword.length < 8) {
+                    this.mostrarError('La nueva contrasena debe tener al menos 8 caracteres.');
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    this.mostrarError('Las contrasenas no coinciden.');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = 'VALIDANDO...';
+                this.actualizarEstadoRecuperacion('Validando codigo y actualizando contrasena...');
+                try {
+                    const restablecerPassword = httpsCallable(cloudFunctions, 'restablecerPasswordConCodigo');
+                    await this.ejecutarRecuperacionConTimeout(restablecerPassword({ email: this.recuperacionEmail, code, newPassword }));
+                    document.getElementById('login-email').value = this.recuperacionEmail;
+                    document.getElementById('login-pass').value = '';
+                    document.getElementById('recuperacion-codigo').value = '';
+                    document.getElementById('recuperacion-nueva-password').value = '';
+                    document.getElementById('recuperacion-confirmar-password').value = '';
+                    this.actualizarEstadoRecuperacion('Contrasena actualizada correctamente.', 'success');
+                    this.cerrarRecuperacionPassword();
+                    this.mostrarError('Contrasena actualizada. Ya puedes iniciar sesion.');
+                    setTimeout(() => document.getElementById('login-pass').focus(), 100);
+                } catch (error) {
+                    console.error('Error al cambiar contrasena', error);
+                    const mensaje = this.mensajeErrorRecuperacion(error, 'reset');
+                    this.actualizarEstadoRecuperacion(mensaje, 'error');
+                    this.mostrarError(mensaje);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'CAMBIAR CONTRASENA';
+                }
+            },
+
+            redirigirPorRol: function(data) {
+                if (data.rol === 'admin') window.location.replace('dashboard.html');
+                else if (data.rol === 'cajero') window.location.replace('pos.html');
+                else if (data.rol === 'cocina') window.location.replace('kds.html');
+                else if (data.rol === 'delivery') window.location.replace('app_delivery.html');
+                else if (data.rol === 'cobrador') window.location.replace('clientes.html?view=cobranzas');
+                else if (data.rol === 'produccion') window.location.replace('produccion.html');
+                else window.location.replace('app_cliente.html');
+            },
+
+            obtenerSesionLocalValida: function(uid, email) {
+                try {
+                    const sesion = JSON.parse(localStorage.getItem('__pos_session') || 'null');
+                    if (!sesion || sesion.uid !== uid || !sesion.rol) return null;
+                    if (email && sesion.email && String(sesion.email).toLowerCase() !== String(email).toLowerCase()) return null;
+                    return sesion;
+                } catch {
+                    return null;
+                }
+            },
+
+            enrutarUsuario: async function(uid, email) {
+                if (this.autoRedirectEnCurso) return false;
+                this.autoRedirectEnCurso = true;
+                try {
+                    const docSnap = await getDoc(doc(db, "users", uid));
+                    if (!docSnap.exists()) {
+                        this.autoRedirectEnCurso = false;
+                        this.ocultarSplashSesion();
+                        this.mostrarError("Error: Perfil de usuario no encontrado en la base de datos.");
+                        return false;
+                    }
+
+                    const data = docSnap.data();
+                    const sesionLocal = {
+                        uid: uid,
+                        email: email,
+                        nombre: data.nombre || 'Usuario',
+                        rol: data.rol,
+                        sucursal: data.sucursal || 'Centro'
+                    };
+                    localStorage.setItem('__pos_session', JSON.stringify(sesionLocal));
+                    this.redirigirPorRol(sesionLocal);
+                    return true;
+                } catch (e) {
+                    const errorRed = e?.code === 'unavailable' || e?.message?.toLowerCase().includes('network') || e?.message?.toLowerCase().includes('offline');
+                    const sesionLocal = this.obtenerSesionLocalValida(uid, email);
+                    if (errorRed && sesionLocal) {
+                        console.warn("Firestore no disponible. Usando sesion local vigente.", e);
+                        this.redirigirPorRol(sesionLocal);
+                        return true;
+                    }
+
+                    this.autoRedirectEnCurso = false;
+                    this.ocultarSplashSesion();
+                    console.error(e);
+                    if (errorRed) {
+                        this.mostrarError("No pudimos conectar con Firestore. Revisa internet y vuelve a intentar.");
+                    } else {
+                        this.mostrarError("Error al verificar los permisos del usuario.");
+                    }
+                    return false;
+                }
+            },
+
+            iniciarSesion: async function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('btn-login');
+                const btnOriginal = btn.innerHTML;
+                const email = document.getElementById('login-email').value.trim().toLowerCase();
+                const pass = document.getElementById('login-pass').value;
+
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> VERIFICANDO...`;
+                btn.disabled = true;
+
+                try {
+                    await this.prepararSesionPersistente();
+                    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                    const redirigido = await this.enrutarUsuario(userCredential.user.uid, email);
+                    if (!redirigido) {
+                        btn.innerHTML = btnOriginal;
+                        btn.disabled = false;
+                    }
+                } catch (error) {
+                    if (['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(error.code)) {
+                        this.mostrarError("Correo o contrasena incorrectos. Verifica los datos o usa 'Olvide mi contrasena'.");
+                    } else if (error.code === 'auth/user-disabled') {
+                        this.mostrarError("Esta cuenta esta deshabilitada. Contacta al administrador.");
+                    } else if (error.code === 'auth/network-request-failed') {
+                        this.mostrarError("No pudimos conectar con Firebase. Verifica internet o vuelve a intentar.");
+                    } else if (error.code === 'auth/too-many-requests') {
+                        this.mostrarError("Demasiados intentos. Intenta más tarde.");
+                    } else {
+                        console.error('Error inesperado al iniciar sesion', error);
+                        this.mostrarError("Ocurrió un error al iniciar sesión.");
+                    }
+                    btn.innerHTML = btnOriginal;
+                    btn.disabled = false;
+                }
+            },
+
+            registrarUsuario: async function(e) {
+                e.preventDefault();
+                if (!this.validarPasoRegistro(1) || !this.validarPasoRegistro(2) || !this.validarPasoRegistro(3)) return;
+                const btn = document.getElementById('btn-registro');
+                const btnOriginal = btn.innerHTML;
+                 
+                const nombre = document.getElementById('reg-nombre').value.trim();
+                const email = document.getElementById('reg-email').value.trim();
+                const telefono = document.getElementById('reg-telefono').value.trim();
+                const pass = document.getElementById('reg-pass').value;
+                const passConfirm = document.getElementById('reg-pass-confirm').value;
+                const solicitudPremium = this.obtenerSolicitudPremiumRegistro();
+                const aceptaTerminos = document.getElementById('reg-acepta-terminos').checked;
+
+                if (pass !== passConfirm) {
+                    this.mostrarError("Las contraseñas no coinciden.");
+                    btn.disabled = false;
+                    return;
+                }
+                if (!aceptaTerminos) {
+                    this.mostrarError("Debes aceptar los terminos y condiciones.");
+                    return;
+                }
+
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> CREANDO CUENTA...`;
+                btn.disabled = true;
+
+                try {
+                    await this.prepararSesionPersistente();
+                    // 1. Crear en Firebase Auth
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                    const uid = userCredential.user.uid;
+
+                    // 2. Crear Perfil en Firestore
+                    await setDoc(doc(db, "users", uid), {
+                        nombre: nombre,
+                        email: email,
+                        telefono: telefono,
+                        rol: "cliente", // Obligatoriamente nace como cliente
+                        tipoCliente: "fiel",
+                        estadoBeneficios: "pendiente",
+                        puntos: 0,
+                        deuda: 0,
+                        direccion: solicitudPremium.direccionExacta,
+                        fechaRegistro: new Date().toISOString(),
+                        solicitudPremium,
+                        solicitudPremiumActualizadaAt: new Date(),
+                        terminosAceptados: true,
+                        terminosAceptadosAt: new Date().toISOString(),
+                        origenRegistro: "crear_cuenta_cliente",
+                        playTesterStatus: "pending",
+                        playTesterRequestedAt: new Date().toISOString(),
+                        playTesterGroupEmail: "club-lin-testers@googlegroups.com",
+                        playStoreUrl: "https://play.google.com/store/apps/details?id=com.lingroup.clublin"
+                    });
+
+                    // 3. Enrutar directamente a la App Cliente
+                    await this.enrutarUsuario(uid, email);
+
+                } catch (error) {
+                    console.error(error);
+                    if (error.code === 'auth/email-already-in-use') {
+                        this.mostrarError("Este correo ya está registrado. Por favor, inicia sesión.");
+                    } else if (error.code === 'auth/weak-password') {
+                        this.mostrarError("La contraseña es muy débil. Usa al menos 6 caracteres.");
+                    } else if (error.code === 'auth/network-request-failed') {
+                        this.mostrarError("No pudimos conectar con Firebase. Verifica internet o vuelve a intentar.");
+                    } else {
+                        this.mostrarError("Ocurrió un error al crear la cuenta.");
+                    }
+                    btn.innerHTML = btnOriginal;
+                    btn.disabled = false;
+                }
+            }
+        };
+
+        // El canal Listen bloqueado por una extension no debe confundirse con el cambio de contrasena.
+        window.addEventListener('unhandledrejection', (event) => {
+            const detalle = String(event?.reason?.message || event?.reason || '').toLowerCase();
+            if (!detalle.includes('blocked_by_client') && !detalle.includes('blocked by client')) return;
+            console.warn('Firestore fue bloqueado por el navegador. Desactiva AdBlock, Brave Shields o la proteccion web para este sitio.');
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await window.AuthModule.prepararSesionPersistente();
+            window.AuthModule.prepararLayoutMovil();
+            window.AuthModule.observarSesionGuardada();
+        });
+    </script>
+</body>
+</html>

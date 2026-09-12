@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" href="favicon.ico">
+    <title>Coffee POS ERP - Monitor de Problemas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800 opacity-0 transition-opacity duration-500" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-50 flex items-center p-4 mb-4 text-white rounded-lg shadow-xl bg-slate-800 border border-slate-700">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20">
+            <i id="toast-icon" class="fa-solid fa-satellite-dish text-blue-400"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-mug-hot text-orange-500\'></i>'">
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide">
+            <a href="dashboard.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-house text-lg w-6"></i><span>Panel Principal</span>
+            </a>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Administracion</p>
+            <a href="sucursales.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-store text-lg w-6"></i><span>Sucursales</span></a>
+            
+            <a href="stock.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-warehouse text-lg w-6"></i><span>Stock</span>
+            </a>
+            <a href="usuarios.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-user-shield text-lg w-6"></i><span>Personal</span></a>
+            <a href="produccion.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-burger text-lg w-6"></i><span>Produccion</span></a>
+            <a href="notificaciones.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-bell text-lg w-6"></i><span>Notificaciones</span></a>
+
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Operaciones</p>
+            <a href="clientes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-gem text-lg w-6"></i><span>Clientes CRM</span></a>
+            <a href="kds.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-fire-burner text-lg w-6"></i><span>Monitor Cocina</span></a>
+
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Finanzas</p>
+            <a href="caja.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-vault text-lg w-6"></i><span>Arqueo de Caja</span></a>
+            <a href="reportes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition"><i class="fa-solid fa-chart-line text-lg w-6"></i><span>Reportes</span></a>
+            <button class="w-full flex items-center gap-4 bg-orange-500 text-white p-3 rounded-xl font-semibold shadow-md transition">
+                <i class="fa-solid fa-triangle-exclamation text-lg w-6"></i><span>Monitor Problemas</span>
+            </button>
+        </nav>
+        <div class="p-4 bg-slate-950 text-xs text-slate-500 text-center border-t border-slate-800">Supervision Operativa</div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="bg-white p-6 shadow-sm flex justify-between items-center z-10 border-b border-slate-200">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 p-1.5 shadow-sm overflow-hidden flex items-center justify-center">
+                    <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-triangle-exclamation text-orange-500\'></i>'">
+                </div>
+                <div>
+                <h2 class="text-2xl font-black text-slate-800">Monitor de Problemas v10.0</h2>
+                <p class="text-slate-500 text-sm">Incidencias operativas del POS, Admin, App Cliente, Produccion y Delivery.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="MonitorProblemasModule.cargarAlertas()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold transition border border-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-rotate"></i> Actualizar
+                </button>
+                <button onclick="MonitorProblemasModule.aplicarFiltroRapido('abierta')" class="bg-red-50 hover:bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold transition border border-red-200 flex items-center gap-2">
+                    <i class="fa-solid fa-siren-on"></i> Solo abiertas
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 bg-slate-100 space-y-6">
+            <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-slate-400">Alertas Totales</p>
+                    <p id="kpi-total-alertas" class="text-3xl font-black text-slate-800 mt-2">0</p>
+                    <p class="text-xs text-slate-500 mt-2">Historico cargado</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-amber-500">Abiertas</p>
+                    <p id="kpi-abiertas" class="text-3xl font-black text-amber-600 mt-2">0</p>
+                    <p class="text-xs text-slate-500 mt-2">Pendientes de revision</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-red-200 p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-red-500">Criticas / Error</p>
+                    <p id="kpi-criticas" class="text-3xl font-black text-red-600 mt-2">0</p>
+                    <p class="text-xs text-slate-500 mt-2">Mayor prioridad</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-emerald-200 p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-emerald-500">Resueltas</p>
+                    <p id="kpi-resueltas" class="text-3xl font-black text-emerald-600 mt-2">0</p>
+                    <p class="text-xs text-slate-500 mt-2">Cerradas por admin</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-blue-200 p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-blue-500">Modulos Impactados</p>
+                    <p id="kpi-modulos" class="text-3xl font-black text-blue-600 mt-2">0</p>
+                    <p class="text-xs text-slate-500 mt-2">Fuentes activas</p>
+                </div>
+            </section>
+
+            <section class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-gauge-high text-orange-500"></i> KPIs de Rendimiento</h3>
+                        <p class="text-xs text-slate-500 font-semibold">Vista ejecutiva de compilacion, sincronizacion y estabilidad operativa por capa tecnica.</p>
+                    </div>
+                    <span class="text-xs font-black uppercase tracking-widest text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-full">Ultimos 7 dias</span>
+                </div>
+                <div id="grid-kpis-rendimiento" class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                    <div class="bg-slate-900 rounded-3xl border border-slate-800 p-5 text-white">
+                        <p class="text-sm font-black">Hosting</p>
+                        <p class="text-xs text-slate-400 mt-2">Cargando datos...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-4">
+                <div>
+                    <h3 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-mobile-screen-button text-orange-500"></i> Salud por Aplicacion</h3>
+                    <p class="text-xs text-slate-500 font-semibold">Describe cada app, su funcion y el estado operativo que se detecta desde las alertas.</p>
+                </div>
+                <div id="grid-salud-apps" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                        <p class="text-sm font-black text-slate-700">POS</p>
+                        <p class="text-xs text-slate-400 mt-2">Cargando resumen...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-column text-orange-500"></i> Tendencia de Incidencias</h3>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Comparativo diario de alertas abiertas vs resueltas.</p>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">7 dias</span>
+                    </div>
+                    <div class="relative h-72">
+                        <canvas id="chart-tendencia-alertas"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-orange-500"></i> Distribucion por Modulo</h3>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Peso relativo de los problemas detectados en cada app o sistema.</p>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">Actual</span>
+                    </div>
+                    <div class="relative h-72">
+                        <canvas id="chart-modulos-alertas"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <div class="flex flex-col xl:flex-row xl:items-end gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 flex-1">
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Modulo</label>
+                            <select id="filtro-modulo" onchange="MonitorProblemasModule.renderizarAlertas()" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                                <option value="">Todos</option>
+                                <option value="POS">POS</option>
+                                <option value="ADMIN">ADMIN</option>
+                                <option value="APP CLIENTE">APP CLIENTE</option>
+                                <option value="APP PRODUCCION">APP PRODUCCION</option>
+                                <option value="APP DELIVERY">APP DELIVERY</option>
+                                <option value="SISTEMA">SISTEMA</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Nivel</label>
+                            <select id="filtro-nivel" onchange="MonitorProblemasModule.renderizarAlertas()" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                                <option value="">Todos</option>
+                                <option value="critical">Critico</option>
+                                <option value="error">Error</option>
+                                <option value="warning">Warning</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Estado</label>
+                            <select id="filtro-estado" onchange="MonitorProblemasModule.renderizarAlertas()" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-orange-500 outline-none">
+                                <option value="">Todos</option>
+                                <option value="abierta">Abierta</option>
+                                <option value="resuelta">Resuelta</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Buscar</label>
+                            <input id="filtro-texto" oninput="MonitorProblemasModule.renderizarAlertas()" type="text" class="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Mensaje, sucursal, tipo...">
+                        </div>
+                    </div>
+                    <div class="xl:w-[260px] grid grid-cols-2 gap-3">
+                        <button onclick="MonitorProblemasModule.limpiarFiltros()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold transition border border-slate-300">
+                            Limpiar
+                        </button>
+                        <button onclick="MonitorProblemasModule.renderizarAlertas()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-bold transition">
+                            Aplicar
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-1 xl:grid-cols-[320px,1fr] gap-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <h3 class="font-black text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-layer-group text-orange-500"></i> Resumen por Modulo</h3>
+                    <div id="lista-resumen-modulos" class="space-y-3">
+                        <p class="text-sm text-slate-400 font-semibold">Cargando resumen...</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                        <div>
+                            <h3 class="font-black text-slate-800">Bitacora de Problemas</h3>
+                            <p class="text-xs text-slate-500 font-semibold">MS, errores, avisos operativos e inconsistencias reportadas por modulo.</p>
+                        </div>
+                        <span id="badge-conteo-alertas" class="text-xs font-black uppercase tracking-widest text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-full">0 registros</span>
+                    </div>
+                    <div class="overflow-auto max-h-[640px]">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
+                                <tr class="text-slate-500 uppercase text-[11px] tracking-widest">
+                                    <th class="text-left px-4 py-3">Fecha</th>
+                                    <th class="text-left px-4 py-3">Modulo</th>
+                                    <th class="text-left px-4 py-3">Nivel</th>
+                                    <th class="text-left px-4 py-3">Mensaje</th>
+                                    <th class="text-left px-4 py-3">Sucursal</th>
+                                    <th class="text-left px-4 py-3">Estado</th>
+                                    <th class="text-right px-4 py-3">Accion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-alertas-body">
+                                <tr><td colspan="7" class="px-4 py-8 text-center text-slate-400 font-bold">Cargando alertas...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                    <div>
+                        <h3 class="font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-orange-500"></i> Historial de Resoluciones</h3>
+                        <p class="text-xs text-slate-500 font-semibold">Registro de problemas resueltos, por quien fueron cerrados y cuando.</p>
+                    </div>
+                    <span id="badge-historial-resuelto" class="text-xs font-black uppercase tracking-widest text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-full">0 resueltas</span>
+                </div>
+                <div class="overflow-auto max-h-[360px]">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
+                            <tr class="text-slate-500 uppercase text-[11px] tracking-widest">
+                                <th class="text-left px-4 py-3">Resuelta</th>
+                                <th class="text-left px-4 py-3">Modulo</th>
+                                <th class="text-left px-4 py-3">Problema</th>
+                                <th class="text-left px-4 py-3">Sucursal</th>
+                                <th class="text-left px-4 py-3">Resuelto por</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-alertas-resueltas-body">
+                            <tr><td colspan="5" class="px-4 py-8 text-center text-slate-400 font-bold">Cargando historial...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { initializeFirestore, collection, query, orderBy, limit, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = initializeFirestore(app, {
+            experimentalForceLongPolling: true,
+            useFetchStreams: false
+        });
+
+        window.MonitorProblemasModule = {
+            alertasCache: [],
+            usuarioActual: null,
+            unsubscribeAlertas: null,
+            chartTendencia: null,
+            chartModulos: null,
+
+            init: function() {
+                const sesionStr = localStorage.getItem('__pos_session');
+                if (!sesionStr) return window.location.replace('index.html');
+                this.usuarioActual = JSON.parse(sesionStr);
+                if (this.usuarioActual.rol !== 'admin') return window.location.replace('index.html');
+
+                onAuthStateChanged(auth, (user) => {
+                    if (!user) return window.location.replace('index.html');
+                    document.getElementById('app-body').classList.remove('opacity-0');
+                    this.cargarAlertas();
+                });
+            },
+
+            mostrarToast: function(msg, tipo = 'info') {
+                const toast = document.getElementById('toast');
+                const icon = document.getElementById('toast-icon');
+                document.getElementById('toast-message').innerText = msg;
+                icon.className = tipo === 'error'
+                    ? 'fa-solid fa-triangle-exclamation text-red-400'
+                    : (tipo === 'success'
+                        ? 'fa-solid fa-circle-check text-emerald-400'
+                        : 'fa-solid fa-satellite-dish text-blue-400');
+                toast.classList.remove('translate-x-full');
+                setTimeout(() => toast.classList.add('translate-x-full'), 3200);
+            },
+
+            normalizarTexto: function(valor) {
+                return String(valor || '')
+                    .replaceAll('ÃƒÂ¡', 'a')
+                    .replaceAll('ÃƒÂ©', 'e')
+                    .replaceAll('ÃƒÂ­', 'i')
+                    .replaceAll('ÃƒÂ³', 'o')
+                    .replaceAll('ÃƒÂº', 'u')
+                    .replaceAll('ÃƒÂ±', 'n')
+                    .replaceAll('ÃƒÂ', 'a')
+                    .replaceAll('Ãƒâ€°', 'e')
+                    .replaceAll('ÃƒÂ', 'i')
+                    .replaceAll('Ãƒâ€œ', 'o')
+                    .replaceAll('ÃƒÅ¡', 'u')
+                    .replaceAll('Ãƒâ€˜', 'n')
+                    .replaceAll('Ã‚', '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .trim()
+                    .toLowerCase();
+            },
+
+            normalizarFecha: function(valor) {
+                if (!valor) return new Date(0);
+                if (typeof valor.toDate === 'function') return valor.toDate();
+                const fecha = new Date(valor);
+                return Number.isNaN(fecha.getTime()) ? new Date(0) : fecha;
+            },
+
+            obtenerModulo: function(alerta) {
+                const origen = this.normalizarTexto(alerta.origen);
+                const tipo = this.normalizarTexto(alerta.tipo);
+                const texto = `${origen} ${tipo}`;
+                if (texto.includes('pos') || texto.includes('caja')) return 'POS';
+                if (texto.includes('dashboard') || texto.includes('admin')) return 'ADMIN';
+                if (texto.includes('app_cliente') || texto.includes('cliente')) return 'APP CLIENTE';
+                if (texto.includes('produccion')) return 'APP PRODUCCION';
+                if (texto.includes('delivery')) return 'APP DELIVERY';
+                return 'SISTEMA';
+            },
+
+            obtenerNivelBadge: function(nivel) {
+                const normal = this.normalizarTexto(nivel);
+                if (normal === 'critical') return '<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 border border-red-200 px-2 py-1 rounded-full text-[10px] font-black uppercase"><i class="fa-solid fa-skull-crossbones"></i> Critico</span>';
+                if (normal === 'error') return '<span class="inline-flex items-center gap-1 bg-rose-100 text-rose-700 border border-rose-200 px-2 py-1 rounded-full text-[10px] font-black uppercase"><i class="fa-solid fa-circle-xmark"></i> Error</span>';
+                if (normal === 'warning') return '<span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 px-2 py-1 rounded-full text-[10px] font-black uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Warning</span>';
+                return '<span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded-full text-[10px] font-black uppercase"><i class="fa-solid fa-circle-info"></i> Info</span>';
+            },
+
+            obtenerEstadoBadge: function(estado) {
+                const normal = this.normalizarTexto(estado || 'abierta');
+                if (normal === 'resuelta') return '<span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-full text-[10px] font-black uppercase"><i class="fa-solid fa-check"></i> Resuelta</span>';
+                return '<span class="inline-flex items-center gap-1 bg-orange-100 text-orange-700 border border-orange-200 px-2 py-1 rounded-full text-[10px] font-black uppercase"><i class="fa-solid fa-clock"></i> Abierta</span>';
+            },
+            obtenerAlertasUltimosDias: function(dias = 7) {
+                const desde = Date.now() - (dias * 24 * 60 * 60 * 1000);
+                return this.alertasCache.filter((alerta) => this.normalizarFecha(alerta.creadoAt || alerta.createdAt).getTime() >= desde);
+            },
+            calcularDisponibilidad: function(alertas = []) {
+                let penalizacion = 0;
+                alertas.forEach((alerta) => {
+                    const nivel = this.normalizarTexto(alerta.nivel);
+                    if (nivel === 'critical') penalizacion += 8;
+                    else if (nivel === 'error') penalizacion += 5;
+                    else if (nivel === 'warning') penalizacion += 2;
+                    else penalizacion += 1;
+                });
+                return Math.max(70, 100 - penalizacion);
+            },
+            obtenerEstadoRendimiento: function(disponibilidad, abiertas, criticas) {
+                if (criticas > 0 || disponibilidad < 86) return { texto: 'Critico', clase: 'text-red-600', fondo: 'bg-red-50 border-red-200', chip: 'bg-red-100 text-red-700' };
+                if (abiertas > 0 || disponibilidad < 94) return { texto: 'Atencion', clase: 'text-amber-600', fondo: 'bg-amber-50 border-amber-200', chip: 'bg-amber-100 text-amber-700' };
+                return { texto: 'Estable', clase: 'text-emerald-600', fondo: 'bg-emerald-50 border-emerald-200', chip: 'bg-emerald-100 text-emerald-700' };
+            },
+            describirAplicacion: function(modulo) {
+                const descripciones = {
+                    'POS': 'Caja, cobro, mesas, cierre de turno y salida de tickets.',
+                    'ADMIN': 'Dashboard gerencial, reportes, auditoria y configuracion central.',
+                    'APP CLIENTE': 'Pedidos del cliente, puntos, credito y notificaciones.',
+                    'APP PRODUCCION': 'Control de carne, panes, papas y lotes por sucursal.',
+                    'APP DELIVERY': 'Recepcion, toma y entrega de pedidos con seguimiento.'
+                };
+                return descripciones[modulo] || 'Servicio operativo del ecosistema Club Lin.';
+            },
+            obtenerResumenModulo: function(modulo, alertasFuente = null) {
+                const alertas = (alertasFuente || this.alertasCache).filter((item) => item.modulo === modulo);
+                const abiertas = alertas.filter((item) => this.normalizarTexto(item.estado || 'abierta') !== 'resuelta').length;
+                const criticas = alertas.filter((item) => ['critical', 'error'].includes(this.normalizarTexto(item.nivel))).length;
+                const warnings = alertas.filter((item) => this.normalizarTexto(item.nivel) === 'warning').length;
+                const ultima = alertas.length ? this.normalizarFecha(alertas[0].creadoAt || alertas[0].createdAt) : new Date(0);
+                const disponibilidad = this.calcularDisponibilidad(alertas);
+                const estado = this.obtenerEstadoRendimiento(disponibilidad, abiertas, criticas);
+                return {
+                    total: alertas.length,
+                    abiertas,
+                    criticas,
+                    warnings,
+                    ultima,
+                    disponibilidad,
+                    estado
+                };
+            },
+            destruirGraficos: function() {
+                if (this.chartTendencia) {
+                    this.chartTendencia.destroy();
+                    this.chartTendencia = null;
+                }
+                if (this.chartModulos) {
+                    this.chartModulos.destroy();
+                    this.chartModulos = null;
+                }
+            },
+            obtenerSeriesUltimosDias: function(dias = 7) {
+                const labels = [];
+                const abiertas = [];
+                const resueltas = [];
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+
+                for (let i = dias - 1; i >= 0; i -= 1) {
+                    const fecha = new Date(hoy);
+                    fecha.setDate(hoy.getDate() - i);
+                    const inicio = fecha.getTime();
+                    const fin = inicio + (24 * 60 * 60 * 1000);
+                    labels.push(fecha.toLocaleDateString('es-PY', { month: 'short', day: 'numeric' }));
+
+                    const alertasDia = this.alertasCache.filter((alerta) => {
+                        const ts = this.normalizarFecha(alerta.creadoAt || alerta.createdAt).getTime();
+                        return ts >= inicio && ts < fin;
+                    });
+                    abiertas.push(alertasDia.filter((item) => this.normalizarTexto(item.estado || 'abierta') !== 'resuelta').length);
+                    resueltas.push(alertasDia.filter((item) => this.normalizarTexto(item.estado) === 'resuelta').length);
+                }
+
+                return { labels, abiertas, resueltas };
+            },
+            renderizarGraficos: function() {
+                this.destruirGraficos();
+
+                const { labels, abiertas, resueltas } = this.obtenerSeriesUltimosDias(7);
+                const ctxTendencia = document.getElementById('chart-tendencia-alertas');
+                if (ctxTendencia) {
+                    this.chartTendencia = new Chart(ctxTendencia, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [
+                                {
+                                    label: 'Abiertas',
+                                    data: abiertas,
+                                    borderColor: '#f59e0b',
+                                    backgroundColor: 'rgba(245, 158, 11, 0.16)',
+                                    tension: 0.35,
+                                    fill: true,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 5
+                                },
+                                {
+                                    label: 'Resueltas',
+                                    data: resueltas,
+                                    borderColor: '#10b981',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                    tension: 0.35,
+                                    fill: true,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 5
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10, font: { weight: '700' } } }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { precision: 0 }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const resumenModulos = ['POS', 'ADMIN', 'APP CLIENTE', 'APP PRODUCCION', 'APP DELIVERY', 'SISTEMA']
+                    .map((modulo) => ({ modulo, total: this.alertasCache.filter((item) => item.modulo === modulo).length }))
+                    .filter((item) => item.total > 0);
+
+                const ctxModulos = document.getElementById('chart-modulos-alertas');
+                if (ctxModulos) {
+                    this.chartModulos = new Chart(ctxModulos, {
+                        type: 'doughnut',
+                        data: {
+                            labels: resumenModulos.map((item) => item.modulo),
+                            datasets: [{
+                                data: resumenModulos.map((item) => item.total),
+                                backgroundColor: ['#f97316', '#2563eb', '#10b981', '#a855f7', '#ef4444', '#64748b'],
+                                borderColor: '#ffffff',
+                                borderWidth: 3,
+                                hoverOffset: 10
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10, font: { weight: '700' } } }
+                            },
+                            cutout: '62%'
+                        }
+                    });
+                }
+            },
+            renderizarHistorialResuelto: function() {
+                const tbody = document.getElementById('tabla-alertas-resueltas-body');
+                const badge = document.getElementById('badge-historial-resuelto');
+                const resueltas = this.alertasCache
+                    .filter((item) => this.normalizarTexto(item.estado) === 'resuelta')
+                    .sort((a, b) => this.normalizarFecha(b.resueltoAt || b.creadoAt) - this.normalizarFecha(a.resueltoAt || a.creadoAt))
+                    .slice(0, 120);
+
+                if (badge) badge.innerText = `${resueltas.length} resueltas`;
+
+                if (!resueltas.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400 font-bold">Aun no hay incidencias resueltas.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = resueltas.map((alerta) => {
+                    const fechaResuelta = this.normalizarFecha(alerta.resueltoAt || alerta.creadoAt);
+                    const fechaTexto = DateTime24.formatDateTime24(fechaResuelta);
+                    const responsable = alerta.resueltoPorNombre || alerta.resueltoPor || 'Admin';
+                    return `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                            <td class="px-4 py-4 font-mono text-xs text-slate-500">${fechaTexto}</td>
+                            <td class="px-4 py-4">
+                                <p class="font-black text-slate-800 text-xs">${alerta.modulo}</p>
+                                <p class="text-[10px] text-slate-400 mt-1">${alerta.tipo || 'evento_operativo'}</p>
+                            </td>
+                            <td class="px-4 py-4">
+                                <p class="font-bold text-slate-800 text-sm leading-tight">${alerta.mensaje || 'Sin mensaje'}</p>
+                                <p class="text-[10px] text-emerald-600 mt-1 font-black uppercase tracking-widest">Resuelta</p>
+                            </td>
+                            <td class="px-4 py-4 text-slate-600 font-semibold">${alerta.sucursal || 'General'}</td>
+                            <td class="px-4 py-4">
+                                <p class="font-black text-slate-800 text-sm">${responsable}</p>
+                                <p class="text-[10px] text-slate-400 mt-1">${alerta.origen || 'sistema'}</p>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+            renderizarKpisRendimiento: function() {
+                const recientes = this.obtenerAlertasUltimosDias(7);
+                const grupos = [
+                    {
+                        titulo: 'Hosting',
+                        descripcion: 'Web Admin, App Cliente y App Delivery publicadas en hosting.',
+                        icono: 'fa-globe',
+                        filtro: (item) => ['admin', 'app cliente', 'app delivery', 'app produccion'].includes(this.normalizarTexto(item.modulo)) || this.normalizarTexto(item.origen).includes('hosting')
+                    },
+                    {
+                        titulo: 'Functions',
+                        descripcion: 'Push, procesos callable, automatizacion y eventos del backend.',
+                        icono: 'fa-diagram-project',
+                        filtro: (item) => {
+                            const base = `${item.tipo || ''} ${item.mensaje || ''} ${item.origen || ''}`;
+                            return this.normalizarTexto(base).includes('function') || this.normalizarTexto(base).includes('push') || this.normalizarTexto(base).includes('callable');
+                        }
+                    },
+                    {
+                        titulo: 'Firestore',
+                        descripcion: 'Lecturas, escrituras, sincronizacion y reconexion de datos.',
+                        icono: 'fa-database',
+                        filtro: (item) => {
+                            const base = `${item.tipo || ''} ${item.mensaje || ''} ${item.origen || ''}`;
+                            return this.normalizarTexto(base).includes('firestore') || this.normalizarTexto(base).includes('sincronizacion') || this.normalizarTexto(base).includes('turno');
+                        }
+                    },
+                    {
+                        titulo: 'Storage',
+                        descripcion: 'Recursos, imagenes y soportes operativos del ecosistema.',
+                        icono: 'fa-hard-drive',
+                        filtro: (item) => this.normalizarTexto(`${item.tipo || ''} ${item.mensaje || ''}`).includes('storage')
+                    }
+                ];
+
+                const cont = document.getElementById('grid-kpis-rendimiento');
+                cont.innerHTML = grupos.map((grupo) => {
+                    const alertas = recientes.filter(grupo.filtro);
+                    const abiertas = alertas.filter((item) => this.normalizarTexto(item.estado || 'abierta') !== 'resuelta').length;
+                    const criticas = alertas.filter((item) => ['critical', 'error'].includes(this.normalizarTexto(item.nivel))).length;
+                    const disponibilidad = this.calcularDisponibilidad(alertas);
+                    const estado = this.obtenerEstadoRendimiento(disponibilidad, abiertas, criticas);
+                    const ultima = alertas.length ? this.normalizarFecha(alertas[0].creadoAt || alertas[0].createdAt) : new Date(0);
+                    const ultimaTexto = ultima.getTime() === 0 ? 'Sin eventos recientes' : DateTime24.formatDateTime24(ultima);
+                    return `
+                        <div class="rounded-3xl border p-5 shadow-sm ${estado.fondo}">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-lg font-black text-slate-900 flex items-center gap-2"><i class="fa-solid ${grupo.icono} text-orange-500"></i>${grupo.titulo}</p>
+                                    <p class="text-xs text-slate-500 font-semibold mt-2 leading-relaxed">${grupo.descripcion}</p>
+                                </div>
+                                <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${estado.chip}">${estado.texto}</span>
+                            </div>
+                            <div class="mt-5 grid grid-cols-2 gap-3">
+                                <div class="rounded-2xl bg-white/80 border border-white/70 p-3">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Disponibilidad</p>
+                                    <p class="text-2xl font-black ${estado.clase} mt-1">${disponibilidad}%</p>
+                                </div>
+                                <div class="rounded-2xl bg-white/80 border border-white/70 p-3">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Incidencias 7d</p>
+                                    <p class="text-2xl font-black text-slate-800 mt-1">${alertas.length}</p>
+                                </div>
+                                <div class="rounded-2xl bg-white/80 border border-white/70 p-3">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Abiertas</p>
+                                    <p class="text-xl font-black text-amber-600 mt-1">${abiertas}</p>
+                                </div>
+                                <div class="rounded-2xl bg-white/80 border border-white/70 p-3">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Criticas</p>
+                                    <p class="text-xl font-black text-red-600 mt-1">${criticas}</p>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-xs text-slate-500 font-semibold">
+                                Ultimo evento: <span class="text-slate-700 font-black">${ultimaTexto}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+            renderizarSaludApps: function() {
+                const modulos = ['POS', 'ADMIN', 'APP CLIENTE', 'APP PRODUCCION', 'APP DELIVERY'];
+                const recientes = this.obtenerAlertasUltimosDias(7);
+                const cont = document.getElementById('grid-salud-apps');
+                cont.innerHTML = modulos.map((modulo) => {
+                    const resumen = this.obtenerResumenModulo(modulo, recientes);
+                    const ultimaTexto = resumen.ultima.getTime() === 0 ? 'Sin incidencias recientes' : DateTime24.formatDateTime24(resumen.ultima);
+                    return `
+                        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-black text-slate-800">${modulo}</p>
+                                    <p class="text-xs text-slate-500 font-semibold mt-2 leading-relaxed">${this.describirAplicacion(modulo)}</p>
+                                </div>
+                                <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${resumen.estado.chip}">${resumen.estado.texto}</span>
+                            </div>
+                            <div class="mt-4 rounded-2xl ${resumen.estado.fondo} border p-4">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Rendimiento estimado</p>
+                                <p class="text-3xl font-black ${resumen.estado.clase} mt-1">${resumen.disponibilidad}%</p>
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                                <div class="rounded-xl bg-slate-50 border border-slate-200 py-2">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total</p>
+                                    <p class="text-lg font-black text-slate-800">${resumen.total}</p>
+                                </div>
+                                <div class="rounded-xl bg-amber-50 border border-amber-200 py-2">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-amber-500">Abiertas</p>
+                                    <p class="text-lg font-black text-amber-600">${resumen.abiertas}</p>
+                                </div>
+                                <div class="rounded-xl bg-red-50 border border-red-200 py-2">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-red-500">Criticas</p>
+                                    <p class="text-lg font-black text-red-600">${resumen.criticas}</p>
+                                </div>
+                            </div>
+                            <div class="mt-4 space-y-1 text-xs text-slate-500 font-semibold">
+                                <p>Warnings: <span class="text-slate-700 font-black">${resumen.warnings}</span></p>
+                                <p>Ultimo evento: <span class="text-slate-700 font-black">${ultimaTexto}</span></p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            cargarAlertas: function() {
+                if (typeof this.unsubscribeAlertas === 'function') this.unsubscribeAlertas();
+                const q = query(collection(db, 'systemAlerts'), orderBy('creadoAt', 'desc'), limit(400));
+                this.unsubscribeAlertas = onSnapshot(q, (snapshot) => {
+                    this.alertasCache = snapshot.docs.map((docSnap) => {
+                        const data = docSnap.data() || {};
+                        return { id: docSnap.id, ...data, modulo: this.obtenerModulo(data) };
+                    });
+                    this.actualizarResumen();
+                    this.renderizarKpisRendimiento();
+                    this.renderizarSaludApps();
+                    this.renderizarGraficos();
+                    this.renderizarHistorialResuelto();
+                    this.renderizarAlertas();
+                }, (error) => {
+                    console.error('Error al leer systemAlerts', error);
+                    this.mostrarToast('No se pudo leer el monitor de problemas.', 'error');
+                    document.getElementById('tabla-alertas-body').innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-red-400 font-bold">Error de conexion con systemAlerts.</td></tr>';
+                });
+            },
+
+            obtenerAlertasFiltradas: function() {
+                const filtroModulo = document.getElementById('filtro-modulo').value;
+                const filtroNivel = this.normalizarTexto(document.getElementById('filtro-nivel').value);
+                const filtroEstado = this.normalizarTexto(document.getElementById('filtro-estado').value);
+                const filtroTexto = this.normalizarTexto(document.getElementById('filtro-texto').value);
+
+                return this.alertasCache.filter((alerta) => {
+                    if (filtroModulo && alerta.modulo !== filtroModulo) return false;
+                    if (filtroNivel && this.normalizarTexto(alerta.nivel) !== filtroNivel) return false;
+                    if (filtroEstado && this.normalizarTexto(alerta.estado || 'abierta') !== filtroEstado) return false;
+                    if (filtroTexto) {
+                        const base = this.normalizarTexto(`${alerta.mensaje} ${alerta.tipo} ${alerta.sucursal} ${alerta.origen}`);
+                        if (!base.includes(filtroTexto)) return false;
+                    }
+                    return true;
+                });
+            },
+
+            actualizarResumen: function() {
+                const total = this.alertasCache.length;
+                const abiertas = this.alertasCache.filter((item) => this.normalizarTexto(item.estado || 'abierta') !== 'resuelta').length;
+                const criticas = this.alertasCache.filter((item) => ['critical', 'error'].includes(this.normalizarTexto(item.nivel))).length;
+                const resueltas = this.alertasCache.filter((item) => this.normalizarTexto(item.estado) === 'resuelta').length;
+                const modulos = new Set(this.alertasCache.map((item) => item.modulo)).size;
+
+                document.getElementById('kpi-total-alertas').innerText = String(total);
+                document.getElementById('kpi-abiertas').innerText = String(abiertas);
+                document.getElementById('kpi-criticas').innerText = String(criticas);
+                document.getElementById('kpi-resueltas').innerText = String(resueltas);
+                document.getElementById('kpi-modulos').innerText = String(modulos);
+
+                const resumenPorModulo = {};
+                this.alertasCache.forEach((alerta) => {
+                    const modulo = alerta.modulo || 'SISTEMA';
+                    if (!resumenPorModulo[modulo]) resumenPorModulo[modulo] = { total: 0, abiertas: 0, criticas: 0 };
+                    resumenPorModulo[modulo].total += 1;
+                    if (this.normalizarTexto(alerta.estado || 'abierta') !== 'resuelta') resumenPorModulo[modulo].abiertas += 1;
+                    if (['critical', 'error'].includes(this.normalizarTexto(alerta.nivel))) resumenPorModulo[modulo].criticas += 1;
+                });
+
+                const cont = document.getElementById('lista-resumen-modulos');
+                const entries = Object.entries(resumenPorModulo).sort((a, b) => b[1].total - a[1].total);
+                if (!entries.length) {
+                    cont.innerHTML = '<p class="text-sm text-slate-400 font-semibold">Aun no hay incidencias reportadas.</p>';
+                    return;
+                }
+
+                cont.innerHTML = entries.map(([modulo, data]) => `
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="font-black text-slate-800">${modulo}</p>
+                            <span class="text-xs font-black uppercase tracking-widest text-slate-500">${data.total} registros</span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-3 gap-2 text-center">
+                            <div class="rounded-xl bg-white border border-slate-200 py-2">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total</p>
+                                <p class="text-lg font-black text-slate-800">${data.total}</p>
+                            </div>
+                            <div class="rounded-xl bg-white border border-amber-200 py-2">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-amber-500">Abiertas</p>
+                                <p class="text-lg font-black text-amber-600">${data.abiertas}</p>
+                            </div>
+                            <div class="rounded-xl bg-white border border-red-200 py-2">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-red-500">Criticas</p>
+                                <p class="text-lg font-black text-red-600">${data.criticas}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            renderizarAlertas: function() {
+                const alertas = this.obtenerAlertasFiltradas();
+                const tbody = document.getElementById('tabla-alertas-body');
+                document.getElementById('badge-conteo-alertas').innerText = `${alertas.length} registros`;
+
+                if (!alertas.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400 font-bold">No hay incidencias para los filtros actuales.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = alertas.map((alerta) => {
+                    const fecha = this.normalizarFecha(alerta.creadoAt || alerta.createdAt);
+                    const fechaTexto = DateTime24.formatDateTime24(fecha);
+                    const detalle = alerta.detalle && typeof alerta.detalle === 'object'
+                        ? Object.entries(alerta.detalle).slice(0, 2).map(([k, v]) => `${k}: ${String(v)}`).join(' | ')
+                        : '';
+                    const resuelta = this.normalizarTexto(alerta.estado || 'abierta') === 'resuelta';
+                    return `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                            <td class="px-4 py-4 font-mono text-xs text-slate-500">${fechaTexto}</td>
+                            <td class="px-4 py-4">
+                                <p class="font-black text-slate-800 text-xs">${alerta.modulo}</p>
+                                <p class="text-[10px] text-slate-400 mt-1">${alerta.origen || 'sin origen'}</p>
+                            </td>
+                            <td class="px-4 py-4">${this.obtenerNivelBadge(alerta.nivel)}</td>
+                            <td class="px-4 py-4">
+                                <p class="font-bold text-slate-800 text-sm leading-tight">${alerta.mensaje || 'Sin mensaje'}</p>
+                                <p class="text-[10px] text-slate-400 mt-1">${alerta.tipo || 'evento_operativo'}${detalle ? ` | ${detalle}` : ''}</p>
+                            </td>
+                            <td class="px-4 py-4 text-slate-600 font-semibold">${alerta.sucursal || 'General'}</td>
+                            <td class="px-4 py-4">${this.obtenerEstadoBadge(alerta.estado)}</td>
+                            <td class="px-4 py-4 text-right">
+                                ${resuelta
+                                    ? '<span class="text-xs font-black text-emerald-600">Resuelta</span>'
+                                    : `<button onclick="MonitorProblemasModule.marcarResuelta('${alerta.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black px-3 py-2 rounded-lg transition">Resolver</button>`}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            aplicarFiltroRapido: function(estado) {
+                document.getElementById('filtro-estado').value = estado;
+                this.renderizarAlertas();
+            },
+
+            limpiarFiltros: function() {
+                document.getElementById('filtro-modulo').value = '';
+                document.getElementById('filtro-nivel').value = '';
+                document.getElementById('filtro-estado').value = '';
+                document.getElementById('filtro-texto').value = '';
+                this.renderizarAlertas();
+            },
+
+            marcarResuelta: async function(alertaId) {
+                if (!alertaId) return;
+                if (!confirm('Marcar esta incidencia como resuelta?')) return;
+                try {
+                    await updateDoc(doc(db, 'systemAlerts', alertaId), {
+                        estado: 'resuelta',
+                        resueltoAt: new Date(),
+                        resueltoPor: this.usuarioActual?.uid || null,
+                        resueltoPorNombre: this.usuarioActual?.nombre || 'Admin'
+                    });
+                    this.mostrarToast('Incidencia marcada como resuelta.', 'success');
+                } catch (error) {
+                    console.error('Error resolviendo incidencia', error);
+                    this.mostrarToast('No se pudo actualizar la incidencia.', 'error');
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => MonitorProblemasModule.init());
+    </script>
+</body>
+</html>

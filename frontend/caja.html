@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Coffee POS ERP - Arqueo y Auditoria v10.1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+    <script src="date_time_utils.js"></script>
+    <script src="print_utils.js"></script>
+</head>
+
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800 opacity-0 transition-opacity duration-500" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+    
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-50 flex items-center p-4 mb-4 text-white rounded-lg shadow-xl bg-slate-800 border border-slate-700">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20">
+            <i id="toast-icon" class="fa-solid fa-info text-blue-400"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-orange-500 p-2 rounded-lg"><i class="fa-solid fa-mug-hot"></i></div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide">
+            <a href="dashboard.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-house text-lg w-6"></i><span>Panel Principal</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Administracion</p>
+            <a href="sucursales.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-store text-lg w-6"></i><span>Sucursales</span>
+            </a>
+            
+            <a href="stock.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-warehouse text-lg w-6"></i><span>Stock</span>
+            </a>
+            <a href="usuarios.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-user-shield text-lg w-6"></i><span>Personal</span>
+            </a>
+            <a href="produccion.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-burger text-lg w-6"></i><span>Produccion</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Operaciones</p>
+            <a href="clientes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-gem text-lg w-6"></i><span>Clientes CRM</span>
+            </a>
+            <a href="kds.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-fire-burner text-lg w-6"></i><span>Monitor Cocina</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Finanzas</p>
+            <button class="w-full flex items-center gap-4 bg-orange-500 text-white p-3 rounded-xl font-semibold shadow-md transition">
+                <i class="fa-solid fa-vault text-lg w-6"></i><span>Arqueo de Caja</span>
+            </button>
+            <a href="reportes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-chart-line text-lg w-6"></i><span>Reportes</span>
+            </a>
+            <a href="monitor_problemas.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-triangle-exclamation text-lg w-6"></i><span>Monitor Problemas</span>
+            </a>
+        </nav>
+        <div class="p-4 bg-slate-950 text-xs text-slate-500 text-center" id="lbl-sucursal">Contabilidad</div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto relative">
+        <header class="bg-white p-6 shadow-sm flex justify-between items-center z-10">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Control de Caja y Auditoria v10.1.0</h2>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <p class="text-slate-500 text-sm">Resumen de ingresos del turno actual.</p>
+                    <span id="badge-estado-conexion-caja" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
+                        <i class="fa-solid fa-signal"></i> Estado desconocido
+                    </span>
+                    <span id="badge-estado-movimiento-caja" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
+                        <i class="fa-solid fa-wave-square"></i> Revisando movimiento
+                    </span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="CajaModule.abrirPreviewArqueo()" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg font-bold transition shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-eye"></i> Vista Previa Ticket (Z)
+                </button>
+                <button onclick="CajaModule.ejecutarArqueoFinal()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-bold transition shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-flag-checkered"></i> Cierre y Limpieza
+                </button>
+            </div>
+        </header>
+
+        <div class="p-8 flex flex-col gap-8">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <section class="bg-slate-900 rounded-3xl shadow-xl border border-slate-800 p-8 text-white relative overflow-hidden">
+                    <h3 class="text-xl font-bold mb-6 text-blue-400 flex items-center"><i class="fa-solid fa-desktop mr-2"></i> Reporte del Sistema</h3>
+                    
+                    <div class="space-y-4 mb-8 relative z-10">
+                        <div class="flex justify-between items-center bg-blue-900/40 p-3 rounded-xl border border-blue-500/30">
+                            <p class="text-blue-300 font-bold"><i class="fa-solid fa-coins mr-2 text-blue-400"></i>Fondo Inicial (Sencillo)</p>
+                            <input type="text" id="sys-fondo-fijo" oninput="CajaModule.actualizarFondoFijo(this)" value="0" class="w-28 bg-transparent border-b-2 border-blue-500 text-right font-mono font-bold text-blue-400 outline-none focus:border-white transition cursor-text" placeholder="0">
+                        </div>
+
+                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                            <p class="text-slate-300 font-bold"><i class="fa-solid fa-burger mr-2 text-green-400"></i>Ventas en Efectivo</p>
+                            <span id="sys-ventas-efectivo" class="font-mono font-bold text-green-400">Gs. 0</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                            <p class="text-slate-300 font-bold"><i class="fa-solid fa-handshake mr-2 text-amber-400"></i>Abonos Administrativos (No Caja)</p>
+                            <span id="sys-abonos-efectivo" class="font-mono font-bold text-amber-300">Gs. 0</span>
+                        </div>
+                        
+                        <div class="border-t border-slate-700 my-2"></div>
+                        
+                        <div class="flex justify-between items-center p-2 opacity-80">
+                            <p class="text-slate-400 font-medium"><i class="fa-solid fa-credit-card mr-2 text-blue-400"></i>Tarjetas POS</p>
+                            <span id="sys-tarjeta" class="font-mono text-white">Gs. 0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 opacity-80">
+                            <p class="text-slate-400 font-medium"><i class="fa-solid fa-money-bill-transfer mr-2 text-purple-400"></i>Transferencias</p>
+                            <span id="sys-transferencia" class="font-mono text-white">Gs. 0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 opacity-60">
+                            <p class="text-slate-400 font-medium"><i class="fa-solid fa-file-invoice-dollar mr-2 text-orange-400"></i>Ventas a Credito (Fiado)</p>
+                            <span id="sys-credito" class="font-mono">Gs. 0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 bg-slate-800 p-5 rounded-2xl text-center border-2 border-green-500/30 shadow-lg relative z-10">
+                        <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Efectivo Fisico Esperado</p>
+                        <p id="sys-total-esperado" class="text-4xl font-black text-green-400 font-mono">Cargando...</p>
+                    </div>
+                </section>
+
+                <section class="bg-white rounded-3xl shadow-md border border-slate-200 p-8 flex flex-col justify-center">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-cash-register text-slate-400 mr-2"></i>Declaracion de Cajon</h3>
+                        <p class="text-slate-500 text-sm">Auditoria manual de los ingresos declarados por el cajero.</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-600 mb-1">Efectivo Fisico Contado</label>
+                            <div class="relative">
+                                <span class="absolute left-6 top-1/2 transform -translate-y-1/2 text-slate-400 font-black text-2xl">Gs.</span>
+                                <input type="text" id="dec-efectivo" oninput="CajaModule.formatearEntrada(this)" class="w-full pl-20 pr-6 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl text-3xl font-black outline-none focus:border-green-500 focus:bg-white transition text-slate-800 text-right" placeholder="0">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-slate-600 mb-1">Gastos Extraidos (Vales/Facturas)</label>
+                            <div class="relative">
+                                <span class="absolute left-6 top-1/2 transform -translate-y-1/2 text-slate-400 font-black text-2xl">Gs.</span>
+                                <input type="text" id="dec-gastos" oninput="CajaModule.formatearEntrada(this)" class="w-full pl-20 pr-6 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl text-3xl font-black outline-none focus:border-red-500 focus:bg-white transition text-slate-800 text-right" placeholder="0">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 mb-1 text-center">Tarjetas (POS)</label>
+                                <input type="text" id="dec-tarjeta" oninput="CajaModule.formatearEntrada(this)" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-xl font-bold outline-none focus:border-blue-500 transition text-slate-800 text-center" placeholder="Gs. 0">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 mb-1 text-center">Transferencias</label>
+                                <input type="text" id="dec-transferencia" oninput="CajaModule.formatearEntrada(this)" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-xl font-bold outline-none focus:border-purple-500 transition text-slate-800 text-center" placeholder="Gs. 0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-6 rounded-2xl text-center border border-slate-200">
+                            <p class="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Diferencia Total Matematica</p>
+                        <p id="res-diferencia" class="text-4xl font-black text-slate-300 font-mono">Gs. 0</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden flex flex-col">
+                <div class="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-list-check text-orange-500 mr-2"></i>Detalle de Transacciones del Turno</h3>
+                    <span class="text-xs font-bold text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200" id="lbl-conteo-tickets">0 Tickets</span>
+                </div>
+                <div class="overflow-y-auto max-h-96">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-100 sticky top-0 shadow-sm z-10">
+                            <tr class="text-slate-500 text-xs uppercase tracking-wider">
+                                <th class="p-4">Hora</th>
+                                <th class="p-4">Cliente</th>
+                                <th class="p-4">Operacion</th>
+                                <th class="p-4">Pago</th>
+                                <th class="p-4 text-right">Monto</th>
+                                <th class="p-4 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-auditoria" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="modal-preview-arqueo" class="fixed inset-0 bg-slate-900/95 hidden justify-center items-center z-[80] backdrop-blur-md transition-opacity">
+        <div class="bg-slate-300 w-full max-w-md h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="bg-slate-800 text-white p-4 flex justify-between items-center shadow-md z-10">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-print mr-2 text-slate-400"></i>Vista Previa de Cierre Z</h3>
+                <button onclick="CajaModule.cerrarPreviewArqueo()" class="text-slate-400 hover:text-white transition bg-slate-700 p-2 rounded-lg"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-8 flex justify-center bg-slate-200">
+                <div id="arqueo-preview-content" class="bg-white p-6 shadow-2xl text-black border border-slate-300 relative" style="width: 300px; font-family: 'Courier New', Courier, monospace; font-size: 12px;"></div>
+            </div>
+
+            <div class="p-5 bg-white border-t border-slate-300 flex flex-col gap-2">
+                <p class="text-center text-xs text-slate-500 font-bold mb-2">Seleccione su impresora termica en el siguiente paso.</p>
+                <button onclick="CajaModule.confirmarImpresionArqueo()" class="w-full bg-slate-900 hover:bg-black text-white font-black text-lg py-4 rounded-xl shadow-lg transition flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-check"></i> CONFIRMAR E IMPRIMIR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { initializeFirestore, collection, getDocs, query, where, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
+
+        // CONFIGURACION FIREBASE
+        const __app_id = "erp_lingroup"; 
+        const __initial_auth_token = "admin_master_001";
+        const firebaseConfig = { apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg", authDomain: "sys-pos-erp-lingroup.firebaseapp.com", projectId: "sys-pos-erp-lingroup", storageBucket: "sys-pos-erp-lingroup.firebasestorage.app" };
+
+        const app = initializeApp(firebaseConfig); 
+        const auth = getAuth(app); 
+        const db = initializeFirestore(app, {
+            experimentalForceLongPolling: true,
+            useFetchStreams: false
+        });
+        const functions = getFunctions(app, "us-central1");
+        const registrarAlertaOperativaFn = httpsCallable(functions, "registrarAlertaOperativa");
+
+        const normalizarMetodoPago = (valor) => String(valor || '')
+            .replaceAll('Ã¡', 'a')
+            .replaceAll('Ã©', 'e')
+            .replaceAll('Ã­', 'i')
+            .replaceAll('Ã³', 'o')
+            .replaceAll('Ãº', 'u')
+            .replaceAll('Ã±', 'n')
+            .replaceAll('Ã', 'a')
+            .replaceAll('Ã‰', 'e')
+            .replaceAll('Ã', 'i')
+            .replaceAll('Ã“', 'o')
+            .replaceAll('Ãš', 'u')
+            .replaceAll('Ã‘', 'n')
+            .replaceAll('Â', '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase();
+        const esMetodoCredito = (valor) => normalizarMetodoPago(valor) === 'credito';
+
+        window.CajaModule = {
+            sesion: null, 
+            efectivoEsperado: 0, 
+            fondoFijoMemoria: 0, 
+            horaAperturaSesion: "",
+            fechaAperturaSesionTs: null,
+            turnoActualId: null,
+            transaccionesActivas: [],
+            datosMemoria: { vEfe: 0, aEfe: 0, vTar: 0, vTrans: 0, vCre: 0 },
+            productosVendidos: {},
+            htmlArqueoMemoria: "",
+            ultimaSincronizacionAt: 0,
+            ultimoEstadoConexion: "desconocido",
+            ultimoEstadoMovimiento: "desconocido",
+            monitorIntervalId: null,
+            alertasOperativasCache: {},
+            modoRecuperacionTurno: false,
+            
+            init: function() { 
+                onAuthStateChanged(auth, async (user) => {
+                    if(user) { 
+                        const sesionStr = localStorage.getItem('__pos_session'); 
+                        if(sesionStr) { 
+                            this.sesion = JSON.parse(sesionStr); 
+                            document.getElementById('lbl-sucursal').innerText = this.sesion.sucursal; 
+                            document.getElementById('app-body').classList.remove('opacity-0'); 
+                            
+                            // Recuperar Fondo Fijo y Apertura
+                            const fondoGuardado = localStorage.getItem('__pos_fondo_fijo');
+                            if(fondoGuardado) {
+                                this.fondoFijoMemoria = parseInt(fondoGuardado);
+                                document.getElementById('sys-fondo-fijo').value = this.formatoMoneda(this.fondoFijoMemoria);
+                            }
+                            this.horaAperturaSesion = localStorage.getItem('__pos_hora_apertura') || "No registrada";
+                            const aperturaTs = localStorage.getItem('__pos_apertura_ts');
+                            this.fechaAperturaSesionTs = aperturaTs ? parseInt(aperturaTs, 10) : null;
+                            this.turnoActualId = localStorage.getItem('__pos_turno_id') || null;
+
+                            const turnoLocalCompleto = fondoGuardado !== null && Boolean(this.fechaAperturaSesionTs) && Boolean(this.turnoActualId);
+                            if (!turnoLocalCompleto) await this.recuperarTurnoPersistido();
+
+                            this.instalarMonitoreoOperativo();
+                            this.cargarVentas(); 
+                        } 
+                    } else window.location.replace('index.html');
+                }); 
+            },
+            
+            mostrarToast: function(msg, tipo = 'info') {
+                document.getElementById('toast-message').innerText = msg;
+                const t = document.getElementById('toast');
+                const icon = document.getElementById('toast-icon');
+                t.classList.remove('translate-x-full');
+                if (icon) {
+                    icon.className = tipo === 'error'
+                        ? 'fa-solid fa-triangle-exclamation text-red-400'
+                        : (tipo === 'success'
+                            ? 'fa-solid fa-circle-check text-emerald-400'
+                            : 'fa-solid fa-info text-blue-400');
+                }
+                setTimeout(() => t.classList.add('translate-x-full'), 3000);
+            },
+            actualizarEstadoVisual: function() {
+                const badgeConexion = document.getElementById('badge-estado-conexion-caja');
+                const badgeMovimiento = document.getElementById('badge-estado-movimiento-caja');
+                if (badgeConexion) {
+                    if (this.ultimoEstadoConexion === 'error') {
+                        badgeConexion.className = 'inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-red-700';
+                        badgeConexion.innerHTML = '<i class="fa-solid fa-plug-circle-xmark"></i> Sin conexion';
+                    } else if (this.ultimoEstadoConexion === 'ok') {
+                        badgeConexion.className = 'inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700';
+                        badgeConexion.innerHTML = '<i class="fa-solid fa-wifi"></i> Conexion estable';
+                    } else {
+                        badgeConexion.className = 'inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600';
+                        badgeConexion.innerHTML = '<i class="fa-solid fa-signal"></i> Estado desconocido';
+                    }
+                }
+                if (badgeMovimiento) {
+                    if (this.ultimoEstadoConexion === 'error') {
+                        badgeMovimiento.className = 'inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-red-700';
+                        badgeMovimiento.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Flujo no disponible';
+                    } else if (this.ultimoEstadoMovimiento === 'sin_movimientos') {
+                        badgeMovimiento.className = 'inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600';
+                        badgeMovimiento.innerHTML = '<i class="fa-solid fa-moon"></i> Sin movimientos';
+                    } else if (this.ultimoEstadoMovimiento === 'con_movimientos') {
+                        badgeMovimiento.className = 'inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-700';
+                        badgeMovimiento.innerHTML = '<i class="fa-solid fa-wave-square"></i> Con movimientos';
+                    } else {
+                        badgeMovimiento.className = 'inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600';
+                        badgeMovimiento.innerHTML = '<i class="fa-solid fa-wave-square"></i> Revisando movimiento';
+                    }
+                }
+            },
+            formatoMoneda: (num) => num.toLocaleString('es-PY'), 
+            limpiarMoneda: (txt) => parseInt(String(txt).replace(/\D/g, '')) || 0,
+            obtenerFechaKey: function(valor) {
+                const fecha = valor instanceof Date ? valor : new Date(valor);
+                if (Number.isNaN(fecha.getTime())) return '';
+                return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+            },
+            crearClaveAlertaOperativa: function(tipo, mensaje) {
+                return `${String(tipo || 'evento').trim()}|${String(mensaje || '').trim()}|${String(this.sesion?.sucursal || 'general').trim()}`;
+            },
+            registrarAlertaOperativa: async function({ tipo = 'evento_operativo', nivel = 'info', mensaje = '', detalle = {}, dedupeMs = 300000 } = {}) {
+                const mensajeLimpio = String(mensaje || '').trim();
+                if (!mensajeLimpio) return;
+
+                const clave = this.crearClaveAlertaOperativa(tipo, mensajeLimpio);
+                const ahora = Date.now();
+                if (dedupeMs > 0 && this.alertasOperativasCache[clave] && (ahora - this.alertasOperativasCache[clave]) < dedupeMs) return;
+                this.alertasOperativasCache[clave] = ahora;
+
+                try {
+                    if (!auth.currentUser) return;
+                    await registrarAlertaOperativaFn({
+                        origen: 'caja',
+                        tipo,
+                        nivel,
+                        mensaje: mensajeLimpio,
+                        sucursal: this.sesion?.sucursal || '',
+                        detalle
+                    });
+                } catch (error) {
+                    console.error('No se pudo registrar la alerta operativa de caja.', error);
+                }
+            },
+            marcarSincronizacionOk: function(origen = 'caja') {
+                const veniaConError = this.ultimoEstadoConexion === 'error';
+                this.ultimaSincronizacionAt = Date.now();
+                this.ultimoEstadoConexion = 'ok';
+                this.actualizarEstadoVisual();
+                if (veniaConError) {
+                    this.mostrarToast('Conexion con Firestore restablecida.', 'success');
+                    this.registrarAlertaOperativa({
+                        tipo: 'firestore_reconectado',
+                        nivel: 'info',
+                        mensaje: `Conexion restablecida en ${origen}.`,
+                        detalle: { origen }
+                    });
+                }
+            },
+            manejarErrorOperativo: function(error, { origen = 'caja', tipo = 'firestore_error', mensaje = 'Se detecto un problema operativo.', detalle = {} } = {}) {
+                console.error(mensaje, error);
+                this.ultimoEstadoConexion = 'error';
+                this.actualizarEstadoVisual();
+                this.mostrarToast(mensaje, 'error');
+                this.registrarAlertaOperativa({
+                    tipo,
+                    nivel: 'error',
+                    mensaje,
+                    detalle: {
+                        ...detalle,
+                        origen,
+                        error: String(error?.message || error || 'desconocido')
+                    }
+                });
+            },
+            instalarMonitoreoOperativo: function() {
+                if (this.monitorIntervalId) clearInterval(this.monitorIntervalId);
+
+                window.addEventListener('online', () => {
+                    this.mostrarToast('Conexion recuperada. Actualizando caja...', 'info');
+                    this.cargarVentas();
+                });
+                window.addEventListener('offline', () => {
+                    this.manejarErrorOperativo(new Error('offline'), {
+                        origen: 'caja',
+                        tipo: 'navegador_offline',
+                        mensaje: 'El equipo quedo sin internet. Caja en modo offline.',
+                        detalle: { online: navigator.onLine }
+                    });
+                });
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') this.verificarSaludOperativa();
+                });
+                this.monitorIntervalId = window.setInterval(() => {
+                    if (document.visibilityState !== 'visible') return;
+                    this.verificarSaludOperativa();
+                }, 90000);
+            },
+            verificarSaludOperativa: function() {
+                const ahora = Date.now();
+                if (this.ultimaSincronizacionAt && (ahora - this.ultimaSincronizacionAt) > 600000) {
+                    this.registrarAlertaOperativa({
+                        tipo: 'sincronizacion_lenta',
+                        nivel: 'warning',
+                        mensaje: 'Caja sin actualizacion reciente de Firestore.',
+                        detalle: { minutosSinSync: Math.round((ahora - this.ultimaSincronizacionAt) / 60000) },
+                        dedupeMs: 600000
+                    });
+                }
+                if (navigator.onLine && auth.currentUser) this.cargarVentas();
+            },
+
+            normalizarFecha: function(valor) {
+                if (!valor) return new Date(0);
+                if (typeof valor.toDate === 'function') return valor.toDate();
+                const fecha = new Date(valor);
+                return Number.isNaN(fecha.getTime()) ? new Date(0) : fecha;
+            },
+            formatTime24: function(valor) {
+                return DateTime24.formatTime24(valor);
+            },
+            formatDateTime24: function(valor) {
+                return DateTime24.formatDateTime24(valor);
+            },
+
+            ventaPerteneceAlTurnoActual: function(venta) {
+                if (!venta || venta.arqueado === true) return false;
+                if (this.turnoActualId && venta.turnoId) return venta.turnoId === this.turnoActualId;
+                if (!venta.turnoId && this.fechaAperturaSesionTs) {
+                    const fechaVenta = this.normalizarFecha(venta.fecha);
+                    return fechaVenta.getTime() >= this.fechaAperturaSesionTs;
+                }
+                return false;
+            },
+            obtenerFechaTurnoVenta: function(venta) {
+                const fechaTurno = this.normalizarFecha(venta?.fechaAperturaTurno);
+                if (fechaTurno && fechaTurno.getTime() > 0) return fechaTurno;
+                return this.normalizarFecha(venta?.fecha);
+            },
+            sincronizarTurnoActivoDesdeVentas: function(ventas = []) {
+                const candidatos = ventas
+                    .filter((venta) =>
+                        venta &&
+                        venta.arqueado !== true &&
+                        venta.tipoTransaccion !== 'abono_deuda' &&
+                        String(venta.turnoId || '').trim()
+                    )
+                    .sort((a, b) => this.obtenerFechaTurnoVenta(b) - this.obtenerFechaTurnoVenta(a));
+
+                const turnoVigente = this.turnoActualId
+                    ? candidatos.find((venta) => String(venta.turnoId || '').trim() === String(this.turnoActualId || '').trim())
+                    : null;
+                const referencia = turnoVigente || candidatos[0] || null;
+                if (!referencia) return;
+
+                this.turnoActualId = String(referencia.turnoId || '').trim() || null;
+                const fechaTurno = this.obtenerFechaTurnoVenta(referencia);
+                if (fechaTurno) {
+                    this.fechaAperturaSesionTs = fechaTurno.getTime();
+                    this.horaAperturaSesion = this.formatDateTime24(fechaTurno);
+                }
+            },
+            verificarEstadoTurno: function(ventas = []) {
+                const abiertasSucursal = (Array.isArray(ventas) ? ventas : []).filter((venta) =>
+                    venta &&
+                    venta.arqueado !== true &&
+                    venta.estadoPago === 'pagado' &&
+                    venta.tipoTransaccion !== 'abono_deuda'
+                );
+                const enRecuperacion = !this.turnoActualId && abiertasSucursal.length > 0;
+                if (enRecuperacion && !this.modoRecuperacionTurno) {
+                    this.modoRecuperacionTurno = true;
+                    this.mostrarToast('Sin turno local. Caja operando por recuperacion de sucursal.', 'info');
+                    this.registrarAlertaOperativa({
+                        tipo: 'turno_recuperado_por_sucursal',
+                        nivel: 'warning',
+                        mensaje: 'Caja sin turno local. Se activo el modo recuperacion por sucursal.',
+                        detalle: { ventasAbiertas: abiertasSucursal.length },
+                        dedupeMs: 900000
+                    });
+                    return;
+                }
+                if (!enRecuperacion) this.modoRecuperacionTurno = false;
+            },
+            recuperarTurnoPersistido: async function() {
+                const sucursal = String(this.sesion?.sucursal || '').trim();
+                const cajeroId = String(this.sesion?.uid || this.sesion?.id || this.sesion?.usuarioId || '').trim();
+                if (!sucursal || !cajeroId) return false;
+                try {
+                    const snap = await getDocs(query(collection(db, 'cashFlows'), where('estadoTurno', '==', 'abierto')));
+                    const candidatos = snap.docs
+                        .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }))
+                        .filter((turno) => String(turno.sucursal || '').trim() === sucursal && String(turno.cajeroId || '').trim() === cajeroId)
+                        .sort((a, b) => this.normalizarFecha(b.fechaApertura || b.updatedAt).getTime() - this.normalizarFecha(a.fechaApertura || a.updatedAt).getTime());
+                    const turno = candidatos[0];
+                    if (!turno?.id) return false;
+                    const aperturaMs = Number(turno.fechaAperturaMs || 0) || this.normalizarFecha(turno.fechaApertura || turno.updatedAt).getTime();
+                    if (!aperturaMs || !Number.isFinite(aperturaMs)) return false;
+                    const fondo = Number(turno.fondoInicial || 0);
+                    this.fondoFijoMemoria = Number.isFinite(fondo) ? fondo : 0;
+                    this.fechaAperturaSesionTs = aperturaMs;
+                    this.horaAperturaSesion = this.formatDateTime24(new Date(aperturaMs));
+                    this.turnoActualId = turno.turnoId || turno.id;
+                    localStorage.setItem('__pos_fondo_fijo', String(this.fondoFijoMemoria));
+                    localStorage.setItem('__pos_hora_apertura', this.horaAperturaSesion);
+                    localStorage.setItem('__pos_apertura_ts', String(this.fechaAperturaSesionTs));
+                    localStorage.setItem('__pos_turno_id', this.turnoActualId);
+                    const fondoInput = document.getElementById('sys-fondo-fijo');
+                    if (fondoInput) fondoInput.value = this.formatoMoneda(this.fondoFijoMemoria);
+                    return true;
+                } catch (error) {
+                    console.error('No se pudo recuperar el turno persistido en caja.', error);
+                    return false;
+                }
+            },
+
+            obtenerDistribucionPago: function(venta) {
+                const monto = Number(venta?.total || 0);
+                const metodo = String(venta?.metodoPago || '');
+                if (venta?.noAfectaCaja === true || venta?.tipoTransaccion === 'producto_gratis' || metodo === 'Gratis') return { efectivo: 0, tarjeta: 0, transferencia: 0 };
+                if (metodo === 'Mixto' && venta?.detallesPago) {
+                    return {
+                        efectivo: Number(venta.detallesPago.efectivo || 0),
+                        tarjeta: Number(venta.detallesPago.tarjeta || 0),
+                        transferencia: Number(venta.detallesPago.transferencia || 0)
+                    };
+                }
+                if (metodo === 'Efectivo') return { efectivo: monto, tarjeta: 0, transferencia: 0 };
+                if (metodo === 'Tarjeta') return { efectivo: 0, tarjeta: monto, transferencia: 0 };
+                if (metodo === 'Transferencia') return { efectivo: 0, tarjeta: 0, transferencia: monto };
+                return { efectivo: 0, tarjeta: 0, transferencia: 0 };
+            },
+            
+            actualizarFondoFijo: function(input) {
+                let val = this.limpiarMoneda(input.value);
+                input.value = val === 0 && input.value.trim() === '' ? '' : this.formatoMoneda(val);
+                this.fondoFijoMemoria = val;
+                localStorage.setItem('__pos_fondo_fijo', val);
+                this.calcularEfectivoEsperadoTotal();
+            },
+
+            cargarVentas: async function() {
+                try {
+                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                    const q = this.turnoActualId
+                        ? query(collection(db, rutaPrivada), where("turnoId", "==", this.turnoActualId))
+                        : query(collection(db, rutaPrivada), where("sucursal", "==", this.sesion.sucursal));
+                    const snap = await getDocs(q);
+                    const ventasSucursal = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+                    this.sincronizarTurnoActivoDesdeVentas(ventasSucursal);
+                    this.verificarEstadoTurno(ventasSucursal);
+                    this.marcarSincronizacionOk('ventas_caja');
+                    
+                    this.datosMemoria = { vEfe: 0, aEfe: 0, vTar: 0, vTrans: 0, vCre: 0 };
+                    this.transaccionesActivas = [];
+                    this.productosVendidos = {};
+
+                    ventasSucursal.forEach((t) => { 
+                        if(!this.ventaPerteneceAlTurnoActual(t)) return;
+                        if(t.estadoPago !== 'pagado') return;
+                        if(t.noAfectaCaja === true || t.tipoTransaccion === 'producto_gratis' || t.metodoPago === 'Gratis') return;
+                        if(t.tipoTransaccion === 'abono_deuda') {
+                            this.datosMemoria.aEfe += Number(t.total || 0);
+                            return;
+                        }
+                        this.transaccionesActivas.push(t);
+
+                        const pago = this.obtenerDistribucionPago(t);
+                        this.datosMemoria.vEfe += pago.efectivo;
+                        this.datosMemoria.vTar += pago.tarjeta;
+                        this.datosMemoria.vTrans += pago.transferencia;
+                        if(esMetodoCredito(t.metodoPago)) this.datosMemoria.vCre += Number(t.total || 0);
+
+                        if (t.items && Array.isArray(t.items)) {
+                            t.items.forEach(item => {
+                                const nombreItem = item.nombre;
+                                const cant = Number(item.cantidad) || 0;
+                                const precio = Number(item.precio) || 0;
+                                const subtotal = cant * precio;
+
+                                if (!this.productosVendidos[nombreItem]) {
+                                    this.productosVendidos[nombreItem] = { cant: 0, total: 0 };
+                                }
+                                this.productosVendidos[nombreItem].cant += cant;
+                                this.productosVendidos[nombreItem].total += subtotal;
+                            });
+                        }
+                    });
+                    
+                    this.transaccionesActivas.sort((a,b) => this.normalizarFecha(b.fecha) - this.normalizarFecha(a.fecha));
+                    this.ultimoEstadoMovimiento = this.transaccionesActivas.length > 0 ? 'con_movimientos' : 'sin_movimientos';
+                    this.actualizarEstadoVisual();
+                    
+                    document.getElementById('sys-ventas-efectivo').innerText = `Gs. ${this.formatoMoneda(this.datosMemoria.vEfe)}`;
+                    document.getElementById('sys-abonos-efectivo').innerText = `Gs. ${this.formatoMoneda(this.datosMemoria.aEfe)}`;
+                    document.getElementById('sys-tarjeta').innerText = `Gs. ${this.formatoMoneda(this.datosMemoria.vTar)}`;
+                    document.getElementById('sys-transferencia').innerText = `Gs. ${this.formatoMoneda(this.datosMemoria.vTrans)}`;
+                    document.getElementById('sys-credito').innerText = `Gs. ${this.formatoMoneda(this.datosMemoria.vCre)}`;
+                    
+                    console.info('Caja sincronizada', {
+                        ventasLeidas: ventasSucursal.length,
+                        turnoActualId: this.turnoActualId || null,
+                        sucursal: this.sesion?.sucursal || '',
+                        ticketsActivos: this.transaccionesActivas.length
+                    });
+                    this.calcularEfectivoEsperadoTotal();
+                    this.renderizarTablaAuditoria();
+
+                } catch (error) {
+                    this.manejarErrorOperativo(error, {
+                        origen: 'caja',
+                        tipo: 'firestore_caja',
+                        mensaje: 'Sin conexion con Firestore. El flujo se actualizara al reconectar.',
+                        detalle: { coleccion: 'sales', sucursal: this.sesion?.sucursal || '' }
+                    });
+                }
+            },
+
+            calcularEfectivoEsperadoTotal: function() {
+                // Calculo UI Admin: suma del fondo mas lo que ingreso fisicamente
+                this.efectivoEsperado = this.fondoFijoMemoria + this.datosMemoria.vEfe;
+                document.getElementById('sys-total-esperado').innerText = `Gs. ${this.formatoMoneda(this.efectivoEsperado)}`;
+                this.calcularDiferencia();
+            },
+
+            renderizarTablaAuditoria: function() {
+                const tbody = document.getElementById('tabla-auditoria'); 
+                document.getElementById('lbl-conteo-tickets').innerText = `${this.transaccionesActivas.length} Tickets`;
+                
+                if(this.transaccionesActivas.length === 0) { 
+                    const mensaje = this.ultimoEstadoConexion === 'error'
+                        ? 'Sin conexion. No se puede verificar el turno actual.'
+                        : 'Sin movimientos pendientes de cierre en este turno.';
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-bold">${mensaje}</td></tr>`; 
+                    return; 
+                }
+                
+                tbody.innerHTML = this.transaccionesActivas.map(t => {
+                    const fechaTicket = this.normalizarFecha(t.fecha);
+                    const hora = this.formatTime24(fechaTicket);
+                    const tipoBdg = t.tipoTransaccion === 'abono_deuda' 
+                        ? `<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold">Abono Deuda</span>` 
+                        : `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">Venta POS</span>`;
+                    
+                    let colorMetodo = 'text-slate-600'; 
+                    if(t.metodoPago==='Efectivo') colorMetodo='text-green-600 font-bold'; 
+                    if(t.metodoPago==='Tarjeta') colorMetodo='text-blue-500 font-bold';
+                    if(t.metodoPago==='Transferencia') colorMetodo='text-purple-500 font-bold';
+                    if(t.metodoPago==='Mixto') colorMetodo='text-amber-600 font-bold';
+                    if(esMetodoCredito(t.metodoPago)) colorMetodo='text-red-500 font-bold';
+                    
+                    return `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-4 font-mono text-slate-500">${hora}</td>
+                        <td class="p-4 font-bold text-slate-700">${t.nombreCliente || 'Ocasional'}</td>
+                        <td class="p-4">${tipoBdg}</td>
+                        <td class="p-4 ${colorMetodo}">${t.metodoPago}</td>
+                        <td class="p-4 text-right font-black text-slate-800">Gs. ${this.formatoMoneda(t.total)}</td>
+                        <td class="p-4 text-center"><span class="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded">Activo</span></td>
+                    </tr>`;
+                }).join('');
+            },
+
+            ejecutarArqueoFinal: async function() {
+                if(this.transaccionesActivas.length === 0) { alert("No hay tickets activos para cerrar."); return; }
+                if(!confirm("ATENCION: Esta accion cerrara el turno y archivara los tickets. Desea continuar?")) return;
+                
+                const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                const fechaCierre = new Date();
+                const fechaApertura = this.fechaAperturaSesionTs ? new Date(this.fechaAperturaSesionTs) : fechaCierre;
+                const turnoId = this.turnoActualId || `legacy_${fechaCierre.getTime()}`;
+                const efectivoDeclarado = this.limpiarMoneda(document.getElementById('dec-efectivo').value);
+                const gastos = this.limpiarMoneda(document.getElementById('dec-gastos').value);
+                const tarjetaDeclarada = this.limpiarMoneda(document.getElementById('dec-tarjeta').value);
+                const transferenciaDeclarada = this.limpiarMoneda(document.getElementById('dec-transferencia').value);
+                const efectivoPos = Number(this.datosMemoria.vEfe || 0);
+                const tarjeta = Number(this.datosMemoria.vTar || 0);
+                const transferencia = Number(this.datosMemoria.vTrans || 0);
+                const credito = Number(this.datosMemoria.vCre || 0);
+                const efectivoEsperado = efectivoPos + Number(this.fondoFijoMemoria || 0) - gastos;
+                const diferenciaCaja = efectivoDeclarado - efectivoEsperado;
+                const diferenciaTarjeta = tarjetaDeclarada - tarjeta;
+                const diferenciaTransferencia = transferenciaDeclarada - transferencia;
+                const diferenciaTotal = diferenciaCaja + diferenciaTarjeta + diferenciaTransferencia;
+                
+                try {
+                    const batch = writeBatch(db);
+                    
+                    this.transaccionesActivas.forEach(t => {
+                        const ticketRef = doc(db, rutaPrivada, t.id);
+                        batch.update(ticketRef, { arqueado: true, fechaArqueo: fechaCierre, turnoId });
+                    });
+
+                    const cierreRef = doc(collection(db, 'cierresCaja'));
+                    batch.set(cierreRef, {
+                        turnoId,
+                        sucursal: this.sesion.sucursal,
+                        cajeroId: this.sesion.uid || null,
+                        cajero: this.sesion.nombre || 'Cajero',
+                        fechaApertura,
+                        fechaAperturaTexto: this.horaAperturaSesion || this.formatDateTime24(fechaApertura),
+                        fechaCierre,
+                        fechaCierreTexto: this.formatDateTime24(fechaCierre),
+                        fechaOperacionKey: this.obtenerFechaKey(fechaApertura),
+                        fechaCierreKey: this.obtenerFechaKey(fechaCierre),
+                        fondoInicial: Number(this.fondoFijoMemoria || 0),
+                        declaracion: {
+                            efectivo: efectivoDeclarado,
+                            gastos,
+                            tarjeta: tarjetaDeclarada,
+                            transferencia: transferenciaDeclarada,
+                            totalCaja: efectivoDeclarado + tarjetaDeclarada + transferenciaDeclarada
+                        },
+                        sistema: {
+                            ventasEfectivo: efectivoPos,
+                            ventasTarjeta: tarjeta,
+                            ventasTransferencia: transferencia,
+                            ventasCredito: credito,
+                            totalEsperadoEfectivo: efectivoEsperado,
+                            totalEsperado: efectivoEsperado + tarjeta + transferencia,
+                            totalCobradoInmediato: efectivoPos + tarjeta + transferencia,
+                            totalVendido: efectivoPos + tarjeta + transferencia + credito,
+                            diferenciaEfectivo: diferenciaCaja,
+                            diferenciaTarjeta,
+                            diferenciaTransferencia,
+                            diferenciaTotal
+                        },
+                        resumenFinanciero: {
+                            efectivoPos,
+                            efectivoDeclarado,
+                            efectivoEsperado,
+                            posTarjeta: tarjeta,
+                            transferencia,
+                            credito,
+                            gastos,
+                            diferenciaCaja,
+                            diferenciaPosTarjeta: diferenciaTarjeta,
+                            diferenciaTransferencia,
+                            diferenciaTotal,
+                            sobrante: Math.max(diferenciaTotal, 0),
+                            faltante: Math.max(-diferenciaTotal, 0)
+                        },
+                        versionEsquemaFinanciero: 2,
+                        productosVendidos: this.productosVendidos,
+                        ticketsContados: this.transaccionesActivas.length,
+                        ticketsTurnoIds: this.transaccionesActivas.map(ticket => ticket.id),
+                        htmlTicket: this.htmlArqueoMemoria || '',
+                        creadoEn: fechaCierre
+                    });
+                    batch.set(doc(db, 'cashFlows', turnoId), {
+                        estadoTurno: 'cerrado',
+                        cierreCajaId: cierreRef.id,
+                        closedAt: fechaCierre,
+                        updatedAt: fechaCierre
+                    }, { merge: true });
+
+                    await batch.commit();
+                    
+                    document.getElementById('dec-efectivo').value = ''; 
+                    document.getElementById('dec-gastos').value = ''; 
+                    document.getElementById('dec-tarjeta').value = ''; 
+                    document.getElementById('dec-transferencia').value = ''; 
+                    document.getElementById('sys-fondo-fijo').value = '0';
+                    this.fondoFijoMemoria = 0;
+                    localStorage.removeItem('__pos_fondo_fijo');
+                    localStorage.removeItem('__pos_hora_apertura');
+                    localStorage.removeItem('__pos_apertura_ts');
+                    localStorage.removeItem('__pos_turno_id');
+                    
+                    this.mostrarToast("Turno Cerrado Correctamente."); 
+                    this.cargarVentas(); 
+
+                } catch(e) { console.error(e); alert("Fallo al cerrar turno. Revise su conexion."); }
+            },
+
+            abrirPreviewArqueo: function() {
+                const decEfe = this.limpiarMoneda(document.getElementById('dec-efectivo').value);
+                const decGastos = this.limpiarMoneda(document.getElementById('dec-gastos').value);
+                const decTar = this.limpiarMoneda(document.getElementById('dec-tarjeta').value);
+                const decTrans = this.limpiarMoneda(document.getElementById('dec-transferencia').value);
+
+                // --- MATEMATICA DEL SISTEMA ---
+                    // 1. Efectivo de ventas del turno (sin abonos administrativos ni fondo inicial)
+                    const espEfeVentas = this.datosMemoria.vEfe;
+                
+                // 2. El Efectivo Total Esperado incluye el fondo inicial.
+                const espEfeTotal = espEfeVentas + this.fondoFijoMemoria; 
+                
+                const espTar = this.datosMemoria.vTar;
+                const espTrans = this.datosMemoria.vTrans;
+                
+                // Los gastos ya salieron físicamente de la caja, por eso reducen el efectivo esperado.
+                const efectivoEsperado = espEfeTotal - decGastos;
+                const totalSistema = efectivoEsperado + espTar + espTrans;
+
+                // Total operativo del turno: solo dinero que impacta el flujo de caja
+                const totalSistemaVendido = espEfeVentas + espTar + espTrans + Number(this.datosMemoria.vCre || 0);
+
+                // --- MATEMATICA DE CAJA (DECLARADO) ---
+                const totalCajaDeclarado = decEfe + decTar + decTrans;
+
+                // Convención única: declarado menos esperado. Positivo sobra, negativo falta.
+                const difEfe = decEfe - efectivoEsperado;
+                const difTar = decTar - espTar;
+                const difTrans = decTrans - espTrans;
+                
+                // Diferencia global sumada
+                const difTotal = difEfe + difTar + difTrans;
+
+                const formatDif = (valor) => valor === 0
+                    ? 'Gs. 0'
+                    : valor > 0
+                        ? `+ Gs. ${this.formatoMoneda(valor)} (SOBRA)`
+                        : `- Gs. ${this.formatoMoneda(Math.abs(valor))} (FALTA)`;
+                const difEfeTexto = formatDif(difEfe);
+                const difTarTexto = formatDif(difTar);
+                const difTransTexto = formatDif(difTrans);
+                const difTotalTexto = formatDif(difTotal);
+
+                const fechaCierre = this.formatDateTime24(new Date());
+                const fechaApertura = this.horaAperturaSesion;
+
+                // Generar lista HTML de productos
+                let listaProdHTML = '';
+                for (const [nombre, data] of Object.entries(this.productosVendidos)) {
+                    listaProdHTML += `<tr><td style="width: 15%; text-align: left;">${data.cant}x</td><td style="width: 50%; text-align: left;">${nombre}</td><td style="width: 35%; text-align: right;">${this.formatoMoneda(data.total)}</td></tr>`;
+                }
+                if (listaProdHTML === '') listaProdHTML = '<tr><td colspan="3" class="center">Sin ventas</td></tr>';
+
+                // TICKET Z - IMPRESION TERMICA DEFINITIVO
+                const htmlZ = `
+                    <html><head><style>
+                        @page { margin: 0; } 
+                        body { margin: 0; padding: 10px; font-family: 'Arial', sans-serif; font-size: 11px; font-weight: 900; width: 100%; max-width: 72mm; color: #000; } 
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; } 
+                        td { padding: 3px 0; font-weight: 900; vertical-align: top; } 
+                        .center { text-align: center; } 
+                        .right { text-align: right; } 
+                        hr { border: 0; border-top: 2px dashed black; margin: 8px 0; } 
+                        .title { font-size: 14px; text-align: center; border-bottom: 2px solid black; padding-bottom: 5px; margin-bottom: 5px; }
+                        .subtitle { text-transform: uppercase; border-bottom: 1px dotted black; padding-bottom: 2px; margin-bottom: 2px; }
+                        .border-top { border-top: 1px dashed black; }
+                    </style></head><body>
+                        <div class="title">REPORTE Z (AUDITORIA)</div>
+                        <div class="center">Apertura: ${fechaApertura}</div>
+                        <div class="center">Cierre: ${fechaCierre}</div>
+                        <div class="center">Sucursal: ${this.sesion.sucursal}</div>
+                        <hr>
+                        
+                        <div class="subtitle">PRODUCTOS VENDIDOS:</div>
+                        <table style="font-size: 10px;">${listaProdHTML}</table>
+                        <div style="font-size: 9px; text-align: right; margin-top: 3px;">VENTA TOTAL (INCLUYE CREDITO): Gs. ${this.formatoMoneda(totalSistemaVendido)}</div>
+                        <hr>
+
+                        <div class="subtitle">SISTEMA (ESPERADO):</div>
+                        <table>
+                            <tr><td>(+) Fondo Inicial</td><td class="right">+${this.formatoMoneda(this.fondoFijoMemoria)}</td></tr>
+                            <tr><td>Ventas Efectivo</td><td class="right">${this.formatoMoneda(espEfeVentas)}</td></tr>
+                            <tr><td>Gastos Extraídos</td><td class="right">-${this.formatoMoneda(decGastos)}</td></tr>
+                            <tr><td>Efectivo Esperado</td><td class="right">${this.formatoMoneda(efectivoEsperado)}</td></tr>
+                            <tr><td>POS Sistema</td><td class="right">${this.formatoMoneda(espTar)}</td></tr>
+                            <tr><td>Transferencia Sist.</td><td class="right">${this.formatoMoneda(espTrans)}</td></tr>
+                            <tr><td>Credito (informativo, no caja)</td><td class="right">${this.formatoMoneda(Number(this.datosMemoria.vCre || 0))}</td></tr>
+                            <tr style="border-top:1px dashed black"><td>VENTA TOTAL</td><td class="right">${this.formatoMoneda(totalSistemaVendido)}</td></tr>
+                            <tr style="border-top:1px solid black"><td>TOTAL CAJA ESPERADO</td><td class="right">${this.formatoMoneda(totalSistema)}</td></tr>
+                        </table>
+                        <div style="font-size: 8px; text-align: center;">El credito no se declara ni afecta diferencias de caja.</div>
+                        <hr>
+
+                        <div class="subtitle">CAJA (DECLARADO):</div>
+                        <table>
+                            <tr><td>Efectivo Declarado</td><td class="right">${this.formatoMoneda(decEfe)}</td></tr>
+                            <tr><td>POS Declarado</td><td class="right">${this.formatoMoneda(decTar)}</td></tr>
+                            <tr><td>Transferencia Decl.</td><td class="right">${this.formatoMoneda(decTrans)}</td></tr>
+                            <tr style="border-top:1px solid black"><td>TOTAL DECLARADO</td><td class="right">${this.formatoMoneda(totalCajaDeclarado)}</td></tr>
+                        </table>
+                        <hr>
+
+                        <div class="subtitle">GASTOS EXTRAIDOS:</div>
+                        <table>
+                            <tr><td>Total Gastos</td><td class="right">${this.formatoMoneda(decGastos)}</td></tr>
+                        </table>
+                        <hr>
+
+                        <div class="subtitle">DIFERENCIAS (DECLARADO - ESPERADO):</div>
+                        <table>
+                            <tr><td style="font-size: 13px; text-decoration: underline;">DIF. EFECTIVO</td><td class="right" style="font-size: 13px; text-decoration: underline;">${difEfeTexto}</td></tr>
+                            <tr><td style="font-size: 12px;">DIF. TARJETAS</td><td class="right" style="font-size: 12px;">${difTarTexto}</td></tr>
+                            <tr><td style="font-size: 12px;">DIF. TRANSF.</td><td class="right" style="font-size: 12px;">${difTransTexto}</td></tr>
+                            <tr class="border-top" style="font-size: 13px;"><td>DIFERENCIA TOTAL</td><td class="right">${difTotalTexto}</td></tr>
+                        </table>
+                        <div style="font-size: 8px; text-align: center; margin-top: 5px;">(+ Sobra dinero / - Falta dinero)</div>
+                        <hr><br><br>
+                        <div class="center">__________________________</div>
+                        <div class="center">Firma Responsable</div>
+                    </body></html>
+                `;
+
+                this.htmlArqueoMemoria = htmlZ;
+                document.getElementById('arqueo-preview-content').innerHTML = htmlZ;
+                document.getElementById('modal-preview-arqueo').classList.remove('hidden');
+                document.getElementById('modal-preview-arqueo').classList.add('flex');
+            },
+
+            cerrarPreviewArqueo: function() {
+                document.getElementById('modal-preview-arqueo').classList.add('hidden');
+                document.getElementById('modal-preview-arqueo').classList.remove('flex');
+            },
+
+            confirmarImpresionArqueo: function() {
+                PrintUtils.printHtml(this.htmlArqueoMemoria);
+            },
+
+            formatearEntrada: function(input) { let val = this.limpiarMoneda(input.value); input.value = val === 0 && input.value.trim() === '' ? '' : this.formatoMoneda(val); this.calcularDiferencia(); },
+            
+            calcularDiferencia: function() { 
+                const decEfe = this.limpiarMoneda(document.getElementById('dec-efectivo').value); 
+                const decGastos = this.limpiarMoneda(document.getElementById('dec-gastos').value); 
+                const decTar = this.limpiarMoneda(document.getElementById('dec-tarjeta').value);
+                const decTrans = this.limpiarMoneda(document.getElementById('dec-transferencia').value);
+                
+                const espTar = this.datosMemoria.vTar;
+                const espTrans = this.datosMemoria.vTrans;
+                const espEfeVentas = this.datosMemoria.vEfe;
+                const espEfeTotal = espEfeVentas + this.fondoFijoMemoria;
+                
+                const efectivoEsperado = espEfeTotal - decGastos;
+                const difEfe = decEfe - efectivoEsperado;
+                const difTar = decTar - espTar;
+                const difTrans = decTrans - espTrans;
+                
+                const difTotal = difEfe + difTar + difTrans;
+                
+                const dEl = document.getElementById('res-diferencia'); 
+                if (difTotal > 0) { 
+                    dEl.innerText = `+ Gs. ${this.formatoMoneda(difTotal)} (SOBRA)`;
+                    dEl.className = "text-4xl font-black text-green-500 font-mono";
+                } 
+                else if (difTotal < 0) { 
+                    dEl.innerText = `- Gs. ${this.formatoMoneda(Math.abs(difTotal))} (FALTA)`;
+                    dEl.className = "text-4xl font-black text-red-500 font-mono";
+                } 
+                else { 
+                    dEl.innerText = `Gs. 0 (OK)`; 
+                    dEl.className = "text-4xl font-black text-slate-300 font-mono"; 
+                } 
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => CajaModule.init());
+    </script>
+</body>
+</html>
+
+

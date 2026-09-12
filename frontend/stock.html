@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" href="favicon.ico">
+    <title>Coffee POS ERP - Control de Stock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <script src="print_utils.js"></script>
+    <script src="cierre_caja_normalizer.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+</head>
+
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800 opacity-0 transition-opacity duration-500" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-[150] flex items-center p-4 mb-4 text-white rounded-lg shadow-xl bg-slate-800 border border-slate-700">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20">
+            <i id="toast-icon" class="fa-solid fa-warehouse"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-mug-hot text-orange-500\'></i>'">
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide">
+            <a href="dashboard.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-house text-lg w-6"></i><span>Panel Principal</span>
+            </a>
+
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Administracion</p>
+            <a href="sucursales.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-store text-lg w-6"></i><span>Sucursales</span>
+            </a>
+            <a href="inventario.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-boxes-stacked text-lg w-6"></i><span>Inventario</span>
+            </a>
+            <button class="w-full flex items-center gap-4 bg-orange-500 text-white p-3 rounded-xl font-semibold shadow-md transition">
+                <i class="fa-solid fa-warehouse text-lg w-6"></i><span>Stock</span>
+            </button>
+            <a href="usuarios.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-user-shield text-lg w-6"></i><span>Personal</span>
+            </a>
+            <a href="produccion.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-burger text-lg w-6"></i><span>Produccion</span>
+            </a>
+            <a href="notificaciones.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-bell text-lg w-6"></i><span>Notificaciones</span>
+            </a>
+
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Operaciones</p>
+            <a href="clientes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-gem text-lg w-6"></i><span>Clientes CRM</span>
+            </a>
+            <a href="kds.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-fire-burner text-lg w-6"></i><span>Monitor Cocina</span>
+            </a>
+
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Finanzas</p>
+            <a href="caja.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-vault text-lg w-6"></i><span>Arqueo de Caja</span>
+            </a>
+            <a href="reportes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-chart-line text-lg w-6"></i><span>Reportes</span>
+            </a>
+            <a href="monitor_problemas.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-triangle-exclamation text-lg w-6"></i><span>Monitor Problemas</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800 flex justify-between items-center bg-slate-950">
+            <div class="leading-tight">
+                <p class="text-sm font-bold text-white" id="user-name">Cargando...</p>
+                <p class="text-xs text-slate-400" id="user-role">...</p>
+            </div>
+            <button onclick="StockModule.cerrarSesion()" class="text-red-400 hover:text-red-300 transition p-2 rounded-lg hover:bg-slate-800" title="Cerrar sesión" aria-label="Cerrar sesión">
+                <i class="fa-solid fa-right-from-bracket text-xl"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="bg-white p-6 shadow-sm flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 p-1.5 shadow-sm overflow-hidden flex items-center justify-center">
+                    <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-warehouse text-orange-500\'></i>'">
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800">Control de Stock</h2>
+                    <p class="text-slate-500 text-sm">Monitorea productos controlados y produccion por sucursal para anticipar pedidos.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-[220px,220px,1fr,auto,auto,auto] gap-3 w-full xl:w-auto">
+                <select id="filtro-sucursal" onchange="StockModule.renderizarTodo()" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-orange-500 bg-white">
+                    <option value="Todos">Todas las sucursales</option>
+                </select>
+                <select id="filtro-categoria" onchange="StockModule.renderizarTodo()" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-orange-500 bg-white">
+                    <option value="Todos">Todas las categorias</option>
+                    <option value="Produccion">Produccion</option>
+                </select>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input id="filtro-texto" oninput="StockModule.renderizarTodo()" type="text" placeholder="Buscar producto, categoria o sucursal..." class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm font-bold outline-none focus:border-orange-500">
+                </div>
+                <button onclick="StockModule.imprimirStock()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-5 py-3 rounded-xl font-bold shadow-sm transition flex items-center justify-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+                <button onclick="StockModule.exportarPedidoSugerido()" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-file-export"></i> Exportar pedido
+                </button>
+                <button onclick="StockModule.mostrarToast('Datos actualizados en tiempo real.', 'success')" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-rotate"></i> Actualizar
+                </button>
+            </div>
+        </header>
+
+        <section class="flex-1 overflow-y-auto p-6 bg-slate-100 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div class="bg-slate-900 text-white rounded-3xl p-5 shadow-xl">
+                    <p class="text-xs font-black uppercase tracking-[0.24em] text-slate-400">Productos controlados</p>
+                    <p id="kpi-controlados" class="text-4xl font-black mt-3">0</p>
+                    <p class="text-xs text-slate-400 mt-3 font-bold">Items con stock unitario administrado.</p>
+                </div>
+                <div class="bg-white rounded-3xl border border-red-200 p-5 shadow-sm">
+                    <p class="text-xs font-black uppercase tracking-[0.24em] text-red-500">Stock critico / bajo</p>
+                    <p id="kpi-bajos" class="text-4xl font-black mt-3 text-red-600">0</p>
+                    <p class="text-xs text-red-600 mt-3 font-bold">Productos controlados para revisar o pedir.</p>
+                </div>
+                <div class="bg-white rounded-3xl border border-amber-200 p-5 shadow-sm">
+                    <p class="text-xs font-black uppercase tracking-[0.24em] text-amber-500">Alertas Produccion</p>
+                    <p id="kpi-produccion-baja" class="text-4xl font-black mt-3 text-amber-600">0</p>
+                    <p class="text-xs text-amber-600 mt-3 font-bold">Recursos productivos con necesidad de reposicion.</p>
+                </div>
+                <div class="bg-white rounded-3xl border border-blue-200 p-5 shadow-sm">
+                    <p class="text-xs font-black uppercase tracking-[0.24em] text-blue-500">Sucursales Monitoreadas</p>
+                    <p id="kpi-sucursales" class="text-4xl font-black mt-3 text-blue-600">0</p>
+                    <p class="text-xs text-blue-600 mt-3 font-bold">Configuraciones productivas activas en pantalla.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-[1.2fr,0.8fr] gap-6">
+                <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-200 flex items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-orange-500"></i> Productos Controlados</h3>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Solo items marcados como controlados, con alertas visuales de reposicion.</p>
+                        </div>
+                        <span id="lbl-controlados-count" class="text-[10px] uppercase tracking-[0.24em] font-black text-slate-500 bg-slate-100 px-3 py-1 rounded-full">0 items</span>
+                    </div>
+                    <div class="overflow-auto max-h-[560px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 sticky top-0 shadow-sm z-0">
+                                <tr class="text-slate-500 text-xs uppercase tracking-wider">
+                                    <th class="p-4 font-semibold">Producto</th>
+                                    <th class="p-4 font-semibold">Sucursal / Categoria</th>
+                                    <th class="p-4 font-semibold text-center">Stock</th>
+                                    <th class="p-4 font-semibold text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-stock-controlado" class="divide-y divide-slate-100">
+                                <tr><td colspan="4" class="p-6 text-center text-slate-400 font-bold">Cargando stock...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-truck-ramp-box text-orange-500"></i> Pedidos Sugeridos</h3>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Lista priorizada de lo que conviene reponer para no frenar ventas.</p>
+                        </div>
+                        <span class="text-[10px] uppercase tracking-[0.24em] font-black text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Reposicion</span>
+                    </div>
+                    <div id="lista-pedidos" class="mt-5 space-y-3 max-h-[560px] overflow-y-auto">
+                        <p class="text-sm text-slate-400 font-bold">Sin datos todavia.</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-burger text-orange-500"></i> Stock de Produccion por Sucursal</h3>
+                        <p class="text-xs text-slate-500 font-semibold mt-1">Cantidades disponibles de medallones, panes, papas, carne salteado, carne lomito y pan lomito.</p>
+                    </div>
+                    <span id="lbl-produccion-count" class="text-[10px] uppercase tracking-[0.24em] font-black text-slate-500 bg-slate-100 px-3 py-1 rounded-full">0 sucursales</span>
+                </div>
+                <div id="grid-produccion" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <p class="text-sm text-slate-400 font-bold">Cargando produccion...</p>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { initializeFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+            messagingSenderId: "1084603889746",
+            appId: "1:1084603889746:web:822ce55a070dc146b2078b",
+            measurementId: "G-1LZVQ05T2E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = initializeFirestore(app, {
+            experimentalForceLongPolling: true,
+            useFetchStreams: false
+        });
+
+        window.StockModule = {
+            usuarioActual: null,
+            productos: [],
+            sucursales: [],
+            produccion: [],
+            ultimoStockFiltrado: [],
+            ultimaProduccionFiltrada: [],
+            ultimasSugerencias: [],
+            unsubscribeProductos: null,
+            unsubscribeSucursales: null,
+            unsubscribeProduccion: null,
+
+            init: function() {
+                const sesionStr = localStorage.getItem('__pos_session');
+                if (!sesionStr) return window.location.replace('index.html');
+                this.usuarioActual = JSON.parse(sesionStr);
+                if (this.usuarioActual.rol !== 'admin') return window.location.replace('index.html');
+
+                document.getElementById('user-name').innerText = this.usuarioActual.nombre || 'Administrador';
+                document.getElementById('user-role').innerText = `Rol: ${String(this.usuarioActual.rol || 'admin').toUpperCase()}`;
+
+                onAuthStateChanged(auth, (user) => {
+                    if (!user) return window.location.replace('index.html');
+                    document.getElementById('app-body').classList.remove('opacity-0');
+                    this.cargarSucursales();
+                    this.cargarProductos();
+                    this.cargarProduccion();
+                });
+            },
+
+            normalizarKey: function(valor) {
+                return String(valor || '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '')
+                    .toLowerCase() || 'general';
+            },
+
+            normalizarTexto: function(valor) {
+                return String(valor || '')
+                    .replaceAll('ÃƒÂ¡', 'a')
+                    .replaceAll('ÃƒÂ©', 'e')
+                    .replaceAll('ÃƒÂ­', 'i')
+                    .replaceAll('ÃƒÂ³', 'o')
+                    .replaceAll('ÃƒÂº', 'u')
+                    .replaceAll('ÃƒÂ±', 'n')
+                    .replaceAll('ÃƒÂ', 'a')
+                    .replaceAll('Ãƒâ€°', 'e')
+                    .replaceAll('ÃƒÂ', 'i')
+                    .replaceAll('Ãƒâ€œ', 'o')
+                    .replaceAll('ÃƒÅ¡', 'u')
+                    .replaceAll('Ãƒâ€˜', 'n')
+                    .replaceAll('Ã‚', '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .trim()
+                    .toLowerCase();
+            },
+
+            formatoNumero: function(valor) {
+                return Number(valor || 0).toLocaleString('es-PY');
+            },
+
+            mostrarToast: function(mensaje, tipo = 'success') {
+                const toast = document.getElementById('toast');
+                const icon = document.getElementById('toast-icon');
+                document.getElementById('toast-message').innerText = mensaje;
+                toast.className = `fixed top-5 right-5 transform transition-transform duration-300 z-[150] flex items-center p-4 mb-4 text-white rounded-lg shadow-xl border ${tipo === 'error' ? 'bg-red-600 border-red-500' : 'bg-slate-800 border-slate-700'}`;
+                icon.className = `fa-solid ${tipo === 'error' ? 'fa-triangle-exclamation' : 'fa-warehouse'}`;
+                toast.classList.remove('translate-x-full');
+                clearTimeout(this._toastTimer);
+                this._toastTimer = setTimeout(() => toast.classList.add('translate-x-full'), 2800);
+            },
+
+            cerrarSesion: async function() {
+                localStorage.removeItem('__pos_session');
+                try { await signOut(auth); } catch (_) {}
+                window.location.replace('index.html');
+            },
+
+            cargarSucursales: function() {
+                this.unsubscribeSucursales?.();
+                this.unsubscribeSucursales = onSnapshot(collection(db, 'branches'), (snap) => {
+                    this.sucursales = [];
+                    snap.forEach((docSnap) => {
+                        const data = docSnap.data() || {};
+                        const nombreBase = data.nombre || data.name || data.branchName || docSnap.id;
+                        const normalizada = CierreCajaNormalizer.normalizarSucursal(data.sucursalId || data.branchId || docSnap.id || nombreBase);
+                        const porNombre = normalizada.id ? normalizada : CierreCajaNormalizer.normalizarSucursal(nombreBase);
+                        const id = porNombre.id || docSnap.id;
+                        const nombre = porNombre.nombre || nombreBase;
+                        if (nombre && !this.sucursales.some((item) => item.id === id)) this.sucursales.push({ id, nombre, key: this.normalizarKey(nombre) });
+                    });
+                    const select = document.getElementById('filtro-sucursal');
+                    const actual = select.value || 'Todos';
+                    const opciones = ['<option value="Todos">Todas las sucursales</option>']
+                        .concat(this.sucursales.map((s) => `<option value="${s.id}">${s.nombre}</option>`));
+                    select.innerHTML = opciones.join('');
+                    if ([...select.options].some((item) => item.value === actual)) select.value = actual;
+                    this.renderizarTodo();
+                }, (error) => {
+                    console.error('Error sucursales stock:', error);
+                    this.mostrarToast('No se pudieron leer las sucursales.', 'error');
+                });
+            },
+
+            cargarProductos: function() {
+                this.unsubscribeProductos?.();
+                this.unsubscribeProductos = onSnapshot(collection(db, 'products'), (snap) => {
+                    this.productos = [];
+                    snap.forEach((docSnap) => this.productos.push({ id: docSnap.id, ...docSnap.data() }));
+                    this.actualizarFiltroCategorias();
+                    this.renderizarTodo();
+                }, (error) => {
+                    console.error('Error productos stock:', error);
+                    this.mostrarToast('No se pudo leer el inventario.', 'error');
+                });
+            },
+
+            actualizarFiltroCategorias: function() {
+                const select = document.getElementById('filtro-categoria');
+                if (!select) return;
+                const actual = select.value || 'Todos';
+                const categorias = [...new Set(
+                    this.productos
+                        .map((item) => String(item.categoria || '').trim())
+                        .filter(Boolean)
+                )].sort((a, b) => a.localeCompare(b, 'es'));
+
+                const opciones = [
+                    '<option value="Todos">Todas las categorias</option>',
+                    ...categorias.map((categoria) => `<option value="${categoria}">${categoria}</option>`),
+                    '<option value="Produccion">Produccion</option>'
+                ];
+                select.innerHTML = opciones.join('');
+                if ([...select.options].some((item) => item.value === actual)) {
+                    select.value = actual;
+                }
+            },
+
+            cargarProduccion: function() {
+                this.unsubscribeProduccion?.();
+                this.unsubscribeProduccion = onSnapshot(collection(db, 'produccionConfig'), (snap) => {
+                    this.produccion = [];
+                    snap.forEach((docSnap) => this.produccion.push({ id: docSnap.id, ...docSnap.data() }));
+                    this.renderizarTodo();
+                }, (error) => {
+                    console.error('Error produccion stock:', error);
+                    this.mostrarToast('No se pudo leer Produccion.', 'error');
+                });
+            },
+
+            obtenerEstadoStock: function(cantidad) {
+                const qty = Number(cantidad || 0);
+                if (qty <= 0) return { key: 'critico', texto: 'Critico', clase: 'bg-red-100 text-red-700 border-red-200', chip: 'bg-red-50 border-red-200 text-red-700' };
+                if (qty <= 5) return { key: 'bajo', texto: 'Bajo', clase: 'bg-amber-100 text-amber-700 border-amber-200', chip: 'bg-amber-50 border-amber-200 text-amber-700' };
+                return { key: 'ok', texto: 'OK', clase: 'bg-emerald-100 text-emerald-700 border-emerald-200', chip: 'bg-emerald-50 border-emerald-200 text-emerald-700' };
+            },
+
+            resolverNombreSucursal: function(valorSucursal, key = '') {
+                const normalizada = CierreCajaNormalizer.normalizarSucursal(key || valorSucursal);
+                if (normalizada.id) return normalizada.nombre;
+                if (valorSucursal && valorSucursal !== 'Unificado') return valorSucursal;
+                const porKey = this.sucursales.find((item) => item.key === key);
+                if (porKey) return porKey.nombre;
+                return valorSucursal || key || 'General';
+            },
+
+            resolverIdSucursal: function(item = {}) {
+                if (item.sucursal === 'Unificado' || item.sucursalId === 'unificado') return 'unificado';
+                return CierreCajaNormalizer.obtenerSucursalRegistro(item).id || this.normalizarKey(item.sucursal || item.nombreSucursal || item.sucursalKey || item.id || '');
+            },
+
+            filtrarProductosControlados: function() {
+                const sucursal = document.getElementById('filtro-sucursal')?.value || 'Todos';
+                const categoria = document.getElementById('filtro-categoria')?.value || 'Todos';
+                const texto = this.normalizarTexto(document.getElementById('filtro-texto')?.value || '');
+                if (categoria === 'Produccion') return [];
+                return this.productos
+                    .filter((item) => item.controlado === true)
+                    .filter((item) => {
+                        const matchSucursal = sucursal === 'Todos' || item.sucursal === 'Unificado' || item.sucursalId === 'unificado' || this.resolverIdSucursal(item) === sucursal;
+                        const matchCategoria = categoria === 'Todos' || String(item.categoria || '').trim() === categoria;
+                        const contenido = this.normalizarTexto(`${item.nombre || ''} ${item.categoria || ''} ${item.sucursal || ''}`);
+                        const matchTexto = !texto || contenido.includes(texto);
+                        return matchSucursal && matchCategoria && matchTexto;
+                    })
+                    .sort((a, b) => {
+                        const estadoA = this.obtenerEstadoStock(a.stock).key;
+                        const estadoB = this.obtenerEstadoStock(b.stock).key;
+                        const orden = { critico: 0, bajo: 1, ok: 2 };
+                        if (orden[estadoA] !== orden[estadoB]) return orden[estadoA] - orden[estadoB];
+                        return String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es');
+                    });
+            },
+
+            filtrarProduccion: function() {
+                const sucursal = document.getElementById('filtro-sucursal')?.value || 'Todos';
+                const categoria = document.getElementById('filtro-categoria')?.value || 'Todos';
+                if (!['Todos', 'Produccion'].includes(categoria)) return [];
+                return this.produccion
+                    .filter((item) => {
+                        const nombre = this.resolverNombreSucursal(item.sucursal || item.nombreSucursal, item.sucursalKey || item.id);
+                        const id = this.resolverIdSucursal(item);
+                        return sucursal === 'Todos' || id === sucursal || nombre === sucursal;
+                    })
+                    .sort((a, b) => this.resolverNombreSucursal(a.sucursal || a.nombreSucursal, a.sucursalKey || a.id).localeCompare(this.resolverNombreSucursal(b.sucursal || b.nombreSucursal, b.sucursalKey || b.id), 'es'));
+            },
+
+            obtenerRecursosProduccion: function(item) {
+                return [
+                    { key: 'medallonesDisponibles', label: 'Medallones', icon: 'fa-burger', cantidad: Number(item.medallonesDisponibles || 0) },
+                    { key: 'panesDisponibles', label: 'Panes', icon: 'fa-bread-slice', cantidad: Number(item.panesDisponibles || 0) },
+                    { key: 'papasDisponibles', label: 'Papas', icon: 'fa-utensils', cantidad: Number(item.papasDisponibles || 0) },
+                    { key: 'carneSalteadoDisponible', label: 'Carne Salteado', icon: 'fa-fire', cantidad: Number(item.carneSalteadoDisponible || 0) },
+                    { key: 'carneLomitoDisponible', label: 'Carne Lomito', icon: 'fa-drumstick-bite', cantidad: Number(item.carneLomitoDisponible || 0) },
+                    { key: 'panLomitoDisponible', label: 'Pan Lomito', icon: 'fa-bread-slice', cantidad: Number(item.panLomitoDisponible || 0) }
+                ];
+            },
+
+            obtenerBadgesProduccionProducto: function(item) {
+                const badges = [];
+                if (item.usaProduccionCarne === true) badges.push(`<span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-amber-200"><i class="fa-solid fa-burger text-[9px]"></i>${Number(item.medallonesPorUnidad || 0)} med</span>`);
+                if (item.usaProduccionPan === true) badges.push(`<span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-yellow-200"><i class="fa-solid fa-bread-slice text-[9px]"></i>${Number(item.panesPorUnidad || 0)} pan</span>`);
+                if (item.usaProduccionPapa === true) badges.push(`<span class="inline-flex items-center gap-1 bg-orange-100 text-orange-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-orange-200"><i class="fa-solid fa-utensils text-[9px]"></i>${Number(item.papasPorUnidad || 0)} papa</span>`);
+                if (item.usaProduccionCarneSalteado === true) badges.push(`<span class="inline-flex items-center gap-1 bg-rose-100 text-rose-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-rose-200"><i class="fa-solid fa-fire text-[9px]"></i>${Number(item.carneSalteadoPorUnidad || 0)} salteado</span>`);
+                if (item.usaProduccionCarneLomito === true) badges.push(`<span class="inline-flex items-center gap-1 bg-cyan-100 text-cyan-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-cyan-200"><i class="fa-solid fa-drumstick-bite text-[9px]"></i>${Number(item.carneLomitoPorUnidad || 0)} lomito</span>`);
+                if (item.usaProduccionPanLomito === true) badges.push(`<span class="inline-flex items-center gap-1 bg-lime-100 text-lime-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-lime-200"><i class="fa-solid fa-bread-slice text-[9px]"></i>${Number(item.panLomitoPorUnidad || 0)} pan lomito</span>`);
+                return badges.join('');
+            },
+
+            renderizarTodo: function() {
+                const productos = this.filtrarProductosControlados();
+                const produccion = this.filtrarProduccion();
+                this.ultimoStockFiltrado = productos;
+                this.ultimaProduccionFiltrada = produccion;
+                this.renderizarKpis(productos, produccion);
+                this.renderizarTabla(productos);
+                this.renderizarProduccion(produccion);
+                this.renderizarPedidos(productos, produccion);
+            },
+
+            renderizarKpis: function(productos, produccion) {
+                const bajos = productos.filter((item) => this.obtenerEstadoStock(item.stock).key !== 'ok').length;
+                const alertasProduccion = produccion.reduce((acc, item) => acc + this.obtenerRecursosProduccion(item).filter((recurso) => this.obtenerEstadoStock(recurso.cantidad).key !== 'ok').length, 0);
+                document.getElementById('kpi-controlados').innerText = this.formatoNumero(productos.length);
+                document.getElementById('kpi-bajos').innerText = this.formatoNumero(bajos);
+                document.getElementById('kpi-produccion-baja').innerText = this.formatoNumero(alertasProduccion);
+                document.getElementById('kpi-sucursales').innerText = this.formatoNumero(produccion.length);
+                document.getElementById('lbl-controlados-count').innerText = `${productos.length} items`;
+                document.getElementById('lbl-produccion-count').innerText = `${produccion.length} sucursales`;
+            },
+
+            renderizarTabla: function(productos) {
+                const tbody = document.getElementById('tabla-stock-controlado');
+                if (productos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400 font-bold">No hay productos controlados para este filtro.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = productos.map((item) => {
+                    const estado = this.obtenerEstadoStock(item.stock);
+                    const badgesProduccion = this.obtenerBadgesProduccionProducto(item);
+                    const badgeSucursal = (!item.sucursal || item.sucursal === 'Unificado')
+                        ? '<span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded-full text-[10px] font-black uppercase">Unificado</span>'
+                        : `<span class="inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 px-2 py-1 rounded-full text-[10px] font-black uppercase">${item.sucursal}</span>`;
+                    return `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="p-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm">
+                                        <i class="fa-solid ${item.icono || 'fa-box'}"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-black text-slate-800 leading-tight">${item.nombre || 'Producto sin nombre'}</p>
+                                        <div class="flex flex-wrap gap-1.5 mt-2">${badgesProduccion || '<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sin consumo de produccion</span>'}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4">
+                                <p class="font-bold text-slate-700">${item.categoria || 'Sin categoria'}</p>
+                                <div class="mt-2">${badgeSucursal}</div>
+                            </td>
+                            <td class="p-4 text-center">
+                                <span class="inline-flex min-w-[90px] items-center justify-center rounded-2xl border px-4 py-2 text-lg font-black ${estado.chip}">${this.formatoNumero(item.stock)}</span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${estado.clase}">
+                                    <i class="fa-solid ${estado.key === 'critico' ? 'fa-siren-on' : estado.key === 'bajo' ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i>${estado.texto}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            renderizarProduccion: function(produccion) {
+                const cont = document.getElementById('grid-produccion');
+                if (produccion.length === 0) {
+                    cont.innerHTML = '<div class="rounded-2xl border border-slate-200 bg-slate-50 p-5"><p class="text-sm text-slate-400 font-bold">No hay configuracion productiva para este filtro.</p></div>';
+                    return;
+                }
+
+                cont.innerHTML = produccion.map((item) => {
+                    const nombreSucursal = this.resolverNombreSucursal(item.sucursal || item.nombreSucursal, item.sucursalKey || item.id);
+                    const recursos = this.obtenerRecursosProduccion(item);
+                    const alertas = recursos.filter((recurso) => this.obtenerEstadoStock(recurso.cantidad).key !== 'ok').length;
+                    return `
+                        <div class="rounded-3xl border ${alertas > 0 ? 'border-amber-200 bg-amber-50/40' : 'border-slate-200 bg-white'} p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3 mb-4">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-[0.24em] font-black ${alertas > 0 ? 'text-amber-600' : 'text-slate-400'}">Sucursal</p>
+                                    <h4 class="text-lg font-black text-slate-800 mt-2">${nombreSucursal}</h4>
+                                </div>
+                                <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${alertas > 0 ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}">
+                                    <i class="fa-solid ${alertas > 0 ? 'fa-bell' : 'fa-check'}"></i>${alertas > 0 ? `${alertas} alertas` : 'Estable'}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${recursos.map((recurso) => {
+                                    const estado = this.obtenerEstadoStock(recurso.cantidad);
+                                    return `
+                                        <div class="rounded-2xl border p-4 ${estado.key === 'ok' ? 'bg-white border-slate-200' : estado.key === 'bajo' ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}">
+                                            <p class="text-[10px] uppercase tracking-[0.2em] font-black ${estado.key === 'ok' ? 'text-slate-400' : estado.key === 'bajo' ? 'text-amber-600' : 'text-red-600'}">
+                                                <i class="fa-solid ${recurso.icon} mr-1"></i>${recurso.label}
+                                            </p>
+                                            <p class="text-2xl font-black mt-2 ${estado.key === 'ok' ? 'text-slate-800' : estado.key === 'bajo' ? 'text-amber-700' : 'text-red-700'}">${this.formatoNumero(recurso.cantidad)}</p>
+                                            <p class="text-[11px] font-bold mt-2 ${estado.key === 'ok' ? 'text-emerald-600' : estado.key === 'bajo' ? 'text-amber-700' : 'text-red-700'}">${estado.texto}</p>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderizarPedidos: function(productos, produccion) {
+                const cont = document.getElementById('lista-pedidos');
+                const sugerencias = this.construirSugerencias(productos, produccion);
+                this.ultimasSugerencias = sugerencias;
+
+                if (sugerencias.length === 0) {
+                    cont.innerHTML = `
+                        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                            <p class="text-sm font-black text-emerald-700 flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> Todo el stock visible esta estable.</p>
+                            <p class="text-xs text-emerald-600 font-semibold mt-2">No hay productos controlados ni recursos de produccion en estado bajo o critico con este filtro.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                cont.innerHTML = sugerencias.map((item) => `
+                    <div class="rounded-2xl border p-4 ${item.clase}">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-black text-slate-800">${item.titulo}</p>
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-black mt-1">${item.subtitulo}</p>
+                                <p class="text-xs text-slate-600 font-semibold mt-3">${item.detalle}</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${item.badge === 'Critico' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200'}">
+                                <i class="fa-solid ${item.badge === 'Critico' ? 'fa-siren-on' : 'fa-triangle-exclamation'}"></i>${item.badge}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            construirSugerencias: function(productos = this.ultimoStockFiltrado, produccion = this.ultimaProduccionFiltrada) {
+                const sugerencias = [];
+
+                productos.forEach((item) => {
+                    const estado = this.obtenerEstadoStock(item.stock);
+                    if (estado.key === 'ok') return;
+                    sugerencias.push({
+                        prioridad: estado.key === 'critico' ? 0 : 1,
+                        tipo: 'Producto controlado',
+                        titulo: item.nombre || 'Producto',
+                        subtitulo: `${item.sucursal || 'Unificado'} - ${item.categoria || 'Sin categoria'}`,
+                        detalle: `Producto controlado con stock actual de ${this.formatoNumero(item.stock)}.`,
+                        cantidad: Number(item.stock || 0),
+                        clase: estado.key === 'critico' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50',
+                        badge: estado.texto
+                    });
+                });
+
+                produccion.forEach((item) => {
+                    const nombreSucursal = this.resolverNombreSucursal(item.sucursal || item.nombreSucursal, item.sucursalKey || item.id);
+                    this.obtenerRecursosProduccion(item).forEach((recurso) => {
+                        const estado = this.obtenerEstadoStock(recurso.cantidad);
+                        if (estado.key === 'ok') return;
+                        sugerencias.push({
+                            prioridad: estado.key === 'critico' ? 0 : 1,
+                            tipo: 'Produccion',
+                            titulo: recurso.label,
+                            subtitulo: nombreSucursal,
+                            detalle: `Produccion disponible: ${this.formatoNumero(recurso.cantidad)}.`,
+                            cantidad: Number(recurso.cantidad || 0),
+                            clase: estado.key === 'critico' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50',
+                            badge: estado.texto
+                        });
+                    });
+                });
+
+                return sugerencias.sort((a, b) => a.prioridad - b.prioridad || a.titulo.localeCompare(b.titulo, 'es'));
+            },
+
+            imprimirStock: function() {
+                const productos = this.ultimoStockFiltrado || [];
+                const produccion = this.ultimaProduccionFiltrada || [];
+                const sucursal = document.getElementById('filtro-sucursal')?.value || 'Todos';
+                const texto = document.getElementById('filtro-texto')?.value || '';
+
+                const filasProductos = productos.length
+                    ? productos.map((item) => {
+                        const estado = this.obtenerEstadoStock(item.stock);
+                        return `<tr>
+                            <td style="padding:8px;border:1px solid #dbe1ea;">${item.nombre || 'Producto'}</td>
+                            <td style="padding:8px;border:1px solid #dbe1ea;">${item.categoria || 'Sin categoria'}</td>
+                            <td style="padding:8px;border:1px solid #dbe1ea;">${item.sucursal || 'Unificado'}</td>
+                            <td style="padding:8px;border:1px solid #dbe1ea;text-align:center;">${this.formatoNumero(item.stock)}</td>
+                            <td style="padding:8px;border:1px solid #dbe1ea;text-align:center;">${estado.texto}</td>
+                        </tr>`;
+                    }).join('')
+                    : '<tr><td colspan="5" style="padding:10px;border:1px solid #dbe1ea;text-align:center;">Sin productos controlados en este filtro.</td></tr>';
+
+                const bloquesProduccion = produccion.length
+                    ? produccion.map((item) => {
+                        const nombreSucursal = this.resolverNombreSucursal(item.sucursal || item.nombreSucursal, item.sucursalKey || item.id);
+                        const recursos = this.obtenerRecursosProduccion(item).map((recurso) => {
+                            const estado = this.obtenerEstadoStock(recurso.cantidad);
+                            return `<tr>
+                                <td style="padding:8px;border:1px solid #dbe1ea;">${recurso.label}</td>
+                                <td style="padding:8px;border:1px solid #dbe1ea;text-align:center;">${this.formatoNumero(recurso.cantidad)}</td>
+                                <td style="padding:8px;border:1px solid #dbe1ea;text-align:center;">${estado.texto}</td>
+                            </tr>`;
+                        }).join('');
+                        return `
+                            <div style="margin-top:16px;">
+                                <h3 style="margin:0 0 8px 0;">${nombreSucursal}</h3>
+                                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                                    <thead>
+                                        <tr style="background:#f8fafc;">
+                                            <th style="padding:8px;border:1px solid #dbe1ea;text-align:left;">Recurso</th>
+                                            <th style="padding:8px;border:1px solid #dbe1ea;">Cantidad</th>
+                                            <th style="padding:8px;border:1px solid #dbe1ea;">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${recursos}</tbody>
+                                </table>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<p>Sin configuracion productiva en este filtro.</p>';
+
+                const ventana = window.open('', '_blank', 'width=980,height=760');
+                if (!ventana) {
+                    this.mostrarToast('El navegador bloqueo la ventana de impresion.', 'error');
+                    return;
+                }
+                ventana.document.write(PrintUtils.buildCopiesDocument(`
+                    <html>
+                    <head>
+                        <title>Control de Stock</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; color: #0f172a; padding: 24px; }
+                            h1, h2, h3 { margin-bottom: 8px; }
+                            .meta { margin-bottom: 18px; color: #475569; font-size: 12px; }
+                            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                            th { background: #f8fafc; }
+                            .section { margin-top: 24px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Control de Stock</h1>
+                        <div class="meta">
+                            <div>Sucursal: ${sucursal}</div>
+                            <div>Busqueda: ${texto || 'Sin filtro'}</div>
+                            <div>Generado: ${DateTime24.formatDateTime24(new Date())}</div>
+                        </div>
+                        <div class="section">
+                            <h2>Productos controlados</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="padding:8px;border:1px solid #dbe1ea;text-align:left;">Producto</th>
+                                        <th style="padding:8px;border:1px solid #dbe1ea;text-align:left;">Categoria</th>
+                                        <th style="padding:8px;border:1px solid #dbe1ea;text-align:left;">Sucursal</th>
+                                        <th style="padding:8px;border:1px solid #dbe1ea;">Stock</th>
+                                        <th style="padding:8px;border:1px solid #dbe1ea;">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${filasProductos}</tbody>
+                            </table>
+                        </div>
+                        <div class="section">
+                            <h2>Produccion por sucursal</h2>
+                            ${bloquesProduccion}
+                        </div>
+                    </body>
+                    </html>
+                `));
+                ventana.document.close();
+                ventana.focus();
+                setTimeout(() => {
+                    ventana.print();
+                }, 250);
+            },
+
+            exportarPedidoSugerido: function() {
+                const sugerencias = this.ultimasSugerencias || [];
+                if (!sugerencias.length) {
+                    this.mostrarToast('No hay pedidos sugeridos para exportar con este filtro.', 'error');
+                    return;
+                }
+
+                const sucursal = document.getElementById('filtro-sucursal')?.value || 'Todos';
+                const texto = document.getElementById('filtro-texto')?.value || 'sin_filtro';
+                const safeFiltro = texto.replace(/[^\w\-]+/g, '_').slice(0, 40) || 'sin_filtro';
+                const lineas = [
+                    'Tipo,Titulo,Sucursal o detalle,Estado,Cantidad,Descripcion'
+                ].concat(sugerencias.map((item) => {
+                    const cols = [
+                        item.tipo,
+                        item.titulo,
+                        item.subtitulo,
+                        item.badge,
+                        String(item.cantidad ?? ''),
+                        item.detalle
+                    ].map((valor) => `"${String(valor || '').replaceAll('"', '""')}"`);
+                    return cols.join(',');
+                }));
+
+                const blob = new Blob([lineas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `pedido_sugerido_${sucursal.replace(/[^\w\-]+/g, '_')}_${safeFiltro}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                this.mostrarToast('Pedido sugerido exportado correctamente.', 'success');
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => window.StockModule.init());
+    </script>
+</body>
+
+</html>

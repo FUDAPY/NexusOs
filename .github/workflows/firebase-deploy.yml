@@ -1,0 +1,61 @@
+name: Firebase Deploy
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f package.json ]; then
+            npm install
+          else
+            echo "No root package.json found; skipping root install."
+          fi
+
+      - name: Install functions dependencies
+        shell: bash
+        run: |
+          if [ -f functions/package-lock.json ]; then
+            npm ci --prefix functions
+          elif [ -f functions/package.json ]; then
+            npm install --prefix functions
+          else
+            echo "No functions package.json found; skipping functions install."
+          fi
+
+      - name: Build project
+        shell: bash
+        run: |
+          if [ -f package.json ]; then
+            npm run build --if-present
+          else
+            echo "No root package.json found; skipping build."
+          fi
+
+      - name: Deploy to Firebase
+        shell: bash
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "FIREBASE_TOKEN secret is not configured; deploy skipped."
+            exit 0
+          fi
+          npx firebase-tools deploy --project sys-pos-erp-lingroup --token "$FIREBASE_TOKEN"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

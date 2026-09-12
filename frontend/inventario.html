@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <link rel="icon" href="favicon.ico">
+
+    <title>Coffee POS ERP - Inventario Avanzado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <script src="print_utils.js"></script>
+    <script src="cierre_caja_normalizer.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+</head>
+
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800 opacity-0 transition-opacity duration-500" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-[150] flex items-center p-4 mb-4 text-white rounded-lg shadow-xl bg-slate-800 border border-slate-700">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20">
+            <i id="toast-icon" class="fa-solid fa-circle-exclamation"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-mug-hot text-orange-500\'></i>'">
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide">
+            <a href="dashboard.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-house text-lg w-6"></i><span>Panel Principal</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Administración</p>
+            <a href="sucursales.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-store text-lg w-6"></i><span>Sucursales</span>
+            </a>
+            <button class="w-full flex items-center gap-4 bg-orange-600 text-white p-3 rounded-xl font-semibold shadow-md transition transform hover:scale-[1.02]">
+                <i class="fa-solid fa-boxes-stacked text-lg w-6"></i><span>Inventario</span>
+            </button>
+            <a href="usuarios.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-user-shield text-lg w-6"></i><span>Personal</span>
+            </a>
+            <a href="produccion.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-burger text-lg w-6"></i><span>Produccion</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Operaciones</p>
+            <a href="clientes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-gem text-lg w-6"></i><span>Clientes CRM</span>
+            </a>
+            <a href="kds.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-fire-burner text-lg w-6"></i><span>Monitor Cocina</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Finanzas</p>
+            <a href="caja.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-vault text-lg w-6"></i><span>Arqueo de Caja</span>
+            </a>
+            <a href="reportes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-chart-line text-lg w-6"></i><span>Reportes</span>
+            </a>
+            <a href="monitor_problemas.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-triangle-exclamation text-lg w-6"></i><span>Monitor Problemas</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800 flex justify-between items-center bg-slate-950">
+            <div class="leading-tight">
+                <p class="text-sm font-bold text-white" id="user-name">Cargando...</p>
+                <p class="text-xs text-slate-400" id="user-role">...</p>
+            </div>
+                        <button onclick="InventarioModule.cerrarSesion()" class="text-red-400 hover:text-red-300 transition p-2 rounded-lg hover:bg-slate-800" title="Cerrar sesión" aria-label="Cerrar sesión">
+                <i class="fa-solid fa-right-from-bracket text-xl"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        
+        <header class="bg-white p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 z-10">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Catálogo y Stock</h2>
+                <p class="text-slate-500 text-sm">Gestiona productos, precios diferenciados y visibilidad.</p>
+            </div>
+            
+            <div class="flex gap-3 w-full md:w-auto">
+                <div class="relative w-full md:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="filtro-texto" onkeyup="InventarioModule.aplicarFiltros()" placeholder="Buscar producto..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-orange-500 outline-none transition">
+                </div>
+                
+                <select id="filtro-sucursal-tabla" onchange="InventarioModule.aplicarFiltros()" class="border border-slate-300 rounded-lg text-sm px-3 py-2 outline-none focus:border-orange-500 transition bg-white w-full md:w-auto">
+                    <option value="Todos">Todas las Sucursales</option>
+                </select>
+
+                <button onclick="InventarioModule.imprimirInventario()" class="bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 px-5 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+
+                <button onclick="InventarioModule.abrirModalCrear()" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-plus"></i> Nuevo Producto
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 p-6 overflow-hidden flex flex-col bg-slate-50">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col relative">
+                
+                <div id="loading-spinner" class="absolute inset-0 bg-white/80 z-10 hidden flex-col justify-center items-center backdrop-blur-sm">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-orange-500 mb-2"></i>
+                    <p class="font-bold text-slate-500 mt-2">Cargando catálogo...</p>
+                </div>
+
+                <div class="overflow-y-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 sticky top-0 shadow-sm z-0">
+                            <tr class="text-slate-500 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold">Producto / Visibilidad</th>
+                                <th class="p-4 font-semibold">Categoría / Sucursal</th>
+                                <th class="p-4 font-semibold text-center">Stock Actual</th>
+                                <th class="p-4 font-semibold text-right">Precio Venta</th>
+                                <th class="p-4 font-semibold text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-formulario" class="fixed inset-0 bg-slate-900/60 hidden justify-center items-center z-50 backdrop-blur-sm">
+        <div class="bg-white w-[600px] rounded-3xl shadow-2xl flex flex-col overflow-hidden border-t-8 border-slate-800">
+            <div class="bg-slate-50 p-5 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="text-xl font-black text-slate-800" id="modal-titulo">Nuevo Producto</h3>
+                <button onclick="InventarioModule.cerrarModalFormulario()" class="text-slate-400 hover:text-red-500 transition">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="form-producto" onsubmit="InventarioModule.guardarProducto(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <input type="hidden" id="prod-id">
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Nombre del Producto</label>
+                    <input type="text" id="prod-nombre" required class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-bold" placeholder="Ej. Sabor Pepperoni (Mitad)">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Precio (Gs.)</label>
+                        <input type="number" id="prod-precio" required min="0" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-bold" placeholder="Ej. 12000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Categoría</label>
+                        <select id="prod-categoria" required onchange="InventarioModule.verificarCategoriaPizza()" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none bg-white transition font-bold">
+                            <option value="Desayuno">Desayuno</option>
+                            <option value="Almuerzo">Almuerzo</option>
+                            <option value="Comida">Comida (Cena)</option>
+                            <option value="Bebida">Bebida</option>
+                            <option value="Postre">Postre</option>
+                            <option value="Pizza" class="bg-yellow-100 font-black">🍕 Pizza (Sabores)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 border border-purple-200 p-4 rounded-xl">
+                    <label class="block text-sm font-bold text-purple-800 mb-2">
+                        <i class="fa-solid fa-eye mr-1"></i> ¿Quién puede comprar esto?
+                    </label>
+                    <select id="prod-visibilidad" required class="w-full border-2 border-purple-300 rounded-xl p-3 focus:border-purple-500 outline-none bg-white font-bold text-slate-700 transition">
+                        <option value="publico">Público General (App Cliente + POS)</option>
+                        <option value="interno">Solo Interno/Funcionarios (Solo POS)</option>
+                    </select>
+                    <p class="text-xs text-purple-600 mt-2 ml-1 leading-tight">
+                        * Si marcas <strong>"Solo Interno"</strong>, este producto será invisible en la App de clientes. 
+                    </p>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl">
+                    <label class="block text-sm font-bold text-yellow-800 mb-2"><i class="fa-solid fa-star mr-1"></i> Club de Puntos</label>
+                    <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                            <p class="text-xs text-slate-500 mb-1">Puntos para canjear (vacío = auto)</p>
+                            <input type="number" id="prod-puntos" min="0" class="w-full border-2 border-yellow-300 rounded-xl p-2 focus:border-orange-500 outline-none transition font-bold text-slate-700" placeholder="Ej: 500">
+                        </div>
+                        <div class="text-xs text-slate-400 w-1/2 leading-tight">
+                            Si dejas este campo vacío, el sistema calculará: <strong>(Precio x 3) / 1000</strong>. Cada 1 punto equivale a Gs. 1.000.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                    <label class="block text-sm font-bold text-blue-800 mb-2"><i class="fa-solid fa-store mr-1"></i> Asignación de Sucursal</label>
+                    <select id="prod-sucursal" required class="w-full border-2 border-blue-300 rounded-xl p-3 focus:border-blue-500 outline-none bg-white font-bold text-slate-700 transition">
+                        <option value="Unificado">Unificado (Disponible en todas las sucursales)</option>
+                    </select>
+                </div>
+
+                <div class="bg-orange-50 border border-orange-200 p-4 rounded-xl">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-orange-800 mb-2"><i class="fa-solid fa-boxes-packing mr-1"></i> ¿Controlar Stock?</label>
+                            <select id="prod-controlado" onchange="InventarioModule.toggleStockInput()" class="w-full border-2 border-orange-300 rounded-xl p-3 focus:border-orange-500 outline-none bg-white transition font-bold">
+                                <option value="no">No (Stock Ilimitado)</option>
+                                <option value="si">Sí (Controlado)</option>
+                            </select>
+                            <p id="aviso-pizza-stock" class="text-[10px] text-red-500 font-bold mt-2 hidden leading-tight">* Las pizzas no controlan stock unitario (se arman por mitades en el POS).</p>
+                        </div>
+                        <div id="div-stock" class="hidden transition-opacity">
+                            <label class="block text-sm font-bold text-orange-800 mb-2">Cantidad Actual</label>
+                            <input type="number" id="prod-stock" min="0" value="0" class="w-full border-2 border-orange-300 rounded-xl p-3 focus:border-orange-500 outline-none transition font-black text-center text-lg">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-amber-900 mb-1"><i class="fa-solid fa-burger mr-1"></i> Control de Produccion</label>
+                        <p class="text-xs text-amber-700 font-semibold">Marca si el producto consume medallones, pan, papas, carne para salteado, carne para lomito o pan para lomito cargados desde Produccion.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div class="bg-white border border-amber-200 rounded-2xl p-4">
+                            <label class="inline-flex items-center gap-2 text-sm font-black text-amber-900">
+                                <input type="checkbox" id="prod-usa-produccion" class="h-4 w-4 rounded border-amber-300 text-orange-600 focus:ring-orange-500">
+                                Usa medallones
+                            </label>
+                            <div class="mt-3">
+                                <label class="block text-xs font-bold text-amber-900 mb-2">Cuantos medallones usa este producto</label>
+                                <input type="number" id="prod-medallones-por-unidad" min="0" step="1" value="0" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-black text-center text-lg bg-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-amber-200 rounded-2xl p-4">
+                            <label class="inline-flex items-center gap-2 text-sm font-black text-amber-900">
+                                <input type="checkbox" id="prod-usa-produccion-pan" class="h-4 w-4 rounded border-amber-300 text-orange-600 focus:ring-orange-500">
+                                Usa pan
+                            </label>
+                            <div class="mt-3">
+                                <label class="block text-xs font-bold text-amber-900 mb-2">Cuantas unidades de pan usa este producto</label>
+                                <input type="number" id="prod-panes-por-unidad" min="0" step="1" value="0" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-black text-center text-lg bg-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-amber-200 rounded-2xl p-4">
+                            <label class="inline-flex items-center gap-2 text-sm font-black text-amber-900">
+                                <input type="checkbox" id="prod-usa-produccion-papa" class="h-4 w-4 rounded border-amber-300 text-orange-600 focus:ring-orange-500">
+                                Usa papas
+                            </label>
+                            <div class="mt-3">
+                                <label class="block text-xs font-bold text-amber-900 mb-2">Cuantas porciones de papa usa este producto</label>
+                                <input type="number" id="prod-papas-por-unidad" min="0" step="1" value="0" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-black text-center text-lg bg-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-amber-200 rounded-2xl p-4">
+                            <label class="inline-flex items-center gap-2 text-sm font-black text-amber-900">
+                                <input type="checkbox" id="prod-usa-carne-salteado" class="h-4 w-4 rounded border-amber-300 text-orange-600 focus:ring-orange-500">
+                                Usa carne salteado
+                            </label>
+                            <div class="mt-3">
+                                <label class="block text-xs font-bold text-amber-900 mb-2">Cuanta carne para salteado usa este producto</label>
+                                <input type="number" id="prod-carne-salteado-por-unidad" min="0" step="1" value="0" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-black text-center text-lg bg-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-amber-200 rounded-2xl p-4">
+                            <label class="inline-flex items-center gap-2 text-sm font-black text-amber-900">
+                                <input type="checkbox" id="prod-usa-carne-lomito" class="h-4 w-4 rounded border-amber-300 text-orange-600 focus:ring-orange-500">
+                                Usa carne lomito
+                            </label>
+                            <div class="mt-3">
+                                <label class="block text-xs font-bold text-amber-900 mb-2">Cuanta carne para lomito usa este producto</label>
+                                <input type="number" id="prod-carne-lomito-por-unidad" min="0" step="1" value="0" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-black text-center text-lg bg-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-amber-200 rounded-2xl p-4">
+                            <label class="inline-flex items-center gap-2 text-sm font-black text-amber-900">
+                                <input type="checkbox" id="prod-usa-pan-lomito" class="h-4 w-4 rounded border-amber-300 text-orange-600 focus:ring-orange-500">
+                                Usa pan lomito
+                            </label>
+                            <div class="mt-3">
+                                <label class="block text-xs font-bold text-amber-900 mb-2">Cuanto pan para lomito usa este producto</label>
+                                <input type="number" id="prod-pan-lomito-por-unidad" min="0" step="1" value="0" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-black text-center text-lg bg-white">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Icono</label>
+                        <select id="prod-icono" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none bg-white font-mono text-sm transition">
+                            <option value="fa-bottle-water">💧 fa-bottle-water</option>
+                            <option value="fa-burger">🍔 fa-burger</option>
+                            <option value="fa-mug-hot">☕ fa-mug-hot</option>
+                            <option value="fa-pizza-slice">🍕 fa-pizza-slice</option>
+                            <option value="fa-cake-candles">🍰 fa-cake-candles</option>
+                            <option value="fa-user-tag">📛 fa-user-tag (Funcionario)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">URL Imagen (Opcional)</label>
+                        <input type="url" id="prod-imagen" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-mono text-sm" placeholder="https://ejemplo.com/imagen.jpg">
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Subir imagen del producto</label>
+                    <input type="file" id="prod-imagen-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="w-full bg-white border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition text-sm">
+                    <p class="text-[10px] text-slate-400 mt-2">JPG, PNG, WEBP o SVG. Si subes un archivo, se guarda en Firebase Storage y reemplaza la URL.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Código RFID / Barcode</label>
+                    <input type="text" id="prod-codigo" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-mono text-sm" placeholder="Ej. 7791234567890">
+                    <p class="text-[10px] text-slate-400 mt-1">Este código permite agregar el producto directo desde el lector en POS.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Descuento Especial</label>
+                    <select id="prod-descuento" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none bg-white font-bold transition">
+                        <option value="0">Sin Descuento</option>
+                        <option value="30">30% Descuento</option>
+                        <option value="40">40% Descuento</option>
+                        <option value="50">50% Descuento</option>
+                        <option value="100">100% (Gratis)</option>
+                    </select>
+                    <p class="text-[10px] text-slate-400 mt-1">Este descuento solo se aplicará en POS si el cliente es tipo Fiel o Premium.</p>
+                </div>
+
+                <div class="flex items-center gap-3 bg-blue-50 p-3 rounded-xl border border-blue-200">
+                    <input type="checkbox" id="prod-promocion-bogo" class="w-5 h-5 border-2 border-blue-300 rounded cursor-pointer">
+                    <label for="prod-promocion-bogo" class="text-sm font-bold text-blue-700 cursor-pointer flex-1">
+                        <i class="fa-solid fa-gift text-orange-500 mr-1"></i> Promoción 2x1 (Compra 2, Paga 1)
+                    </label>
+                </div>
+                <p class="text-[10px] text-slate-400 -mt-2">La promo 2x1 solo se aplicará en POS si el cliente es tipo Fiel o Premium.</p>
+
+                <div class="flex items-center gap-3 bg-emerald-50 p-3 rounded-xl border border-emerald-200">
+                    <input type="checkbox" id="prod-permite-gratis" class="w-5 h-5 border-2 border-emerald-300 rounded cursor-pointer">
+                    <label for="prod-permite-gratis" class="text-sm font-bold text-emerald-700 cursor-pointer flex-1">
+                        <i class="fa-solid fa-ticket text-emerald-500 mr-1"></i> Habilitar como producto gratis / LIN Ticket
+                    </label>
+                </div>
+                <p class="text-[10px] text-slate-400 -mt-2">Permite usar este producto como premio sin sumar ingreso en caja. Si controla stock o produccion, se descuenta igual al entregarlo.</p>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Estado POS</label>
+                    <select id="prod-estado" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none bg-white font-bold transition">
+                        <option value="Activo" class="text-green-600">Activo (Visible)</option>
+                        <option value="Inactivo" class="text-red-500">Inactivo (Oculto)</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="InventarioModule.cerrarModalFormulario()" class="px-6 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition">Cancelar</button>
+                    <button type="submit" id="btn-guardar" class="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl shadow-md hover:bg-black transition flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Producto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-eliminar" class="fixed inset-0 bg-slate-900/70 hidden justify-center items-center z-50 backdrop-blur-sm">
+        <div class="bg-white w-[400px] rounded-3xl shadow-2xl p-6 flex flex-col items-center text-center border-t-8 border-red-500">
+            <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4 text-4xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-800 mb-2">¿Eliminar Producto?</h3>
+            <p class="text-slate-500 mb-6 font-medium">Esta acción borrará el producto permanentemente.</p>
+            <div class="flex w-full gap-3">
+                <button onclick="InventarioModule.cerrarModalEliminar()" class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition">Cancelar</button>
+                <button id="btn-confirmar-eliminar" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 shadow-md transition">Sí, Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, deleteField, doc, onSnapshot, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+            messagingSenderId: "1084603889746",
+            appId: "1:1084603889746:web:822ce55a070dc146b2078b",
+            measurementId: "G-1LZVQ05T2E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        window.InventarioModule = {
+            productosFirebase: [], 
+            productosVisibles: [],
+            idEliminar: null,
+            usuarioActual: null,
+            unsubscribeProductos: null,
+            sucursalesDisponibles: [],
+
+            init: function() {
+                const sesionStr = localStorage.getItem('__pos_session');
+                if (!sesionStr) { window.location.replace('index.html'); return; }
+                this.usuarioActual = JSON.parse(sesionStr);
+
+                if (this.usuarioActual.rol !== 'admin') {
+                    alert("Acceso denegado. Permisos insuficientes.");
+                    this.cerrarSesion(); return;
+                }
+
+                document.getElementById('user-name').innerText = this.usuarioActual.nombre;
+                document.getElementById('user-role').innerText = `Rol: ${this.usuarioActual.rol.toUpperCase()}`;
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) { 
+                        document.getElementById('app-body').classList.remove('opacity-0'); 
+                        this.cargarSucursales(); 
+                        this.cargarProductos(); 
+                    } else { 
+                        window.location.replace('index.html'); 
+                    }
+                });
+            },
+
+            mostrarToast: function(mensaje, tipo = 'success') {
+                const toast = document.getElementById('toast');
+                document.getElementById('toast-message').innerText = mensaje;
+                const icon = document.getElementById('toast-icon');
+                if(tipo === 'error') {
+                    toast.classList.replace('bg-slate-800', 'bg-red-600');
+                    icon.className = 'fa-solid fa-triangle-exclamation text-white';
+                } else if(tipo === 'alert') {
+                    toast.classList.replace('bg-slate-800', 'bg-orange-500');
+                    icon.className = 'fa-solid fa-circle-info text-white';
+                } else {
+                    toast.classList.replace('bg-red-600', 'bg-slate-800');
+                    toast.classList.replace('bg-orange-500', 'bg-slate-800');
+                    icon.className = 'fa-solid fa-check text-green-400';
+                }
+                toast.classList.remove('translate-x-full');
+                setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+            },
+
+            cargarSucursales: async function() {
+                try {
+                    const snap = await getDocs(collection(db, "branches"));
+                    const selectSucursal = document.getElementById('prod-sucursal');
+                    const filtroSucursal = document.getElementById('filtro-sucursal-tabla');
+                    this.sucursalesDisponibles = [];
+
+                    let opciones = `<option value="Unificado">Unificado (Todas las Sucursales)</option>`;
+                    let opcionesFiltro = `<option value="Todos">Todas las Sucursales</option>`;
+                    
+                    snap.forEach(doc => { 
+                        const data = doc.data() || {};
+                        const nombreBase = data.nombre || data.name || data.branchName || doc.id;
+                        const normalizada = CierreCajaNormalizer.normalizarSucursal(data.sucursalId || data.branchId || doc.id || nombreBase);
+                        const porNombre = normalizada.id ? normalizada : CierreCajaNormalizer.normalizarSucursal(nombreBase);
+                        const id = porNombre.id || doc.id;
+                        const nombre = porNombre.nombre || nombreBase;
+                        if (!this.sucursalesDisponibles.some((item) => item.id === id)) {
+                            this.sucursalesDisponibles.push({ id, nombre });
+                        }
+                    });
+                    this.sucursalesDisponibles
+                        .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+                        .forEach(({ id, nombre }) => {
+                            opciones += `<option value="${id}" data-nombre="${nombre}">${nombre}</option>`;
+                            opcionesFiltro += `<option value="${id}">${nombre}</option>`;
+                        });
+                    
+                    selectSucursal.innerHTML = opciones;
+                    filtroSucursal.innerHTML = opcionesFiltro;
+
+                } catch (error) { console.error("Error sucursales:", error); }
+            },
+
+            cargarProductos: function() {
+                const spinner = document.getElementById('loading-spinner');
+                spinner.classList.remove('hidden'); spinner.classList.add('flex');
+                try {
+                    if (this.unsubscribeProductos) this.unsubscribeProductos();
+                    this.unsubscribeProductos = onSnapshot(collection(db, "products"), (snap) => {
+                        this.productosFirebase = [];
+                        snap.forEach(doc => { this.productosFirebase.push({ id: doc.id, ...doc.data() }); });
+                        this.aplicarFiltros();
+                        spinner.classList.add('hidden'); spinner.classList.remove('flex');
+                    }, (error) => {
+                        console.error(error);
+                        this.mostrarToast("Error leyendo BD.", "error");
+                        spinner.classList.add('hidden'); spinner.classList.remove('flex');
+                    });
+                } catch (error) {
+                    console.error(error);
+                    this.mostrarToast("Error leyendo BD.", "error");
+                    spinner.classList.add('hidden'); spinner.classList.remove('flex');
+                }
+            },
+
+            aplicarFiltros: function() {
+                const txt = document.getElementById('filtro-texto').value.toLowerCase();
+                const suc = document.getElementById('filtro-sucursal-tabla').value;
+
+                this.productosVisibles = this.productosFirebase.filter(p => {
+                    const matchTexto = p.nombre.toLowerCase().includes(txt) || (p.categoria && p.categoria.toLowerCase().includes(txt));
+                    const productoSucursal = CierreCajaNormalizer.obtenerSucursalRegistro(p);
+                    const matchSucursal = (suc === 'Todos') || (p.sucursal === 'Unificado') || (p.sucursalId === 'unificado') || (productoSucursal.id && productoSucursal.id === suc);
+                    return matchTexto && matchSucursal;
+                });
+                this.renderizarTabla();
+            },
+
+            renderizarTabla: function() {
+                const tbody = document.getElementById('inventory-table-body');
+                if(this.productosVisibles.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-bold">No se encontraron productos.</td></tr>`; return; }
+                
+                tbody.innerHTML = this.productosVisibles.map(p => {
+                    const opacidad = p.estado === 'Inactivo' ? 'opacity-50 grayscale' : '';
+                    const badgeEstado = p.estado === 'Inactivo' ? `<span class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px] uppercase ml-2 font-bold">Inactivo</span>` : '';
+                    const badgesProduccion = [];
+                    if (p.controlado === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-blue-200 mt-1.5"><i class="fa-solid fa-boxes-stacked text-[9px]"></i>Controlado</span>`);
+                    if (p.usaProduccionCarne === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-amber-200 mt-1.5"><i class="fa-solid fa-burger text-[9px]"></i>${Number(p.medallonesPorUnidad || 0)} medallones</span>`);
+                    if (p.usaProduccionPan === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-yellow-200 mt-1.5"><i class="fa-solid fa-bread-slice text-[9px]"></i>${Number(p.panesPorUnidad || 0)} pan</span>`);
+                    if (p.usaProduccionPapa === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-orange-100 text-orange-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-orange-200 mt-1.5"><i class="fa-solid fa-utensils text-[9px]"></i>${Number(p.papasPorUnidad || 0)} porciones papa</span>`);
+                    if (p.usaProduccionCarneSalteado === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-rose-100 text-rose-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-rose-200 mt-1.5"><i class="fa-solid fa-fire text-[9px]"></i>${Number(p.carneSalteadoPorUnidad || 0)} salteado</span>`);
+                    if (p.usaProduccionCarneLomito === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-cyan-100 text-cyan-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-cyan-200 mt-1.5"><i class="fa-solid fa-drumstick-bite text-[9px]"></i>${Number(p.carneLomitoPorUnidad || 0)} lomito</span>`);
+                    if (p.usaProduccionPanLomito === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-lime-100 text-lime-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-lime-200 mt-1.5"><i class="fa-solid fa-bread-slice text-[9px]"></i>${Number(p.panLomitoPorUnidad || 0)} pan lomito</span>`);
+                    if (p.permiteProductoGratis === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-emerald-200 mt-1.5"><i class="fa-solid fa-ticket text-[9px]"></i>LIN Ticket gratis</span>`);
+                    const badgeProduccion = badgesProduccion.join('');
+                    
+                    const esInterno = p.visibilidad === 'interno';
+                    const badgeVisibilidad = esInterno 
+                        ? `<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-purple-200 ml-2"><i class="fa-solid fa-eye-slash"></i> Interno</span>` 
+                        : `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-green-200 ml-2"><i class="fa-solid fa-users"></i> Público</span>`;
+
+                    const sucursalProducto = CierreCajaNormalizer.obtenerSucursalRegistro(p);
+                    const nombreSucursalProducto = sucursalProducto.nombre || p.sucursalNombre || p.sucursal || 'Unificado';
+                    const badgeSucursal = (!p.sucursal || p.sucursal === 'Unificado' || p.sucursalId === 'unificado')
+                        ? `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-[10px] font-bold uppercase">Unificado</span>`
+                        : `<span class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-slate-300">${nombreSucursalProducto}</span>`;
+                    
+                    let htmlStock = `<span class="text-slate-400 font-bold text-sm bg-slate-100 px-3 py-1 rounded-lg">Ilimitado / No Aplica</span>`;
+                    if(p.controlado === true) {
+                        const colorStock = p.stock <= 5 ? 'text-red-600 bg-red-100 border border-red-200' : 'text-green-700 bg-green-100 border border-green-200';
+                        htmlStock = `<span class="${colorStock} font-black text-lg px-4 py-1 rounded-lg shadow-sm">${p.stock}</span>`;
+                    }
+
+                    return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition ${opacidad}">
+                        <td class="p-4 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 text-xl shadow-inner overflow-hidden">
+                                ${p.imagen ? `<img src="${p.imagen}" alt="${p.nombre}" class="w-full h-full object-cover">` : `<i class="fa-solid ${p.icono || 'fa-box'}"></i>`}
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-bold text-slate-800 text-base leading-tight flex items-center">${p.nombre} ${badgeEstado}</p>
+                                </div>
+                                ${badgeProduccion}
+                                <div class="mt-1.5 flex items-center">${badgeVisibilidad}</div>
+                                <p class="text-[10px] text-slate-400 font-mono mt-1">ID: ${p.id}</p>
+                            </div>
+                        </td>
+                        <td class="p-4"><p class="font-bold text-slate-700 mb-1">${p.categoria}</p>${badgeSucursal}</td>
+                        <td class="p-4 text-center">${htmlStock}</td>
+                        <td class="p-4 text-right font-black text-orange-600 text-lg">Gs. ${Number(p.precio).toLocaleString('es-PY')}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="InventarioModule.abrirModalEditar('${p.id}')" class="w-10 h-10 bg-white border border-slate-200 text-blue-600 rounded-lg mr-1 hover:bg-blue-600 hover:text-white transition shadow-sm"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="InventarioModule.confirmarEliminar('${p.id}')" class="w-10 h-10 bg-white border border-slate-200 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            },
+
+            // --- LÓGICA DE PROTECCIÓN PARA PIZZAS ---
+            verificarCategoriaPizza: function() {
+                const cat = document.getElementById('prod-categoria').value;
+                const ctrlSelect = document.getElementById('prod-controlado');
+                const iconSelect = document.getElementById('prod-icono');
+                const aviso = document.getElementById('aviso-pizza-stock');
+
+                if (cat === 'Pizza') {
+                    ctrlSelect.value = 'no';
+                    ctrlSelect.disabled = true; // Bloquea la opción
+                    ctrlSelect.classList.add('opacity-50', 'bg-slate-100');
+                    aviso.classList.remove('hidden');
+                    iconSelect.value = 'fa-pizza-slice'; // Auto-selecciona el icono correcto
+                    this.toggleStockInput();
+                } else {
+                    ctrlSelect.disabled = false;
+                    ctrlSelect.classList.remove('opacity-50', 'bg-slate-100');
+                    aviso.classList.add('hidden');
+                }
+            },
+
+            toggleStockInput: function() {
+                const esControlado = document.getElementById('prod-controlado').value;
+                const divStock = document.getElementById('div-stock');
+                if(esControlado === 'si' && document.getElementById('prod-categoria').value !== 'Pizza') {
+                    divStock.classList.remove('hidden');
+                } else {
+                    divStock.classList.add('hidden');
+                }
+            },
+
+            subirImagenProducto: async function(file, productId) {
+                if (!file) return "";
+                const tiposPermitidos = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+                if (!tiposPermitidos.includes(file.type)) throw new Error('Formato de imagen no permitido.');
+                if (file.size > 5 * 1024 * 1024) throw new Error('La imagen no puede superar 5 MB.');
+                const nombreSeguro = file.name.toLowerCase().replace(/[^a-z0-9.-]/g, '-');
+                const ruta = `product-images/${productId}-${Date.now()}-${nombreSeguro}`;
+                const referencia = ref(storage, ruta);
+                await uploadBytes(referencia, file, { contentType: file.type });
+                return await getDownloadURL(referencia);
+            },
+
+            abrirModalCrear: function() { 
+                document.getElementById('prod-id').value = ""; 
+                document.getElementById('form-producto').reset(); 
+                document.getElementById('prod-sucursal').value = "Unificado";
+                document.getElementById('prod-controlado').value = "no";
+                document.getElementById('prod-usa-produccion').checked = false;
+                document.getElementById('prod-medallones-por-unidad').value = 0;
+                document.getElementById('prod-usa-produccion-pan').checked = false;
+                document.getElementById('prod-panes-por-unidad').value = 0;
+                document.getElementById('prod-usa-produccion-papa').checked = false;
+                document.getElementById('prod-papas-por-unidad').value = 0;
+                document.getElementById('prod-usa-carne-salteado').checked = false;
+                document.getElementById('prod-carne-salteado-por-unidad').value = 0;
+                document.getElementById('prod-usa-carne-lomito').checked = false;
+                document.getElementById('prod-carne-lomito-por-unidad').value = 0;
+                document.getElementById('prod-usa-pan-lomito').checked = false;
+                document.getElementById('prod-pan-lomito-por-unidad').value = 0;
+                document.getElementById('prod-visibilidad').value = "publico";
+                document.getElementById('prod-permite-gratis').checked = false;
+                document.getElementById('prod-imagen').value = "";
+                document.getElementById('prod-imagen-file').value = "";
+                this.verificarCategoriaPizza(); // Llama a la validación
+                this.toggleStockInput();
+                document.getElementById('modal-titulo').innerText = "Nuevo Producto"; 
+                document.getElementById('modal-formulario').classList.remove('hidden'); 
+                document.getElementById('modal-formulario').classList.add('flex'); 
+            },
+            
+            abrirModalEditar: function(id) {
+                const p = this.productosFirebase.find(x => x.id === id); 
+                if(!p) return;
+                document.getElementById('prod-id').value = p.id; 
+                document.getElementById('prod-nombre').value = p.nombre; 
+                document.getElementById('prod-precio').value = p.precio; 
+                document.getElementById('prod-categoria').value = p.categoria; 
+                document.getElementById('prod-icono').value = p.icono || 'fa-burger'; 
+                document.getElementById('prod-estado').value = p.estado || 'Activo';
+                const sucursalProducto = CierreCajaNormalizer.obtenerSucursalRegistro(p);
+                document.getElementById('prod-sucursal').value = p.sucursal === 'Unificado' || p.sucursalId === 'unificado' ? 'Unificado' : (sucursalProducto.id || p.sucursal || 'Unificado');
+                document.getElementById('prod-puntos').value = p.puntosCanje || ""; 
+                document.getElementById('prod-visibilidad').value = p.visibilidad || "publico";
+                document.getElementById('prod-descuento').value = p.descuento || "0";
+                document.getElementById('prod-promocion-bogo').checked = p.promocionBogo || false;
+                document.getElementById('prod-permite-gratis').checked = p.permiteProductoGratis || false;
+                document.getElementById('prod-codigo').value = p.codigo || "";
+                document.getElementById('prod-imagen').value = p.imagen || "";
+                document.getElementById('prod-imagen-file').value = "";
+                document.getElementById('prod-usa-produccion').checked = p.usaProduccionCarne === true;
+                document.getElementById('prod-medallones-por-unidad').value = Number(p.medallonesPorUnidad || 0);
+                document.getElementById('prod-usa-produccion-pan').checked = p.usaProduccionPan === true;
+                document.getElementById('prod-panes-por-unidad').value = Number(p.panesPorUnidad || 0);
+                document.getElementById('prod-usa-produccion-papa').checked = p.usaProduccionPapa === true;
+                document.getElementById('prod-papas-por-unidad').value = Number(p.papasPorUnidad || 0);
+                document.getElementById('prod-usa-carne-salteado').checked = p.usaProduccionCarneSalteado === true;
+                document.getElementById('prod-carne-salteado-por-unidad').value = Number(p.carneSalteadoPorUnidad || 0);
+                document.getElementById('prod-usa-carne-lomito').checked = p.usaProduccionCarneLomito === true;
+                document.getElementById('prod-carne-lomito-por-unidad').value = Number(p.carneLomitoPorUnidad || 0);
+                document.getElementById('prod-usa-pan-lomito').checked = p.usaProduccionPanLomito === true;
+                document.getElementById('prod-pan-lomito-por-unidad').value = Number(p.panLomitoPorUnidad || 0);
+
+                if(p.controlado && p.categoria !== 'Pizza') {
+                    document.getElementById('prod-controlado').value = "si";
+                    document.getElementById('prod-stock').value = p.stock || 0;
+                } else {
+                    document.getElementById('prod-controlado').value = "no";
+                    document.getElementById('prod-stock').value = 0;
+                }
+                
+                this.verificarCategoriaPizza(); // Aplica bloqueo si es pizza
+                this.toggleStockInput();
+                
+                document.getElementById('modal-titulo').innerText = "Editar Producto"; 
+                document.getElementById('modal-formulario').classList.remove('hidden'); 
+                document.getElementById('modal-formulario').classList.add('flex');
+            },
+            
+            cerrarModalFormulario: function() { document.getElementById('modal-formulario').classList.add('hidden'); document.getElementById('modal-formulario').classList.remove('flex'); },
+
+            registrarMovimientoInventarioEnBatch: function(batch, { productoId, productoAnterior = null, productoNuevo = {}, tipo = 'AJUSTE_POSITIVO', cantidadAnterior = 0, cantidadResultante = 0 }) {
+                if (!batch || !productoId || productoNuevo.controlado !== true) return;
+                const cantidad = Number(cantidadResultante || 0) - Number(cantidadAnterior || 0);
+                if (cantidad === 0 && tipo !== 'STOCK_INICIAL') return;
+                batch.set(doc(collection(db, "inventoryMovements")), {
+                    productoId,
+                    nombreProducto: productoNuevo.nombre || productoAnterior?.nombre || '',
+                    sucursal: productoNuevo.sucursal || productoAnterior?.sucursal || 'Unificado',
+                    sucursalId: productoNuevo.sucursalId || productoAnterior?.sucursalId || CierreCajaNormalizer.obtenerSucursalRegistro(productoNuevo || productoAnterior || {}).id || 'unificado',
+                    sucursalNombre: productoNuevo.sucursalNombre || productoNuevo.sucursal || productoAnterior?.sucursalNombre || productoAnterior?.sucursal || 'Unificado',
+                    tipo,
+                    cantidadAnterior: Number(cantidadAnterior || 0),
+                    cantidad,
+                    cantidadResultante: Number(cantidadResultante || 0),
+                    usuario: this.usuarioActual?.nombre || 'Admin',
+                    usuarioId: this.usuarioActual?.uid || this.usuarioActual?.id || null,
+                    fecha: serverTimestamp(),
+                    motivo: tipo === 'STOCK_INICIAL' ? 'Stock inicial desde inventario' : 'Ajuste manual desde inventario',
+                    estado: 'aplicado',
+                    idempotencyKey: `${productoId}::${Date.now()}::${tipo}`
+                });
+            },
+
+            guardarProducto: async function(event) {
+                event.preventDefault(); 
+                const id = document.getElementById('prod-id').value;
+                const btn = document.getElementById('btn-guardar'); 
+                btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+                
+                const categoriaSelect = document.getElementById('prod-categoria').value;
+                // Si es Pizza, obligamos a que no sea controlado, por seguridad.
+                const esControlado = categoriaSelect === 'Pizza' ? false : (document.getElementById('prod-controlado').value === 'si');
+                const puntosInput = document.getElementById('prod-puntos').value;
+                const usaProduccionCarne = document.getElementById('prod-usa-produccion').checked === true;
+                const medallonesPorUnidad = Math.max(0, Math.floor(Number(document.getElementById('prod-medallones-por-unidad').value) || 0));
+                const usaProduccionPan = document.getElementById('prod-usa-produccion-pan').checked === true;
+                const panesPorUnidad = Math.max(0, Math.floor(Number(document.getElementById('prod-panes-por-unidad').value) || 0));
+                const usaProduccionPapa = document.getElementById('prod-usa-produccion-papa').checked === true;
+                const papasPorUnidad = Math.max(0, Math.floor(Number(document.getElementById('prod-papas-por-unidad').value) || 0));
+                const usaProduccionCarneSalteado = document.getElementById('prod-usa-carne-salteado').checked === true;
+                const carneSalteadoPorUnidad = Math.max(0, Math.floor(Number(document.getElementById('prod-carne-salteado-por-unidad').value) || 0));
+                const usaProduccionCarneLomito = document.getElementById('prod-usa-carne-lomito').checked === true;
+                const carneLomitoPorUnidad = Math.max(0, Math.floor(Number(document.getElementById('prod-carne-lomito-por-unidad').value) || 0));
+                const usaProduccionPanLomito = document.getElementById('prod-usa-pan-lomito').checked === true;
+                const panLomitoPorUnidad = Math.max(0, Math.floor(Number(document.getElementById('prod-pan-lomito-por-unidad').value) || 0));
+                const sucursalSelect = document.getElementById('prod-sucursal');
+                const sucursalSeleccionadaId = sucursalSelect.value;
+                const sucursalSeleccionadaNombre = sucursalSeleccionadaId === 'Unificado'
+                    ? 'Unificado'
+                    : (sucursalSelect.selectedOptions[0]?.dataset?.nombre || sucursalSelect.selectedOptions[0]?.textContent || sucursalSeleccionadaId).trim();
+
+                const datos = { 
+                    nombre: document.getElementById('prod-nombre').value.trim(), 
+                    precio: Number(document.getElementById('prod-precio').value), 
+                    categoria: categoriaSelect, 
+                    icono: document.getElementById('prod-icono').value, 
+                    estado: document.getElementById('prod-estado').value,
+                    sucursal: sucursalSeleccionadaNombre,
+                    sucursalId: sucursalSeleccionadaId === 'Unificado' ? 'unificado' : sucursalSeleccionadaId,
+                    sucursalNombre: sucursalSeleccionadaNombre,
+                    visibilidad: document.getElementById('prod-visibilidad').value,
+                    controlado: esControlado,
+                    stock: esControlado ? Number(document.getElementById('prod-stock').value) : 0,
+                    descuento: Number(document.getElementById('prod-descuento').value) || 0,
+                    promocionBogo: document.getElementById('prod-promocion-bogo').checked || false,
+                    permiteProductoGratis: document.getElementById('prod-permite-gratis').checked || false,
+                    usaProduccionCarne,
+                    medallonesPorUnidad: usaProduccionCarne ? medallonesPorUnidad : 0,
+                    usaProduccionPan,
+                    panesPorUnidad: usaProduccionPan ? panesPorUnidad : 0,
+                    usaProduccionPapa,
+                    papasPorUnidad: usaProduccionPapa ? papasPorUnidad : 0,
+                    usaProduccionCarneSalteado,
+                    carneSalteadoPorUnidad: usaProduccionCarneSalteado ? carneSalteadoPorUnidad : 0,
+                    usaProduccionCarneLomito,
+                    carneLomitoPorUnidad: usaProduccionCarneLomito ? carneLomitoPorUnidad : 0,
+                    usaProduccionPanLomito,
+                    panLomitoPorUnidad: usaProduccionPanLomito ? panLomitoPorUnidad : 0
+                };
+                const imagen = document.getElementById('prod-imagen').value.trim();
+                const archivoImagen = document.getElementById('prod-imagen-file').files[0] || null;
+                const codigo = document.getElementById('prod-codigo').value.trim();
+                const puntosCanje = Number(puntosInput || 0);
+                if (id === "") {
+                    if (imagen && !archivoImagen) datos.imagen = imagen;
+                    if (codigo) datos.codigo = codigo;
+                    if (puntosCanje > 0) datos.puntosCanje = puntosCanje;
+                } else {
+                    datos.imagen = archivoImagen ? imagen : (imagen || deleteField());
+                    datos.codigo = codigo || deleteField();
+                    datos.puntosCanje = puntosCanje > 0 ? puntosCanje : deleteField();
+                }
+                
+                try {
+                    if (id === "") {
+                        const nuevoDoc = await addDoc(collection(db, "products"), datos);
+                        if (datos.controlado === true && Number(datos.stock || 0) > 0) {
+                            const batch = writeBatch(db);
+                            this.registrarMovimientoInventarioEnBatch(batch, {
+                                productoId: nuevoDoc.id,
+                                productoNuevo: datos,
+                                tipo: 'STOCK_INICIAL',
+                                cantidadAnterior: 0,
+                                cantidadResultante: Number(datos.stock || 0)
+                            });
+                            await batch.commit();
+                        }
+                        if (archivoImagen) {
+                            const urlImagen = await this.subirImagenProducto(archivoImagen, nuevoDoc.id);
+                            await updateDoc(doc(db, "products", nuevoDoc.id), { imagen: urlImagen });
+                        }
+                        this.mostrarToast("Producto creado con éxito.");
+                    } else {
+                        if (archivoImagen) datos.imagen = await this.subirImagenProducto(archivoImagen, id);
+                        const productoAnterior = this.productosFirebase.find(p => p.id === id) || null;
+                        const stockAnterior = productoAnterior?.controlado === true ? Number(productoAnterior.stock || 0) : 0;
+                        const stockNuevo = datos.controlado === true ? Number(datos.stock || 0) : 0;
+                        const batch = writeBatch(db);
+                        batch.update(doc(db, "products", id), datos);
+                        if (stockAnterior !== stockNuevo) {
+                            this.registrarMovimientoInventarioEnBatch(batch, {
+                                productoId: id,
+                                productoAnterior,
+                                productoNuevo: datos,
+                                tipo: stockNuevo >= stockAnterior ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO',
+                                cantidadAnterior: stockAnterior,
+                                cantidadResultante: stockNuevo
+                            });
+                        }
+                        await batch.commit();
+                        this.mostrarToast("Producto actualizado.");
+                    }
+                    this.cerrarModalFormulario(); this.cargarProductos();
+                } catch(err) { console.error(err); this.mostrarToast(err.message || "Error de conexión.", "error"); } 
+                finally { btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Guardar Producto`; }
+            },
+
+            confirmarEliminar: function(id) { this.idEliminar = id; document.getElementById('btn-confirmar-eliminar').onclick = () => this.ejecutarEliminacion(); document.getElementById('modal-eliminar').classList.remove('hidden'); document.getElementById('modal-eliminar').classList.add('flex'); },
+            cerrarModalEliminar: function() { this.idEliminar = null; document.getElementById('modal-eliminar').classList.add('hidden'); document.getElementById('modal-eliminar').classList.remove('flex'); },
+            ejecutarEliminacion: async function() {
+                if(!this.idEliminar) return;
+                const btn = document.getElementById('btn-confirmar-eliminar'); btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+                try { await deleteDoc(doc(db, "products", this.idEliminar)); this.mostrarToast("Producto borrado."); this.cerrarModalEliminar(); this.cargarProductos(); } 
+                catch(e) { this.mostrarToast("Error al borrar.", "error"); } finally { btn.disabled = false; btn.innerText = "Sí, Eliminar"; }
+            },
+
+            imprimirInventario: function() {
+                const sucursal = document.getElementById('filtro-sucursal-tabla')?.value || 'Todos';
+                const textoFiltro = (document.getElementById('filtro-texto')?.value || '').trim();
+                const items = [...this.productosVisibles].sort((a, b) =>
+                    String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' })
+                );
+
+                if (items.length === 0) {
+                    this.mostrarToast("No hay productos para imprimir.", "alert");
+                    return;
+                }
+
+                const tituloSucursal = sucursal === 'Todos' ? 'Inventario General' : `Inventario - ${sucursal}`;
+                const subtituloFiltro = textoFiltro ? `Filtro aplicado: ${textoFiltro}` : 'Sin filtro de texto';
+                const fecha = DateTime24.formatDateTime24(new Date());
+                const filas = items.map((item, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${String(item.nombre || '')}</td>
+                        <td class="precio">Gs. ${Number(item.precio || 0).toLocaleString('es-PY')}</td>
+                    </tr>
+                `).join('');
+
+                const ventana = window.open('', '_blank', 'width=900,height=700');
+                if (!ventana) {
+                    this.mostrarToast("El navegador bloqueo la ventana de impresion.", "error");
+                    return;
+                }
+
+                ventana.document.write(PrintUtils.buildCopiesDocument(`
+                    <!DOCTYPE html>
+                    <html lang="es">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>${tituloSucursal}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; color: #0f172a; margin: 32px; }
+                            h1 { font-size: 24px; margin: 0 0 6px; }
+                            p { margin: 0 0 8px; color: #475569; font-size: 12px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th, td { border: 1px solid #cbd5e1; padding: 10px 12px; font-size: 13px; }
+                            th { background: #f8fafc; text-align: left; }
+                            .precio { text-align: right; font-weight: bold; }
+                            .meta { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+                            @media print { body { margin: 18px; } }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>${tituloSucursal}</h1>
+                        <div class="meta">
+                            <p>Fecha: ${fecha}</p>
+                            <p>${subtituloFiltro}</p>
+                            <p>Total de productos: ${items.length}</p>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">#</th>
+                                    <th>Producto</th>
+                                    <th style="width: 180px;">Precio</th>
+                                </tr>
+                            </thead>
+                            <tbody>${filas}</tbody>
+                        </table>
+                    </body>
+                    </html>
+                `));
+                ventana.document.close();
+                ventana.focus();
+                setTimeout(() => ventana.print(), 250);
+            },
+
+            cerrarSesion: async function() { await signOut(auth); localStorage.removeItem('__pos_session'); window.location.replace('index.html'); }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => InventarioModule.init());
+    </script>
+</body>
+</html>

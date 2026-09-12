@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.web.sys_pos_erp_lingroup.twa",
+      "sha256_cert_fingerprints": [
+        "19:B3:93:71:78:C3:A9:59:D3:DB:20:99:3D:6B:A2:BC:E5:95:FB:A2:4C:19:A8:AC:4F:74:7A:E8:43:6E:43:9E"
+      ]
+    }
+  }
+]

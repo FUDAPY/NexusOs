@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" href="favicon.ico">
+    <title>Club Lin v5.0 - Produccion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+</head>
+
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-[120] flex items-center p-4 text-white rounded-xl shadow-xl bg-slate-900 border border-slate-700">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/10">
+            <i id="toast-icon" class="fa-solid fa-circle-check"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-burger text-orange-500\'></i>'">
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-wide">CLUB LIN</h1>
+                <p class="text-[10px] uppercase tracking-[0.24em] text-orange-300 font-black">Produccion v5.0</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2">
+            <a id="link-dashboard" href="dashboard.html" class="hidden w-full items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-house text-lg w-6"></i><span>Panel Principal</span>
+            </a>
+            <a id="link-inventario" href="inventario.html" class="hidden w-full items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-boxes-stacked text-lg w-6"></i><span>Inventario</span>
+            </a>
+            <a id="link-stock" href="stock.html" class="hidden w-full items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-warehouse text-lg w-6"></i><span>Stock</span>
+            </a>
+            <button class="w-full flex items-center gap-4 bg-orange-600 text-white p-3 rounded-xl font-semibold shadow-md transition">
+                <i class="fa-solid fa-burger text-lg w-6"></i><span>Produccion</span>
+            </button>
+            <div class="mt-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Modulo</p>
+                <p class="text-sm font-bold text-white mt-2">Control de medallones, panes y papas por sucursal</p>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">Registra cantidades directas y deja que las ventas descuenten el consumo automaticamente.</p>
+            </div>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800 bg-slate-950">
+            <p class="text-sm font-bold text-white" id="lbl-usuario">Cargando...</p>
+            <p class="text-xs text-slate-400 mt-1" id="lbl-rol">...</p>
+            <button onclick="ProduccionModule.cerrarSesion()" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 text-red-300 font-bold py-3 rounded-xl transition">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i>Cerrar sesion
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-[11px] uppercase tracking-[0.3em] text-orange-500 font-black">Version 5.1</p>
+                <h2 class="text-2xl font-black text-slate-900 mt-1">Centro de Produccion</h2>
+                <p class="text-sm text-slate-500 font-semibold mt-1">Gestiona cantidades disponibles de medallones, panes y papas por sucursal.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-[10px] uppercase tracking-[0.24em] text-slate-400 font-black">Sucursal activa</p>
+                    <div class="mt-2 relative">
+                        <select id="select-sucursal-produccion" onchange="ProduccionModule.cambiarSucursal()" class="min-w-[220px] rounded-xl border border-slate-300 bg-white px-4 py-2.5 pr-10 text-sm font-bold outline-none focus:border-orange-500">
+                            <option value="">Cargando...</option>
+                        </select>
+                        <i class="fa-solid fa-store absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="flex-1 overflow-y-auto p-6 bg-slate-50">
+            <div class="grid grid-cols-1 xl:grid-cols-[1.15fr,0.85fr] gap-6">
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+                        <div class="rounded-3xl bg-slate-900 text-white p-5 shadow-xl">
+                            <p class="text-[10px] uppercase tracking-[0.26em] text-slate-400 font-black">Medallones disponibles</p>
+                            <p id="card-medallones" class="text-4xl font-black mt-3">0</p>
+                            <p class="text-xs text-slate-400 font-bold mt-3">Stock productivo listo para vender.</p>
+                        </div>
+                        <div class="rounded-3xl bg-white border border-yellow-200 p-5 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-[0.26em] text-yellow-700 font-black">Panes disponibles</p>
+                            <p id="card-panes" class="text-4xl font-black mt-3 text-yellow-700">0</p>
+                            <p class="text-xs text-yellow-700 font-bold mt-3">Unidades listas para despacho.</p>
+                        </div>
+                        <div class="rounded-3xl bg-white border border-orange-200 p-5 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-[0.26em] text-orange-700 font-black">Papas disponibles</p>
+                            <p id="card-papas" class="text-4xl font-black mt-3 text-orange-700">0</p>
+                            <p class="text-xs text-orange-700 font-bold mt-3">Porciones listas para despacho.</p>
+                        </div>
+                        <div class="rounded-3xl bg-white border border-rose-200 p-5 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-[0.26em] text-rose-700 font-black">Carne salteado</p>
+                            <p id="card-carne-salteado" class="text-4xl font-black mt-3 text-rose-700">0</p>
+                            <p class="text-xs text-rose-700 font-bold mt-3">Cantidad disponible para salteados.</p>
+                        </div>
+                        <div class="rounded-3xl bg-white border border-cyan-200 p-5 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-[0.26em] text-cyan-700 font-black">Carne lomito</p>
+                            <p id="card-carne-lomito" class="text-4xl font-black mt-3 text-cyan-700">0</p>
+                            <p class="text-xs text-cyan-700 font-bold mt-3">Cantidad disponible para lomitos.</p>
+                        </div>
+                        <div class="rounded-3xl bg-white border border-lime-200 p-5 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-[0.26em] text-lime-700 font-black">Pan lomito</p>
+                            <p id="card-pan-lomito" class="text-4xl font-black mt-3 text-lime-700">0</p>
+                            <p class="text-xs text-lime-700 font-bold mt-3">Unidades listas para lomito.</p>
+                        </div>
+                        <div class="rounded-3xl bg-white border border-slate-200 p-5 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-[0.26em] text-slate-400 font-black">Insumos cargados</p>
+                            <p id="card-ingresos" class="text-4xl font-black mt-3 text-slate-900">0</p>
+                            <p class="text-xs text-slate-400 font-bold mt-3">Acumulado historico de cantidades registradas.</p>
+                        </div>
+                        <div class="rounded-3xl bg-white border border-amber-200 p-5 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-[0.26em] text-amber-600 font-black">Lotes registrados</p>
+                            <p id="card-lotes" class="text-4xl font-black mt-3 text-amber-700">0</p>
+                            <p class="text-xs text-amber-700 font-bold mt-3">Movimientos cargados para esta sucursal.</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900">Stock base manual</h3>
+                                <p class="text-sm text-slate-500 font-semibold mt-1">Carga la cantidad disponible actual por sucursal para medallones, panes y papas.</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-[10px] uppercase tracking-[0.22em] font-black">Editable</span>
+                        </div>
+                        <form id="form-config-produccion" onsubmit="ProduccionModule.guardarConfiguracion(event)" class="p-6 grid grid-cols-1 xl:grid-cols-[1fr,auto] gap-4 items-end">
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">Medallones disponibles</label>
+                                    <input type="number" id="input-stock-medallones" min="0" step="1" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg font-black outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">Panes disponibles</label>
+                                    <input type="number" id="input-stock-panes" min="0" step="1" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg font-black outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">Papas disponibles</label>
+                                    <input type="number" id="input-stock-papas" min="0" step="1" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg font-black outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">Carne para salteado</label>
+                                    <input type="number" id="input-stock-carne-salteado" min="0" step="1" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg font-black outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">Carne para lomito</label>
+                                    <input type="number" id="input-stock-carne-lomito" min="0" step="1" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg font-black outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">Pan para lomito</label>
+                                    <input type="number" id="input-stock-pan-lomito" min="0" step="1" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg font-black outline-none focus:border-orange-500">
+                                </div>
+                            </div>
+                            <button type="submit" class="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black px-6 py-3.5 shadow-lg transition">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i>Guardar stock base
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900">Registrar lote</h3>
+                                <p class="text-sm text-slate-500 font-semibold mt-1">Ingresa cantidades directas y el sistema acredita el stock productivo en esa sucursal.</p>
+                            </div>
+                            <span id="preview-lote" class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] uppercase tracking-[0.22em] font-black">Sin calculo</span>
+                        </div>
+                        <form id="form-lote-produccion" onsubmit="ProduccionModule.registrarLote(event)" class="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Sucursal del lote</label>
+                                <select id="select-sucursal-lote" onchange="ProduccionModule.sincronizarSucursalDesdeLote()" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-sm font-black outline-none focus:border-orange-500 bg-white">
+                                    <option value="">Selecciona sucursal</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Tipo de ingreso</label>
+                                <select id="select-tipo-lote" onchange="ProduccionModule.actualizarPreviewLote()" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-sm font-black outline-none focus:border-orange-500 bg-white">
+                                    <option value="medallones">Medallones</option>
+                                    <option value="panes">Panes</option>
+                                    <option value="papas">Papas</option>
+                                    <option value="carne_salteado">Carne salteado</option>
+                                    <option value="carne_lomito">Carne lomito</option>
+                                    <option value="pan_lomito">Pan lomito</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label id="label-cantidad-lote" class="block text-sm font-bold text-slate-700 mb-2">Cantidad ingresada</label>
+                                <input type="number" id="input-cantidad-lote" min="1" step="1" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg font-black outline-none focus:border-orange-500" placeholder="Ej. 20">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Observacion</label>
+                                <input type="text" id="input-observacion-lote" maxlength="160" class="w-full rounded-2xl border-2 border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-orange-500" placeholder="Ej. Produccion del turno noche">
+                            </div>
+                            <div class="md:col-span-4 flex justify-end">
+                                <button type="submit" class="rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black px-6 py-3.5 shadow-lg transition">
+                                    <i class="fa-solid fa-drumstick-bite mr-2"></i>Registrar ingreso
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-5 border-b border-slate-200">
+                            <h3 class="text-lg font-black text-slate-900">Ultimos lotes</h3>
+                            <p class="text-sm text-slate-500 font-semibold mt-1">Historial rapido de produccion por sucursal.</p>
+                        </div>
+                        <div id="lista-lotes" class="p-4 space-y-3 max-h-[520px] overflow-y-auto">
+                            <p class="text-sm text-slate-400 font-bold text-center py-8">Cargando lotes...</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-3xl bg-slate-900 text-white p-6 shadow-xl">
+                        <p class="text-[10px] uppercase tracking-[0.26em] text-orange-300 font-black">Derechos reservados</p>
+                        <p class="text-sm font-bold text-white mt-3 leading-relaxed">Todos los derechos reservados a Otelax Dev del Grupo Otelax Holding - dev.grupooh.online - 2026</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp, increment, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+            messagingSenderId: "1084603889746",
+            appId: "1:1084603889746:web:822ce55a070dc146b2078b",
+            measurementId: "G-1LZVQ05T2E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.ProduccionModule = {
+            sesion: null,
+            sucursales: [],
+            sucursalActual: null,
+            unsubscribeConfig: null,
+            unsubscribeLotes: null,
+
+            init: function() {
+                const sesionStr = localStorage.getItem('__pos_session');
+                if (!sesionStr) return window.location.replace('index.html');
+                this.sesion = JSON.parse(sesionStr);
+                if (!['admin', 'produccion'].includes(this.sesion.rol)) return window.location.replace('index.html');
+
+                document.getElementById('lbl-usuario').innerText = this.sesion.nombre || 'Usuario';
+                document.getElementById('lbl-rol').innerText = this.sesion.rol === 'admin' ? 'Administrador' : 'Rol produccion';
+
+                if (this.sesion.rol === 'admin') {
+                    ['link-dashboard', 'link-inventario', 'link-stock'].forEach((id) => {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        el.classList.remove('hidden');
+                        el.classList.add('flex');
+                    });
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (!user) return window.location.replace('index.html');
+                    await this.cargarSucursales();
+                    this.prepararEventos();
+                });
+            },
+
+            normalizarKey: function(valor) {
+                return String(valor || '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '')
+                    .toLowerCase() || 'general';
+            },
+
+            formatoMoneda: function(valor) {
+                return Number(valor || 0).toLocaleString('es-PY');
+            },
+
+            formatoNumero: function(valor) {
+                return Number(valor || 0).toLocaleString('es-PY', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            },
+
+            obtenerMetaTipoLote: function() {
+                const tipo = document.getElementById('select-tipo-lote')?.value || 'medallones';
+                if (tipo === 'panes') {
+                    return { tipo, unidad: 'unidades', label: 'Cantidad de panes ingresados', placeholder: 'Ej. 24' };
+                }
+                if (tipo === 'papas') {
+                    return { tipo, unidad: 'porciones', label: 'Cantidad de papas ingresadas', placeholder: 'Ej. 18' };
+                }
+                if (tipo === 'carne_salteado') {
+                    return { tipo, unidad: 'porciones', label: 'Cantidad de carne para salteado', placeholder: 'Ej. 15' };
+                }
+                if (tipo === 'carne_lomito') {
+                    return { tipo, unidad: 'porciones', label: 'Cantidad de carne para lomito', placeholder: 'Ej. 12' };
+                }
+                if (tipo === 'pan_lomito') {
+                    return { tipo, unidad: 'unidades', label: 'Cantidad de pan para lomito', placeholder: 'Ej. 20' };
+                }
+                return { tipo: 'medallones', unidad: 'unidades', label: 'Cantidad de medallones ingresados', placeholder: 'Ej. 40' };
+            },
+            obtenerConfiguracionBase: function() {
+                return {
+                    medallonesDisponibles: Math.max(0, Math.floor(Number(document.getElementById('input-stock-medallones').value) || 0)),
+                    panesDisponibles: Math.max(0, Math.floor(Number(document.getElementById('input-stock-panes').value) || 0)),
+                    papasDisponibles: Math.max(0, Math.floor(Number(document.getElementById('input-stock-papas').value) || 0)),
+                    carneSalteadoDisponible: Math.max(0, Math.floor(Number(document.getElementById('input-stock-carne-salteado').value) || 0)),
+                    carneLomitoDisponible: Math.max(0, Math.floor(Number(document.getElementById('input-stock-carne-lomito').value) || 0)),
+                    panLomitoDisponible: Math.max(0, Math.floor(Number(document.getElementById('input-stock-pan-lomito').value) || 0))
+                };
+            },
+
+            mostrarToast: function(msg, tipo = 'success') {
+                const toast = document.getElementById('toast');
+                const icon = document.getElementById('toast-icon');
+                const texto = document.getElementById('toast-message');
+                texto.innerText = msg;
+                toast.className = `fixed top-5 right-5 transform transition-transform duration-300 z-[120] flex items-center p-4 text-white rounded-xl shadow-xl border ${tipo === 'error' ? 'bg-red-600 border-red-500' : 'bg-slate-900 border-slate-700'}`;
+                icon.className = `fa-solid ${tipo === 'error' ? 'fa-circle-xmark' : 'fa-circle-check'}`;
+                toast.style.transform = 'translateX(0)';
+                clearTimeout(this._toastTimer);
+                this._toastTimer = setTimeout(() => toast.style.transform = 'translateX(140%)', 2600);
+            },
+
+            cargarSucursales: async function() {
+                const snap = await getDocs(collection(db, 'branches'));
+                this.sucursales = [];
+                snap.forEach((docSnap) => {
+                    const data = docSnap.data() || {};
+                    if (data.nombre) this.sucursales.push({ id: docSnap.id, nombre: data.nombre });
+                });
+                if (this.sucursales.length === 0) this.sucursales.push({ id: 'general', nombre: 'General' });
+
+                const select = document.getElementById('select-sucursal-produccion');
+                const selectLote = document.getElementById('select-sucursal-lote');
+                select.innerHTML = this.sucursales.map((s) => `<option value="${s.nombre}">${s.nombre}</option>`).join('');
+                selectLote.innerHTML = this.sucursales.map((s) => `<option value="${s.nombre}">${s.nombre}</option>`).join('');
+                const preferida = this.sesion.rol === 'produccion' && this.sesion.sucursal && this.sesion.sucursal !== 'N/A'
+                    ? this.sesion.sucursal
+                    : this.sucursales[0].nombre;
+                select.value = preferida;
+                selectLote.value = preferida;
+                this.cambiarSucursal();
+            },
+
+            prepararEventos: function() {
+                document.getElementById('input-cantidad-lote').addEventListener('input', () => this.actualizarPreviewLote());
+            },
+
+            cambiarSucursal: function() {
+                const nombre = document.getElementById('select-sucursal-produccion').value;
+                const sucursal = this.sucursales.find((item) => item.nombre === nombre) || { id: this.normalizarKey(nombre), nombre };
+                this.sucursalActual = { nombre: sucursal.nombre, key: this.normalizarKey(sucursal.nombre) };
+                const selectLote = document.getElementById('select-sucursal-lote');
+                if (selectLote && selectLote.value !== sucursal.nombre) selectLote.value = sucursal.nombre;
+                this.escucharConfiguracion();
+                this.escucharLotes();
+            },
+
+            sincronizarSucursalDesdeLote: function() {
+                const nombre = document.getElementById('select-sucursal-lote').value;
+                const selectCabecera = document.getElementById('select-sucursal-produccion');
+                if (selectCabecera && selectCabecera.value !== nombre) {
+                    selectCabecera.value = nombre;
+                }
+                this.cambiarSucursal();
+            },
+
+            escucharConfiguracion: function() {
+                this.unsubscribeConfig?.();
+                const ref = doc(db, 'produccionConfig', this.sucursalActual.key);
+                this.unsubscribeConfig = onSnapshot(ref, (snap) => {
+                    const data = snap.exists() ? (snap.data() || {}) : {};
+                    const medallonesDisponibles = Number(data.medallonesDisponibles || 0);
+                    const panesDisponibles = Number(data.panesDisponibles || 0);
+                    const papasDisponibles = Number(data.papasDisponibles || 0);
+                    const carneSalteadoDisponible = Number(data.carneSalteadoDisponible || 0);
+                    const carneLomitoDisponible = Number(data.carneLomitoDisponible || 0);
+                    const panLomitoDisponible = Number(data.panLomitoDisponible || 0);
+                    const medallonesIngresados = Number(data.medallonesIngresados || 0);
+                    const panesIngresados = Number(data.panesIngresados || 0);
+                    const papasIngresadas = Number(data.papasIngresadas || 0);
+                    const carneSalteadoIngresada = Number(data.carneSalteadoIngresada || 0);
+                    const carneLomitoIngresada = Number(data.carneLomitoIngresada || 0);
+                    const panLomitoIngresado = Number(data.panLomitoIngresado || 0);
+                    document.getElementById('card-medallones').innerText = this.formatoNumero(medallonesDisponibles);
+                    document.getElementById('card-panes').innerText = this.formatoNumero(panesDisponibles);
+                    document.getElementById('card-papas').innerText = this.formatoNumero(papasDisponibles);
+                    document.getElementById('card-carne-salteado').innerText = this.formatoNumero(carneSalteadoDisponible);
+                    document.getElementById('card-carne-lomito').innerText = this.formatoNumero(carneLomitoDisponible);
+                    document.getElementById('card-pan-lomito').innerText = this.formatoNumero(panLomitoDisponible);
+                    document.getElementById('card-ingresos').innerText = this.formatoNumero(medallonesIngresados + panesIngresados + papasIngresadas + carneSalteadoIngresada + carneLomitoIngresada + panLomitoIngresado);
+                    document.getElementById('input-stock-medallones').value = medallonesDisponibles > 0 ? medallonesDisponibles : 0;
+                    document.getElementById('input-stock-panes').value = panesDisponibles > 0 ? panesDisponibles : 0;
+                    document.getElementById('input-stock-papas').value = papasDisponibles > 0 ? papasDisponibles : 0;
+                    document.getElementById('input-stock-carne-salteado').value = carneSalteadoDisponible > 0 ? carneSalteadoDisponible : 0;
+                    document.getElementById('input-stock-carne-lomito').value = carneLomitoDisponible > 0 ? carneLomitoDisponible : 0;
+                    document.getElementById('input-stock-pan-lomito').value = panLomitoDisponible > 0 ? panLomitoDisponible : 0;
+                    this.actualizarPreviewLote();
+                });
+            },
+
+            escucharLotes: function() {
+                this.unsubscribeLotes?.();
+                const q = query(collection(db, 'produccionLotes'), orderBy('createdAt', 'desc'), limit(40));
+                this.unsubscribeLotes = onSnapshot(q, (snap) => {
+                    const cont = document.getElementById('lista-lotes');
+                    const lotes = [];
+                    snap.forEach((docSnap) => {
+                        const data = docSnap.data() || {};
+                        if ((data.sucursalKey || '') === this.sucursalActual.key) {
+                            lotes.push({ id: docSnap.id, ...data });
+                        }
+                    });
+                    if (lotes.length === 0) {
+                        document.getElementById('card-lotes').innerText = '0';
+                        cont.innerHTML = '<p class="text-sm text-slate-400 font-bold text-center py-8">Aun no hay lotes registrados para esta sucursal.</p>';
+                        return;
+                    }
+                    cont.innerHTML = '';
+                    document.getElementById('card-lotes').innerText = this.formatoNumero(lotes.length);
+                    lotes.forEach((data) => {
+                        const fecha = typeof data.createdAt?.toDate === 'function'
+                            ? DateTime24.formatDateTime24(data.createdAt)
+                            : 'Pendiente';
+                        const tipo = String(data.tipoInsumo || 'medallones');
+                        const badgeClase = tipo === 'panes'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : (tipo === 'papas'
+                                ? 'bg-orange-100 text-orange-700'
+                                : (tipo === 'carne_salteado'
+                                    ? 'bg-rose-100 text-rose-700'
+                                    : (tipo === 'carne_lomito'
+                                        ? 'bg-cyan-100 text-cyan-700'
+                                        : (tipo === 'pan_lomito'
+                                            ? 'bg-lime-100 text-lime-700'
+                                            : 'bg-emerald-100 text-emerald-700'))));
+                        const badgeTexto = tipo === 'panes'
+                            ? 'Panes'
+                            : (tipo === 'papas'
+                                ? 'Papas'
+                                : (tipo === 'carne_salteado'
+                                    ? 'Carne salteado'
+                                    : (tipo === 'carne_lomito'
+                                        ? 'Carne lomito'
+                                        : (tipo === 'pan_lomito' ? 'Pan lomito' : 'Medallones'))));
+                        const resumen = `${this.formatoNumero(data.cantidadAcreditada || data.cantidadIngresada || 0)} ${data.unidad || 'unidades'}`;
+                        const detalle = `${this.formatoNumero(data.cantidadIngresada || 0)} ${data.unidad || 'unidades'} cargadas al stock productivo`;
+                        cont.innerHTML += `
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-[10px] uppercase tracking-[0.24em] text-slate-400 font-black">${fecha}</p>
+                                        <p class="text-lg font-black text-slate-900 mt-2">${resumen}</p>
+                                        <p class="text-sm font-bold text-slate-500 mt-1">${detalle}</p>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full ${badgeClase} text-[10px] uppercase tracking-[0.2em] font-black">${badgeTexto}</span>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-slate-200 text-xs font-semibold text-slate-500">
+                                    <p>Responsable: ${data.createdByNombre || 'Sistema'}</p>
+                                    <p class="mt-1">Obs.: ${data.observacion || 'Sin observacion'}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+            },
+
+            actualizarPreviewLote: function() {
+                const meta = this.obtenerMetaTipoLote();
+                const inputCantidad = document.getElementById('input-cantidad-lote');
+                const labelCantidad = document.getElementById('label-cantidad-lote');
+                if (labelCantidad) labelCantidad.innerText = meta.label;
+                if (inputCantidad) {
+                    inputCantidad.placeholder = meta.placeholder;
+                    inputCantidad.min = '1';
+                    inputCantidad.step = '1';
+                }
+                const cantidad = Number(document.getElementById('input-cantidad-lote').value || 0);
+                const unidad = meta.unidad || 'unidades';
+                const texto = cantidad > 0
+                    ? `Ingresaras ${this.formatoNumero(cantidad)} ${unidad}`
+                    : 'Sin calculo';
+                document.getElementById('preview-lote').innerText = texto;
+            },
+
+            guardarConfiguracion: async function(event) {
+                event.preventDefault();
+                const config = this.obtenerConfiguracionBase();
+                if (!this.sucursalActual?.key) return this.mostrarToast('Selecciona una sucursal.', 'error');
+
+                await setDoc(doc(db, 'produccionConfig', this.sucursalActual.key), {
+                    sucursal: this.sucursalActual.nombre,
+                    sucursalKey: this.sucursalActual.key,
+                    medallonesDisponibles: config.medallonesDisponibles,
+                    panesDisponibles: config.panesDisponibles,
+                    papasDisponibles: config.papasDisponibles,
+                    carneSalteadoDisponible: config.carneSalteadoDisponible,
+                    carneLomitoDisponible: config.carneLomitoDisponible,
+                    panLomitoDisponible: config.panLomitoDisponible,
+                    updatedAt: serverTimestamp(),
+                    updatedBy: this.sesion.uid,
+                    updatedByNombre: this.sesion.nombre || 'Usuario'
+                }, { merge: true });
+
+                this.mostrarToast('Stock base actualizado.');
+            },
+
+            registrarLote: async function(event) {
+                event.preventDefault();
+                const sucursalLote = document.getElementById('select-sucursal-lote').value;
+                const meta = this.obtenerMetaTipoLote();
+                if (!sucursalLote) return this.mostrarToast('Selecciona la sucursal del lote.', 'error');
+                if (!this.sucursalActual?.nombre || this.sucursalActual.nombre !== sucursalLote) {
+                    document.getElementById('select-sucursal-produccion').value = sucursalLote;
+                    this.cambiarSucursal();
+                }
+                const cantidad = Number(document.getElementById('input-cantidad-lote').value || 0);
+                const observacion = document.getElementById('input-observacion-lote').value.trim();
+                if (!this.sucursalActual?.key) return this.mostrarToast('Selecciona una sucursal.', 'error');
+                if (cantidad <= 0) return this.mostrarToast('Completa la cantidad recibida.', 'error');
+
+                const medallonesGenerados = meta.tipo === 'medallones' ? Math.max(1, Math.round(cantidad)) : 0;
+                const panesGenerados = meta.tipo === 'panes' ? Math.max(1, Math.round(cantidad)) : 0;
+                const papasGeneradas = meta.tipo === 'papas' ? Math.max(1, Math.round(cantidad)) : 0;
+                const carneSalteadoGenerada = meta.tipo === 'carne_salteado' ? Math.max(1, Math.round(cantidad)) : 0;
+                const carneLomitoGenerada = meta.tipo === 'carne_lomito' ? Math.max(1, Math.round(cantidad)) : 0;
+                const panLomitoGenerado = meta.tipo === 'pan_lomito' ? Math.max(1, Math.round(cantidad)) : 0;
+                const batch = writeBatch(db);
+                const configRef = doc(db, 'produccionConfig', this.sucursalActual.key);
+                const loteRef = doc(collection(db, 'produccionLotes'));
+
+                batch.set(loteRef, {
+                    sucursal: this.sucursalActual.nombre,
+                    sucursalKey: this.sucursalActual.key,
+                    tipoInsumo: meta.tipo,
+                    cantidadIngresada: cantidad,
+                    unidad: meta.unidad,
+                    cantidadAcreditada: cantidad,
+                    medallonesGenerados,
+                    panesGenerados,
+                    papasGeneradas,
+                    carneSalteadoGenerada,
+                    carneLomitoGenerada,
+                    panLomitoGenerado,
+                    observacion,
+                    createdAt: serverTimestamp(),
+                    createdBy: this.sesion.uid,
+                    createdByNombre: this.sesion.nombre || 'Usuario'
+                });
+
+                batch.set(configRef, {
+                    sucursal: this.sucursalActual.nombre,
+                    sucursalKey: this.sucursalActual.key,
+                    medallonesDisponibles: increment(medallonesGenerados),
+                    panesDisponibles: increment(panesGenerados),
+                    papasDisponibles: increment(papasGeneradas),
+                    carneSalteadoDisponible: increment(carneSalteadoGenerada),
+                    carneLomitoDisponible: increment(carneLomitoGenerada),
+                    panLomitoDisponible: increment(panLomitoGenerado),
+                    medallonesIngresados: increment(medallonesGenerados),
+                    panesIngresados: increment(panesGenerados),
+                    papasIngresadas: increment(papasGeneradas),
+                    carneSalteadoIngresada: increment(carneSalteadoGenerada),
+                    carneLomitoIngresada: increment(carneLomitoGenerada),
+                    panLomitoIngresado: increment(panLomitoGenerado),
+                    updatedAt: serverTimestamp(),
+                    updatedBy: this.sesion.uid,
+                    updatedByNombre: this.sesion.nombre || 'Usuario'
+                }, { merge: true });
+
+                await batch.commit();
+                document.getElementById('form-lote-produccion').reset();
+                document.getElementById('select-sucursal-lote').value = this.sucursalActual.nombre;
+                this.actualizarPreviewLote();
+                const mensaje = meta.tipo === 'medallones'
+                    ? `Ingreso registrado: ${this.formatoNumero(medallonesGenerados)} medallones.`
+                    : (meta.tipo === 'panes'
+                        ? `Ingreso registrado: ${this.formatoNumero(panesGenerados)} panes.`
+                        : (meta.tipo === 'papas'
+                            ? `Ingreso registrado: ${this.formatoNumero(papasGeneradas)} papas.`
+                            : (meta.tipo === 'carne_salteado'
+                                ? `Ingreso registrado: ${this.formatoNumero(carneSalteadoGenerada)} de carne para salteado.`
+                                : (meta.tipo === 'carne_lomito'
+                                    ? `Ingreso registrado: ${this.formatoNumero(carneLomitoGenerada)} de carne para lomito.`
+                                    : `Ingreso registrado: ${this.formatoNumero(panLomitoGenerado)} panes para lomito.`))));
+                this.mostrarToast(mensaje);
+            },
+
+            cerrarSesion: async function() {
+                await signOut(auth);
+                localStorage.removeItem('__pos_session');
+                window.location.replace('index.html');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => ProduccionModule.init());
+    </script>
+</body>
+
+</html>

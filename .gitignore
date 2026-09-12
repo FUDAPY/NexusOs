@@ -1,0 +1,128 @@
+# ===================================================================
+# SECRETOS Y CREDENCIALES - NUNCA SUBIR
+# ===================================================================
+# Entornos
+.env
+.env.*
+!.env*.example
+
+# Claves y certificados
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.der
+*.jks
+*.keystore
+*.jceks
+
+# Service accounts de Google / Firebase
+*-firebase-adminsdk-*.json
+*service-account*.json
+*serviceAccount*.json
+*.gserviceaccount.json
+
+# Config de Firebase en clientes
+google-services.json
+google-services (*).json
+GoogleService-Info.plist
+
+# CLI de Firebase / configuracion local
+.firebase/
+.firebaserc
+
+# Carpetas de secretos
+secrets/
+.secrets/
+server/secrets/
+
+# Config local de herramientas
+control_center_config.json
+settings.local.json
+
+# ===================================================================
+# DEPENDENCIAS Y BUILD
+# ===================================================================
+node_modules/
+dist/
+build/
+out/
+release/
+coverage/
+*.tsbuildinfo
+.esbuild/
+.cache/
+.electron-builder-cache/
+__appImage-x64/
+
+# ===================================================================
+# ANDROID / MOBILE
+# ===================================================================
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/release/
+mobile/android/capacitor-cordova-android-plugins/
+mobile/ios/App/Pods/
+*.apk
+*.aab
+*.ipa
+*.hprof
+
+# ===================================================================
+# LOGS Y ARTEFACTOS TEMPORALES DE DIAGNOSTICO
+# ===================================================================
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.tmp_*
+_*.txt
+_*.json
+_*.cmd
+_*.mjs
+_*.done
+tmp/
+temp/
+
+# ===================================================================
+# BINARIOS PESADOS / BACKUPS / INSTALADORES
+# ===================================================================
+# GitHub rechaza archivos > 100 MB; ademas no aportan al codigo.
+*.7z
+*.zip
+*.rar
+*.tar
+*.tar.gz
+*.gz
+*.msi
+*.exe
+*.dmg
+*.AppImage
+*.pdf
+PortableGit-*
+*.bak
+*.orig
+
+# ===================================================================
+# EDITOR / SISTEMA OPERATIVO
+# ===================================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# ===================================================================
+# SOLO README.md COMO MARKDOWN (regla del proyecto)
+# Comentar estas 2 lineas si necesitas subir otros .md
+# ===================================================================
+*.md
+!README.md

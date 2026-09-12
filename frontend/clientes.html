@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee POS ERP - Clientes VIP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="date_time_utils.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+</head>
+
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800 opacity-0 transition-opacity duration-500" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-50 flex items-center p-4 mb-4 text-white rounded-lg shadow-xl bg-slate-800">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20">
+            <i id="toast-icon" class="fa-solid fa-bell text-blue-400"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-mug-hot text-orange-500\'></i>'">
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 mt-2">
+            <a href="dashboard.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-house text-lg"></i><span>Panel Principal</span>
+            </a>
+            
+            <a href="stock.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-warehouse text-lg w-6"></i><span>Stock</span>
+            </a>
+            <a href="usuarios.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-user-shield text-lg"></i><span>Gestion Personal</span>
+            </a>
+            <a href="produccion.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-burger text-lg"></i><span>Produccion</span>
+            </a>
+            <button class="w-full flex items-center gap-4 bg-orange-500 text-white p-3 rounded-xl font-semibold shadow-md transition">
+                <i class="fa-solid fa-gem text-lg"></i><span>Clientes CRM</span>
+            </button>
+            <a href="clientes.html?view=aprobaciones" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-user-check text-lg"></i><span>Aprobacion de Clientes</span>
+            </a>
+            <a href="reportes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-chart-line text-lg"></i><span>Reportes Finanzas</span>
+            </a>
+            <a href="monitor_problemas.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i><span>Monitor Problemas</span>
+            </a>
+        </nav>
+        <div class="p-4 bg-slate-950 text-xs text-slate-500 text-center">Fidelizacion y Creditos</div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="bg-white p-6 shadow-sm flex justify-between items-center z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 p-1.5 shadow-sm overflow-hidden flex items-center justify-center">
+                    <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-gem text-orange-500\'></i>'">
+                </div>
+                <div>
+                <h2 class="text-2xl font-bold text-slate-800" id="clientes-view-title">Cartera de Clientes</h2>
+                <p class="text-slate-500 text-sm" id="clientes-view-subtitle">Gestiona puntos, aprueba cuentas y audita creditos.</p>
+                </div>
+            </div>
+            <button id="btn-nuevo-cliente" onclick="ClientesModule.abrirModalCrear()" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-user-plus"></i> Nuevo Cliente
+            </button>
+        </header>
+
+        <div class="bg-white border-b border-slate-200 p-4 px-6 flex gap-4">
+            <div class="relative flex-1 max-w-md">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-magnifying-glass text-slate-400"></i></div>
+                <input type="text" id="buscador-clientes" onkeyup="ClientesModule.filtrarTabla()" placeholder="Buscar por nombre o correo..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500 transition">
+            </div>
+            <div id="toolbar-aprobaciones" class="hidden items-center gap-2">
+                <span class="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 text-xs font-black uppercase tracking-[0.2em] border border-amber-200">Solo pendientes</span>
+                <a href="clientes.html" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition">Ver todos</a>
+            </div>
+        </div>
+
+        <div class="flex-1 p-6 overflow-hidden flex flex-col bg-slate-50">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col relative">
+                
+                <div id="loading-spinner" class="absolute inset-0 bg-white/80 z-10 hidden flex-col justify-center items-center backdrop-blur-sm">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-orange-500 mb-2"></i>
+                </div>
+
+                <div class="overflow-y-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 sticky top-0 shadow-sm z-0">
+                            <tr class="text-slate-500 text-sm uppercase tracking-wider">
+                                <th id="th-cliente-nombre" class="p-4 font-semibold">Nombre del Cliente</th>
+                                <th id="th-cliente-tipo" class="p-4 font-semibold text-center">Tipo de Cuenta</th>
+                                <th id="th-cliente-extra" class="p-4 font-semibold text-center">Puntos Acumulados</th>
+                                <th id="th-cliente-deuda" class="p-4 font-semibold text-right">Deuda Pendiente</th>
+                                <th id="th-cliente-acciones" class="p-4 font-semibold text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientes-table-body" class="divide-y divide-slate-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-formulario" class="fixed inset-0 bg-slate-900/60 hidden justify-center items-center z-50 backdrop-blur-sm">
+        <div class="bg-white w-[600px] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+                <h3 class="text-xl font-bold" id="modal-titulo">Registrar Cliente</h3>
+                <button onclick="ClientesModule.cerrarModalFormulario()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form id="form-cliente" onsubmit="ClientesModule.guardarCliente(event)" class="p-6 space-y-4">
+                <input type="hidden" id="cli-id">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Nombre Completo</label>
+                        <input type="text" id="cli-nombre" required class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition" placeholder="Ej. Carlos Benitez">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Correo Electronico (App)</label>
+                        <input type="email" id="cli-email" required class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition" placeholder="carlos@gmail.com">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Contrasena Provisoria</label>
+                        <input type="text" id="cli-pass" minlength="6" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition" placeholder="Para nuevas cuentas">
+                        <p class="text-[10px] text-slate-400 mt-1">Dejar vacio si estas editando.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Telefono</label>
+                        <input type="text" id="cli-telefono" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition" placeholder="Ej. 0981 123 456">
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1"><i class="fa-solid fa-crown text-orange-500 mr-1"></i> Tipo de Cliente</label>
+                            <select id="cli-tipo" class="w-full border-2 border-slate-300 rounded-xl p-3 focus:border-orange-500 outline-none bg-white font-bold">
+                                <option value="fiel">Cliente Fiel (Solo Puntos)</option>
+                                <option value="premium">Premium (Puntos + Credito)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Estado de la Cuenta</label>
+                            <select id="cli-estado" class="w-full border-2 border-slate-300 rounded-xl p-3 focus:border-orange-500 outline-none bg-white">
+                                <option value="activo">Aprobado / Activo</option>
+                                <option value="pendiente">Pendiente de Aprobacion</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1"><i class="fa-solid fa-percent text-green-500 mr-1"></i> Descuento VIP (Solo Premium)</label>
+                        <input type="number" id="cli-descuento-vip" min="0" max="100" value="0" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-green-500 outline-none transition" placeholder="Ej. 10">
+                        <p class="text-[10px] text-slate-400 mt-1">Porcentaje configurable por cliente. Default: 0%.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1"><i class="fa-solid fa-wifi text-blue-500 mr-1"></i> Tarjeta RFID (Opcional)</label>
+                        <input type="text" id="cli-rfid" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-blue-500 outline-none transition font-mono" placeholder="UID de la tarjeta...">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3 bg-white border-2 border-slate-200 rounded-xl p-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="cli-solicitar-pin-credito" class="mt-1 h-5 w-5 accent-orange-500">
+                            <span>
+                                <span class="block text-sm font-black text-slate-800 uppercase">Solicitar PIN para credito</span>
+                                <span class="block text-[11px] text-slate-500 font-semibold mt-1">Cuando POS cargue una compra a credito, el cajero debera pedir este PIN al cliente.</span>
+                            </span>
+                        </label>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">PIN de credito</label>
+                            <input type="password" id="cli-pin-credito" minlength="4" autocomplete="new-password" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-mono" placeholder="Nuevo PIN">
+                            <p class="text-[10px] text-slate-400 mt-1">Al crear, si queda vacio usa la contrasena provisoria.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-store text-emerald-500 mr-1"></i> Credito Libre por Sucursal</label>
+                        <div id="cli-sucursales-credito-libre" class="grid grid-cols-1 gap-2 rounded-xl border-2 border-slate-200 bg-white p-3 max-h-40 overflow-y-auto">
+                            <p class="text-xs text-slate-400 font-semibold">Cargando sucursales...</p>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Si marcas una sucursal, el cliente podra usar "Credito" ahi sin generar deuda.</p>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="ClientesModule.cerrarModalFormulario()" class="px-6 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition">Cancelar</button>
+                    <button type="submit" id="btn-guardar" class="px-6 py-3 bg-orange-500 text-white font-bold rounded-xl shadow-md hover:bg-orange-600 transition flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Cliente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-detalle" class="fixed inset-0 bg-slate-900/80 hidden justify-center items-center z-50 backdrop-blur-md transition-opacity">
+        <div class="bg-slate-50 w-full max-w-4xl h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            
+            <div class="bg-white p-6 border-b border-slate-200 flex justify-between items-start shrink-0 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-orange-500 opacity-5 rounded-bl-full"></div>
+                <div class="flex items-center gap-6 relative z-10">
+                    <div class="w-20 h-20 bg-gradient-to-tr from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white text-4xl shadow-lg border-4 border-white">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <h3 id="det-nombre" class="text-3xl font-black text-slate-800 tracking-tight">Cargando...</h3>
+                        <p class="text-slate-500 font-medium mt-1 flex items-center gap-3 flex-wrap">
+                            <span id="det-email"><i class="fa-solid fa-envelope mr-1 text-slate-400"></i> ...</span>
+                            <span id="det-telefono"><i class="fa-solid fa-phone mr-1 text-slate-400"></i> ...</span>
+                        </p>
+                        <p id="det-direccion" class="text-xs text-slate-400 mt-2"><i class="fa-solid fa-location-dot mr-1"></i> Sin direccion registrada</p>
+                        <div class="mt-2" id="det-badges"></div>
+                    </div>
+                </div>
+                <button onclick="ClientesModule.cerrarModalDetalle()" class="text-slate-400 hover:bg-slate-100 p-2 rounded-xl transition relative z-10"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <div class="md:col-span-1 space-y-6">
+                    <div id="panel-puntos" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <p class="text-slate-500 text-sm font-bold uppercase tracking-widest mb-1"><i class="fa-solid fa-star text-orange-400 mr-1"></i> Puntos Acumulados</p>
+                        <p id="det-puntos" class="text-4xl font-black text-slate-800">0</p>
+                        <p class="text-xs text-slate-400 mt-2">Canjeables por productos en POS.</p>
+                    </div>
+
+                    <div id="panel-deuda" class="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
+                    <p class="text-slate-500 text-sm font-bold uppercase tracking-widest mb-1"><i class="fa-solid fa-hand-holding-dollar text-red-400 mr-1"></i> Deuda Activa (Credito)</p>
+                        <p id="det-deuda" class="text-3xl font-black text-red-500 font-mono">Gs. 0</p>
+                        <div id="det-deuda-resumen" class="mt-3 space-y-2"></div>
+                        <button onclick="ClientesModule.saldarDeudaCliente()" id="btn-saldar" class="w-full mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-xl transition shadow-md">
+                            Saldar Deuda
+                        </button>
+                    </div>
+
+                    <div id="det-solicitud-premium" class="bg-white p-6 rounded-2xl shadow-sm border border-amber-100">
+                        <p class="text-slate-500 text-sm font-bold uppercase tracking-widest mb-3"><i class="fa-solid fa-id-card text-amber-400 mr-1"></i> Solicitud Premium</p>
+                        <p class="text-sm text-slate-400 font-semibold">Este cliente aun no envio una ficha completa.</p>
+                    </div>
+
+                    <div id="det-acciones-aprobacion" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
+                        <p class="text-slate-500 text-sm font-bold uppercase tracking-widest mb-3"><i class="fa-solid fa-user-check text-emerald-500 mr-1"></i> Revision Administrativa</p>
+                        <div class="flex gap-2">
+                            <button id="btn-det-aprobar" onclick="ClientesModule.aprobarCliente(ClientesModule.clienteSeleccionado.id)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-xl transition shadow-sm">
+                                Aprobar
+                            </button>
+                            <button id="btn-det-rechazar" onclick="ClientesModule.rechazarCliente(ClientesModule.clienteSeleccionado.id)" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-black py-3 rounded-xl transition shadow-sm">
+                                Rechazar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-historial" class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                        <h4 class="font-bold text-slate-700 text-lg"><i class="fa-solid fa-receipt mr-2 text-slate-400"></i> Historial de Consumo</h4>
+                            <span class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">Ultimas ventas</span>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto p-2">
+                        <div id="det-loader-historial" class="p-8 text-center text-orange-500 hidden">
+                            <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                        </div>
+                        <ul id="det-historial-lista" class="divide-y divide-slate-50">
+                            </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Arquitectura Privada
+        const __app_id = "erp_lingroup";
+        const __initial_auth_token = "admin_master_001";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // App secundaria para registrar sin cerrar sesion
+        const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+        const secondaryAuth = getAuth(secondaryApp);
+
+        window.ClientesModule = {
+            clientesLista: [],
+            clienteSeleccionado: null,
+            sucursalesDisponibles: [],
+            vistaActual: 'clientes',
+            sesion: null,
+            resumenDeudaPorCliente: {},
+            ultimaVentaImprimir: null,
+            htmlTicketMemoria: "",
+
+            init: function() {
+                const params = new URLSearchParams(window.location.search);
+                const vistaSolicitada = params.get('view');
+                this.vistaActual = vistaSolicitada === 'aprobaciones' ? 'aprobaciones' : (vistaSolicitada === 'cobranzas' ? 'cobranzas' : 'clientes');
+
+                // CANDADO DE PRIVACIDAD ABSOLUTA
+                const sesionStr = localStorage.getItem('__pos_session');
+                if (sesionStr) {
+                    const sesion = JSON.parse(sesionStr);
+                    this.sesion = sesion;
+                    if(!['admin', 'cobrador'].includes(sesion.rol)) {
+                        window.location.replace('pos.html');
+                        return;
+                    }
+                    if (sesion.rol === 'cobrador' && !['cobranzas', 'aprobaciones'].includes(this.vistaActual)) {
+                        this.vistaActual = 'cobranzas';
+                    }
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        document.getElementById('app-body').classList.remove('opacity-0');
+                        this.configurarVista();
+                        this.cargarSucursales();
+                        this.cargarClientes();
+                    } else {
+                        window.location.replace('index.html');
+                    }
+                });
+            },
+
+            esAdmin: function() {
+                return this.sesion?.rol === 'admin';
+            },
+
+            esCobrador: function() {
+                return this.sesion?.rol === 'cobrador';
+            },
+
+            puedeGestionarSolicitudes: function() {
+                return this.esAdmin() || this.esCobrador();
+            },
+
+            esMetodoCredito: function(metodoPago) {
+                return String(metodoPago || '')
+                    .replaceAll('Ã¡', 'a')
+                    .replaceAll('Ã©', 'e')
+                    .replaceAll('Ã­', 'i')
+                    .replaceAll('Ã³', 'o')
+                    .replaceAll('Ãº', 'u')
+                    .replaceAll('Ã±', 'n')
+                    .replaceAll('Ã', 'a')
+                    .replaceAll('Ã‰', 'e')
+                    .replaceAll('Ã', 'i')
+                    .replaceAll('Ã“', 'o')
+                    .replaceAll('Ãš', 'u')
+                    .replaceAll('Ã‘', 'n')
+                    .replaceAll('Â', '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .trim()
+                    .toLowerCase() === 'credito';
+            },
+
+            mostrarToast: function(mensaje, tipo = 'success') {
+                const toast = document.getElementById('toast');
+                document.getElementById('toast-message').innerText = mensaje;
+                if(tipo === 'error') {
+                    toast.classList.replace('bg-slate-800', 'bg-red-500');
+                    document.getElementById('toast-icon').className = 'fa-solid fa-triangle-exclamation text-white';
+                } else {
+                    toast.classList.replace('bg-red-500', 'bg-slate-800');
+                    document.getElementById('toast-icon').className = 'fa-solid fa-check text-green-400';
+                }
+                toast.classList.remove('translate-x-full');
+                setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+            },
+
+            formatoMoneda: function(num) {
+                return Number(num || 0).toLocaleString('es-PY');
+            },
+
+            normalizarFecha: function(valor) {
+                if (!valor) return null;
+                if (typeof valor?.toDate === 'function') return valor.toDate();
+                const fecha = new Date(valor);
+                return Number.isNaN(fecha.getTime()) ? null : fecha;
+            },
+
+            obtenerClaveMes: function(fecha) {
+                const d = this.normalizarFecha(fecha);
+                if (!d) return '';
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            },
+
+            normalizarEstadoVenta: function(valor) {
+                return String(valor || '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .trim()
+                    .toLowerCase();
+            },
+
+            ventaGeneraDeudaCliente: function(venta = {}) {
+                const esCredito = this.esMetodoCredito(venta.metodoPago || venta.metodoPagoSolicitado);
+                if (!esCredito || venta.creditoLibreSucursal === true) return false;
+
+                const estadoPago = this.normalizarEstadoVenta(venta.estadoPago);
+                if (estadoPago === 'anulado' || estadoPago === 'rechazado') return false;
+
+                if (Number(venta.deudaGenerada || 0) > 0) return true;
+                if (venta.creditoProcesado === true) return true;
+                return estadoPago === 'pagado';
+            },
+
+            construirResumenDeudaPorCliente: async function() {
+                const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                const snap = await getDocs(collection(db, rutaPrivada));
+                const buckets = {};
+                const ahora = new Date();
+                const mesActual = this.obtenerClaveMes(ahora);
+
+                const descontarDeuda = (clienteId, monto) => {
+                    let restante = Math.max(0, Number(monto || 0));
+                    const mapa = buckets[clienteId] || {};
+                    const claves = Object.keys(mapa).sort();
+                    for (const clave of claves) {
+                        if (restante <= 0) break;
+                        const saldo = Number(mapa[clave] || 0);
+                        if (saldo <= 0) continue;
+                        const aplicado = Math.min(saldo, restante);
+                        mapa[clave] = saldo - aplicado;
+                        restante -= aplicado;
+                    }
+                    buckets[clienteId] = mapa;
+                };
+
+                snap.forEach((docSnap) => {
+                    const venta = docSnap.data() || {};
+                    const clienteId = venta.cliente;
+                    if (!clienteId || clienteId === 'ocasional') return;
+                    const fecha = this.normalizarFecha(venta.fecha);
+                    if (!fecha) return;
+
+                    if (!buckets[clienteId]) buckets[clienteId] = {};
+
+                    if (this.ventaGeneraDeudaCliente(venta)) {
+                        const claveMes = this.obtenerClaveMes(fecha);
+                        const montoDeuda = Number(venta.deudaGenerada || venta.total || 0);
+                        buckets[clienteId][claveMes] = Number(buckets[clienteId][claveMes] || 0) + montoDeuda;
+                        return;
+                    }
+
+                    if (venta.tipoTransaccion === 'abono_deuda') {
+                        const estadoAprobacion = this.normalizarEstadoVenta(venta.estadoAprobacionCobro);
+                        const aprobado = estadoAprobacion === 'aprobado' || venta.deudaAplicada === true || (!estadoAprobacion && venta.estadoPago === 'pagado');
+                        if (aprobado) descontarDeuda(clienteId, Number(venta.total || 0));
+                    }
+                });
+
+                const resumen = {};
+                Object.entries(buckets).forEach(([clienteId, mapaMeses]) => {
+                    let deudaMesActual = 0;
+                    let deudaMesAnterior = 0;
+                    Object.entries(mapaMeses).forEach(([clave, monto]) => {
+                        const valor = Math.max(0, Number(monto || 0));
+                        if (valor <= 0) return;
+                        if (clave === mesActual) deudaMesActual += valor;
+                        else deudaMesAnterior += valor;
+                    });
+                    resumen[clienteId] = {
+                        deudaMesActual,
+                        deudaMesAnterior
+                    };
+                });
+
+                return resumen;
+            },
+
+            reconciliarResumenDeuda: function(resumenBase = {}, deudaTotal = 0) {
+                const totalObjetivo = Math.max(0, Number(deudaTotal || 0));
+                let deudaMesActual = Math.max(0, Number(resumenBase.deudaMesActual || 0));
+                let deudaMesAnterior = Math.max(0, Number(resumenBase.deudaMesAnterior || 0));
+                let deudaCalculada = deudaMesActual + deudaMesAnterior;
+
+                if (deudaCalculada === totalObjetivo) {
+                    return { deudaMesActual, deudaMesAnterior };
+                }
+
+                if (deudaCalculada < totalObjetivo) {
+                    const faltante = totalObjetivo - deudaCalculada;
+                    // Si falta deuda por reconstruir, priorizamos el mes actual cuando no hay arrastre previo
+                    // o cuando ya existen consumos del mes vigentes.
+                    if (deudaMesActual > 0 || deudaMesAnterior === 0) {
+                        deudaMesActual += faltante;
+                    } else {
+                        deudaMesAnterior += faltante;
+                    }
+                    return { deudaMesActual, deudaMesAnterior };
+                }
+
+                let excedente = deudaCalculada - totalObjetivo;
+
+                // Si hay ajustes manuales o movimientos heredados, reducimos primero la deuda mas antigua.
+                if (deudaMesAnterior > 0 && excedente > 0) {
+                    const aplicadoAnterior = Math.min(deudaMesAnterior, excedente);
+                    deudaMesAnterior -= aplicadoAnterior;
+                    excedente -= aplicadoAnterior;
+                }
+                if (deudaMesActual > 0 && excedente > 0) {
+                    const aplicadoActual = Math.min(deudaMesActual, excedente);
+                    deudaMesActual -= aplicadoActual;
+                    excedente -= aplicadoActual;
+                }
+
+                return {
+                    deudaMesActual: Math.max(0, deudaMesActual),
+                    deudaMesAnterior: Math.max(0, deudaMesAnterior)
+                };
+            },
+
+            configurarVista: function() {
+                const titulo = document.getElementById('clientes-view-title');
+                const subtitulo = document.getElementById('clientes-view-subtitle');
+                const btnNuevo = document.getElementById('btn-nuevo-cliente');
+                const toolbar = document.getElementById('toolbar-aprobaciones');
+                const buscador = document.getElementById('buscador-clientes');
+                const navLinks = document.querySelectorAll('aside nav a');
+                const footer = document.querySelector('aside > div:last-child');
+                const headerExtra = document.getElementById('th-cliente-extra');
+                const headerTipo = document.getElementById('th-cliente-tipo');
+                const headerAcciones = document.getElementById('th-cliente-acciones');
+
+                if (this.esCobrador()) {
+                    const enAprobaciones = this.vistaActual === 'aprobaciones';
+                    if (titulo) titulo.innerText = enAprobaciones ? 'Aprobacion de Clientes' : 'CMR Cobranza';
+                    if (subtitulo) subtitulo.innerText = enAprobaciones
+                        ? 'Revisa solicitudes pendientes y decide si aprobar o rechazar la cuenta premium.'
+                        : 'Consulta telefono, direccion y deuda pendiente sin editar ni registrar movimientos.';
+                    if (btnNuevo) btnNuevo.classList.add('hidden');
+                    if (toolbar) {
+                        toolbar.classList.toggle('hidden', !enAprobaciones);
+                        toolbar.classList.toggle('flex', enAprobaciones);
+                    }
+                    if (buscador) buscador.placeholder = enAprobaciones ? 'Buscar solicitudes por nombre, correo o telefono...' : 'Buscar por nombre, correo o telefono...';
+                    if (headerTipo) headerTipo.innerText = 'Nivel';
+                    if (headerExtra) headerExtra.innerText = 'Telefono';
+                    if (headerAcciones) headerAcciones.innerText = enAprobaciones ? 'Revision' : 'Ficha';
+                    navLinks.forEach(link => {
+                        const href = link.getAttribute('href') || '';
+                        const visible = href === 'clientes.html' || href === 'clientes.html?view=aprobaciones';
+                        link.classList.toggle('hidden', !visible);
+                    });
+                    if (footer) footer.innerText = enAprobaciones ? 'Cobranza y aprobaciones' : 'Consulta de cobranza';
+                    return;
+                }
+
+                if (this.vistaActual === 'aprobaciones') {
+                    if (titulo) titulo.innerText = 'Aprobacion de Clientes';
+                    if (subtitulo) subtitulo.innerText = 'Revisa solicitudes pendientes y decide si activar o rechazar la cuenta premium.';
+                    if (btnNuevo) btnNuevo.classList.add('hidden');
+                    if (toolbar) toolbar.classList.remove('hidden');
+                    if (toolbar) toolbar.classList.add('flex');
+                } else {
+                    if (titulo) titulo.innerText = 'Cartera de Clientes';
+                    if (subtitulo) subtitulo.innerText = 'Gestiona puntos, aprueba cuentas y audita creditos.';
+                    if (btnNuevo) btnNuevo.classList.remove('hidden');
+                    if (toolbar) toolbar.classList.add('hidden');
+                    if (toolbar) toolbar.classList.remove('flex');
+                    if (buscador) buscador.placeholder = 'Buscar por nombre o correo...';
+                    if (headerTipo) headerTipo.innerText = 'Tipo de Cuenta';
+                    if (headerExtra) headerExtra.innerText = 'Puntos Acumulados';
+                    if (headerAcciones) headerAcciones.innerText = 'Acciones';
+                }
+            },
+
+            obtenerListaVisible: function(lista = this.clientesLista) {
+                const base = Array.isArray(lista) ? lista : [];
+                if (this.esCobrador()) {
+                    return this.vistaActual === 'aprobaciones'
+                        ? base.filter(cli => cli.estadoBeneficios === 'pendiente')
+                        : base.filter(cli => Number(cli.deuda || 0) > 0);
+                }
+                if (this.vistaActual !== 'aprobaciones') return base;
+                return base.filter(cli => cli.estadoBeneficios === 'pendiente');
+            },
+
+            escaparHtml: function(valor) {
+                return String(valor ?? '')
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#39;');
+            },
+
+            obtenerDescuentoClienteConfigurado: function(data = {}) {
+                return data?.descuentoVipConfigurado === true ? Math.max(0, Math.min(100, Number(data.descuentoVip || 0))) : 0;
+            },
+
+            renderizarSolicitudPremium: function(solicitud = null) {
+                const contenedor = document.getElementById('det-solicitud-premium');
+                if (!contenedor) return;
+
+                if (!solicitud || typeof solicitud !== 'object') {
+                    contenedor.innerHTML = `
+                        <p class="text-slate-500 text-sm font-bold uppercase tracking-widest mb-3"><i class="fa-solid fa-id-card text-amber-400 mr-1"></i> Solicitud Premium</p>
+                        <p class="text-sm text-slate-400 font-semibold">Este cliente aun no envio una ficha completa.</p>
+                    `;
+                    return;
+                }
+
+                const refs = Array.isArray(solicitud.referencias) ? solicitud.referencias.slice(0, 2) : [];
+                const fila = (label, value) => `
+                    <div class="rounded-xl border border-amber-100 bg-amber-50/60 px-3 py-2">
+                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-amber-700">${label}</p>
+                        <p class="text-sm font-bold text-slate-700 mt-1 break-words">${this.escaparHtml(value || 'No informado')}</p>
+                    </div>
+                `;
+
+                contenedor.innerHTML = `
+                    <p class="text-slate-500 text-sm font-bold uppercase tracking-widest mb-3"><i class="fa-solid fa-id-card text-amber-400 mr-1"></i> Solicitud Premium</p>
+                    <div class="space-y-3">
+                        ${fila('Nombre completo', solicitud.nombreCompleto)}
+                        ${fila('Cedula de identidad', solicitud.cedulaIdentidad)}
+                        ${fila('Fecha de nacimiento', solicitud.fechaNacimiento)}
+                        ${fila('Direccion exacta', solicitud.direccionExacta)}
+                        ${fila('Barrio / Ciudad', solicitud.barrioCiudad)}
+                        ${fila('Telefono', solicitud.telefono)}
+                        ${fila('Correo electronico', solicitud.correoElectronico)}
+                        ${fila('Lugar de trabajo / actividad', solicitud.lugarTrabajoActividad)}
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        ${refs.map((ref, index) => `
+                            <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500 mb-2">Referencia ${index + 1}</p>
+                                <div class="space-y-2">
+                                    ${fila('Nombre', ref?.nombre)}
+                                    ${fila('Telefono', ref?.telefono)}
+                                    ${fila('Relacion', ref?.relacion)}
+                                </div>
+                            </div>
+                        `).join('') || `<p class="text-sm text-slate-400 font-semibold">Sin referencias cargadas.</p>`}
+                    </div>
+                `;
+            },
+
+            cargarSucursales: async function() {
+                try {
+                    const snap = await getDocs(collection(db, "branches"));
+                    this.sucursalesDisponibles = [];
+                    snap.forEach(docSnap => {
+                        const nombre = docSnap.data().nombre || docSnap.id;
+                        this.sucursalesDisponibles.push(nombre);
+                    });
+                    this.renderizarOpcionesCreditoLibre();
+                } catch (error) {
+                    console.error("Error cargando sucursales:", error);
+                    this.sucursalesDisponibles = [];
+                    this.renderizarOpcionesCreditoLibre();
+                }
+            },
+
+            renderizarOpcionesCreditoLibre: function(seleccionadas = null) {
+                const contenedor = document.getElementById('cli-sucursales-credito-libre');
+                if (!contenedor) return;
+                const valores = Array.isArray(seleccionadas) ? seleccionadas : this.obtenerSucursalesCreditoLibreSeleccionadas();
+                if (this.sucursalesDisponibles.length === 0) {
+                    contenedor.innerHTML = `<p class="text-xs text-slate-400 font-semibold">No hay sucursales configuradas todavia.</p>`;
+                    return;
+                }
+                contenedor.innerHTML = this.sucursalesDisponibles.map(nombre => {
+                    const checked = valores.includes(nombre) ? 'checked' : '';
+                    return `
+                        <label class="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 hover:bg-slate-50 transition cursor-pointer">
+                            <input type="checkbox" class="cli-credito-libre-option h-4 w-4 accent-emerald-500" value="${nombre}" ${checked}>
+                            <span class="text-sm font-bold text-slate-700">${nombre}</span>
+                        </label>
+                    `;
+                }).join('');
+            },
+
+            obtenerSucursalesCreditoLibreSeleccionadas: function() {
+                return Array.from(document.querySelectorAll('.cli-credito-libre-option:checked'))
+                    .map(input => input.value)
+                    .filter(Boolean);
+            },
+
+            generarHashPinCredito: async function(userId, pin) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(`${userId}::club-lin-credit-pin::${String(pin || '')}`);
+                const digest = await crypto.subtle.digest('SHA-256', data);
+                return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+            },
+
+            marcarSucursalesCreditoLibre: function(valores = []) {
+                this.renderizarOpcionesCreditoLibre(Array.isArray(valores) ? valores : []);
+            },
+
+            // 1. CARGAR Y MOSTRAR CLIENTES
+            cargarClientes: async function() {
+                const spinner = document.getElementById('loading-spinner');
+                spinner.classList.remove('hidden'); spinner.classList.add('flex');
+                
+                try {
+                    // Filtrar solo usuarios que tengan rol 'cliente'
+                    const q = query(collection(db, "users"), where("rol", "==", "cliente"));
+                    const snap = await getDocs(q);
+                    this.resumenDeudaPorCliente = await this.construirResumenDeudaPorCliente();
+                    
+                    this.clientesLista = [];
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const deudaTotal = Number(data.deuda || 0);
+                        const resumenDeuda = this.reconciliarResumenDeuda(
+                            this.resumenDeudaPorCliente[doc.id] || { deudaMesActual: 0, deudaMesAnterior: 0 },
+                            deudaTotal
+                        );
+                        this.clientesLista.push({
+                            id: doc.id,
+                            nombre: data.nombre || 'Sin Nombre',
+                            email: data.email || '',
+                            telefono: data.telefono || '',
+                            tipoCliente: data.tipoCliente || 'fiel', // fiel o premium
+                            estadoBeneficios: data.estadoBeneficios || 'pendiente',
+                            puntos: data.puntos || 0,
+                            deuda: data.deuda || 0,
+                            rfid: data.rfid || '',
+                            descuentoVip: this.obtenerDescuentoClienteConfigurado(data),
+                            descuentoVipConfigurado: data.descuentoVipConfigurado === true,
+                            solicitarPinCredito: data.solicitarPinCredito === true,
+                            creditoPinConfigurado: data.creditoPinConfigurado === true,
+                            sucursalesCreditoLibre: Array.isArray(data.sucursalesCreditoLibre) ? data.sucursalesCreditoLibre.filter(Boolean) : [],
+                            solicitudPremium: data.solicitudPremium || null,
+                            solicitudPremiumActualizadaAt: data.solicitudPremiumActualizadaAt || null,
+                            deudaMesActual: Number(resumenDeuda.deudaMesActual || 0),
+                            deudaMesAnterior: Number(resumenDeuda.deudaMesAnterior || 0)
+                        });
+                    });
+                    
+                    this.renderizarTabla(this.obtenerListaVisible(this.clientesLista));
+                } catch (error) {
+                    console.error("Error Firebase:", error);
+                    this.mostrarToast("Error leyendo clientes.", "error");
+                } finally {
+                    spinner.classList.add('hidden'); spinner.classList.remove('flex');
+                }
+            },
+
+            renderizarTabla: function(lista) {
+                const tbody = document.getElementById('clientes-table-body');
+                if(lista.length === 0) {
+                    const mensajeVacio = this.esCobrador()
+                        ? (this.vistaActual === 'aprobaciones' ? 'No hay solicitudes pendientes por revisar.' : 'No hay clientes con deuda para consultar.')
+                        : (this.vistaActual === 'aprobaciones' ? 'No hay solicitudes pendientes por revisar.' : 'No hay clientes registrados en el CRM.');
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-bold"><i class="fa-solid fa-users-slash text-4xl mb-3"></i><br>${mensajeVacio}</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = lista.map(cli => {
+                    const tipoHtml = cli.tipoCliente === 'premium' 
+                        ? `<span class="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm"><i class="fa-solid fa-crown mr-1"></i> Premium</span>`
+                        : `<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider"><i class="fa-solid fa-star mr-1"></i> Fiel</span>`;
+
+                    const opacidad = cli.estadoBeneficios === 'pendiente' && this.vistaActual !== 'aprobaciones' ? 'opacity-50' : '';
+                    const colorDeuda = cli.deuda <= 0 ? 'text-slate-400' : (Number(cli.deudaMesAnterior || 0) > 0 ? 'text-red-500' : 'text-emerald-600');
+                    const badgeSolicitud = cli.estadoBeneficios === 'pendiente'
+                        ? `<span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-[10px] font-black uppercase border border-amber-200 mt-1"><i class="fa-solid fa-hourglass-half"></i> Pendiente</span>`
+                        : '';
+                    const acciones = this.esCobrador() && this.vistaActual !== 'aprobaciones'
+                        ? `
+                            <button onclick="event.stopPropagation(); ClientesModule.abrirModalDetalle('${cli.id}')" class="px-3 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition shadow-sm text-xs font-black">
+                                <i class="fa-solid fa-eye mr-1"></i> Ver ficha
+                            </button>
+                        `
+                        : this.vistaActual === 'aprobaciones'
+                        ? `
+                            <button onclick="event.stopPropagation(); ClientesModule.aprobarCliente('${cli.id}')" class="px-3 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition shadow-sm text-xs font-black mr-1">
+                                <i class="fa-solid fa-check mr-1"></i> Aprobar
+                            </button>
+                            <button onclick="event.stopPropagation(); ClientesModule.rechazarCliente('${cli.id}')" class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition shadow-sm text-xs font-black">
+                                <i class="fa-solid fa-xmark mr-1"></i> Rechazar
+                            </button>
+                        `
+                        : `
+                            <button onclick="event.stopPropagation(); ClientesModule.abrirModalEditar('${cli.id}')" class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition shadow-sm mr-1"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="event.stopPropagation(); ClientesModule.eliminarCliente('${cli.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fa-solid fa-trash"></i></button>
+                        `;
+
+                    return `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100 cursor-pointer ${opacidad}" onclick="ClientesModule.abrirModalDetalle('${cli.id}')">
+                            <td class="p-4 flex items-center gap-4">
+                                <div class="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 font-bold text-lg">
+                                    ${cli.nombre.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-800 text-lg leading-tight hover:text-orange-500 transition">${cli.nombre}</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">${cli.email}</p>
+                                    ${cli.solicitarPinCredito ? `<span class="inline-flex items-center gap-1 bg-slate-900 text-white px-2 py-1 rounded-full text-[10px] font-black uppercase border border-slate-700 mt-1"><i class="fa-solid fa-key"></i> PIN credito</span>` : ''}
+                                    ${badgeSolicitud}
+                                </div>
+                            </td>
+                            <td class="p-4 text-center">${tipoHtml}</td>
+                            <td class="p-4 text-center font-black text-slate-600 text-lg">${this.esCobrador() ? (cli.telefono || 'Sin telefono') : cli.puntos.toLocaleString('es-PY')}</td>
+                            <td class="p-4 text-right font-black ${colorDeuda} font-mono text-lg">
+                                <div>Gs. ${cli.deuda.toLocaleString('es-PY')}</div>
+                                ${cli.deuda > 0 ? `<div class="text-[10px] font-bold ${Number(cli.deudaMesAnterior || 0) > 0 ? 'text-red-400' : 'text-emerald-500'}">${Number(cli.deudaMesAnterior || 0) > 0 ? 'Mes anterior' : 'Mes actual'}</div>` : ''}
+                            </td>
+                            <td class="p-4 text-center">${acciones}</td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            filtrarTabla: function() {
+                const txt = document.getElementById('buscador-clientes').value.toLowerCase();
+                const filtrados = this.obtenerListaVisible(this.clientesLista).filter(c =>
+                    c.nombre.toLowerCase().includes(txt) ||
+                    c.email.toLowerCase().includes(txt) ||
+                    String(c.telefono || '').toLowerCase().includes(txt)
+                );
+                this.renderizarTabla(filtrados);
+            },
+
+            // 2. CREAR / EDITAR CLIENTES (CRM)
+            abrirModalCrear: function() {
+                if (!this.esAdmin()) {
+                    this.mostrarToast('Solo administracion puede crear clientes.', 'error');
+                    return;
+                }
+                document.getElementById('cli-id').value = "";
+                document.getElementById('form-cliente').reset();
+                this.marcarSucursalesCreditoLibre([]);
+                document.getElementById('cli-solicitar-pin-credito').checked = false;
+                document.getElementById('cli-pin-credito').value = "";
+                document.getElementById('cli-pass').required = true; // Exigir pass al crear
+                document.getElementById('modal-titulo').innerText = "Registrar Cliente Nuevo";
+                document.getElementById('modal-formulario').classList.remove('hidden');
+                document.getElementById('modal-formulario').classList.add('flex');
+            },
+
+            abrirModalEditar: function(id) {
+                if (!this.esAdmin()) {
+                    this.mostrarToast('Solo administracion puede editar clientes.', 'error');
+                    return;
+                }
+                const c = this.clientesLista.find(x => x.id === id);
+                if(!c) return;
+
+                document.getElementById('cli-id').value = c.id;
+                document.getElementById('cli-nombre').value = c.nombre;
+                document.getElementById('cli-email').value = c.email;
+                document.getElementById('cli-telefono').value = c.telefono;
+                document.getElementById('cli-tipo').value = c.tipoCliente;
+                document.getElementById('cli-estado').value = c.estadoBeneficios;
+                document.getElementById('cli-rfid').value = c.rfid;
+                document.getElementById('cli-descuento-vip').value = this.obtenerDescuentoClienteConfigurado(c);
+                this.marcarSucursalesCreditoLibre(c.sucursalesCreditoLibre || []);
+                document.getElementById('cli-solicitar-pin-credito').checked = c.solicitarPinCredito === true;
+                document.getElementById('cli-pin-credito').value = "";
+                 
+                document.getElementById('cli-pass').required = false; // No exigir si solo edita perfil
+                document.getElementById('cli-pass').value = ""; 
+
+                document.getElementById('modal-titulo').innerText = "Editar Perfil Cliente";
+                document.getElementById('modal-formulario').classList.remove('hidden');
+                document.getElementById('modal-formulario').classList.add('flex');
+            },
+
+            cerrarModalFormulario: function() {
+                document.getElementById('modal-formulario').classList.add('hidden');
+                document.getElementById('modal-formulario').classList.remove('flex');
+            },
+
+            guardarCliente: async function(event) {
+                event.preventDefault();
+                if (!this.esAdmin()) {
+                    this.mostrarToast('Solo administracion puede guardar clientes.', 'error');
+                    return;
+                }
+                const id = document.getElementById('cli-id').value;
+                const email = document.getElementById('cli-email').value.trim();
+                const pass = document.getElementById('cli-pass').value;
+                
+                const btn = document.getElementById('btn-guardar');
+                btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
+
+                const descuentoCliente = Math.max(0, Math.min(100, Number(document.getElementById('cli-descuento-vip').value) || 0));
+                const solicitarPinCredito = document.getElementById('cli-solicitar-pin-credito').checked;
+                const pinCredito = document.getElementById('cli-pin-credito').value.trim();
+                const datos = {
+                    nombre: document.getElementById('cli-nombre').value,
+                    email: email,
+                    telefono: document.getElementById('cli-telefono').value,
+                    tipoCliente: document.getElementById('cli-tipo').value,
+                    estadoBeneficios: document.getElementById('cli-estado').value,
+                    rfid: document.getElementById('cli-rfid').value,
+                    descuentoVip: descuentoCliente,
+                    descuentoVipConfigurado: descuentoCliente > 0,
+                    sucursalesCreditoLibre: this.obtenerSucursalesCreditoLibreSeleccionadas(),
+                    solicitarPinCredito,
+                    rol: 'cliente'
+                };
+                const prepararPinCredito = async (userId, valorPin) => {
+                    const limpio = String(valorPin || '').trim();
+                    if (!limpio) return false;
+                    if (limpio.length < 4) throw new Error('El PIN de credito debe tener minimo 4 caracteres.');
+                    const pinHash = await this.generarHashPinCredito(userId, limpio);
+                    await setDoc(doc(db, "creditPins", userId), {
+                        clienteId: userId,
+                        pinHash,
+                        updatedAt: new Date(),
+                        updatedBy: this.sesion?.uid || null,
+                        updatedByName: this.sesion?.nombre || 'Admin'
+                    }, { merge: true });
+                    return true;
+                };
+
+                try {
+                    if (id === "") {
+                        const existenteSnap = await getDocs(query(collection(db, "users"), where("email", "==", email), limit(1)));
+
+                        if (!existenteSnap.empty) {
+                            const existenteDoc = existenteSnap.docs[0];
+                            const existenteData = existenteDoc.data() || {};
+                            const payloadExistente = {
+                                ...datos,
+                                puntos: Number(existenteData.puntos || 0),
+                                deuda: Number(existenteData.deuda || 0)
+                            };
+                            const pinHashExistente = await prepararPinCredito(existenteDoc.id, pinCredito);
+                            if (pinHashExistente) payloadExistente.creditoPinConfigurado = true;
+                            if (solicitarPinCredito && !pinHashExistente && !existenteData.creditoPinConfigurado) {
+                                throw new Error('Para activar Solicitar PIN en este cliente, cargá un PIN de credito.');
+                            }
+                            await updateDoc(doc(db, "users", existenteDoc.id), payloadExistente);
+                            this.mostrarToast("El correo ya existia. Se actualizo el cliente existente.");
+                        } else {
+                            // Crear nuevo cliente con Firebase Auth
+                            const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+                            const nuevoUid = userCredential.user.uid;
+                            await signOut(secondaryAuth);
+                            
+                            // Valores por defecto al nacer
+                            datos.puntos = 0;
+                            datos.deuda = 0;
+                            const pinCreado = await prepararPinCredito(nuevoUid, pinCredito || pass);
+                            datos.creditoPinConfigurado = pinCreado;
+                            await setDoc(doc(db, "users", nuevoUid), datos);
+                            this.mostrarToast("Cliente registrado.");
+                        }
+                    } else {
+                        // Solo actualizar el documento
+                        const payloadUpdate = { ...datos };
+                        const pinHash = await prepararPinCredito(id, pinCredito);
+                        const clienteActual = this.clientesLista.find(c => c.id === id);
+                        if (pinHash) payloadUpdate.creditoPinConfigurado = true;
+                        if (solicitarPinCredito && !pinHash && !clienteActual?.creditoPinConfigurado) {
+                            throw new Error('Para activar Solicitar PIN en este cliente, cargá un PIN de credito.');
+                        }
+                        await updateDoc(doc(db, "users", id), payloadUpdate);
+                        this.mostrarToast("Perfil actualizado.");
+                    }
+                    this.cerrarModalFormulario();
+                    this.cargarClientes();
+                } catch(err) {
+                    console.error(err);
+                    this.mostrarToast("Error: " + err.message, "error");
+                } finally {
+                    btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Guardar Cliente`;
+                }
+            },
+
+            eliminarCliente: async function(id) {
+                if (!this.esAdmin()) {
+                    this.mostrarToast('Solo administracion puede eliminar clientes.', 'error');
+                    return;
+                }
+                if(confirm("Estas seguro de eliminar todo el registro de este cliente?")) {
+                    try {
+                        await deleteDoc(doc(db, "users", id));
+                        this.mostrarToast("Cliente eliminado de la base de datos.");
+                        this.cargarClientes();
+                    } catch(e) {
+                        console.error(e);
+                        this.mostrarToast("No se pudo eliminar el cliente: " + e.message, "error");
+                    }
+                }
+            },
+
+            aprobarCliente: async function(id) {
+                if (!this.puedeGestionarSolicitudes()) {
+                    this.mostrarToast('No tienes permisos para aprobar solicitudes.', 'error');
+                    return;
+                }
+                const cliente = this.clientesLista.find(x => x.id === id);
+                if (!cliente) return;
+                if (!confirm(`Aprobar la solicitud premium de ${cliente.nombre}?`)) return;
+                try {
+                    await updateDoc(doc(db, "users", id), {
+                        tipoCliente: "premium",
+                        estadoBeneficios: "activo"
+                    });
+                    this.mostrarToast("Solicitud aprobada. Cliente activado como premium.");
+                    if (this.clienteSeleccionado?.id === id) this.cerrarModalDetalle();
+                    this.cargarClientes();
+                } catch (error) {
+                    console.error(error);
+                    this.mostrarToast("No se pudo aprobar la solicitud.", "error");
+                }
+            },
+
+            rechazarCliente: async function(id) {
+                if (!this.puedeGestionarSolicitudes()) {
+                    this.mostrarToast('No tienes permisos para rechazar solicitudes.', 'error');
+                    return;
+                }
+                const cliente = this.clientesLista.find(x => x.id === id);
+                if (!cliente) return;
+                if (!confirm(`Rechazar la solicitud premium de ${cliente.nombre}?`)) return;
+                try {
+                    await updateDoc(doc(db, "users", id), {
+                        tipoCliente: "fiel",
+                        estadoBeneficios: "rechazado"
+                    });
+                    this.mostrarToast("Solicitud rechazada.");
+                    if (this.clienteSeleccionado?.id === id) this.cerrarModalDetalle();
+                    this.cargarClientes();
+                } catch (error) {
+                    console.error(error);
+                    this.mostrarToast("No se pudo rechazar la solicitud.", "error");
+                }
+            },
+
+            // 3. VISOR DE DETALLES E HISTORIAL
+            abrirModalDetalle: function(id) {
+                this.clienteSeleccionado = this.clientesLista.find(c => c.id === id);
+                const c = this.clienteSeleccionado;
+                if(!c) return;
+
+                // Cargar Perfil
+                document.getElementById('det-nombre').innerText = c.nombre;
+                document.getElementById('det-email').innerHTML = `<i class="fa-solid fa-envelope mr-1 text-slate-400"></i> ${c.email}`;
+                document.getElementById('det-telefono').innerHTML = `<i class="fa-solid fa-phone mr-1 text-slate-400"></i> ${c.telefono || 'No registrado'}`;
+                document.getElementById('det-direccion').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> ${c.direccion || 'Sin direccion registrada'}`;
+                
+                let badges = c.tipoCliente === 'premium' ? `<span class="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-bold uppercase"><i class="fa-solid fa-crown mr-1"></i> Cuenta Premium</span>` : `<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase"><i class="fa-solid fa-star mr-1"></i> Cliente Fiel</span>`;
+                if(c.estadoBeneficios === 'pendiente') badges += ` <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase ml-2">Pendiente Aprobacion</span>`;
+                if (Array.isArray(c.sucursalesCreditoLibre) && c.sucursalesCreditoLibre.length > 0) badges += c.sucursalesCreditoLibre.map(nombre => ` <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase ml-2"><i class="fa-solid fa-store mr-1"></i> Libre en ${nombre}</span>`).join('');
+                if (c.solicitarPinCredito) badges += ` <span class="bg-slate-900 text-white px-3 py-1 rounded-full text-xs font-bold uppercase ml-2"><i class="fa-solid fa-key mr-1"></i> PIN requerido en credito</span>`;
+                document.getElementById('det-badges').innerHTML = badges;
+
+                // Cargar Finanzas
+                document.getElementById('det-puntos').innerText = c.puntos.toLocaleString('es-PY');
+                const colorDeudaDetalle = c.deuda <= 0 ? 'text-red-500' : (Number(c.deudaMesAnterior || 0) > 0 ? 'text-red-500' : 'text-emerald-600');
+                const deudaEl = document.getElementById('det-deuda');
+                deudaEl.innerText = `Gs. ${c.deuda.toLocaleString('es-PY')}`;
+                deudaEl.className = `text-3xl font-black font-mono ${colorDeudaDetalle}`;
+                const deudaResumenEl = document.getElementById('det-deuda-resumen');
+                if (deudaResumenEl) {
+                    deudaResumenEl.innerHTML = `
+                        <div class="flex items-center justify-between rounded-lg px-3 py-2 ${Number(c.deudaMesActual || 0) > 0 ? 'bg-emerald-50 border border-emerald-100' : 'bg-slate-50 border border-slate-100'}">
+                            <span class="text-xs font-black uppercase tracking-wider ${Number(c.deudaMesActual || 0) > 0 ? 'text-emerald-700' : 'text-slate-400'}">Mes actual</span>
+                            <span class="text-sm font-black font-mono ${Number(c.deudaMesActual || 0) > 0 ? 'text-emerald-600' : 'text-slate-400'}">Gs. ${this.formatoMoneda(c.deudaMesActual || 0)}</span>
+                        </div>
+                        <div class="flex items-center justify-between rounded-lg px-3 py-2 ${Number(c.deudaMesAnterior || 0) > 0 ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-100'}">
+                            <span class="text-xs font-black uppercase tracking-wider ${Number(c.deudaMesAnterior || 0) > 0 ? 'text-red-700' : 'text-slate-400'}">Mes anterior</span>
+                            <span class="text-sm font-black font-mono ${Number(c.deudaMesAnterior || 0) > 0 ? 'text-red-500' : 'text-slate-400'}">Gs. ${this.formatoMoneda(c.deudaMesAnterior || 0)}</span>
+                        </div>
+                    `;
+                }
+                this.renderizarSolicitudPremium(c.solicitudPremium);
+                const accionesAprobacion = document.getElementById('det-acciones-aprobacion');
+                const puedeVerAccionesAprobacion = c.estadoBeneficios === 'pendiente' && (this.esAdmin() || (this.esCobrador() && this.vistaActual === 'aprobaciones'));
+                if (accionesAprobacion) accionesAprobacion.classList.toggle('hidden', !puedeVerAccionesAprobacion);
+                const panelPuntos = document.getElementById('panel-puntos');
+                const panelHistorial = document.getElementById('panel-historial');
+                const panelSolicitud = document.getElementById('det-solicitud-premium');
+                const btnSaldar = document.getElementById('btn-saldar');
+                if (panelPuntos) panelPuntos.classList.toggle('hidden', this.esCobrador());
+                if (panelHistorial) panelHistorial.classList.remove('hidden');
+                if (panelSolicitud) panelSolicitud.classList.toggle('hidden', this.esCobrador() && this.vistaActual !== 'aprobaciones');
+                
+                btnSaldar.innerText = this.esCobrador() ? 'Registrar Cobro' : 'Saldar Deuda';
+
+                if((this.esAdmin() || this.esCobrador()) && c.deuda > 0) {
+                    btnSaldar.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btnSaldar.disabled = false;
+                } else {
+                    btnSaldar.classList.add('opacity-50', 'cursor-not-allowed');
+                    btnSaldar.disabled = true;
+                }
+                btnSaldar.classList.remove('hidden');
+
+                document.getElementById('modal-detalle').classList.remove('hidden');
+                document.getElementById('modal-detalle').classList.add('flex');
+
+                if (this.esAdmin() || this.esCobrador()) this.cargarHistorialCliente(c.id);
+                else document.getElementById('det-historial-lista').innerHTML = '';
+            },
+
+            cerrarModalDetalle: function() {
+                document.getElementById('modal-detalle').classList.add('hidden');
+                document.getElementById('modal-detalle').classList.remove('flex');
+            },
+
+            cargarHistorialCliente: async function(clienteId) {
+                if (!(this.esAdmin() || this.esCobrador())) return;
+                const loader = document.getElementById('det-loader-historial');
+                const listaUl = document.getElementById('det-historial-lista');
+                
+                loader.classList.remove('hidden'); listaUl.innerHTML = '';
+
+                try {
+                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                    // Query: Traer las ventas asociadas a este cliente (Limite 20 para no saturar)
+                    const q = query(collection(db, rutaPrivada), where("cliente", "==", clienteId));
+                    const snap = await getDocs(q);
+
+                    if(snap.empty) {
+                        listaUl.innerHTML = `<p class="p-8 text-center text-slate-400 italic">No hay registros de compras.</p>`;
+                        return;
+                    }
+
+                    // Convertir a Array y ordenar por fecha (Firestore a veces requiere indice para orderBy compuesto, lo hacemos en JS)
+                    let historial = [];
+                    snap.forEach(doc => historial.push({ id: doc.id, ...doc.data() }));
+                    historial.sort((a, b) => {
+                        const fechaB = this.normalizarFecha(b.fecha);
+                        const fechaA = this.normalizarFecha(a.fecha);
+                        return (fechaB ? fechaB.getTime() : 0) - (fechaA ? fechaA.getTime() : 0);
+                    });
+
+                    listaUl.innerHTML = historial.map(venta => {
+                        const dateObj = this.normalizarFecha(venta.fecha);
+                        const fechaFormat = dateObj
+                            ? `${DateTime24.formatDate24(dateObj)} - ${DateTime24.formatTime24(dateObj)}`
+                            : 'Fecha no disponible';
+                        const resumenItems = Array.isArray(venta.items) && venta.items.length > 0
+                            ? venta.items.map(i => `${Number(i.cantidad || 1)}x ${i.nombre || 'Producto'}`).join(', ')
+                            : (venta.tipoTransaccion === 'abono_deuda' ? 'Movimiento de abono de deuda' : 'Sin detalle de productos');
+                        const esCredito = this.esMetodoCredito(venta.metodoPago);
+                        const esCreditoLibre = esCredito && venta.creditoLibreSucursal === true;
+                        const estadoAprobacionCobro = String(venta.estadoAprobacionCobro || '').toLowerCase();
+                        const metodoFormatSeguro = venta.tipoTransaccion === 'abono_deuda'
+                            ? `<span class="${estadoAprobacionCobro === 'rechazado' ? 'text-red-500' : (estadoAprobacionCobro === 'pendiente' ? 'text-amber-600' : 'text-emerald-600')} font-bold"><i class="fa-solid fa-hand-holding-dollar"></i> ${estadoAprobacionCobro === 'pendiente' ? 'Cobro pendiente de aprobacion' : (estadoAprobacionCobro === 'rechazado' ? 'Cobro rechazado' : 'Abono de deuda')}</span>`
+                            : esCredito
+                                ? `<span class="${esCreditoLibre ? 'text-emerald-600' : 'text-red-500'} font-bold"><i class="fa-solid fa-hand-holding-dollar"></i> ${esCreditoLibre ? 'Credito libre' : 'A Credito'}</span>`
+                                : venta.metodoPago === 'Mixto'
+                                    ? `<span class="text-amber-600 font-bold"><i class="fa-solid fa-layer-group"></i> Pago mixto</span>`
+                                    : `<span class="text-green-500 font-bold"><i class="fa-solid fa-money-bill"></i> Pagado</span>`;
+
+                        return `
+                            <li class="p-4 hover:bg-slate-50 transition">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <p class="font-bold text-slate-800">Monto: Gs. ${venta.total.toLocaleString('es-PY')}</p>
+                                        <p class="text-xs text-slate-500">${fechaFormat} | Sucursal: ${venta.sucursal}</p>
+                                    </div>
+                                    <div class="text-right text-sm">
+                                        ${metodoFormatSeguro}
+                                    </div>
+                                </div>
+                                <p class="text-sm text-slate-600 italic border-l-2 border-slate-200 pl-3 mt-2">${resumenItems}</p>
+                            </li>
+                        `;
+                    }).join('');
+
+                } catch(e) {
+                    console.error("Error cargando historial:", e);
+                    listaUl.innerHTML = `<p class="p-8 text-center text-red-400">Error cargando datos.</p>`;
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            },
+
+            imprimirComprobanteAbono: function(venta) {
+                if (!this.esAdmin()) return;
+                if (!venta) return;
+                const fecha = this.normalizarFecha(venta.fecha || new Date());
+                const fechaFormat = DateTime24.formatDateTime24(fecha.getTime() === 0 ? new Date() : fecha);
+                const sucursal = venta.sucursal || this.sesion?.sucursal || 'Administracion';
+                const cajero = venta.cajero || this.sesion?.nombre || 'Admin';
+                const cliente = venta.cliente || venta.nombreCliente || 'Cliente';
+                const ticketId = venta.ticket_id || `AB-${Date.now()}`;
+
+                const armarCopia = (tituloCopia, etiquetaFirma) =>
+                    `<div style="text-align:center;font-weight:900;">COMPROBANTE DE ABONO</div>` +
+                    `<div style="text-align:center;font-size:10px; margin-top:2px;">${tituloCopia}</div>` +
+                    `<hr>` +
+                    `<div>Ticket: ${ticketId}</div>` +
+                    `<div>Fecha: ${fechaFormat}</div>` +
+                    `<div>Sucursal: ${sucursal}</div>` +
+                    `<div>Cajero: ${cajero}</div>` +
+                    `<div>Cliente: ${cliente}</div>` +
+                    `<hr>` +
+                    `<div style="font-size:14px;">MONTO ABONADO: Gs. ${this.formatoMoneda(venta.total)}</div>` +
+                    `<div>Metodo: ${venta.metodoPago || 'Efectivo'}</div>` +
+                    `<hr>` +
+                    `<div style="text-align:center;margin-top:10px;">${etiquetaFirma}</div>` +
+                    `<div style="border-bottom:2px dashed #000; margin-top:40px;"></div>`;
+
+                const html = `<html><head><style>@page { margin: 0; } body { margin: 0; padding: 5px 8px; font-family: Arial, sans-serif; font-size: 10px; font-weight: 900; width: 100%; max-width: 58mm; color: #000; } div { line-height: 1.2; } hr { border-top: 1px dashed #000; border-bottom: none; margin: 5px 0; } .separador { border-top: 2px dashed #000; margin: 12px 0; padding-top: 10px; }</style></head><body>` +
+                    armarCopia('COPIA CLIENTE', 'Firma del Cliente:') +
+                    `<div class="separador"></div>` +
+                    armarCopia('COPIA ADMINISTRACION', 'Firma Administrador General:') +
+                    `</body></html>`;
+
+                this.htmlTicketMemoria = html;
+                const printFrame = document.createElement('iframe');
+                printFrame.style.position = 'fixed';
+                printFrame.style.right = '0';
+                printFrame.style.bottom = '0';
+                printFrame.style.width = '0';
+                printFrame.style.height = '0';
+                printFrame.style.border = '0';
+                document.body.appendChild(printFrame);
+                printFrame.contentDocument.write(html);
+                printFrame.contentDocument.close();
+                setTimeout(() => {
+                    printFrame.contentWindow.focus();
+                    printFrame.contentWindow.print();
+                    setTimeout(() => document.body.removeChild(printFrame), 2000);
+                }, 250);
+            },
+
+            saldarDeudaCliente: async function() {
+                if (!(this.esAdmin() || this.esCobrador())) {
+                    this.mostrarToast('No tienes permisos para registrar cobros.', 'error');
+                    return;
+                }
+                if(!this.clienteSeleccionado) return;
+                const c = this.clienteSeleccionado;
+                const deudaDisponible = Number(c.deuda || 0);
+                const montoIngresado = window.prompt(`Ingresa el monto a cobrar a ${c.nombre}`, String(deudaDisponible));
+                if (montoIngresado === null) return;
+                const montoAbonado = Number(String(montoIngresado).replace(/[^\d]/g, '')) || 0;
+                if (montoAbonado <= 0) return;
+                if (montoAbonado > deudaDisponible) {
+                    this.mostrarToast('El monto no puede superar la deuda actual.', 'error');
+                    return;
+                }
+
+                if(confirm(`Confirmas el cobro de Gs. ${this.formatoMoneda(montoAbonado)} para ${c.nombre}?`)) {
+                    const btnSaldar = document.getElementById('btn-saldar');
+                    btnSaldar.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
+                    btnSaldar.disabled = true;
+
+                    try {
+                        const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                        const ticketRef = doc(collection(db, rutaPrivada));
+                        const comprobante = {
+                            ticket_id: `AB-${Date.now()}`,
+                            tipoTransaccion: "abono_deuda",
+                            total: montoAbonado,
+                            sucursal: this.sesion?.sucursal || 'Administracion',
+                            cajero: this.sesion?.nombre || 'Admin',
+                            cliente: c.id,
+                            nombreCliente: c.nombre,
+                            fecha: new Date(),
+                            metodoPago: "Efectivo",
+                            estadoPago: this.esAdmin() ? "pagado" : "pendiente_aprobacion",
+                            items: [],
+                            deudaAplicada: this.esAdmin(),
+                            estadoAprobacionCobro: this.esAdmin() ? "aprobado" : "pendiente",
+                            cobroRegistradoPorId: this.sesion?.uid || null,
+                            cobroRegistradoPorNombre: this.sesion?.nombre || 'Sistema',
+                            fechaAprobacionCobro: this.esAdmin() ? new Date() : null,
+                            aprobadoPor: this.esAdmin() ? (this.sesion?.nombre || 'Admin') : null
+                        };
+                        if (this.esAdmin()) {
+                            const batch = writeBatch(db);
+                            const userRef = doc(db, "users", c.id);
+                            batch.update(userRef, { deuda: Math.max(0, deudaDisponible - montoAbonado) });
+                            batch.set(ticketRef, comprobante);
+                            await batch.commit();
+
+                            this.ultimaVentaImprimir = {
+                                ...comprobante,
+                                cliente: c.nombre
+                            };
+                            this.imprimirComprobanteAbono(this.ultimaVentaImprimir);
+                            this.mostrarToast("Cobro aplicado correctamente.", "success");
+                        } else {
+                            await setDoc(ticketRef, comprobante);
+                            this.mostrarToast("Cobro registrado. Queda pendiente de aprobacion administrativa.", "success");
+                        }
+                        this.cerrarModalDetalle();
+                        this.cargarClientes(); // Refrescar vista
+                    } catch(e) {
+                        this.mostrarToast("Error al registrar el cobro.", "error");
+                        btnSaldar.innerText = this.esCobrador() ? "Registrar Cobro" : "Saldar Deuda";
+                        btnSaldar.disabled = false;
+                    }
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => ClientesModule.init());
+    </script>
+</body>
+
+</html>
+

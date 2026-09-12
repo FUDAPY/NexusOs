@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1LZVQ05T2E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1LZVQ05T2E');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee POS ERP - Usuarios y Clientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="admin_sidebar.js" defer></script>
+</head>
+
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800" id="app-body">
+    <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
+        Todos los derechos reservados 2026 -
+        <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 transform translate-x-full transition-transform duration-300 z-[100] flex items-center p-4 mb-4 text-white rounded-lg shadow-xl bg-slate-800">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg bg-white/20">
+            <i id="toast-icon" class="fa-solid fa-circle-exclamation"></i>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-bold">Mensaje</div>
+    </div>
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 overflow-hidden">
+                <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-mug-hot text-orange-500\'></i>'">
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">POS CATE</h1>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 mt-2 scrollbar-hide">
+            <a href="dashboard.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-house text-lg w-6"></i><span>Panel Principal</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Administracion</p>
+            <a href="sucursales.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-store text-lg w-6"></i><span>Sucursales</span>
+            </a>
+            
+            <a href="stock.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-warehouse text-lg w-6"></i><span>Stock</span>
+            </a>
+            <a href="produccion.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-burger text-lg w-6"></i><span>Produccion</span>
+            </a>
+            <button class="w-full flex items-center gap-4 bg-orange-500 text-white p-3 rounded-xl font-semibold shadow-md transition">
+                <i class="fa-solid fa-user-shield text-lg w-6"></i><span>Personal</span>
+            </button>
+            <a href="notificaciones.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-bell text-lg w-6"></i><span>Notificaciones</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Operaciones</p>
+            <a href="clientes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-gem text-lg w-6"></i><span>Clientes CRM</span>
+            </a>
+            <a href="kds.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-fire-burner text-lg w-6"></i><span>Monitor Cocina</span>
+            </a>
+            
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-2 pl-2">Finanzas</p>
+            <a href="caja.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-vault text-lg w-6"></i><span>Arqueo de Caja</span>
+            </a>
+            <a href="reportes.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-chart-line text-lg w-6"></i><span>Reportes</span>
+            </a>
+            <a href="monitor_problemas.html" class="w-full flex items-center gap-4 text-slate-400 hover:bg-slate-800 hover:text-white p-3 rounded-xl font-semibold transition">
+                <i class="fa-solid fa-triangle-exclamation text-lg w-6"></i><span>Monitor Problemas</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="bg-white p-6 shadow-sm flex justify-between items-center z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 p-1.5 shadow-sm overflow-hidden flex items-center justify-center">
+                    <img src="club_lin_logo.jpg" alt="Club Lin" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fa-solid fa-user-shield text-orange-500\'></i>'">
+                </div>
+                <div>
+                <h2 class="text-2xl font-bold text-slate-800">Cuentas de Acceso</h2>
+                <p class="text-slate-500 text-sm">Crea credenciales para tu personal o registra clientes manualmente.</p>
+                </div>
+            </div>
+            <button onclick="UsuariosModule.abrirModalCrear()" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-user-plus"></i> Nuevo Registro
+            </button>
+        </header>
+
+        <div class="bg-white border-b border-slate-200 px-6 pt-4 flex gap-6">
+            <button onclick="UsuariosModule.cambiarPestana('empleados')" id="tab-empleados" class="pb-3 text-orange-500 font-bold border-b-2 border-orange-500 transition">Personal de Sucursales</button>
+            <button onclick="UsuariosModule.cambiarPestana('clientes')" id="tab-clientes" class="pb-3 text-slate-500 font-semibold border-b-2 border-transparent hover:text-slate-800 transition flex items-center gap-2">
+                Cartera de Clientes <span id="badge-pendientes" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full hidden animate-pulse">0</span>
+            </button>
+        </div>
+
+        <div class="flex-1 p-6 overflow-hidden flex flex-col bg-slate-50">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col">
+                <div class="overflow-y-auto flex-1 relative">
+                    
+                    <div id="loading-spinner" class="absolute inset-0 bg-white/80 z-10 hidden flex-col justify-center items-center backdrop-blur-sm">
+                        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-orange-500 mb-2"></i>
+                        <p class="font-bold text-slate-500 mt-2">Sincronizando...</p>
+                    </div>
+
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 sticky top-0 z-0 shadow-sm">
+                            <tr class="text-slate-500 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold">Usuario / Cliente</th>
+                                <th class="p-4 font-semibold">Login / Correo</th>
+                                <th class="p-4 font-semibold text-center">Rol</th>
+                                <th class="p-4 font-semibold text-center">Estado / Sucursal</th>
+                                <th class="p-4 font-semibold text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-slate-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-formulario" class="fixed inset-0 bg-slate-900/60 hidden justify-center items-center z-50 backdrop-blur-sm">
+        <div class="bg-white w-[600px] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+                <h3 class="text-xl font-bold">Crear Nueva Cuenta</h3>
+                <button onclick="UsuariosModule.cerrarModalFormulario()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form id="form-usuario" onsubmit="UsuariosModule.guardarUsuario(event)" class="p-6 space-y-4">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Nombre Completo</label>
+                        <input type="text" id="usr-nombre" required class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition" placeholder="Ej. Juan Perez">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Correo Electronico</label>
+                        <input type="email" id="usr-email" required class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition" placeholder="juan@lingroup.com">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Contrasena</label>
+                        <input type="text" id="usr-pass" required minlength="6" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition" placeholder="Minimo 6 caracteres">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Tipo de Cuenta</label>
+                        <select id="usr-rol" required class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition bg-white">
+                            <option value="cajero">Personal: Cajero (POS)</option>
+                            <option value="delivery">Personal: Motorista (Delivery)</option>
+                            <option value="cocina">Personal: Cocinero (KDS)</option>
+                            <option value="cobrador">Personal: Cobrador (CMR)</option>
+                            <option value="produccion">Personal: Produccion</option>
+                            <option value="cliente" class="font-bold text-orange-600">Cliente (Para App/POS)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">
+                        <i class="fa-solid fa-store text-orange-500 mr-2"></i>Sucursal (Ignorar si es Cliente)
+                    </label>
+                    <select id="usr-sucursal" required class="w-full border-2 border-slate-300 rounded-xl p-3 focus:border-orange-500 outline-none transition bg-white">
+                        <option value="N/A">Cargando sucursales...</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="UsuariosModule.cerrarModalFormulario()" class="px-6 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition">Cancelar</button>
+                    <button type="submit" id="btn-guardar" class="px-6 py-3 bg-orange-500 text-white font-bold rounded-xl shadow-md hover:bg-orange-600 transition flex items-center gap-2">
+                        <i class="fa-solid fa-check"></i> Registrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Configuracion de tu Proyecto Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
+            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
+            projectId: "sys-pos-erp-lingroup",
+            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
+            messagingSenderId: "1084603889746",
+            appId: "1:1084603889746:web:822ce55a070dc146b2078b",
+            measurementId: "G-1LZVQ05T2E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // CORRECCION PERMISOS: La BD se inicia con la App Secundaria (la del Admin) para poder escribir
+        const db = getFirestore(app);
+
+        // App Secundaria para registrar Auth sin perder sesion del Admin
+        const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+        const secondaryAuth = getAuth(secondaryApp);
+        // NO iniciamos base de datos secundaria, usamos la db principal que tiene la sesion de Admin valida.
+
+        window.UsuariosModule = {
+            usuariosFirebase: [],
+            pestanaActual: 'empleados',
+
+            init: function() {
+                const sesionStr = localStorage.getItem('__pos_session');
+                if (!sesionStr) return window.location.replace('index.html');
+                const sesion = JSON.parse(sesionStr);
+                if (sesion.rol !== 'admin') {
+                    if (sesion.rol === 'cobrador') return window.location.replace('clientes.html?view=cobranzas');
+                    if (sesion.rol === 'produccion') return window.location.replace('produccion.html');
+                    return window.location.replace('index.html');
+                }
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        this.cargarUsuarios();
+                        this.cargarSucursalesParaSelect(); 
+                    } else {
+                        window.location.replace('index.html');
+                    }
+                });
+            },
+
+            cargarSucursalesParaSelect: async function() {
+                try {
+                    const snap = await getDocs(collection(db, "branches"));
+                    const selectEl = document.getElementById('usr-sucursal');
+                    
+                    let opcionesHtml = `
+                        <option value="N/A">No aplica (Es Cliente)</option>
+                        <option value="Todas las Sucursales">Todas las Sucursales (Admin)</option>
+                    `;
+                    
+                    snap.forEach(doc => {
+                        const nombreSucursal = doc.data().nombre;
+                        opcionesHtml += `<option value="${nombreSucursal}">${nombreSucursal}</option>`;
+                    });
+                    
+                    selectEl.innerHTML = opcionesHtml;
+                } catch (error) {
+                    console.error("Error cargando sucursales para el menu: ", error);
+                }
+            },
+
+            cambiarPestana: function(pestana) {
+                this.pestanaActual = pestana;
+                const tabEmp = document.getElementById('tab-empleados');
+                const tabCli = document.getElementById('tab-clientes');
+                
+                if(pestana === 'empleados') {
+                    tabEmp.className = "pb-3 text-orange-500 font-bold border-b-2 border-orange-500 transition";
+                    tabCli.className = "pb-3 text-slate-500 font-semibold border-b-2 border-transparent hover:text-slate-800 transition flex items-center gap-2";
+                } else {
+                    tabCli.className = "pb-3 text-orange-500 font-bold border-b-2 border-orange-500 transition flex items-center gap-2";
+                    tabEmp.className = "pb-3 text-slate-500 font-semibold border-b-2 border-transparent hover:text-slate-800 transition";
+                }
+                this.renderizarTabla();
+            },
+
+            mostrarToast: function(mensaje, tipo = 'success') {
+                const toast = document.getElementById('toast');
+                document.getElementById('toast-message').innerText = mensaje;
+                if(tipo === 'error') {
+                    toast.classList.replace('bg-slate-800', 'bg-red-500');
+                    document.getElementById('toast-icon').className = 'fa-solid fa-triangle-exclamation text-white';
+                } else {
+                    toast.classList.replace('bg-red-500', 'bg-slate-800');
+                    document.getElementById('toast-icon').className = 'fa-solid fa-check text-green-400';
+                }
+                toast.classList.remove('translate-x-full');
+                setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+            },
+
+            cargarUsuarios: async function() {
+                const spinner = document.getElementById('loading-spinner');
+                spinner.classList.remove('hidden'); spinner.classList.add('flex');
+                
+                try {
+                    const snap = await getDocs(collection(db, "users"));
+                    this.usuariosFirebase = [];
+                    let clientesPendientes = 0;
+                    
+                    snap.forEach((doc) => {
+                        const data = doc.data();
+                        this.usuariosFirebase.push({ id: doc.id, ...data });
+                        if(data.rol === 'cliente' && data.estadoBeneficios === 'pendiente') clientesPendientes++;
+                    });
+                    
+                    const badge = document.getElementById('badge-pendientes');
+                    if(clientesPendientes > 0) {
+                        badge.innerText = clientesPendientes; badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+
+                    this.renderizarTabla();
+                } catch (error) {
+                    console.error("Error Firebase:", error);
+                } finally {
+                    spinner.classList.add('hidden'); spinner.classList.remove('flex');
+                }
+            },
+
+            renderizarTabla: function() {
+                const tbody = document.getElementById('users-table-body');
+                const lista = this.usuariosFirebase.filter(u => this.pestanaActual === 'empleados' ? u.rol !== 'cliente' : u.rol === 'cliente');
+
+                if (lista.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-bold">No hay registros en esta categoria.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = lista.map(usr => {
+                    let rolEstilo = ""; let icono = "fa-user";
+                    if(usr.rol === 'admin') { rolEstilo = "bg-purple-100 text-purple-700"; icono = "fa-crown"; }
+                    if(usr.rol === 'cajero') { rolEstilo = "bg-blue-100 text-blue-700"; icono = "fa-cash-register"; }
+                    if(usr.rol === 'delivery') { rolEstilo = "bg-yellow-100 text-yellow-700"; icono = "fa-motorcycle"; }
+                    if(usr.rol === 'cobrador') { rolEstilo = "bg-emerald-100 text-emerald-700"; icono = "fa-file-invoice-dollar"; }
+                    if(usr.rol === 'cocina') { rolEstilo = "bg-orange-100 text-orange-700"; icono = "fa-fire-burner"; }
+                    if(usr.rol === 'cliente') { rolEstilo = "bg-slate-100 text-slate-700"; icono = "fa-star"; }
+
+                    let estadoHtml = `<span class="font-semibold text-slate-700">${usr.sucursal || 'Sin Asignar'}</span>`;
+                    let accionHtml = `<button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><i class="fa-solid fa-trash"></i></button>`;
+
+                    if(usr.rol === 'cliente') {
+                        if(usr.estadoBeneficios === 'pendiente') {
+                            estadoHtml = `<span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold border border-red-200"><i class="fa-solid fa-clock"></i> Pendiente App</span>`;
+                            accionHtml = `
+                                <button onclick="UsuariosModule.aprobarCliente('${usr.id}')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 font-bold text-xs transition shadow-sm"><i class="fa-solid fa-check mr-1"></i> Aprobar</button>
+                                <button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100 ml-2"><i class="fa-solid fa-trash"></i></button>
+                            `;
+                        } else {
+                            estadoHtml = `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200">Aprobado</span>`;
+                        }
+                    }
+
+                    return `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                            <td class="p-4 flex items-center gap-3">
+                                <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 shadow-inner"><i class="fa-solid ${icono}"></i></div>
+                                <p class="font-bold text-slate-800">${usr.nombre}</p>
+                            </td>
+                            <td class="p-4 text-slate-600 font-mono text-sm">${usr.email}</td>
+                            <td class="p-4 text-center"><span class="${rolEstilo} px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border shadow-sm">${usr.rol}</span></td>
+                            <td class="p-4 text-center">${estadoHtml}</td>
+                            <td class="p-4 text-center flex justify-center items-center">${accionHtml}</td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            abrirModalCrear: function() {
+                document.getElementById('form-usuario').reset();
+                document.getElementById('modal-formulario').classList.remove('hidden');
+                document.getElementById('modal-formulario').classList.add('flex');
+            },
+
+            cerrarModalFormulario: function() {
+                document.getElementById('modal-formulario').classList.add('hidden');
+            },
+
+            guardarUsuario: async function(event) {
+                event.preventDefault();
+                const btn = document.getElementById('btn-guardar');
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Registrando...`; 
+                btn.disabled = true;
+
+                const email = document.getElementById('usr-email').value;
+                const pass = document.getElementById('usr-pass').value;
+                const rolSelect = document.getElementById('usr-rol').value;
+
+                try {
+                    // 1. Firebase Auth (Usa la App Secundaria para no desloguear al Admin)
+                    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+                    const nuevoUid = userCredential.user.uid;
+                    
+                    // IMPORTANTE: Cerramos la sesion secundaria inmediatamente para evitar conflictos
+                    await signOut(secondaryAuth); 
+
+                    // 2. Guardar perfil (Usa la BD principal que SI tiene permisos de Admin)
+                    await setDoc(doc(db, "users", nuevoUid), {
+                        nombre: document.getElementById('usr-nombre').value,
+                        email: email,
+                        rol: rolSelect,
+                        sucursal: document.getElementById('usr-sucursal').value,
+                        estadoBeneficios: 'activo',
+                        puntos: 0,
+                        deuda: 0,
+                        datosCompletos: true // Evita que les pida llenar datos despues
+                    });
+
+                    this.mostrarToast("Cuenta creada exitosamente.");
+                    this.cerrarModalFormulario();
+                    this.cargarUsuarios(); 
+
+                } catch (error) { 
+                    console.error(error);
+                    
+                    // MANEJO PROFESIONAL DE ERRORES
+                    let mensajeError = "Ocurrio un error al registrar. (Posible permiso)";
+                    if (error.code === 'auth/email-already-in-use') {
+                        mensajeError = "Este correo ya esta en uso. Por favor, utiliza uno diferente.";
+                    } else if (error.code === 'auth/weak-password') {
+                        mensajeError = "La contrasena es muy debil. Debe tener al menos 6 caracteres.";
+                    } else if (error.code === 'auth/invalid-email') {
+                        mensajeError = "El formato del correo electronico no es valido.";
+                    }
+
+                    this.mostrarToast(mensajeError, "error");
+
+                } finally { 
+                    btn.innerHTML = `<i class="fa-solid fa-check"></i> Registrar`; 
+                    btn.disabled = false; 
+                }
+            },
+
+            aprobarCliente: async function(id) {
+                try {
+                    await updateDoc(doc(db, "users", id), { estadoBeneficios: "activo" });
+                    this.mostrarToast("Cliente aprobado. Ya puede acumular puntos.");
+                    this.cargarUsuarios();
+                } catch(e) { console.error(e); this.mostrarToast("Error al aprobar.", "error"); }
+            },
+
+            eliminarUsuario: async function(id) {
+                if(confirm("Estas seguro de eliminar este registro permanentemente? (Se eliminaran sus puntos y deudas)")) {
+                    try {
+                        await deleteDoc(doc(db, "users", id));
+                        this.mostrarToast("Registro eliminado con exito.");
+                        this.cargarUsuarios();
+                    } catch(e) { console.error(e); this.mostrarToast("Error al eliminar (Verifique permisos).", "error"); }
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => UsuariosModule.init());
+    </script>
+</body>
+
+</html>
