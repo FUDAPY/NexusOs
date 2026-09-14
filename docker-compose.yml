@@ -88,10 +88,11 @@ services:
       PORT: "3000"
       API_PREFIX: /api/v1
       # Una sola fuente de verdad: las MISMAS variables que usa mongo.
-      # Asi la clave no se duplica (ni se desincroniza) en dos lugares.
-      MONGO_URI: "mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_INITDB_DATABASE}?authSource=admin&replicaSet=rs0"
+      # Los defaults tienen que coincidir con los del servicio mongo: si aca
+      # faltaran, la URI quedaria sin nombre de base y la conexion falla.
+      MONGO_URI: "mongodb://${MONGO_INITDB_ROOT_USERNAME:-giuli}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_INITDB_DATABASE:-pos_cate}?authSource=admin&replicaSet=rs0"
       MONGO_MAX_POOL_SIZE: "20"
-      MONGO_DB_NAME: "${MONGO_INITDB_DATABASE}"
+      MONGO_DB_NAME: "${MONGO_INITDB_DATABASE:-pos_cate}"
       REDIS_URL: "redis://default:${REDIS_PASSWORD}@redis:6379/0"
       REDIS_STOCK_LOCK_TTL_MS: "5000"
       JWT_SECRET: "${JWT_SECRET:?definir JWT_SECRET en Environment (minimo 32 caracteres)}"
