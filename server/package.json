@@ -23,7 +23,8 @@
     "migrate:derive": "tsx scripts/migrate-firestore.ts --derive-only",
     "mongo:replica:status": "tsx scripts/init-replica-set.ts --status-only",
     "mongo:replica:init": "tsx scripts/init-replica-set.ts",
-    "mongo:copy": "tsx scripts/copy-mongo.ts"
+    "mongo:copy": "tsx scripts/copy-mongo.ts",
+    "auditar:mongo": "tsx scripts/auditar-mongo.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

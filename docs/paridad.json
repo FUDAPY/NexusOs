@@ -1,0 +1,6452 @@
+{
+  "generadoEn": "2026-09-14T16:27:26.993Z",
+  "base": "pos_cate",
+  "muestras": 200,
+  "totalColecciones": 27,
+  "colecciones": [
+    {
+      "nombre": "audit_logs",
+      "documentos": 218,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "tipo": {
+          "tipos": {
+            "string": 195
+          },
+          "ejemplos": [
+            "anulacion_ticket",
+            "anulacion_ticket"
+          ]
+        },
+        "subtipo": {
+          "tipos": {
+            "string": 184
+          },
+          "ejemplos": [
+            "total",
+            "parcial"
+          ]
+        },
+        "motivo": {
+          "tipos": {
+            "string": 195
+          },
+          "ejemplos": [
+            "SE CARGO DEMAS",
+            "va a querer solo 2"
+          ]
+        },
+        "ticketId": {
+          "tipos": {
+            "string": 187
+          },
+          "ejemplos": [
+            "T-706422",
+            "T-659813"
+          ]
+        },
+        "ventaId": {
+          "tipos": {
+            "string": 187
+          },
+          "ejemplos": [
+            "qiolcGHbsEhihW6LekAE",
+            "LSyNyMWKZkPx5oWJulcG"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 195
+          },
+          "ejemplos": [
+            "CAFETERIA CHICOLIN",
+            "CAFETERIA CHICOLIN"
+          ]
+        },
+        "clienteId": {
+          "tipos": {
+            "string": 184
+          },
+          "ejemplos": [
+            "ocasional",
+            "ocasional"
+          ]
+        },
+        "nombreCliente": {
+          "tipos": {
+            "string": 192
+          },
+          "ejemplos": [
+            "Virtual sin nombre (Ocasional)",
+            "Fisico 10"
+          ]
+        },
+        "aliasReferencia": {
+          "tipos": {
+            "string": 184
+          },
+          "ejemplos": [
+            "Virtual sin nombre",
+            "Fisico 10"
+          ]
+        },
+        "metodoPago": {
+          "tipos": {
+            "string": 187
+          },
+          "ejemplos": [
+            "Por Cobrar",
+            "Por Cobrar"
+          ]
+        },
+        "estadoPago": {
+          "tipos": {
+            "string": 184
+          },
+          "ejemplos": [
+            "pendiente",
+            "pendiente"
+          ]
+        },
+        "totalAntes": {
+          "tipos": {
+            "int": 184
+          },
+          "ejemplos": [
+            0,
+            120000
+          ]
+        },
+        "totalDespues": {
+          "tipos": {
+            "int": 184
+          },
+          "ejemplos": [
+            0,
+            112000
+          ]
+        },
+        "origen": {
+          "tipos": {
+            "string": 189
+          },
+          "ejemplos": [
+            "admin",
+            "admin"
+          ]
+        },
+        "autorizacionRfid": {
+          "tipos": {
+            "boolean": 184
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "adminId": {
+          "tipos": {
+            "string": 192
+          },
+          "ejemplos": [
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1",
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1"
+          ]
+        },
+        "adminNombre": {
+          "tipos": {
+            "string": 193
+          },
+          "ejemplos": [
+            "LIZ ACOSTA",
+            "LIZ ACOSTA"
+          ]
+        },
+        "item": {
+          "tipos": {
+            "null": 115,
+            "object": 69
+          },
+          "ejemplos": []
+        },
+        "itemsRestantes": {
+          "tipos": {
+            "array": 184
+          },
+          "ejemplos": []
+        },
+        "itemsOriginales": {
+          "tipos": {
+            "array": 184
+          },
+          "ejemplos": []
+        },
+        "fecha": {
+          "tipos": {
+            "date": 195
+          },
+          "ejemplos": []
+        },
+        "timestamp": {
+          "tipos": {
+            "date": 200
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "06WI9YKpdOMQjxlWxwBd",
+            "0Bhj3eikGteaNkj0CPtw"
+          ]
+        },
+        "total": {
+          "tipos": {
+            "int": 11
+          },
+          "ejemplos": [
+            696000,
+            38000
+          ]
+        },
+        "totalBrutoConCredito": {
+          "tipos": {
+            "int": 7
+          },
+          "ejemplos": [
+            721000,
+            1245000
+          ]
+        },
+        "totalDeclarado": {
+          "tipos": {
+            "int": 8
+          },
+          "ejemplos": [
+            731000,
+            1077000
+          ]
+        },
+        "diferenciaTotal": {
+          "tipos": {
+            "int": 8
+          },
+          "ejemplos": [
+            35000,
+            0
+          ]
+        },
+        "ticketsContados": {
+          "tipos": {
+            "int": 8
+          },
+          "ejemplos": [
+            13,
+            26
+          ]
+        },
+        "turnosIncluidos": {
+          "tipos": {
+            "array": 6
+          },
+          "ejemplos": []
+        },
+        "cierreId": {
+          "tipos": {
+            "string": 8
+          },
+          "ejemplos": [
+            "dzbBZmt0o7b4eFFlf31r",
+            "DquRvMQ11S7BvMSM9vF7"
+          ]
+        },
+        "accion": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "APROBAR_COBRO_POS",
+            "APROBAR_COBRO_POS"
+          ]
+        },
+        "empresa": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "POS",
+            "POS"
+          ]
+        },
+        "usuarioUid": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "XseiDDPkY2a7E0tPGhbYj2rVGdk2",
+            "L6dEsfm73MfrVJltTTqGVOgaJil1"
+          ]
+        },
+        "usuarioNombre": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "Jose Lin Rodas",
+            "Giuliano Catella"
+          ]
+        },
+        "clientePosId": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "pX6uufRUd0cctLhieVl8wu6Ji8t1",
+            "qFRPvzZL5DRlMGu5xUj4Ln8iOOA2"
+          ]
+        },
+        "monto": {
+          "tipos": {
+            "int": 5
+          },
+          "ejemplos": [
+            453000,
+            1000
+          ]
+        },
+        "deudaAntes": {
+          "tipos": {
+            "int": 5
+          },
+          "ejemplos": [
+            453000,
+            488000
+          ]
+        },
+        "deudaDespues": {
+          "tipos": {
+            "int": 5
+          },
+          "ejemplos": [
+            0,
+            487000
+          ]
+        },
+        "cobroSysCreditosId": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "aS0rQLcG764XkXufl1ct",
+            "j8yE4FxDAIAlJrg4Ks6F"
+          ]
+        },
+        "turnoId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "TURN-CAFETERIACHI-1787561745236-980",
+            "TURN-CAFETERIACHI-1784971135890-117"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "branches",
+      "documentos": 2,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 2
+          },
+          "ejemplos": []
+        },
+        "ruc": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "80153468-2",
+            "80153468-2"
+          ]
+        },
+        "telefono": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "0973555666",
+            "0973411298"
+          ]
+        },
+        "mensajePie": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "Muchas gracias por su preferencia, vuelva pronto!!!",
+            "Muchas gracias por su preferencia, vuelva pronto!!!"
+          ]
+        },
+        "direccion": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "AV. CAMILO RECALDE E/ FARMACIA AMADA",
+            "AV. MONSEÑOR RODRIGUEZ - FRENTE A BRAND FOR LESS"
+          ]
+        },
+        "controlHorarioPedidos": {
+          "tipos": {
+            "boolean": 2
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "horarioApertura": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "16:30",
+            "06:30"
+          ]
+        },
+        "categoriasActivas": {
+          "tipos": {
+            "array": 2
+          },
+          "ejemplos": []
+        },
+        "iconoTema": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "fa-burger",
+            "fa-mug-hot"
+          ]
+        },
+        "temaApp": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "restaurante",
+            "cafe"
+          ]
+        },
+        "mapsUrl": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "https://maps.app.goo.gl/XocA8ReQbH9UV9xE9",
+            "https://maps.app.goo.gl/j5LDuFEJYqKFNUWeA"
+          ]
+        },
+        "horarioCierre": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "01:00",
+            "15:20"
+          ]
+        },
+        "colorAcento": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "#ff0000",
+            "#c96b2c"
+          ]
+        },
+        "colorPrincipal": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "#ffffff",
+            "#6f4e37"
+          ]
+        },
+        "nombre": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "San Benito Cafe Resto Bar",
+            "CAFETERIA CHICOLIN"
+          ]
+        },
+        "imagenLocalUrl": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "https://firebasestorage.googleapis.com/v0/b/sys-pos-erp-lingroup.firebasestorage.app/o/branch-images%2F0wqglGrCcP5PiLqJ7Aft-1784988460955-d41466f9-dae5-4cf7-86df-548163140f7a.jpg?alt=media&token=fabf92a7-7d74-4ae2-9079-1a2f7612856a",
+            ""
+          ]
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "0wqglGrCcP5PiLqJ7Aft",
+            "TNvbdFQxBH1TCMY9j0wR"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "cash_closes",
+      "documentos": 316,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "turnoId": {
+          "tipos": {
+            "string": 195
+          },
+          "ejemplos": [
+            "TURN-MrLinRestaur-1782760205099-714",
+            "TURN-CAFETERIACHI-1780648818723-38"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Mr Lin Restaurante",
+            "CAFETERIA CHICOLIN"
+          ]
+        },
+        "cajeroId": {
+          "tipos": {
+            "string": 196,
+            "null": 4
+          },
+          "ejemplos": [
+            "pcfieE6cu4MuInrU1U3ldDrSzDa2",
+            "wwH7KHASj0YWiH0KwZA7mnd3dmj2"
+          ]
+        },
+        "cajero": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Benjamin",
+            "Noni"
+          ]
+        },
+        "fechaApertura": {
+          "tipos": {
+            "date": 200
+          },
+          "ejemplos": []
+        },
+        "fechaAperturaTexto": {
+          "tipos": {
+            "string": 199
+          },
+          "ejemplos": [
+            "29/6/2026, 15:10:05",
+            "5/6/2026, 04:40:18"
+          ]
+        },
+        "fechaCierre": {
+          "tipos": {
+            "date": 200
+          },
+          "ejemplos": []
+        },
+        "fechaCierreTexto": {
+          "tipos": {
+            "string": 199
+          },
+          "ejemplos": [
+            "30/6/2026, 00:51:44",
+            "5/6/2026, 14:14:35"
+          ]
+        },
+        "fechaOperacionKey": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "2026-06-29",
+            "2026-06-05"
+          ]
+        },
+        "fechaCierreKey": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "2026-06-30",
+            "2026-06-05"
+          ]
+        },
+        "fondoInicial": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "declaracion": {
+          "tipos": {
+            "object": 200
+          },
+          "ejemplos": []
+        },
+        "sistema": {
+          "tipos": {
+            "object": 200
+          },
+          "ejemplos": []
+        },
+        "productosVendidos": {
+          "tipos": {
+            "object": 200
+          },
+          "ejemplos": []
+        },
+        "ticketsContados": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            52,
+            91
+          ]
+        },
+        "ticketsTurnoIds": {
+          "tipos": {
+            "array": 200
+          },
+          "ejemplos": []
+        },
+        "htmlTicket": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "\n                    <html><head><style>\n                        @page { margin: 0; }\n                        body { margin: 0; padding: 5px 8px; font-family: 'Arial', sans-serif; font-size: 10px; font-weight: 900; width: 100%; max-width: 58mm; color: #000; }\n                        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }\n                        td { padding: 2px 0; font-weight: 900; vertical-align: top; line-height: 1.1; }\n                        .center { text-align: center; } .right { text-align: right; }\n                        hr { border: 0; border-top: 1px dashed black; margin: 5px 0; }\n                        .subtitle { text-transform: uppercase; border-bottom: 1px dotted black; padding-bottom: 2px; margin-bottom: 2px; font-size: 11px; }\n                        .productos-table td { font-size: 8px !important; }\n                    </style></head><body>\n                        <div class=\"center\" style=\"font-size:13px; font-weight: 900; border-bottom:2px solid black; padding-bottom: 3px; margin-bottom: 5px;\">REPORTE Z (CIERRE)</div>\n                        <div><span style=\"font-size: 9px;\">Apertura: 29/6/2026, 15:10:05</span></div>\n                        <div><span style=\"font-size: 9px;\">Cierre: &nbsp;&nbsp;30/6/2026, 00:51:44</span></div>\n                        <div><span style=\"font-size: 9px;\">Cajero: &nbsp;&nbsp;Benjamin</span></div>\n                        <hr>\n\n                        <div class=\"subtitle\">PRODUCTOS VENDIDOS:</div>\n                        <table class=\"productos-table\" style=\"margin-bottom: 2px;\">\n                            <tr><td style=\"width: 15%; text-align: left;\">10x</td><td style=\"width: 55%; text-align: left;\">LOMITO ARABE C/ PAPAS</td><td style=\"width: 30%; text-align: right;\">320.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">PILSEN'I</td><td style=\"width: 30%; text-align: right;\">16.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">PAPAS FRITAS C/ CHEDDAR & BACON</td><td style=\"width: 30%; text-align: right;\">30.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">6x</td><td style=\"width: 55%; text-align: left;\">ORIGINAL</td><td style=\"width: 30%; text-align: right;\">48.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">BIFE MEGA</td><td style=\"width: 30%; text-align: right;\">35.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">RAMEN</td><td style=\"width: 30%; text-align: right;\">25.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">FANTA GUARANA 1 LT</td><td style=\"width: 30%; text-align: right;\">30.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">11x</td><td style=\"width: 55%; text-align: left;\">HAMBURGUESA CLASICA SIMPLE S/ PAPAS</td><td style=\"width: 30%; text-align: right;\">286.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">SEVENUP LIMA LIMÓN NORMAL 500ML</td><td style=\"width: 30%; text-align: right;\">20.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">8x</td><td style=\"width: 55%; text-align: left;\">SANDWICH DE LOMITO C/ PAPAS</td><td style=\"width: 30%; text-align: right;\">224.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">4x</td><td style=\"width: 55%; text-align: left;\">Adicional </td><td style=\"width: 30%; text-align: right;\">20.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">3x</td><td style=\"width: 55%; text-align: left;\">LOMITO ARABE S/ PAPAS</td><td style=\"width: 30%; text-align: right;\">84.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">10x</td><td style=\"width: 55%; text-align: left;\">CLASICA SIMPLE S/ PAPAS</td><td style=\"width: 30%; text-align: right;\">260.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">5x</td><td style=\"width: 55%; text-align: left;\">CLASICA SIMPLE C/ PAPAS</td><td style=\"width: 30%; text-align: right;\">140.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">SALTEADO MEGA PREMIUM</td><td style=\"width: 30%; text-align: right;\">35.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">6x</td><td style=\"width: 55%; text-align: left;\">COCA COLA 1 LTS</td><td style=\"width: 30%; text-align: right;\">90.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">4x</td><td style=\"width: 55%; text-align: left;\">PIZZA 6 PORCIONES S/ BORDES</td><td style=\"width: 30%; text-align: right;\">140.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">PIZZA 8 PORCIONES C/ BORDE</td><td style=\"width: 30%; text-align: right;\">130.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">4x</td><td style=\"width: 55%; text-align: left;\">PIZZA 12 PORCIONES S/ BORDES </td><td style=\"width: 30%; text-align: right;\">260.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">3x</td><td style=\"width: 55%; text-align: left;\">FANTA NARANJA 1 LT</td><td style=\"width: 30%; text-align: right;\">45.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">6x</td><td style=\"width: 55%; text-align: left;\">AGUA DE 500ML</td><td style=\"width: 30%; text-align: right;\">30.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">CLASICA DOBLE S/ PAPAS</td><td style=\"width: 30%; text-align: right;\">30.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">4x</td><td style=\"width: 55%; text-align: left;\">CLASICA DOBLE C/ PAPAS</td><td style=\"width: 30%; text-align: right;\">140.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">CLASICA TRIPLE S/ PAPAS</td><td style=\"width: 30%; text-align: right;\">70.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">4x</td><td style=\"width: 55%; text-align: left;\">AGUA TONICA PASO DE LOS TOROS</td><td style=\"width: 30%; text-align: right;\">48.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">PAPAS FRITAS GRANDE</td><td style=\"width: 30%; text-align: right;\">25.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">PIZZA 6 PORCIONES C/ BORDE</td><td style=\"width: 30%; text-align: right;\">100.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">SPRITE 1 LT</td><td style=\"width: 30%; text-align: right;\">15.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">4x</td><td style=\"width: 55%; text-align: left;\">ENERGIZANTE</td><td style=\"width: 30%; text-align: right;\">80.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">AGUA 2LTS</td><td style=\"width: 30%; text-align: right;\">20.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">PIZZA 12 PORCIONES C/ BORDE</td><td style=\"width: 30%; text-align: right;\">80.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">7x</td><td style=\"width: 55%; text-align: left;\">LIN JUNIOR C/ PAPAS</td><td style=\"width: 30%; text-align: right;\">140.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">SEVENUP LIMA LIMÓN  ZERO 500ML</td><td style=\"width: 30%; text-align: right;\">10.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">SANDWICH DE LOMITO S/ PAPAS</td><td style=\"width: 30%; text-align: right;\">26.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">BIFE</td><td style=\"width: 30%; text-align: right;\">28.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">MILANESA NAPOLITANA </td><td style=\"width: 30%; text-align: right;\">38.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">BIFE MEGA PREMIUN</td><td style=\"width: 30%; text-align: right;\">76.000</td></tr>\n                        </table>\n                        <div class=\"right\" style=\"font-size: 8.5px; font-weight: 900; margin-top: 3px;\">VENDIDOS TOTAL: Gs. 3.156.000</div>\n                        <hr>\n\n                        <div class=\"subtitle\">SISTEMA ESPERADO:</div>\n                        <table>\n                            <tr><td>Fondo Inicial</td><td class=\"right\">+0</td></tr>\n                            <tr><td>Ventas Efectivo</td><td class=\"right\">+2.498.000</td></tr>\n                            <tr><td>Gastos</td><td class=\"right\">-125.000</td></tr>\n                            <tr style=\"border-top: 1px dashed black;\"><td style=\"font-size: 10px;\">Total Esp. Efectivo</td><td class=\"right\" style=\"font-size: 10px;\">2.373.000</td></tr>\n                            <tr><td style=\"padding-top: 3px;\">Total Tarjeta POS</td><td class=\"right\" style=\"padding-top: 3px;\">553.000</td></tr>\n                            <tr><td>Total Transf.</td><td class=\"right\">105.000</td></tr>\n                            <tr style=\"border-top: 2px solid black;\"><td style=\"font-size: 11px;\">TOTAL ESPERADO</td><td class=\"right\" style=\"font-size: 11px;\">3.031.000</td></tr>\n                        </table>\n                        <hr>\n\n                        <div class=\"subtitle\">CAJA DECLARADO:</div>\n                        <table>\n                    <tr><td>Efectivo Fisico</td><td class=\"right\">2.260.000</td></tr>\n                            <tr><td>Tarjeta POS</td><td class=\"right\">652.000</td></tr>\n                            <tr><td>Transferencia</td><td class=\"right\">125.000</td></tr>\n                            <tr style=\"border-top: 2px solid black;\"><td style=\"font-size: 11px;\">TOTAL EN CAJA</td><td class=\"right\" style=\"font-size: 11px;\">3.037.000</td></tr>\n                        </table>\n                        <hr>\n\n                        <div class=\"subtitle\">DIFERENCIA FINAL:</div>\n                        <table>\n                            <tr><td style=\"font-size: 10px;\">Dif. Efectivo</td><td class=\"right\" style=\"font-size: 10px;\">- Gs. 113.000 (FALTA)</td></tr>\n                            <tr><td style=\"font-size: 10px;\">Dif. Tarjeta</td><td class=\"right\" style=\"font-size: 10px;\">+ Gs. 99.000 (SOBRA)</td></tr>\n                            <tr><td style=\"font-size: 10px;\">Dif. Transf.</td><td class=\"right\" style=\"font-size: 10px;\">+ Gs. 20.000 (SOBRA)</td></tr>\n                            <tr style=\"border-top: 2px solid black;\"><td style=\"font-size: 12px;\">DIF TOTAL</td><td class=\"right\" style=\"font-size: 12px;\">+ Gs. 6.000 (SOBRA)</td></tr>\n                        </table>\n                        <hr><br><div class=\"center\">____________________</div><div class=\"center\">Firma del Cajero</div>\n                    </body></html>\n                ",
+            "\n                    <html><head><style>\n                        @page { margin: 0; }\n                        body { margin: 0; padding: 5px 8px; font-family: 'Arial', sans-serif; font-size: 10px; font-weight: 900; width: 100%; max-width: 58mm; color: #000; }\n                        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }\n                        td { padding: 2px 0; font-weight: 900; vertical-align: top; line-height: 1.1; }\n                        .center { text-align: center; } .right { text-align: right; }\n                        hr { border: 0; border-top: 1px dashed black; margin: 5px 0; }\n                        .subtitle { text-transform: uppercase; border-bottom: 1px dotted black; padding-bottom: 2px; margin-bottom: 2px; font-size: 11px; }\n                        .productos-table td { font-size: 8px !important; }\n                    </style></head><body>\n                        <div class=\"center\" style=\"font-size:13px; font-weight: 900; border-bottom:2px solid black; padding-bottom: 3px; margin-bottom: 5px;\">REPORTE Z (CIERRE)</div>\n                        <div><span style=\"font-size: 9px;\">Apertura: 5/6/2026, 04:40:18</span></div>\n                        <div><span style=\"font-size: 9px;\">Cierre: &nbsp;&nbsp;5/6/2026, 14:14:35</span></div>\n                        <div><span style=\"font-size: 9px;\">Cajero: &nbsp;&nbsp;Noni</span></div>\n                        <hr>\n\n                        <div class=\"subtitle\">PRODUCTOS VENDIDOS:</div>\n                        <table class=\"productos-table\" style=\"margin-bottom: 2px;\">\n                            <tr><td style=\"width: 15%; text-align: left;\">9x</td><td style=\"width: 55%; text-align: left;\">CAFE NEGRO (ESPRESSO)</td><td style=\"width: 30%; text-align: right;\">45.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">13x</td><td style=\"width: 55%; text-align: left;\">MIXTO ARABE</td><td style=\"width: 30%; text-align: right;\">91.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa de la Casa c/ Papas</td><td style=\"width: 30%; text-align: right;\">26.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">20x</td><td style=\"width: 55%; text-align: left;\">CAFE CON LECHE PEQUEÑO</td><td style=\"width: 30%; text-align: right;\">100.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">7x</td><td style=\"width: 55%; text-align: left;\">MIXTO NORMAL</td><td style=\"width: 30%; text-align: right;\">42.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">5x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa Lin JR C/ Papas</td><td style=\"width: 30%; text-align: right;\">100.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">10x</td><td style=\"width: 55%; text-align: left;\">JUGO NATURAL</td><td style=\"width: 30%; text-align: right;\">50.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">6x</td><td style=\"width: 55%; text-align: left;\">PAN DE QUESO</td><td style=\"width: 30%; text-align: right;\">30.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa de la casa Triple c/ Papas</td><td style=\"width: 30%; text-align: right;\">38.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">5x</td><td style=\"width: 55%; text-align: left;\">Lomito Árabe s/ Papas</td><td style=\"width: 30%; text-align: right;\">140.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">6x</td><td style=\"width: 55%; text-align: left;\">Lomito Árabe c/ Papas</td><td style=\"width: 30%; text-align: right;\">192.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa de la Casa Triple s/ Papas</td><td style=\"width: 30%; text-align: right;\">35.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa de la Casa Doble s/ Papas</td><td style=\"width: 30%; text-align: right;\">28.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">FANTA NARANJA LATA 350 ML</td><td style=\"width: 30%; text-align: right;\">10.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">4x</td><td style=\"width: 55%; text-align: left;\">SANDWICH DE MILANESA</td><td style=\"width: 30%; text-align: right;\">40.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">5x</td><td style=\"width: 55%; text-align: left;\">CLASICA DOBLE C/ PAPAS</td><td style=\"width: 30%; text-align: right;\">160.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">SPRITE LATA 350 ML</td><td style=\"width: 30%; text-align: right;\">10.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa Clásica Simple c/ Papas</td><td style=\"width: 30%; text-align: right;\">52.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">6x</td><td style=\"width: 55%; text-align: left;\">GUARANA ANTARTIDA LATA</td><td style=\"width: 30%; text-align: right;\">60.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">PAPA FRITA X10.000</td><td style=\"width: 30%; text-align: right;\">10.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">3x</td><td style=\"width: 55%; text-align: left;\">BIFE ACEBOLLADO CON ARROZ</td><td style=\"width: 30%; text-align: right;\">72.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">4x</td><td style=\"width: 55%; text-align: left;\">Bife Acebollado con Arroz y Papas Fritas </td><td style=\"width: 30%; text-align: right;\">112.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">12x</td><td style=\"width: 55%; text-align: left;\">COCA COLA LATA 350 ML</td><td style=\"width: 30%; text-align: right;\">120.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">AGUA CALIENTE</td><td style=\"width: 30%; text-align: right;\">10.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">5x</td><td style=\"width: 55%; text-align: left;\">MIXTO BAURU</td><td style=\"width: 30%; text-align: right;\">50.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">3x</td><td style=\"width: 55%; text-align: left;\">TAPIOCA CON HUEVO REVUELTO</td><td style=\"width: 30%; text-align: right;\">36.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">3x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa de la Casa Doble c/ Papas</td><td style=\"width: 30%; text-align: right;\">96.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa Lin JR S/ Papas</td><td style=\"width: 30%; text-align: right;\">18.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">Hamburguesa Clásica Cuádruple c/ Papas</td><td style=\"width: 30%; text-align: right;\">42.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">TAPIOCA CON J&Q Y HUEVO</td><td style=\"width: 30%; text-align: right;\">15.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">Bife Acebollado con Arroz y Papas Fritas y Ensalada</td><td style=\"width: 30%; text-align: right;\">64.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">3x</td><td style=\"width: 55%; text-align: left;\">AGUA 1 LTS</td><td style=\"width: 30%; text-align: right;\">24.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">Sandwich de Lomito s/ Papas</td><td style=\"width: 30%; text-align: right;\">26.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">3x</td><td style=\"width: 55%; text-align: left;\">Salteado Mega Premium </td><td style=\"width: 30%; text-align: right;\">105.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">CAFE NEGRO (ESPRESSO) GRANDE</td><td style=\"width: 30%; text-align: right;\">7.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">TILLY JUGO</td><td style=\"width: 30%; text-align: right;\">5.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">3x</td><td style=\"width: 55%; text-align: left;\">AGUA 500 ML</td><td style=\"width: 30%; text-align: right;\">15.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">2x</td><td style=\"width: 55%; text-align: left;\">CAFE CON LECHE GRANDE</td><td style=\"width: 30%; text-align: right;\">14.000</td></tr><tr><td style=\"width: 15%; text-align: left;\">1x</td><td style=\"width: 55%; text-align: left;\">CAFE FRIO</td><td style=\"width: 30%; text-align: right;\">10.000</td></tr>\n                        </table>\n                        <div class=\"right\" style=\"font-size: 8.5px; font-weight: 900; margin-top: 3px;\">VENDIDOS TOTAL: Gs. 1.972.000</div>\n                        <hr>\n\n                        <div class=\"subtitle\">SISTEMA ESPERADO:</div>\n                        <table>\n                            <tr><td>Fondo Inicial</td><td class=\"right\">+0</td></tr>\n                            <tr><td>Ventas Efectivo</td><td class=\"right\">+1.465.000</td></tr>\n                            <tr><td>Gastos</td><td class=\"right\">-20.000</td></tr>\n                            <tr style=\"border-top: 1px dashed black;\"><td style=\"font-size: 10px;\">Total Esp. Efectivo</td><td class=\"right\" style=\"font-size: 10px;\">1.445.000</td></tr>\n                            <tr><td style=\"padding-top: 3px;\">Total Tarjeta POS</td><td class=\"right\" style=\"padding-top: 3px;\">362.000</td></tr>\n                            <tr><td>Total Transf.</td><td class=\"right\">145.000</td></tr>\n                            <tr style=\"border-top: 2px solid black;\"><td style=\"font-size: 11px;\">TOTAL ESPERADO</td><td class=\"right\" style=\"font-size: 11px;\">1.952.000</td></tr>\n                        </table>\n                        <hr>\n\n                        <div class=\"subtitle\">CAJA DECLARADO:</div>\n                        <table>\n                    <tr><td>Efectivo Fisico</td><td class=\"right\">1.442.000</td></tr>\n                            <tr><td>Tarjeta POS</td><td class=\"right\">362.000</td></tr>\n                            <tr><td>Transferencia</td><td class=\"right\">129.000</td></tr>\n                            <tr style=\"border-top: 2px solid black;\"><td style=\"font-size: 11px;\">TOTAL EN CAJA</td><td class=\"right\" style=\"font-size: 11px;\">1.933.000</td></tr>\n                        </table>\n                        <hr>\n\n                        <div class=\"subtitle\">DIFERENCIA FINAL:</div>\n                        <table>\n                            <tr><td style=\"font-size: 10px;\">Dif. Efectivo</td><td class=\"right\" style=\"font-size: 10px;\">- Gs. 3.000 (FALTA)</td></tr>\n                            <tr><td style=\"font-size: 10px;\">Dif. Tarjeta</td><td class=\"right\" style=\"font-size: 10px;\">Gs. 0</td></tr>\n                            <tr><td style=\"font-size: 10px;\">Dif. Transf.</td><td class=\"right\" style=\"font-size: 10px;\">- Gs. 16.000 (FALTA)</td></tr>\n                            <tr style=\"border-top: 2px solid black;\"><td style=\"font-size: 12px;\">DIF TOTAL</td><td class=\"right\" style=\"font-size: 12px;\">- Gs. 19.000 (FALTA)</td></tr>\n                        </table>\n                        <hr><br><div class=\"center\">____________________</div><div class=\"center\">Firma del Cajero</div>\n                    </body></html>\n                "
+          ]
+        },
+        "creadoEn": {
+          "tipos": {
+            "date": 200
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "06RiI4npDsQwiEXmLtAU",
+            "0JI35LQv4Eb0Z9D4cANH"
+          ]
+        },
+        "resumenFinanciero": {
+          "tipos": {
+            "object": 84
+          },
+          "ejemplos": []
+        },
+        "versionEsquemaFinanciero": {
+          "tipos": {
+            "int": 84
+          },
+          "ejemplos": [
+            2,
+            2
+          ]
+        },
+        "turnosIncluidos": {
+          "tipos": {
+            "array": 4
+          },
+          "ejemplos": []
+        },
+        "cierreForzado": {
+          "tipos": {
+            "boolean": 4
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "motivoCierreForzado": {
+          "tipos": {
+            "string": 4
+          },
+          "ejemplos": [
+            "POR FALTA DE ENERGIA",
+            "Caja no pudo cerrar desde POS"
+          ]
+        },
+        "forzadoPor": {
+          "tipos": {
+            "string": 4
+          },
+          "ejemplos": [
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1",
+            "Giuliano Catella"
+          ]
+        },
+        "forzadoPorId": {
+          "tipos": {
+            "string": 4
+          },
+          "ejemplos": [
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1",
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "cash_flow_audits",
+      "documentos": 487,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "action": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "reconcile_current_shift",
+            "reconcile_current_shift"
+          ]
+        },
+        "turnoId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "TURN-CAFETERIACHI-1787561745236-980",
+            "TURN-SanBenitoCaf-1785007940724-489"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "CAFETERIA CHICOLIN",
+            "San Benito Cafe Resto Bar"
+          ]
+        },
+        "before": {
+          "tipos": {
+            "object": 200
+          },
+          "ejemplos": []
+        },
+        "after": {
+          "tipos": {
+            "object": 200
+          },
+          "ejemplos": []
+        },
+        "differences": {
+          "tipos": {
+            "object": 200
+          },
+          "ejemplos": []
+        },
+        "ticketsRead": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            387,
+            32
+          ]
+        },
+        "contributionsApplied": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            108,
+            7
+          ]
+        },
+        "createdBy": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "muIrbu5mnChYgrqHsqsZ652Fz0w2",
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3"
+          ]
+        },
+        "createdAt": {
+          "tipos": {
+            "date": 200
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "02Gui4MGPd6eHvSagcPX",
+            "05vZBTG8UXvAjyShXMGy"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "cash_flow_contributions",
+      "documentos": 123,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 123
+          },
+          "ejemplos": []
+        },
+        "saleId": {
+          "tipos": {
+            "string": 123
+          },
+          "ejemplos": [
+            "0Yb8YY7tlb4lWvrp2lFc",
+            "22w5DCVCsHcGDMxcpa41"
+          ]
+        },
+        "summaryId": {
+          "tipos": {
+            "string": 123
+          },
+          "ejemplos": [
+            "TURN-CAFETERIACHI-1789118251072-200",
+            "TURN-CAFETERIACHI-1789118247059-49"
+          ]
+        },
+        "turnoId": {
+          "tipos": {
+            "string": 123
+          },
+          "ejemplos": [
+            "TURN-CAFETERIACHI-1789118251072-200",
+            "TURN-CAFETERIACHI-1789118247059-49"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 123
+          },
+          "ejemplos": [
+            "CAFETERIA CHICOLIN",
+            "CAFETERIA CHICOLIN"
+          ]
+        },
+        "sucursalId": {
+          "tipos": {
+            "string": 123
+          },
+          "ejemplos": [
+            "cafeteria_chicolin",
+            "cafeteria_chicolin"
+          ]
+        },
+        "fechaOperativa": {
+          "tipos": {
+            "string": 123
+          },
+          "ejemplos": [
+            "2026-09-11",
+            "2026-09-11"
+          ]
+        },
+        "fechaAperturaMs": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            1789118252753,
+            1789118252714
+          ]
+        },
+        "ventaTotalBruta": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            5000,
+            10000
+          ]
+        },
+        "efectivo": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            0,
+            10000
+          ]
+        },
+        "tarjetaPOS": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            5000,
+            0
+          ]
+        },
+        "transferencia": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "credito": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "totalProductos": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "totalTickets": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "totalTicketsFlujo": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "totalTicketsPagados": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "totalTicketsPendientes": {
+          "tipos": {
+            "int": 123
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 123
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 123
+          },
+          "ejemplos": [
+            "0Yb8YY7tlb4lWvrp2lFc",
+            "22w5DCVCsHcGDMxcpa41"
+          ]
+        },
+        "sourceUpdatedAt": {
+          "tipos": {
+            "date": 40
+          },
+          "ejemplos": []
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "cash_shifts",
+      "documentos": 140,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 140
+          },
+          "ejemplos": []
+        },
+        "sucursalId": {
+          "tipos": {
+            "string": 140
+          },
+          "ejemplos": [
+            "cafeteria_chicolin",
+            "cafeteria_chicolin"
+          ]
+        },
+        "origen": {
+          "tipos": {
+            "string": 137
+          },
+          "ejemplos": [
+            "sales_materialized_view",
+            "sales_materialized_view"
+          ]
+        },
+        "version": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "fechaApertura": {
+          "tipos": {
+            "date": 140
+          },
+          "ejemplos": []
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 140
+          },
+          "ejemplos": [
+            "CAFETERIA CHICOLIN",
+            "CAFETERIA CHICOLIN"
+          ]
+        },
+        "fechaOperativa": {
+          "tipos": {
+            "string": 137
+          },
+          "ejemplos": [
+            "2026-07-03",
+            "2026-07-04"
+          ]
+        },
+        "sucursalesActivas": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "turnoId": {
+          "tipos": {
+            "string": 140
+          },
+          "ejemplos": [
+            "TURN-CAFETERIACHI-1783069048373-148",
+            "TURN-CAFETERIACHI-1783156257303-313"
+          ]
+        },
+        "totalTicketsPendientes": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "transferencia": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "tarjetaPOS": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "credito": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "estadoTurno": {
+          "tipos": {
+            "string": 140
+          },
+          "ejemplos": [
+            "cerrado",
+            "cerrado"
+          ]
+        },
+        "totalTicketsFlujo": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "efectivo": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "totalTickets": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "totalTicketsPagados": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "closedAt": {
+          "tipos": {
+            "date": 135
+          },
+          "ejemplos": []
+        },
+        "totalProductos": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "ventaTotalBruta": {
+          "tipos": {
+            "int": 137
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 140
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 140
+          },
+          "ejemplos": [
+            "TURN-CAFETERIACHI-1783069048373-148",
+            "TURN-CAFETERIACHI-1783156257303-313"
+          ]
+        },
+        "cierreCajaId": {
+          "tipos": {
+            "string": 87
+          },
+          "ejemplos": [
+            "nWgvCiSdapnDDvIw8Z0q",
+            "rhbgbrcvhCfUmrUPQyrw"
+          ]
+        },
+        "reconciliationSource": {
+          "tipos": {
+            "string": 62
+          },
+          "ejemplos": [
+            "admin_callable",
+            "admin_callable"
+          ]
+        },
+        "cierreForzado": {
+          "tipos": {
+            "boolean": 2
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "cierreForzadoPorId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3",
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1"
+          ]
+        },
+        "reconciledBy": {
+          "tipos": {
+            "string": 62
+          },
+          "ejemplos": [
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1",
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1"
+          ]
+        },
+        "reconciledAt": {
+          "tipos": {
+            "date": 62
+          },
+          "ejemplos": []
+        },
+        "origenApertura": {
+          "tipos": {
+            "string": 89
+          },
+          "ejemplos": [
+            "pos",
+            "pos"
+          ]
+        },
+        "fondoInicial": {
+          "tipos": {
+            "int": 89
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "cajeroId": {
+          "tipos": {
+            "string": 89
+          },
+          "ejemplos": [
+            "wwH7KHASj0YWiH0KwZA7mnd3dmj2",
+            "wwH7KHASj0YWiH0KwZA7mnd3dmj2"
+          ]
+        },
+        "fechaAperturaMs": {
+          "tipos": {
+            "int": 89
+          },
+          "ejemplos": [
+            1785145167389,
+            1785145167412
+          ]
+        },
+        "cajero": {
+          "tipos": {
+            "string": 89
+          },
+          "ejemplos": [
+            "Noni",
+            "Noni"
+          ]
+        },
+        "aperturaRegistrada": {
+          "tipos": {
+            "boolean": 89
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "categories",
+      "documentos": 6,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 6
+          },
+          "ejemplos": []
+        },
+        "nombre": {
+          "tipos": {
+            "string": 6
+          },
+          "ejemplos": [
+            "Almuerzo",
+            "Bebida"
+          ]
+        },
+        "slug": {
+          "tipos": {
+            "string": 6
+          },
+          "ejemplos": [
+            "almuerzo",
+            "bebida"
+          ]
+        },
+        "icono": {
+          "tipos": {
+            "string": 6
+          },
+          "ejemplos": [
+            "fa-utensils",
+            "fa-utensils"
+          ]
+        },
+        "color": {
+          "tipos": {
+            "string": 6
+          },
+          "ejemplos": [
+            "#0f172a",
+            "#0f172a"
+          ]
+        },
+        "orden": {
+          "tipos": {
+            "int": 6
+          },
+          "ejemplos": [
+            0,
+            1
+          ]
+        },
+        "estado": {
+          "tipos": {
+            "string": 6
+          },
+          "ejemplos": [
+            "activa",
+            "activa"
+          ]
+        },
+        "visibleEnPos": {
+          "tipos": {
+            "boolean": 6
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "origen": {
+          "tipos": {
+            "string": 6
+          },
+          "ejemplos": [
+            "derivado:products.categoria",
+            "derivado:products.categoria"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "credit_pin_attempts",
+      "documentos": 23,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 23
+          },
+          "ejemplos": []
+        },
+        "clienteId": {
+          "tipos": {
+            "string": 23
+          },
+          "ejemplos": [
+            "pX6uufRUd0cctLhieVl8wu6Ji8t1",
+            "pX6uufRUd0cctLhieVl8wu6Ji8t1"
+          ]
+        },
+        "cajeroId": {
+          "tipos": {
+            "string": 23
+          },
+          "ejemplos": [
+            "wwH7KHASj0YWiH0KwZA7mnd3dmj2",
+            "wwH7KHASj0YWiH0KwZA7mnd3dmj2"
+          ]
+        },
+        "cajeroRol": {
+          "tipos": {
+            "string": 23
+          },
+          "ejemplos": [
+            "cajero",
+            "cajero"
+          ]
+        },
+        "success": {
+          "tipos": {
+            "boolean": 23
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "createdAt": {
+          "tipos": {
+            "date": 23
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 23
+          },
+          "ejemplos": [
+            "00D4HcPegsPcGpxPpRTx",
+            "1UZpohOG4erLoGBZ3zRW"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "credit_pins",
+      "documentos": 10,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 10
+          },
+          "ejemplos": []
+        },
+        "updatedBy": {
+          "tipos": {
+            "string": 10
+          },
+          "ejemplos": [
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1",
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3"
+          ]
+        },
+        "clienteId": {
+          "tipos": {
+            "string": 10
+          },
+          "ejemplos": [
+            "2RI90mEnAOXBNls3VMGq9uOez7s2",
+            "8LY73SQBpqcSjVfJkp08gKmw9kj2"
+          ]
+        },
+        "pinHash": {
+          "tipos": {
+            "string": 10
+          },
+          "ejemplos": [
+            "3aa285d30671bb480f3548739b89b85899efcd0c7aae93138ee43349bafd3a18",
+            "fad83c3041bfd2ec953a6caad7f971ffa964d210d3b7969289eae75b2f1f36c9"
+          ]
+        },
+        "updatedByName": {
+          "tipos": {
+            "string": 10
+          },
+          "ejemplos": [
+            "LIZ ACOSTA",
+            "Giuliano Catella"
+          ]
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 10
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 10
+          },
+          "ejemplos": [
+            "2RI90mEnAOXBNls3VMGq9uOez7s2",
+            "8LY73SQBpqcSjVfJkp08gKmw9kj2"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "currencies",
+      "documentos": 4,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 4
+          },
+          "ejemplos": []
+        },
+        "codigo": {
+          "tipos": {
+            "string": 4
+          },
+          "ejemplos": [
+            "PYG",
+            "BRL"
+          ]
+        },
+        "nombre": {
+          "tipos": {
+            "string": 4
+          },
+          "ejemplos": [
+            "Guarani Paraguayo",
+            "Real Brasileno"
+          ]
+        },
+        "simbolo": {
+          "tipos": {
+            "string": 4
+          },
+          "ejemplos": [
+            "Gs.",
+            "BRL"
+          ]
+        },
+        "decimales": {
+          "tipos": {
+            "int": 4
+          },
+          "ejemplos": [
+            0,
+            2
+          ]
+        },
+        "esBase": {
+          "tipos": {
+            "boolean": 4
+          },
+          "ejemplos": [
+            true,
+            false
+          ]
+        },
+        "tasaCompra": {
+          "tipos": {
+            "int": 4
+          },
+          "ejemplos": [
+            1,
+            1000
+          ]
+        },
+        "tasaVenta": {
+          "tipos": {
+            "int": 4
+          },
+          "ejemplos": [
+            1,
+            1000
+          ]
+        },
+        "activa": {
+          "tipos": {
+            "boolean": 4
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "actualizadoEn": {
+          "tipos": {
+            "date": 4
+          },
+          "ejemplos": []
+        },
+        "origen": {
+          "tipos": {
+            "string": 4
+          },
+          "ejemplos": [
+            "derivado:settings/sistema.divisas",
+            "derivado:settings/sistema.divisas"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "inventory_movements",
+      "documentos": 2202,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "productoId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "PHhjNaLSgO6ZDIztnczR",
+            "yrDQMiOEV4aseDVJGrYx"
+          ]
+        },
+        "nombreProducto": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "COCA COLA 1LTS",
+            "AGUA 500 ML"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "San Benito Cafe Resto Bar",
+            "Cafetería Chicolín"
+          ]
+        },
+        "sucursalId": {
+          "tipos": {
+            "string": 174
+          },
+          "ejemplos": [
+            "mr_lin_restaurante",
+            "cafeteria_chicolin"
+          ]
+        },
+        "tipo": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "VENTA",
+            "VENTA"
+          ]
+        },
+        "cantidadAnterior": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            8,
+            12
+          ]
+        },
+        "cantidad": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            -1,
+            -1
+          ]
+        },
+        "cantidadResultante": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            7,
+            11
+          ]
+        },
+        "ventaId": {
+          "tipos": {
+            "string": 172
+          },
+          "ejemplos": [
+            "QwFBUtHlPiECe09PQCNV",
+            "6xhUrwkW8zqFc1IDgRWL"
+          ]
+        },
+        "usuario": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Benjamin",
+            "Noni"
+          ]
+        },
+        "usuarioId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "pcfieE6cu4MuInrU1U3ldDrSzDa2",
+            "wwH7KHASj0YWiH0KwZA7mnd3dmj2"
+          ]
+        },
+        "cajaId": {
+          "tipos": {
+            "string": 172
+          },
+          "ejemplos": [
+            "TURN-SanBenitoCaf-1785380394805-703",
+            "TURN-CAFETERIACHI-1787561745236-980"
+          ]
+        },
+        "turnoId": {
+          "tipos": {
+            "string": 172
+          },
+          "ejemplos": [
+            "TURN-SanBenitoCaf-1785380394805-703",
+            "TURN-CAFETERIACHI-1787561745236-980"
+          ]
+        },
+        "motivo": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Venta confirmada en POS",
+            "Venta confirmada en POS"
+          ]
+        },
+        "estado": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "aplicado",
+            "aplicado"
+          ]
+        },
+        "idempotencyKey": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "QwFBUtHlPiECe09PQCNV::PHhjNaLSgO6ZDIztnczR::VENTA",
+            "6xhUrwkW8zqFc1IDgRWL::yrDQMiOEV4aseDVJGrYx::VENTA"
+          ]
+        },
+        "fecha": {
+          "tipos": {
+            "date": 200
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "012ZrqmNcWp2THzABDXv",
+            "04LUQO02WSDUc66g36iZ"
+          ]
+        },
+        "sucursalNombre": {
+          "tipos": {
+            "string": 25
+          },
+          "ejemplos": [
+            "Cafetería Chicolín",
+            "San Benito Cafe Resto Bar"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "lin_ticket_claims",
+      "documentos": 2,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 2
+          },
+          "ejemplos": []
+        },
+        "ticketId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "Z1rU31Qpguk0PKfmiAmu",
+            "iF9SD1nSJ7pDjtpDJgEV"
+          ]
+        },
+        "ticketName": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "HAMBURGUESA CON PAPAS FRITA Y COCA COLA",
+            "HAMBURGUESA CON PAPAS FRITA"
+          ]
+        },
+        "productId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "",
+            "k6d6k4eHH51gB80GO8xt"
+          ]
+        },
+        "productName": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "COMBO LIN TICKET",
+            "COMBO LIN TICKET LIN BURGER C/ PAPAS FRITAS"
+          ]
+        },
+        "productPrice": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            0,
+            1
+          ]
+        },
+        "productImageUrl": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "https://firebasestorage.googleapis.com/v0/b/sys-pos-erp-lingroup.firebasestorage.app/o/lin-tickets%2FZ1rU31Qpguk0PKfmiAmu-1781026594749-combos-lin-tickest.png?alt=media&token=6c1dc3ba-0cd0-497b-ada3-ef7d710726df",
+            ""
+          ]
+        },
+        "userId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "bvJHC8xsyRU5iQeSq2TWH0unWGl2",
+            "pX6uufRUd0cctLhieVl8wu6Ji8t1"
+          ]
+        },
+        "userName": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "Thiago Santos da Rosa",
+            "Giuliano Catella"
+          ]
+        },
+        "branchId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "0wqglGrCcP5PiLqJ7Aft",
+            "0wqglGrCcP5PiLqJ7Aft"
+          ]
+        },
+        "branchName": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "Mr Lin Restaurante",
+            "Mr Lin Restaurante"
+          ]
+        },
+        "pointsGranted": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "status": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "pending_redeem",
+            "pending_redeem"
+          ]
+        },
+        "noAfectaCaja": {
+          "tipos": {
+            "boolean": 2
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "oneTimePerUser": {
+          "tipos": {
+            "boolean": 2
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "type": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "free_product",
+            "free_product"
+          ]
+        },
+        "claimedAt": {
+          "tipos": {
+            "date": 2
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "bvJHC8xsyRU5iQeSq2TWH0unWGl2_Z1rU31Qpguk0PKfmiAmu",
+            "pX6uufRUd0cctLhieVl8wu6Ji8t1_iF9SD1nSJ7pDjtpDJgEV"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "lin_tickets",
+      "documentos": 1,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 1
+          },
+          "ejemplos": []
+        },
+        "name": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "HAMBURGUESA CON PAPAS FRITA"
+          ]
+        },
+        "title": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "HAMBURGUESA CON PAPAS FRITA"
+          ]
+        },
+        "description": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            ""
+          ]
+        },
+        "type": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "free_product"
+          ]
+        },
+        "benefitType": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "free_product"
+          ]
+        },
+        "points": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            0
+          ]
+        },
+        "pointsValue": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            0
+          ]
+        },
+        "productId": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "k6d6k4eHH51gB80GO8xt"
+          ]
+        },
+        "productName": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "COMBO LIN TICKET LIN BURGER C/ PAPAS FRITAS"
+          ]
+        },
+        "productPrice": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            1
+          ]
+        },
+        "productImageUrl": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            ""
+          ]
+        },
+        "productCategory": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Almuerzo"
+          ]
+        },
+        "branchId": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "all"
+          ]
+        },
+        "branchName": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Todas las sucursales"
+          ]
+        },
+        "appliesToAllBranches": {
+          "tipos": {
+            "boolean": 1
+          },
+          "ejemplos": [
+            true
+          ]
+        },
+        "startDate": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "2026-07-02"
+          ]
+        },
+        "endDate": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "2026-07-10"
+          ]
+        },
+        "active": {
+          "tipos": {
+            "boolean": 1
+          },
+          "ejemplos": [
+            true
+          ]
+        },
+        "oneTimePerUser": {
+          "tipos": {
+            "boolean": 1
+          },
+          "ejemplos": [
+            true
+          ]
+        },
+        "conditions": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Valido durante la promo!!"
+          ]
+        },
+        "createdAt": {
+          "tipos": {
+            "date": 1
+          },
+          "ejemplos": []
+        },
+        "imageUrl": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "https://firebasestorage.googleapis.com/v0/b/sys-pos-erp-lingroup.firebasestorage.app/o/lin-tickets%2FiF9SD1nSJ7pDjtpDJgEV-1784998491965-combos-lin-tickest.png?alt=media&token=4ddf3bb6-a62e-4ecf-b957-b61affa88d77"
+          ]
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 1
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "iF9SD1nSJ7pDjtpDJgEV"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "notifications",
+      "documentos": 1,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 1
+          },
+          "ejemplos": []
+        },
+        "titulo": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "RECUERDEN"
+          ]
+        },
+        "mensaje": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "QUE PUEDEN REALIZAR SUS PEDIDOS DESDE LA APP Y CONSEGUIR PUNTOS"
+          ]
+        },
+        "fecha": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "2026-07-05T23:00:52.595Z"
+          ]
+        },
+        "autor": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Giuliano Catella"
+          ]
+        },
+        "rolAutor": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "admin"
+          ]
+        },
+        "vistoPor": {
+          "tipos": {
+            "array": 1
+          },
+          "ejemplos": []
+        },
+        "pushFallidos": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            1
+          ]
+        },
+        "pushEnviados": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            5
+          ]
+        },
+        "totalTokens": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            6
+          ]
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "FVUbSA6L5kuWFQ5Nb1Lb"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "order_items",
+      "documentos": 25514,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "orderId": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "productoId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "ysei6UDGoUvZVWBRFAAl",
+            "07CJP7ScIJ9VE5Y0i1tR"
+          ]
+        },
+        "nombre": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "COCA COLA 1 LTS",
+            "GRILLE CON ARROZ Y HUEVO"
+          ]
+        },
+        "categoria": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Bebida",
+            "Almuerzo"
+          ]
+        },
+        "cantidad": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "precio": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            15000,
+            24000
+          ]
+        },
+        "descuento": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "promocionBogo": {
+          "tipos": {
+            "boolean": 200
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "codigo": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "",
+            ""
+          ]
+        },
+        "icono": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "fa-bottle-water",
+            "fa-burger"
+          ]
+        },
+        "controlado": {
+          "tipos": {
+            "boolean": 200
+          },
+          "ejemplos": [
+            true,
+            false
+          ]
+        },
+        "obsProd": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "",
+            ""
+          ]
+        },
+        "subtotal": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            15000,
+            24000
+          ]
+        },
+        "ticket_id": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "T-693213",
+            "T-263482"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "San Benito Cafe Resto Bar",
+            "CAFETERIA CHICOLIN"
+          ]
+        },
+        "fecha": {
+          "tipos": {
+            "date": 179,
+            "string": 21
+          },
+          "ejemplos": [
+            "2026-03-12T10:55:22.136Z",
+            "2026-03-12T10:55:22.136Z"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "orders",
+      "documentos": 15332,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "ticket_id": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "T-693213",
+            "T-263482"
+          ]
+        },
+        "tipoTransaccion": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "venta_comida",
+            "venta_comida"
+          ]
+        },
+        "total": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            15000,
+            24000
+          ]
+        },
+        "cajero": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Lariza",
+            "Noni"
+          ]
+        },
+        "cliente": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "ocasional",
+            "ocasional"
+          ]
+        },
+        "nombreCliente": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Fisico 1",
+            "FAFA (Ocasional)"
+          ]
+        },
+        "aliasReferencia": {
+          "tipos": {
+            "string": 129
+          },
+          "ejemplos": [
+            "Fisico 1",
+            "FAFA"
+          ]
+        },
+        "items": {
+          "tipos": {
+            "array": 200
+          },
+          "ejemplos": []
+        },
+        "fecha": {
+          "tipos": {
+            "date": 185,
+            "string": 15
+          },
+          "ejemplos": [
+            "2026-03-12T10:55:22.136Z",
+            "2026-03-04T23:02:02.739Z"
+          ]
+        },
+        "estadoCocina": {
+          "tipos": {
+            "string": 198
+          },
+          "ejemplos": [
+            "listo",
+            "listo"
+          ]
+        },
+        "observacion": {
+          "tipos": {
+            "string": 193
+          },
+          "ejemplos": [
+            "",
+            "SIN HUEVO Y SIN PAPAS"
+          ]
+        },
+        "origenCuentaPendiente": {
+          "tipos": {
+            "boolean": 119
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "metodoPago": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Efectivo",
+            "Transferencia"
+          ]
+        },
+        "sucursalCreditoLibre": {
+          "tipos": {
+            "null": 174,
+            "string": 5
+          },
+          "ejemplos": [
+            "Mr Lin Restaurante",
+            "Mr Lin Restaurante"
+          ]
+        },
+        "creditoProcesado": {
+          "tipos": {
+            "boolean": 120
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "puntosCanjeados": {
+          "tipos": {
+            "int": 182
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "cajeroCobro": {
+          "tipos": {
+            "string": 128
+          },
+          "ejemplos": [
+            "Lariza",
+            "Noni"
+          ]
+        },
+        "estadoPago": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "pagado",
+            "pagado"
+          ]
+        },
+        "puntosOtorgados": {
+          "tipos": {
+            "int": 197
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "creditoLibreSucursal": {
+          "tipos": {
+            "boolean": 179
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "detalleEfectivo": {
+          "tipos": {
+            "object": 117
+          },
+          "ejemplos": []
+        },
+        "arqueado": {
+          "tipos": {
+            "boolean": 196
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "fechaArqueo": {
+          "tipos": {
+            "date": 181,
+            "string": 15
+          },
+          "ejemplos": [
+            "2026-03-12T17:51:59.270Z",
+            "2026-03-05T02:48:02.908Z"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "San Benito Cafe Resto Bar",
+            "CAFETERIA CHICOLIN"
+          ]
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "003Jljv7OSqMjmpcAvgm",
+            "00NjSaLV5LDBenM8gOao"
+          ]
+        },
+        "sucursalId": {
+          "tipos": {
+            "string": 43
+          },
+          "ejemplos": [
+            "mr_lin_restaurante",
+            "cafeteria_chicolin"
+          ]
+        },
+        "turnoId": {
+          "tipos": {
+            "string": 143
+          },
+          "ejemplos": [
+            "TURN-SanBenitoCaf-1785380397425-508",
+            "TURN-MrLinRestaur-1777674997153-980"
+          ]
+        },
+        "fechaAperturaTurno": {
+          "tipos": {
+            "date": 142
+          },
+          "ejemplos": []
+        },
+        "produccionSync": {
+          "tipos": {
+            "object": 17
+          },
+          "ejemplos": []
+        },
+        "discountAmount": {
+          "tipos": {
+            "int": 54
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "totalPYG": {
+          "tipos": {
+            "int": 30
+          },
+          "ejemplos": [
+            129000,
+            15000
+          ]
+        },
+        "subtotalOriginal": {
+          "tipos": {
+            "int": 54
+          },
+          "ejemplos": [
+            129000,
+            28000
+          ]
+        },
+        "fechaMetaPublica": {
+          "tipos": {
+            "date": 53
+          },
+          "ejemplos": []
+        },
+        "changePYG": {
+          "tipos": {
+            "int": 30
+          },
+          "ejemplos": [
+            1000,
+            0
+          ]
+        },
+        "exchangeRate": {
+          "tipos": {
+            "int": 30
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "fechaConfirmacionCaja": {
+          "tipos": {
+            "string": 67
+          },
+          "ejemplos": [
+            "2026-08-01T00:49:44.562Z",
+            "2026-09-09T15:32:58.371Z"
+          ]
+        },
+        "premiumDiscountApplied": {
+          "tipos": {
+            "boolean": 54
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "totalInSelectedCurrency": {
+          "tipos": {
+            "int": 28,
+            "double": 2
+          },
+          "ejemplos": [
+            129000,
+            15000
+          ]
+        },
+        "metaPublicaRegistrada": {
+          "tipos": {
+            "boolean": 53
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "amountReceivedCurrency": {
+          "tipos": {
+            "int": 30
+          },
+          "ejemplos": [
+            130000,
+            15000
+          ]
+        },
+        "movimientoGratuito": {
+          "tipos": {
+            "boolean": 53
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "subtotal": {
+          "tipos": {
+            "int": 53
+          },
+          "ejemplos": [
+            129000,
+            28000
+          ]
+        },
+        "noAfectaCaja": {
+          "tipos": {
+            "boolean": 53
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "paymentMethod": {
+          "tipos": {
+            "string": 30
+          },
+          "ejemplos": [
+            "cash",
+            "cash"
+          ]
+        },
+        "requiereConfirmacionCaja": {
+          "tipos": {
+            "boolean": 67
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "paymentCurrency": {
+          "tipos": {
+            "string": 30
+          },
+          "ejemplos": [
+            "PYG",
+            "PYG"
+          ]
+        },
+        "premiumDiscountPercent": {
+          "tipos": {
+            "int": 54
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "confirmadoPorCaja": {
+          "tipos": {
+            "boolean": 67
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "motivoNoAfectaCaja": {
+          "tipos": {
+            "null": 20
+          },
+          "ejemplos": []
+        },
+        "creditoPinRequerido": {
+          "tipos": {
+            "boolean": 3
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "creditoPinValidado": {
+          "tipos": {
+            "boolean": 3
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "detallesPago": {
+          "tipos": {
+            "object": 4,
+            "null": 1
+          },
+          "ejemplos": []
+        },
+        "deudaAplicada": {
+          "tipos": {
+            "boolean": 2
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "estadoAprobacionCobro": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "aprobado",
+            "aprobado"
+          ]
+        },
+        "cobroRegistradoPorId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1",
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1"
+          ]
+        },
+        "cobroRegistradoPorNombre": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "LIZ ACOSTA",
+            "LIZ ACOSTA"
+          ]
+        },
+        "fechaAprobacionCobro": {
+          "tipos": {
+            "date": 2
+          },
+          "ejemplos": []
+        },
+        "aprobadoPor": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "LIZ ACOSTA",
+            "LIZ ACOSTA"
+          ]
+        },
+        "cierreForzado": {
+          "tipos": {
+            "boolean": 1
+          },
+          "ejemplos": [
+            true
+          ]
+        },
+        "cierreForzadoPorId": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3"
+          ]
+        },
+        "cierreForzadoPor": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Giuliano Catella"
+          ]
+        },
+        "motivoCierreForzado": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Caja no pudo cerrar desde POS de FECHA 20 AL 23"
+          ]
+        },
+        "origenPedido": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "app_cliente"
+          ]
+        },
+        "telefonoCliente": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "0973546466"
+          ]
+        },
+        "metodoPagoSolicitado": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Crédito"
+          ]
+        },
+        "tipoEntrega": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Delivery"
+          ]
+        },
+        "descuentoPagoEfectivoPct": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            0
+          ]
+        },
+        "descuentoPagoEfectivoMonto": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            0
+          ]
+        },
+        "deudaGenerada": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            50000
+          ]
+        },
+        "direccionDelivery": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Av. Camilo Recalde"
+          ]
+        },
+        "notasCliente": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "Mitad Pepperoni y mitad Palmito La parte de pepperoni sin requeson"
+          ]
+        },
+        "gps": {
+          "tipos": {
+            "object": 1
+          },
+          "ejemplos": []
+        },
+        "referenciaGPS": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "-25.508305, -54.614532"
+          ]
+        },
+        "mapaProveedor": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "openstreetmap"
+          ]
+        },
+        "mapaDeliveryUrl": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "https://www.openstreetmap.org/?mlat=-25.5083051&mlon=-54.6145317#map=18/-25.5083051/-54.6145317"
+          ]
+        },
+        "estadoDelivery": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "en_camino"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "password_reset_otps",
+      "documentos": 5,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 5
+          },
+          "ejemplos": []
+        },
+        "emailHash": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "451e22f81692d63293700df3821e3704e865c40532e9b5ec1978ba9554f6cf6c",
+            "836858b8bc7d2a5596dace3abe00a0c4510572e7e48bde1b8ad1e756e145847e"
+          ]
+        },
+        "userId": {
+          "tipos": {
+            "string": 4,
+            "null": 1
+          },
+          "ejemplos": [
+            "BFORTMdyywdJYPMP99nEoX07aQ23",
+            "vko1vzp5TFSl5NPsFVsSnnUtF6d2"
+          ]
+        },
+        "codeHash": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "c04ac3208bd9e080210ab06874216520072c038373dd3b794bad7bdc93433da5",
+            "6b788f53bb77e8ad6569b623f018dd81adff08501fe2144c502d0551f4dfbe1d"
+          ]
+        },
+        "attempts": {
+          "tipos": {
+            "int": 5
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "maxAttempts": {
+          "tipos": {
+            "int": 5
+          },
+          "ejemplos": [
+            5,
+            5
+          ]
+        },
+        "status": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "active",
+            "consumed"
+          ]
+        },
+        "used": {
+          "tipos": {
+            "boolean": 5
+          },
+          "ejemplos": [
+            false,
+            true
+          ]
+        },
+        "sentAt": {
+          "tipos": {
+            "date": 5
+          },
+          "ejemplos": []
+        },
+        "expiresAt": {
+          "tipos": {
+            "date": 5
+          },
+          "ejemplos": []
+        },
+        "userAgent": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) coffee-pos-erp/1.0.0 Chrome/122.0.6261.156 Electron/29.4.6 Safari/537.36",
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Mobile Safari/537.36"
+          ]
+        },
+        "createdAt": {
+          "tipos": {
+            "date": 5
+          },
+          "ejemplos": []
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 5
+          },
+          "ejemplos": []
+        },
+        "deliveryStatus": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "sent",
+            "sent"
+          ]
+        },
+        "deliveredAt": {
+          "tipos": {
+            "date": 3
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "451e22f81692d63293700df3821e3704e865c40532e9b5ec1978ba9554f6cf6c",
+            "836858b8bc7d2a5596dace3abe00a0c4510572e7e48bde1b8ad1e756e145847e"
+          ]
+        },
+        "usedAt": {
+          "tipos": {
+            "date": 2
+          },
+          "ejemplos": []
+        },
+        "consumedAt": {
+          "tipos": {
+            "date": 2
+          },
+          "ejemplos": []
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "password_reset_rate_limits",
+      "documentos": 5,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 5
+          },
+          "ejemplos": []
+        },
+        "requestCount": {
+          "tipos": {
+            "int": 5
+          },
+          "ejemplos": [
+            1,
+            1
+          ]
+        },
+        "windowStartedAt": {
+          "tipos": {
+            "date": 5
+          },
+          "ejemplos": []
+        },
+        "expiresAt": {
+          "tipos": {
+            "date": 5
+          },
+          "ejemplos": []
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 5
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "13e1bc8a194ec3c1674eed30a94be7af5434de79f09c546217d4e9c21423ecc9",
+            "54cbf81688b03ee4e82aac39afe209fcb9f3905f470a114abaa7e76f539e25ce"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "play_tester_requests",
+      "documentos": 19,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 19
+          },
+          "ejemplos": []
+        },
+        "uid": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "2RI90mEnAOXBNls3VMGq9uOez7s2",
+            "2v51IYC75bhjo2ykcFykoJNJu5x1"
+          ]
+        },
+        "createdAt": {
+          "tipos": {
+            "date": 19
+          },
+          "ejemplos": []
+        },
+        "groupEmail": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "club-lin-testers@googlegroups.com",
+            "club-lin-testers@googlegroups.com"
+          ]
+        },
+        "displayName": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "JHOSEP PERUANO",
+            "Google Play Reviewer"
+          ]
+        },
+        "playStoreUrl": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "https://play.google.com/store/apps/details?id=com.lingroup.clublin",
+            "https://play.google.com/store/apps/details?id=com.lingroup.clublin"
+          ]
+        },
+        "source": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "user_created",
+            "manual_admin"
+          ]
+        },
+        "email": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "peruano@gmail.com",
+            "review.club.lin@grupooh.online"
+          ]
+        },
+        "errorMessage": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "Google Groups API no esta configurada. Agregar el correo al grupo manualmente o configurar Workspace/API.",
+            ""
+          ]
+        },
+        "processedAt": {
+          "tipos": {
+            "date": 19
+          },
+          "ejemplos": []
+        },
+        "status": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "manual_review_required",
+            "added_to_google_group"
+          ]
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 19
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 19
+          },
+          "ejemplos": [
+            "2ri90menaoxbnls3vmgq9uoez7s2",
+            "2v51iyc75bhjo2ykcfykojnju5x1"
+          ]
+        },
+        "processedBy": {
+          "tipos": {
+            "string": 9
+          },
+          "ejemplos": [
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3",
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "production_batches",
+      "documentos": 12,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 12
+          },
+          "ejemplos": []
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 12
+          },
+          "ejemplos": [
+            "Mr Lin Restaurante",
+            "San Benito Cafe Resto Bar"
+          ]
+        },
+        "sucursalKey": {
+          "tipos": {
+            "string": 12
+          },
+          "ejemplos": [
+            "mr_lin_restaurante",
+            "san_benito_cafe_resto_bar"
+          ]
+        },
+        "tipoInsumo": {
+          "tipos": {
+            "string": 12
+          },
+          "ejemplos": [
+            "pan_lomito",
+            "medallones"
+          ]
+        },
+        "cantidadIngresada": {
+          "tipos": {
+            "int": 12
+          },
+          "ejemplos": [
+            39,
+            500
+          ]
+        },
+        "unidad": {
+          "tipos": {
+            "string": 12
+          },
+          "ejemplos": [
+            "unidades",
+            "unidades"
+          ]
+        },
+        "cantidadAcreditada": {
+          "tipos": {
+            "int": 12
+          },
+          "ejemplos": [
+            39,
+            500
+          ]
+        },
+        "medallonesGenerados": {
+          "tipos": {
+            "int": 12
+          },
+          "ejemplos": [
+            0,
+            500
+          ]
+        },
+        "panesGenerados": {
+          "tipos": {
+            "int": 12
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "papasGeneradas": {
+          "tipos": {
+            "int": 12
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "carneSalteadoGenerada": {
+          "tipos": {
+            "int": 12
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "carneLomitoGenerada": {
+          "tipos": {
+            "int": 12
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "panLomitoGenerado": {
+          "tipos": {
+            "int": 12
+          },
+          "ejemplos": [
+            39,
+            0
+          ]
+        },
+        "observacion": {
+          "tipos": {
+            "string": 12
+          },
+          "ejemplos": [
+            "",
+            ""
+          ]
+        },
+        "createdBy": {
+          "tipos": {
+            "string": 12
+          },
+          "ejemplos": [
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3",
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1"
+          ]
+        },
+        "createdByNombre": {
+          "tipos": {
+            "string": 12
+          },
+          "ejemplos": [
+            "Giuliano Catella",
+            "LIZ ACOSTA"
+          ]
+        },
+        "createdAt": {
+          "tipos": {
+            "date": 12
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 12
+          },
+          "ejemplos": [
+            "0ORkrjnQDLIxjZ4YgTfB",
+            "0W104Vm13UFADkvCzfYQ"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "production_config",
+      "documentos": 3,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 3
+          },
+          "ejemplos": []
+        },
+        "sucursalKey": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "cafeteria_chicolin",
+            "mr_lin_restaurante"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "CAFETERIA CHICOLIN",
+            "Mr Lin Restaurante"
+          ]
+        },
+        "carneSalteadoIngresada": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            0,
+            13
+          ]
+        },
+        "panLomitoIngresado": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            0,
+            39
+          ]
+        },
+        "panesIngresados": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            0,
+            45
+          ]
+        },
+        "carneLomitoIngresada": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            0,
+            17
+          ]
+        },
+        "papasIngresadas": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            58,
+            84
+          ]
+        },
+        "carneSalteadoConsumida": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            0,
+            103
+          ]
+        },
+        "panLomitoConsumido": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            0,
+            268
+          ]
+        },
+        "carneLomitoConsumida": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            0,
+            262
+          ]
+        },
+        "updatedBy": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1",
+            "mCCPLlpqC4Ym9gQ5Dbze4KuilJm1"
+          ]
+        },
+        "medallonesIngresados": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            120,
+            318
+          ]
+        },
+        "carneSalteadoDisponible": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            100000,
+            99844
+          ]
+        },
+        "updatedByNombre": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "Sync ventas",
+            "Sync ventas"
+          ]
+        },
+        "carneLomitoDisponible": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            100000,
+            99642
+          ]
+        },
+        "panLomitoDisponible": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            10000,
+            9632
+          ]
+        },
+        "medallonesDisponibles": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            934,
+            137118
+          ]
+        },
+        "panesConsumidos": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            27,
+            640
+          ]
+        },
+        "papasDisponibles": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            99974,
+            1008934
+          ]
+        },
+        "medallonesConsumidos": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            146,
+            3080
+          ]
+        },
+        "papasConsumidos": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            26,
+            727
+          ]
+        },
+        "panesDisponibles": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            9967,
+            10085
+          ]
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 3
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "cafeteria_chicolin",
+            "mr_lin_restaurante"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "products",
+      "documentos": 286,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "categoria": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Almuerzo",
+            "Almuerzo"
+          ]
+        },
+        "icono": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "fa-burger",
+            "fa-bottle-water"
+          ]
+        },
+        "estado": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Activo",
+            "Activo"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "CAFETERIA CHICOLIN",
+            "San Benito Cafe Resto Bar"
+          ]
+        },
+        "visibilidad": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "publico",
+            "publico"
+          ]
+        },
+        "controlado": {
+          "tipos": {
+            "boolean": 200
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "descuento": {
+          "tipos": {
+            "int": 189
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "promocionBogo": {
+          "tipos": {
+            "boolean": 189
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "stock": {
+          "tipos": {
+            "int": 189,
+            "null": 11
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "nombre": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "GRILLE CON ARROZ, ENSALADA Y PAPAS",
+            "MILANESA MEGA PREMIUM"
+          ]
+        },
+        "precio": {
+          "tipos": {
+            "int": 200
+          },
+          "ejemplos": [
+            25000,
+            70000
+          ]
+        },
+        "usaProduccionPanLomito": {
+          "tipos": {
+            "boolean": 188
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "medallonesPorUnidad": {
+          "tipos": {
+            "int": 188
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "permiteProductoGratis": {
+          "tipos": {
+            "boolean": 159
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "carneLomitoPorUnidad": {
+          "tipos": {
+            "int": 188
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "panesPorUnidad": {
+          "tipos": {
+            "int": 188
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "usaProduccionCarne": {
+          "tipos": {
+            "boolean": 188
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "panLomitoPorUnidad": {
+          "tipos": {
+            "int": 188
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "carneSalteadoPorUnidad": {
+          "tipos": {
+            "int": 188
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "usaProduccionCarneSalteado": {
+          "tipos": {
+            "boolean": 188
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "usaProduccionPapa": {
+          "tipos": {
+            "boolean": 188
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "papasPorUnidad": {
+          "tipos": {
+            "int": 188
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "usaProduccionPan": {
+          "tipos": {
+            "boolean": 188
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "usaProduccionCarneLomito": {
+          "tipos": {
+            "boolean": 188
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "imagen": {
+          "tipos": {
+            "string": 88
+          },
+          "ejemplos": [
+            "https://firebasestorage.googleapis.com/v0/b/sys-pos-erp-lingroup.firebasestorage.app/o/product-images%2F07CJP7ScIJ9VE5Y0i1tR-1783014665828-untitled-design.png?alt=media&token=492f4f91-5ead-42aa-b4ce-1d74a2a9dea2",
+            "https://firebasestorage.googleapis.com/v0/b/sys-pos-erp-lingroup.firebasestorage.app/o/product-images%2F0F4ut6wwsSDhqQ6SZ1vV-1783015191459-untitled-design.png?alt=media&token=9b8a0a19-6ed3-436b-bd70-7e61d5960ee3"
+          ]
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "07CJP7ScIJ9VE5Y0i1tR",
+            "0F4ut6wwsSDhqQ6SZ1vV"
+          ]
+        },
+        "sucursalId": {
+          "tipos": {
+            "string": 71
+          },
+          "ejemplos": [
+            "mr_lin_restaurante",
+            "cafeteria_chicolin"
+          ]
+        },
+        "sucursalNombre": {
+          "tipos": {
+            "string": 71
+          },
+          "ejemplos": [
+            "San Benito Cafe Resto Bar",
+            "Cafetería Chicolín"
+          ]
+        },
+        "puntosCanje": {
+          "tipos": {
+            "int": 1,
+            "null": 11
+          },
+          "ejemplos": [
+            1000
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "public_goals",
+      "documentos": 3,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 3
+          },
+          "ejemplos": []
+        },
+        "branchName": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "Cafeteria Chicolin",
+            "Mr Lin Restaurante"
+          ]
+        },
+        "branchId": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "cafeteria_chicolin",
+            "mr_lin_restaurante"
+          ]
+        },
+        "dailyGoal": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            2000000,
+            2000000
+          ]
+        },
+        "monthlyGoal": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            2000000,
+            2000000
+          ]
+        },
+        "achievedDays": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            1,
+            0
+          ]
+        },
+        "achievedDates": {
+          "tipos": {
+            "array": 2
+          },
+          "ejemplos": []
+        },
+        "dailySales": {
+          "tipos": {
+            "array": 2
+          },
+          "ejemplos": []
+        },
+        "salesCount": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            452,
+            88
+          ]
+        },
+        "source": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "rebuild_from_paid_sales_by_payment_date",
+            "rebuild_from_paid_sales_by_payment_date"
+          ]
+        },
+        "dailyTotals.2026-06-06": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            216000,
+            -1432000
+          ]
+        },
+        "dailyTotals.2026-06-08": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            916000,
+            -118000
+          ]
+        },
+        "dailyTotals.2026-06-09": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1135000,
+            -504000
+          ]
+        },
+        "dailyTotals.2026-06-13": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1856000,
+            -1389000
+          ]
+        },
+        "dailyTotals.2026-06-16": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1063000,
+            -830000
+          ]
+        },
+        "dailyTotals.2026-06-17": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1112000,
+            -624000
+          ]
+        },
+        "dailyTotals.2026-06-18": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1378000,
+            -1005000
+          ]
+        },
+        "dailyTotals.2026-06-19": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1255000,
+            -1375000
+          ]
+        },
+        "dailyTotals.2026-06-22": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1333000,
+            -634000
+          ]
+        },
+        "dailyTotals.2026-06-24": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            653000,
+            -1290000
+          ]
+        },
+        "dailyTotals.2026-06-25": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1043000,
+            -364000
+          ]
+        },
+        "dailyTotals.2026-06-26": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            937000,
+            0
+          ]
+        },
+        "dailyTotals.2026-06-29": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            2558000,
+            2846000
+          ]
+        },
+        "dailyTotals.2026-06-30": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            2444000,
+            1074000
+          ]
+        },
+        "dailyTotals.2026-07-01": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1668000,
+            1363000
+          ]
+        },
+        "dailyTotals.2026-07-02": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1946000,
+            515000
+          ]
+        },
+        "dailyTotals.2026-07-03": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            1996000
+          ]
+        },
+        "dailyTotals.2026-07-04": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            2578000
+          ]
+        },
+        "dailyTotals.2026-07-06": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            1710000
+          ]
+        },
+        "dailyTotals.2026-06-23": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            830000,
+            -919000
+          ]
+        },
+        "dailyTotals.2026-06-11": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1180000,
+            -653000
+          ]
+        },
+        "dailyTotals.2026-05-28": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            -20000,
+            -1304000
+          ]
+        },
+        "dailyTotals.2026-06-10": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1190000,
+            -1494000
+          ]
+        },
+        "dailyTotals.2026-06-20": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1267000,
+            -850000
+          ]
+        },
+        "dailyTotals.2026-06-27": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            919000,
+            272000
+          ]
+        },
+        "dailyTotals.2026-06-15": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            916000,
+            -1250000
+          ]
+        },
+        "dailyTotals.2026-06-12": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1240000,
+            -1777000
+          ]
+        },
+        "dailyTotals.2026-07-07": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            1741000,
+            0
+          ]
+        },
+        "dailyTotals.2026-07-08": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            2180000
+          ]
+        },
+        "dailyTotals.2026-07-09": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            2905000,
+            0
+          ]
+        },
+        "dailyTotals.2026-07-10": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            2261000
+          ]
+        },
+        "dailyTotals.2026-07-11": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            4278000,
+            0
+          ]
+        },
+        "dailyTotals.2026-07-13": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            3150000,
+            1944000
+          ]
+        },
+        "dailyTotals.2026-07-14": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            2956000,
+            60000
+          ]
+        },
+        "dailyTotals.2026-07-15": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            2611000
+          ]
+        },
+        "dailyTotals.2026-07-16": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            4541000
+          ]
+        },
+        "dailyTotals.2026-07-17": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            3884000,
+            0
+          ]
+        },
+        "dailyTotals.2026-07-18": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            4122000,
+            0
+          ]
+        },
+        "dailyTotals.2026-07-20": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            2350000
+          ]
+        },
+        "dailyTotals.2026-07-21": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            3592000
+          ]
+        },
+        "dailyTotals.2026-07-22": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            3084000,
+            42500
+          ]
+        },
+        "dailyTotals.2026-07-23": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            3516000,
+            28000
+          ]
+        },
+        "dailyTotals.2026-07-24": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            3198000
+          ]
+        },
+        "dailyTotals.2026-07-25": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            582000,
+            50000
+          ]
+        },
+        "month": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "2026-09",
+            "2026-03"
+          ]
+        },
+        "lastSaleDay": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            12,
+            17
+          ]
+        },
+        "monthlyTotal": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            159791000,
+            -103077722
+          ]
+        },
+        "lastSaleTotal": {
+          "tipos": {
+            "int": 3
+          },
+          "ejemplos": [
+            30000,
+            0
+          ]
+        },
+        "dailyTotals": {
+          "tipos": {
+            "object": 3
+          },
+          "ejemplos": []
+        },
+        "lastSaleAt": {
+          "tipos": {
+            "date": 3
+          },
+          "ejemplos": []
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 3
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 3
+          },
+          "ejemplos": [
+            "cafeteria_chicolin",
+            "mr_lin_restaurante"
+          ]
+        },
+        "dailyTotals.2026-05-11": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -562000,
+            562000
+          ]
+        },
+        "dailyTotals.2026-03-24": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -604000,
+            604000
+          ]
+        },
+        "dailyTotals.2026-04-29": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1265000,
+            1265000
+          ]
+        },
+        "dailyTotals.2026-04-01": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1225000,
+            1225000
+          ]
+        },
+        "dailyTotals.2026-05-21": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -891000,
+            891000
+          ]
+        },
+        "dailyTotals.2026-06-02": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1337000,
+            1337000
+          ]
+        },
+        "dailyTotals.2026-05-06": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1379720,
+            1379720
+          ]
+        },
+        "dailyTotals.2026-03-30": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -926000,
+            926000
+          ]
+        },
+        "dailyTotals.2026-05-29": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1240000,
+            1240000
+          ]
+        },
+        "dailyTotals.2026-04-07": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1481000,
+            1481000
+          ]
+        },
+        "dailyTotals.2026-04-05": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1875000,
+            1875000
+          ]
+        },
+        "dailyTotals.2026-04-08": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1154000,
+            1154000
+          ]
+        },
+        "dailyTotals.2026-06-21": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1615000,
+            1615000
+          ]
+        },
+        "dailyTotals.2026-03-04": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1819000,
+            1819000
+          ]
+        },
+        "dailyTotals.2026-03-08": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1750000,
+            1750000
+          ]
+        },
+        "dailyTotals.2026-05-10": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -2095000,
+            2095000
+          ]
+        },
+        "dailyTotals.2026-05-05": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -849500,
+            849500
+          ]
+        },
+        "dailyTotals.2026-04-13": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1283000,
+            1283000
+          ]
+        },
+        "dailyTotals.2026-05-27": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1299000,
+            1299000
+          ]
+        },
+        "dailyTotals.2026-03-27": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1052000,
+            1052000
+          ]
+        },
+        "dailyTotals.2026-06-14": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1742000,
+            1742000
+          ]
+        },
+        "dailyTotals.2026-06-07": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1472000,
+            1472000
+          ]
+        },
+        "dailyTotals.2026-03-07": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1384000,
+            1384000
+          ]
+        },
+        "dailyTotals.2026-03-18": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -967000,
+            967000
+          ]
+        },
+        "dailyTotals.2026-03-22": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -2139000,
+            2139000
+          ]
+        },
+        "dailyTotals.2026-03-11": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -913000,
+            913000
+          ]
+        },
+        "dailyTotals.2026-03-25": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1075000,
+            1075000
+          ]
+        },
+        "dailyTotals.2026-05-02": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1966000,
+            1966000
+          ]
+        },
+        "dailyTotals.2026-03-05": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1783000,
+            1783000
+          ]
+        },
+        "dailyTotals.2026-05-25": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -847000,
+            847000
+          ]
+        },
+        "dailyTotals.2026-04-30": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1408000,
+            1408000
+          ]
+        },
+        "dailyTotals.2026-03-10": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -925000,
+            925000
+          ]
+        },
+        "dailyTotals.2026-04-06": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -355000,
+            355000
+          ]
+        },
+        "dailyTotals.2026-05-20": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -701000,
+            701000
+          ]
+        },
+        "dailyTotals.2026-06-04": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -993000,
+            993000
+          ]
+        },
+        "dailyTotals.2026-03-28": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1560000,
+            1560000
+          ]
+        },
+        "dailyTotals.2026-04-02": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1494000,
+            1494000
+          ]
+        },
+        "dailyTotals.2026-06-05": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -960000,
+            960000
+          ]
+        },
+        "dailyTotals.2026-05-17": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1507000,
+            1507000
+          ]
+        },
+        "dailyTotals.2026-05-13": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1351000,
+            1351000
+          ]
+        },
+        "dailyTotals.2026-05-04": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1120000,
+            1120000
+          ]
+        },
+        "dailyTotals.2026-06-01": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -684000,
+            684000
+          ]
+        },
+        "dailyTotals.2026-05-18": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -628000,
+            628000
+          ]
+        },
+        "dailyTotals.2026-05-22": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -803000,
+            803000
+          ]
+        },
+        "dailyTotals.2026-03-16": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1755000,
+            1755000
+          ]
+        },
+        "dailyTotals.2026-03-20": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1162000,
+            1162000
+          ]
+        },
+        "dailyTotals.2026-03-14": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -737000,
+            737000
+          ]
+        },
+        "dailyTotals.2026-03-29": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1487000,
+            1487000
+          ]
+        },
+        "dailyTotals.2026-04-17": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -977000,
+            977000
+          ]
+        },
+        "dailyTotals.2026-05-09": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1390002,
+            1390002
+          ]
+        },
+        "dailyTotals.2026-05-07": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1611000,
+            1611000
+          ]
+        },
+        "dailyTotals.2026-05-26": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -901000,
+            901000
+          ]
+        },
+        "dailyTotals.2026-07-12": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            2328000,
+            2328000
+          ]
+        },
+        "dailyTotals.2026-04-20": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1669000,
+            1669000
+          ]
+        },
+        "dailyTotals.2026-04-12": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1405000,
+            1405000
+          ]
+        },
+        "dailyTotals.2026-05-15": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1737000,
+            1737000
+          ]
+        },
+        "dailyTotals.2026-03-23": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1094000,
+            1094000
+          ]
+        },
+        "dailyTotals.2026-03-12": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1429000,
+            1429000
+          ]
+        },
+        "dailyTotals.2026-04-14": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1185000,
+            1185000
+          ]
+        },
+        "dailyTotals.2026-06-03": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1314000,
+            1314000
+          ]
+        },
+        "dailyTotals.2026-04-16": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1369000,
+            1369000
+          ]
+        },
+        "dailyTotals.2026-05-14": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1844000,
+            1844000
+          ]
+        },
+        "dailyTotals.2026-04-21": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1304000,
+            1304000
+          ]
+        },
+        "dailyTotals.2026-03-26": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -652000,
+            652000
+          ]
+        },
+        "dailyTotals.2026-04-23": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -874000,
+            874000
+          ]
+        },
+        "dailyTotals.2026-03-09": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -802000,
+            802000
+          ]
+        },
+        "dailyTotals.2026-05-01": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -2019000,
+            2019000
+          ]
+        },
+        "dailyTotals.2026-04-26": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1591000,
+            1591000
+          ]
+        },
+        "dailyTotals.2026-03-02": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -772000,
+            772000
+          ]
+        },
+        "dailyTotals.2026-04-19": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -2693000,
+            2693000
+          ]
+        },
+        "dailyTotals.2026-05-08": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1932000,
+            1932000
+          ]
+        },
+        "dailyTotals.2026-03-19": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -749000,
+            749000
+          ]
+        },
+        "dailyTotals.2026-04-04": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1285000,
+            1285000
+          ]
+        },
+        "dailyTotals.2026-05-23": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1404000,
+            1404000
+          ]
+        },
+        "dailyTotals.2026-05-16": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -2050000,
+            2050000
+          ]
+        },
+        "dailyTotals.2026-05-31": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1609000,
+            1609000
+          ]
+        },
+        "dailyTotals.2026-03-15": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1240000,
+            1240000
+          ]
+        },
+        "dailyTotals.2026-03-21": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -917000,
+            917000
+          ]
+        },
+        "dailyTotals.2026-03-31": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1534000,
+            1534000
+          ]
+        },
+        "dailyTotals.2026-04-25": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1750000,
+            1750000
+          ]
+        },
+        "dailyTotals.2026-04-28": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1039000,
+            1039000
+          ]
+        },
+        "dailyTotals.2026-05-24": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1765000,
+            1765000
+          ]
+        },
+        "dailyTotals.2026-04-03": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -2147000,
+            2147000
+          ]
+        },
+        "dailyTotals.2026-05-30": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -2299000,
+            2299000
+          ]
+        },
+        "dailyTotals.2026-04-09": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1226000,
+            1226000
+          ]
+        },
+        "dailyTotals.2026-05-12": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1353000,
+            1353000
+          ]
+        },
+        "dailyTotals.2026-05-19": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -822000,
+            822000
+          ]
+        },
+        "dailyTotals.2026-04-27": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1301000,
+            1301000
+          ]
+        },
+        "dailyTotals.2026-04-15": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1355000,
+            1355000
+          ]
+        },
+        "dailyTotals.2026-03-03": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -603000,
+            603000
+          ]
+        },
+        "dailyTotals.2026-05-03": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1655000,
+            1655000
+          ]
+        },
+        "dailyTotals.2026-03-06": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1348000,
+            1348000
+          ]
+        },
+        "dailyTotals.2026-04-11": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -3031000,
+            3031000
+          ]
+        },
+        "dailyTotals.2026-04-24": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1279000,
+            1279000
+          ]
+        },
+        "dailyTotals.2026-03-13": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1383000,
+            1383000
+          ]
+        },
+        "dailyTotals.2026-04-10": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1362000,
+            1362000
+          ]
+        },
+        "dailyTotals.2026-04-18": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -1854000,
+            1854000
+          ]
+        },
+        "dailyTotals.2026-04-22": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -967000,
+            967000
+          ]
+        },
+        "dailyTotals.2026-06-28": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            1189000,
+            1189000
+          ]
+        },
+        "dailyTotals.2026-03-17": {
+          "tipos": {
+            "int": 2
+          },
+          "ejemplos": [
+            -667500,
+            667500
+          ]
+        },
+        "dailyTotals.2026-07-26": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            45000
+          ]
+        },
+        "dailyTotals.2026-07-29": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            63000
+          ]
+        },
+        "dailyTotals.2026-08-20": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            87000
+          ]
+        },
+        "dailyTotals.2026-08-31": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            35000
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "settings",
+      "documentos": 2,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 2
+          },
+          "ejemplos": []
+        },
+        "creditoMaximoCliente": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            500000
+          ]
+        },
+        "descuentoEfectivoAppPct": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            0
+          ]
+        },
+        "codigoRfidAnulacion": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "0004294165"
+          ]
+        },
+        "divisas": {
+          "tipos": {
+            "object": 1
+          },
+          "ejemplos": []
+        },
+        "fechaActualizacionCambio": {
+          "tipos": {
+            "int": 1
+          },
+          "ejemplos": [
+            1785349870785
+          ]
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "sistema",
+            "fcm"
+          ]
+        },
+        "vapidPublicKey": {
+          "tipos": {
+            "string": 1
+          },
+          "ejemplos": [
+            "BITerUE1khiTQfL0fyoT-sS3mOTEih9Cj_e-"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "support_alerts",
+      "documentos": 353,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "origen": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "dashboard",
+            "dashboard"
+          ]
+        },
+        "tipo": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "sincronizacion_lenta",
+            "firestore_auditoria_dashboard"
+          ]
+        },
+        "nivel": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "warning",
+            "warning"
+          ]
+        },
+        "mensaje": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Dashboard sin actualizacion reciente de Firestore.",
+            "La auditoria del dashboard quedo sin sincronizacion en vivo."
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Todas",
+            "Todas"
+          ]
+        },
+        "detalle": {
+          "tipos": {
+            "object": 200
+          },
+          "ejemplos": []
+        },
+        "creadoPor": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3",
+            "pcfieE6cu4MuInrU1U3ldDrSzDa2"
+          ]
+        },
+        "creadoPorRol": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "admin",
+            "cajero"
+          ]
+        },
+        "estado": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "abierta",
+            "resuelta"
+          ]
+        },
+        "creadoAt": {
+          "tipos": {
+            "date": 200
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "0SWjk85b6i8fWUs5OuOM",
+            "0dus42q16q123snw6As4"
+          ]
+        },
+        "resueltoPor": {
+          "tipos": {
+            "string": 100
+          },
+          "ejemplos": [
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3",
+            "EtDE1FcTFvfp0itJ2LPcHGusgZJ3"
+          ]
+        },
+        "resueltoPorNombre": {
+          "tipos": {
+            "string": 100
+          },
+          "ejemplos": [
+            "Giuliano Catella",
+            "Giuliano Catella"
+          ]
+        },
+        "resueltoAt": {
+          "tipos": {
+            "date": 100
+          },
+          "ejemplos": []
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "sync_logs",
+      "documentos": 12710,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 200
+          },
+          "ejemplos": []
+        },
+        "timestamp": {
+          "tipos": {
+            "date": 200
+          },
+          "ejemplos": []
+        },
+        "tipo": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "producto_stock_actualizado",
+            "producto_stock_actualizado"
+          ]
+        },
+        "coleccion": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "products",
+            "products"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "CAFETERIA CHICOLIN",
+            "CAFETERIA CHICOLIN"
+          ]
+        },
+        "usuario": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "Noni",
+            "Noni"
+          ]
+        },
+        "detalle": {
+          "tipos": {
+            "object": 200
+          },
+          "ejemplos": []
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 200
+          },
+          "ejemplos": [
+            "00KfEJG4ubcYV8cPUgac",
+            "00Oa9wFzj5D1xQiJIePN"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "users",
+      "documentos": 66,
+      "campos": {
+        "_id": {
+          "tipos": {
+            "objectId": 66
+          },
+          "ejemplos": []
+        },
+        "nombre": {
+          "tipos": {
+            "string": 64
+          },
+          "ejemplos": [
+            "Wilson",
+            "DAIHANA DALMONTE"
+          ]
+        },
+        "email": {
+          "tipos": {
+            "string": 64
+          },
+          "ejemplos": [
+            "cocina.cafe@lingroup.com",
+            "alba@lingroup.com"
+          ]
+        },
+        "rol": {
+          "tipos": {
+            "string": 64
+          },
+          "ejemplos": [
+            "cocina",
+            "cliente"
+          ]
+        },
+        "sucursal": {
+          "tipos": {
+            "string": 16
+          },
+          "ejemplos": [
+            "CAFETERIA CHICOLIN",
+            "Todas las Sucursales"
+          ]
+        },
+        "estadoBeneficios": {
+          "tipos": {
+            "string": 64
+          },
+          "ejemplos": [
+            "activo",
+            "activo"
+          ]
+        },
+        "puntos": {
+          "tipos": {
+            "int": 64
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "deuda": {
+          "tipos": {
+            "int": 64
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "datosCompletos": {
+          "tipos": {
+            "boolean": 17
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "legacyId": {
+          "tipos": {
+            "string": 66
+          },
+          "ejemplos": [
+            "0N03IVscm4UmE5M2pWItqQOmw9i2",
+            "1pSAWF1NbTNFnBkz5mM5aYNUFIS2"
+          ]
+        },
+        "telefono": {
+          "tipos": {
+            "string": 48
+          },
+          "ejemplos": [
+            "0973100000",
+            "0992038740"
+          ]
+        },
+        "tipoCliente": {
+          "tipos": {
+            "string": 46
+          },
+          "ejemplos": [
+            "premium",
+            "premium"
+          ]
+        },
+        "rfid": {
+          "tipos": {
+            "string": 30
+          },
+          "ejemplos": [
+            "",
+            ""
+          ]
+        },
+        "descuentoVip": {
+          "tipos": {
+            "int": 30
+          },
+          "ejemplos": [
+            0,
+            0
+          ]
+        },
+        "descuentoVipConfigurado": {
+          "tipos": {
+            "boolean": 27
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "solicitarPinCredito": {
+          "tipos": {
+            "boolean": 14
+          },
+          "ejemplos": [
+            false,
+            false
+          ]
+        },
+        "sucursalesCreditoLibre": {
+          "tipos": {
+            "array": 30
+          },
+          "ejemplos": []
+        },
+        "creditoPinConfigurado": {
+          "tipos": {
+            "boolean": 8
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "playStoreUrl": {
+          "tipos": {
+            "string": 17
+          },
+          "ejemplos": [
+            "https://play.google.com/store/apps/details?id=com.lingroup.clublin",
+            "https://play.google.com/store/apps/details?id=com.lingroup.clublin"
+          ]
+        },
+        "playTesterRequestedAt": {
+          "tipos": {
+            "date": 15
+          },
+          "ejemplos": []
+        },
+        "playTesterGroupEmail": {
+          "tipos": {
+            "string": 17
+          },
+          "ejemplos": [
+            "club-lin-testers@googlegroups.com",
+            "club-lin-testers@googlegroups.com"
+          ]
+        },
+        "playTesterProcessedAt": {
+          "tipos": {
+            "date": 17
+          },
+          "ejemplos": []
+        },
+        "playTesterErrorMessage": {
+          "tipos": {
+            "string": 17
+          },
+          "ejemplos": [
+            "Google Groups API no esta configurada. Agregar el correo al grupo manualmente o configurar Workspace/API.",
+            ""
+          ]
+        },
+        "playTesterStatus": {
+          "tipos": {
+            "string": 17
+          },
+          "ejemplos": [
+            "manual_review_required",
+            "added_to_google_group"
+          ]
+        },
+        "terminosAceptados": {
+          "tipos": {
+            "boolean": 6
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "direccion": {
+          "tipos": {
+            "string": 29
+          },
+          "ejemplos": [
+            "Review test account",
+            "Regimiento Sauce"
+          ]
+        },
+        "fechaRegistro": {
+          "tipos": {
+            "date": 1,
+            "string": 28
+          },
+          "ejemplos": [
+            "2026-04-08T19:43:10.202Z",
+            "2026-06-09T19:37:31.667Z"
+          ]
+        },
+        "reviewAccount": {
+          "tipos": {
+            "boolean": 1
+          },
+          "ejemplos": [
+            true
+          ]
+        },
+        "origenRegistro": {
+          "tipos": {
+            "string": 6
+          },
+          "ejemplos": [
+            "google_play_review",
+            "crear_cuenta_cliente"
+          ]
+        },
+        "solicitudPremiumActualizadaAt": {
+          "tipos": {
+            "date": 19
+          },
+          "ejemplos": []
+        },
+        "solicitudPremium": {
+          "tipos": {
+            "object": 19
+          },
+          "ejemplos": []
+        },
+        "terminosAceptadosAt": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "2026-06-09T19:37:31.667Z",
+            "2026-07-02T14:17:10.373Z"
+          ]
+        },
+        "pushPlatform": {
+          "tipos": {
+            "string": 6
+          },
+          "ejemplos": [
+            "android",
+            "android"
+          ]
+        },
+        "pushUpdatedAt": {
+          "tipos": {
+            "string": 8
+          },
+          "ejemplos": [
+            "2026-04-24T20:12:15.279Z",
+            "2026-06-19T14:14:27.478Z"
+          ]
+        },
+        "pushPermiso": {
+          "tipos": {
+            "string": 8
+          },
+          "ejemplos": [
+            "stale",
+            "granted"
+          ]
+        },
+        "ultimaUbicacionDelivery": {
+          "tipos": {
+            "object": 2
+          },
+          "ejemplos": []
+        },
+        "ultimaDireccionDelivery": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "Calle boquerón, Edificio GenzEntregar en el portón grande y preguntar por Jorge",
+            "Av. Camilo Recalde"
+          ]
+        },
+        "ubicacionActualizadaAt": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "2026-07-17T15:26:08.186Z",
+            "2026-09-01T00:47:03.876Z"
+          ]
+        },
+        "pushPlatformWeb": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "web",
+            "web"
+          ]
+        },
+        "pushTokenWeb": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "frwZ4pel2u8hr9OVB9_tl5:APA91bGZrrtYGPhV9yXjlI9TcxWjGW4Kyz-crXLzoHZZuuQqmlCXB1cRakY1KBPS_i8AatBf8XzL7QjX6VDyHzibr8j2n0lnmR4r8xZZmuoB71-v3RoHB04",
+            "dPw3_3JgSwjQHApRpv6Lgz:APA91bEVPLxSUEfZZ5Zpn1T52B8SZ-Pv8D-hBvOBw34J0qMrQBKKSS0gUVSSjOtEL9fHHp1-2Gs3zvVm2CJRvHH52I4_e0gJsKaHmF5wkUXItKPPln0JlWQ"
+          ]
+        },
+        "webPushError": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "Missing or insufficient permissions.",
+            "Missing or insufficient permissions."
+          ]
+        },
+        "webPushEstado": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "error",
+            "error"
+          ]
+        },
+        "webPushUpdatedAt": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "2026-06-19T14:14:28.244Z",
+            "2026-09-11T01:42:47.992Z"
+          ]
+        },
+        "permisosClientePrompt": {
+          "tipos": {
+            "boolean": 5
+          },
+          "ejemplos": [
+            true,
+            true
+          ]
+        },
+        "permisoNotificacionesCliente": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "granted",
+            "unsupported"
+          ]
+        },
+        "permisoUbicacionCliente": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "granted",
+            "granted"
+          ]
+        },
+        "pushTokenMovil": {
+          "tipos": {
+            "string": 5
+          },
+          "ejemplos": [
+            "dHnsjbK7TLKVWegeWhoDRK:APA91bFVNE-8oWeAMwyvx7hl7JAS4BrworG0ZxhEFocV7Qei7fmtcxTdFx4GxrQs5ptAAqVrsVi_LCiL-K4b68DVv7nnlT8Zia7Cvj6bk9yL8vcB-5hc6q8",
+            "dC6JlL7DSwib8hyeQWIrc2:APA91bFGi2jXBwtQG8cRX9KoVwuC2ATVwZb-Vbq7SvSyYwTXdDV2mFos_k8VihUC8uaVpfZ5PqWptqaLKwe4ELI52gk5hDQO2QbqFgwAIbw0NQ5cyEAjrk8"
+          ]
+        },
+        "updatedAt": {
+          "tipos": {
+            "date": 4
+          },
+          "ejemplos": []
+        },
+        "apellidos": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "De tal",
+            "Catella"
+          ]
+        },
+        "fechaNacimiento": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "2005-01-08",
+            "2005-01-08"
+          ]
+        },
+        "cedula": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "7179073",
+            "7179073"
+          ]
+        },
+        "nombres": {
+          "tipos": {
+            "string": 2
+          },
+          "ejemplos": [
+            "Giuliano",
+            "Giuliano"
+          ]
+        }
+      },
+      "indices": [
+        {
+          "nombre": "_id_",
+          "campos": [
+            "_id"
+          ]
+        }
+      ]
+    }
+  ]
+}
