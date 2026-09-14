@@ -24,7 +24,9 @@
     "mongo:replica:status": "tsx scripts/init-replica-set.ts --status-only",
     "mongo:replica:init": "tsx scripts/init-replica-set.ts",
     "mongo:copy": "tsx scripts/copy-mongo.ts",
-    "auditar:mongo": "tsx scripts/auditar-mongo.ts"
+    "auditar:mongo": "tsx scripts/auditar-mongo.ts",
+    "mongo:indices": "tsx scripts/mantener-mongo.ts --indices",
+    "mongo:normalizar": "tsx scripts/mantener-mongo.ts --normalizar"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
