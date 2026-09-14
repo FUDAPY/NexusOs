@@ -12,13 +12,39 @@
 # ===================================================================
 
 services:
+  # -------------------------------------------------------------------
+  # Genera el keyFile de autenticacion interna del replica set.
+  # Es OBLIGATORIO: mongod se niega a arrancar con --auth + --replSet sin keyFile
+  #   "BadValue: security.keyFile is required when authorization is enabled with replica sets"
+  # Permisos exigidos en UNIX: 400 y propiedad del usuario que corre mongod.
+  # -------------------------------------------------------------------
+  mongo-keyfile:
+    image: mongo:8
+    user: root
+    entrypoint: ["sh", "-c"]
+    command:
+      - "set -e; mkdir -p /keyfile; if [ ! -s /keyfile/mongo-keyfile ]; then head -c 756 /dev/urandom | base64 -w0 > /keyfile/mongo-keyfile; fi; chmod 400 /keyfile/mongo-keyfile; chown mongodb:mongodb /keyfile/mongo-keyfile; ls -l /keyfile/mongo-keyfile; echo keyfile-listo"
+    volumes:
+      - mongo-keyfile:/keyfile
+    restart: "no"
+
   mongo:
     image: mongo:8
-    # --replSet es OBLIGATORIO: habilita las transacciones ACID.
-    # Sin este flag, withTransaction() degrada a ejecucion directa y
-    # "crear orden + descontar stock + audit_log" deja de ser atomico.
+    depends_on:
+      mongo-keyfile:
+        condition: service_completed_successfully
+    # --replSet  habilita las transacciones ACID.
+    # --keyFile  habilita autenticacion interna Y de clientes; sin el, mongod no arranca
+    #            junto con --auth y --replSet.
     # Se pasa como lista para que cada flag llegue como argumento separado.
-    command: ["mongod", "--replSet", "rs0", "--auth", "--bind_ip_all"]
+    command:
+      - mongod
+      - --replSet
+      - rs0
+      - --auth
+      - --bind_ip_all
+      - --keyFile
+      - /keyfile/mongo-keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME:-giuli}"
       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD:?definir MONGO_INITDB_ROOT_PASSWORD en Environment}"
@@ -26,6 +52,7 @@ services:
     volumes:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
+      - mongo-keyfile:/keyfile:ro
     ports:
       - "${MONGO_EXTERNAL_PORT:-5220}:27017"
     restart: unless-stopped
@@ -46,4 +73,5 @@ services:
 volumes:
   mongo-data:
   mongo-config:
+  mongo-keyfile:
   redis-data:
