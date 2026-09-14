@@ -112,14 +112,7 @@
 - **Auditoría inmutable:** `audit_logs` solo admite inserciones (hooks que bloquean `updateOne`, `findOneAndUpdate`, `deleteOne` y `deleteMany`) y aplica TTL de 5 años.
 - **Contrato de respuesta:** éxito `{ success: true, data }`; error `{ success: false, error, code? }`, generado siempre desde `utils/response.ts`.
 
-## 5. Convenciones de Código
-
-- Comentarios breves y técnicos. Cero explicaciones redundantes.
-- Prohibidas las firmas de IA o menciones sobre asistencia automatizada.
-- Prefijo `I` para interfaces (`IOrder`), `PascalCase` para archivos de modelos y `kebab.case.ts` para servicios, rutas y controladores.
-- Colecciones y campos en español para mantener la coherencia con el frontend (ej. `fecha`, `nombreCliente`, `metodoPago`).
-
-## 6. Comandos de Verificación
+## 5. Comandos de Verificación
 
 - Instalar: `cd server; npm install`
 - Correr tests: `npm run test`
@@ -146,32 +139,82 @@
 El proyecto nativo vive en `mobile/android` y empaqueta el frontend vía Capacitor
 (`mobile/capacitor.config.json` → `webDir: ../frontend`).
 
+**Antes de la primera compilación** hay que definir la identidad de la app en
+`mobile/capacitor.config.json` y `mobile/android/app/build.gradle`:
+
+| Parámetro | Definir |
+| --- | --- |
+| `appId` / `applicationId` | Identificador único en formato inverso: `com.<empresa>.<app>` |
+| `appName` | Nombre visible en el lanzador del dispositivo |
+| `versionCode` | Entero incremental — **obligatorio incrementarlo en cada envío** |
+| `versionName` | Versión visible para el usuario (`1.0.0`) |
+
+> ⚠️ El `applicationId` es **permanente**. Google Play identifica la app por ese valor: si se cambia
+> después de publicar, la consola lo trata como una aplicación **nueva**, incompatible con la ficha
+> anterior. Definirlo bien antes del primer envío.
+
+Pasos de compilación:
+
 1. Sincronizar el frontend con el proyecto nativo:
    ```
    cd mobile
    npx cap sync android
    ```
-2. Abrir el proyecto en **Android Studio**:
-   `File → Open… → mobile/android`
-3. Generar el bundle firmado:
-   `Build → Generate Signed Bundle / APK… → Android App Bundle`
+2. Abrir el proyecto en **Android Studio** → `File → Open… → mobile/android`.
+3. `Build → Generate Signed Bundle / APK… → Android App Bundle`.
    > Google Play exige **`.aab`** para publicaciones nuevas; el `.apk` sirve solo para pruebas locales.
-4. Subir el `.aab` en **Play Console**. Antes de cada subida hay que incrementar `versionCode`
-   en `mobile/android/app/build.gradle`.
+4. Subir el `.aab` en **Play Console**.
 
-| Parámetro | Valor actual |
+### Huellas SHA-1 y SHA-256: cómo obtenerlas y dónde van
+
+Google identifica la firma de la app mediante dos huellas del keystore. **Sin registrarlas, la
+autenticación y las integraciones fallan en producción.**
+
+**Paso 1 — Crear el keystore de release** (una sola vez, guardarlo **fuera** del repositorio):
+
+```bash
+keytool -genkeypair -v -keystore nexusos-release.jks -alias nexusos \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+**Paso 2 — Leer las huellas:**
+
+```bash
+keytool -list -v -keystore nexusos-release.jks -alias nexusos
+```
+
+En la salida aparecen las dos líneas que se necesitan:
+
+```text
+SHA1:   3B:1C:9F:...   (20 bytes)
+SHA256: 9F:2A:71:...   (32 bytes — es la que exige Play)
+```
+
+*Alternativa sin `keytool`:* Android Studio → panel **Gradle** → `Tasks → android → signingReport`.
+
+**Paso 3 — Registrar cada huella en su destino:**
+
+| Destino | Para qué sirve |
 | --- | --- |
-| `applicationId` | `com.lingroup.clublin` |
-| `versionCode` / `versionName` | `170` / `17.0` |
-| `minSdkVersion` | 24 |
-| `compileSdkVersion` / `targetSdkVersion` | 36 / 36 |
+| Firebase Console → ⚙️ Configuración del proyecto → *Tus apps* → app Android → **Agregar huella digital** | Habilita Auth, Firestore y FCM en el binario firmado. Después **volver a descargar `google-services.json`** y reemplazarlo en `mobile/android/app/`. |
+| Google Cloud Console → *APIs y servicios → Credenciales* → restricciones de la API key | Limita la clave a apps firmadas con esa huella. |
+| Play Console → *Integridad de la app* → **Play App Signing** | Registrar las huellas de la clave de **subida** y de la clave de **firma de Play**. |
 
-> ⚠️ **`applicationId` es permanente.** Google Play identifica la app por ese valor: si se cambia,
-> la consola lo trata como una aplicación **nueva** y no se puede actualizar la existente.
-> Mantener `com.lingroup.clublin` para seguir publicando sobre la ficha actual.
+**Paso 4 — Repetir para la firma de Play.** Con **Play App Signing** activado, Google re-firma el
+`.aab`: la huella que reciben los usuarios **no** es la del keystore de subida. Hay que registrar en
+Firebase también la **SHA-1 de la firma de Play**, que Play Console muestra en *Integridad de la app*.
 
-Requisitos de firma: keystore de release (fuera del repositorio) y **Play App Signing** activado
-en Play Console.
+**Paso 5 — Keystore debug** (solo para pruebas locales). Android Studio lo genera en
+`~/.android/debug.keystore`:
+
+```bash
+keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey \
+  -storepass android -keypass android
+```
+
+> 🔒 El keystore **nunca** se sube al repositorio (`*.jks` está en `.gitignore`). Si se pierde y no
+> hay Play App Signing, la app no puede volver a actualizarse. Guardarlo en un gestor de secretos y
+> en un backup cifrado.
 
 ### Variables de entorno
 

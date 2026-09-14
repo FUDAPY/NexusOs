@@ -1,0 +1,212 @@
+/* ===================================================================
+   NexusOS · Theme layer
+   -------------------------------------------------------------------
+   Remapea las utilidades de Tailwind ya presentes en las paginas al
+   sistema visual de NexusOS. NO requiere cambiar el markup ni la logica
+   de las paginas: se carga despues de Tailwind y sobreescribe colores,
+   bordes, radios y sombras.
+
+   Orden de carga obligatorio:
+     <script src="https://cdn.tailwindcss.com"></script>
+     <link rel="stylesheet" href="nexus.css">
+     <link rel="stylesheet" href="nexus-theme.css">   <-- ultimo
+
+   Se usa !important de forma deliberada: el CDN de Tailwind inyecta su
+   hoja de estilos en <head> en tiempo de ejecucion (despues de este
+   archivo), y sin !important ganaria por orden de aparicion.
+   =================================================================== */
+
+/* ---------- Base ---------- */
+html { background: var(--nx-bg); }
+body {
+  background: var(--nx-bg) !important;
+  color: var(--nx-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Superficies ---------- */
+.bg-white      { background-color: var(--nx-surface)  !important; }
+.bg-slate-50   { background-color: var(--nx-surface-2) !important; }
+.bg-slate-100  { background-color: var(--nx-surface-2) !important; }
+.bg-slate-200  { background-color: var(--nx-surface-3) !important; }
+.bg-slate-700  { background-color: var(--nx-surface-3) !important; }
+.bg-slate-800  { background-color: var(--nx-surface-2) !important; }
+.bg-slate-900  { background-color: var(--nx-surface)   !important; }
+.bg-slate-950  { background-color: var(--nx-bg)        !important; }
+.bg-slate-800\/50 { background-color: rgba(22, 31, 51, 0.62) !important; }
+.bg-slate-900\/50 { background-color: rgba(15, 22, 38, 0.62) !important; }
+.bg-slate-900\/80 { background-color: rgba(15, 22, 38, 0.86) !important; }
+.bg-black\/50  { background-color: rgba(3, 6, 14, 0.7) !important; }
+.bg-black\/70  { background-color: rgba(3, 6, 14, 0.82) !important; }
+
+/* ---------- Texto ---------- */
+.text-white      { color: var(--nx-text)       !important; }
+.text-slate-800  { color: var(--nx-text)       !important; }
+.text-slate-700  { color: var(--nx-text)       !important; }
+.text-slate-600  { color: var(--nx-text-muted) !important; }
+.text-slate-500  { color: var(--nx-text-muted) !important; }
+.text-slate-400  { color: var(--nx-text-muted) !important; }
+.text-slate-300  { color: var(--nx-text-muted) !important; }
+.text-slate-200  { color: var(--nx-text)       !important; }
+.text-gray-800, .text-gray-700 { color: var(--nx-text) !important; }
+.text-gray-600, .text-gray-500 { color: var(--nx-text-muted) !important; }
+.placeholder-slate-500::placeholder { color: var(--nx-text-dim) !important; }
+.placeholder-slate-400::placeholder { color: var(--nx-text-dim) !important; }
+
+/* ---------- Bordes y separadores ---------- */
+.border-slate-100, .border-slate-200, .border-slate-300 {
+  border-color: var(--nx-border-soft) !important;
+}
+.border-slate-400, .border-slate-600, .border-slate-700, .border-slate-800 {
+  border-color: var(--nx-border) !important;
+}
+.divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--nx-border-soft) !important;
+}
+.ring-slate-200, .ring-slate-300 { --tw-ring-color: var(--nx-border) !important; }
+
+/* ---------- Marca (naranja) ---------- */
+.bg-orange-500 { background-color: var(--nx-brand) !important; }
+.bg-orange-600 { background-color: var(--nx-brand-hover) !important; }
+.hover\:bg-orange-600:hover { background-color: var(--nx-brand-hover) !important; }
+.hover\:bg-orange-500:hover { background-color: var(--nx-brand) !important; }
+.text-orange-500, .text-orange-600 { color: var(--nx-brand) !important; }
+.text-orange-200, .text-orange-300 { color: #fdba74 !important; }
+.border-orange-500 { border-color: var(--nx-brand) !important; }
+.border-orange-200, .border-orange-300 { border-color: rgba(249,115,22,.35) !important; }
+.focus\:border-orange-500:focus { border-color: var(--nx-brand) !important; }
+.focus\:ring-orange-500:focus { --tw-ring-color: var(--nx-brand) !important; }
+.bg-orange-500\/10 { background-color: var(--nx-brand-soft) !important; }
+.bg-orange-500\/20 { background-color: rgba(249,115,22,.2) !important; }
+
+/* ---------- Estados semanticos ---------- */
+.text-amber-700, .text-amber-600, .text-amber-500 { color: var(--nx-warning) !important; }
+.text-yellow-500, .text-yellow-400 { color: var(--nx-warning) !important; }
+.bg-yellow-500\/20 { background-color: var(--nx-warning-soft) !important; }
+.bg-yellow-500 { background-color: var(--nx-warning) !important; }
+.border-yellow-500, .border-yellow-400 { border-color: rgba(250,204,21,.4) !important; }
+
+.text-red-500, .text-red-600, .text-red-700, .text-red-400 { color: var(--nx-danger) !important; }
+.bg-red-500, .bg-red-600 { background-color: var(--nx-danger) !important; }
+.bg-red-500\/10, .bg-red-500\/20 { background-color: var(--nx-danger-soft) !important; }
+.border-red-500, .border-red-400, .border-red-300 { border-color: rgba(239,68,68,.4) !important; }
+.hover\:bg-red-600:hover { background-color: #dc2626 !important; }
+
+.text-green-500, .text-green-600, .text-emerald-500, .text-emerald-600 { color: var(--nx-success) !important; }
+.bg-green-500, .bg-emerald-500, .bg-green-600, .bg-emerald-600 { background-color: var(--nx-success) !important; }
+.bg-green-500\/10, .bg-green-100, .bg-emerald-100 { background-color: var(--nx-success-soft) !important; }
+.border-green-500, .border-green-400, .border-emerald-500 { border-color: rgba(34,197,94,.4) !important; }
+
+.text-blue-500, .text-blue-600, .text-indigo-500, .text-indigo-600 { color: var(--nx-info) !important; }
+.bg-blue-500, .bg-indigo-500 { background-color: var(--nx-info) !important; }
+.bg-blue-100, .bg-indigo-100 { background-color: var(--nx-info-soft) !important; }
+.text-cyan-400, .text-sky-400, .text-sky-500 { color: var(--nx-accent) !important; }
+
+/* ---------- Interacciones ---------- */
+.hover\:bg-slate-800:hover, .hover\:bg-slate-700:hover, .hover\:bg-slate-100:hover,
+.hover\:bg-slate-50:hover {
+  background-color: var(--nx-surface-2) !important;
+}
+.hover\:bg-slate-900:hover, .hover\:bg-slate-950:hover {
+  background-color: var(--nx-surface-3) !important;
+}
+.hover\:bg-white:hover { background-color: var(--nx-surface-3) !important; }
+.hover\:text-white:hover, .hover\:text-slate-800:hover { color: var(--nx-text) !important; }
+.hover\:text-orange-300:hover, .hover\:text-orange-500:hover { color: var(--nx-brand) !important; }
+.hover\:border-orange-500:hover { border-color: var(--nx-brand) !important; }
+.focus\:bg-slate-800:focus, .focus\:bg-white:focus { background-color: var(--nx-bg) !important; }
+.focus\:bg-slate-900:focus { background-color: var(--nx-bg) !important; }
+
+/* ---------- Radios y sombras unificados ---------- */
+.rounded     { border-radius: var(--nx-radius-sm) !important; }
+.rounded-md  { border-radius: var(--nx-radius-sm) !important; }
+.rounded-lg  { border-radius: var(--nx-radius)    !important; }
+.rounded-xl  { border-radius: var(--nx-radius)    !important; }
+.rounded-2xl { border-radius: var(--nx-radius-lg) !important; }
+.rounded-3xl { border-radius: var(--nx-radius-lg) !important; }
+.shadow-sm  { box-shadow: var(--nx-shadow)    !important; }
+.shadow     { box-shadow: var(--nx-shadow)    !important; }
+.shadow-md  { box-shadow: var(--nx-shadow-md) !important; }
+.shadow-lg  { box-shadow: var(--nx-shadow-md) !important; }
+.shadow-xl, .shadow-2xl { box-shadow: var(--nx-shadow-lg) !important; }
+.shadow-inner { box-shadow: inset 0 1px 3px rgba(0,0,0,.45) !important; }
+
+/* ---------- Controles nativos ---------- */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+select, textarea {
+  background-color: var(--nx-bg) !important;
+  border-color: var(--nx-border) !important;
+  color: var(--nx-text) !important;
+  caret-color: var(--nx-brand);
+}
+input::placeholder, textarea::placeholder { color: var(--nx-text-dim) !important; }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--nx-brand) !important;
+  box-shadow: var(--nx-ring) !important;
+  outline: none !important;
+}
+select option { background: var(--nx-surface); color: var(--nx-text); }
+
+/* Autofill del navegador (rompe el tema oscuro si no se corrige) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--nx-text) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--nx-bg) inset !important;
+  caret-color: var(--nx-brand);
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.75);
+  cursor: pointer;
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--nx-brand); }
+
+/* ---------- Tablas nativas ---------- */
+table { border-color: var(--nx-border-soft) !important; }
+thead th {
+  background-color: var(--nx-surface-2) !important;
+  color: var(--nx-text-muted) !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+tbody tr { border-color: var(--nx-border-soft) !important; }
+tbody tr:hover { background-color: var(--nx-surface-2) !important; }
+tbody td { color: var(--nx-text); border-color: var(--nx-border-soft) !important; }
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--nx-surface-3);
+  border-radius: var(--nx-radius-full);
+  border: 2px solid var(--nx-bg);
+}
+::-webkit-scrollbar-thumb:hover { background: #2c3a58; }
+* { scrollbar-color: var(--nx-surface-3) transparent; scrollbar-width: thin; }
+
+/* ---------- Modales / overlays existentes ---------- */
+.fixed.inset-0 { backdrop-filter: blur(3px); }
+
+/* ---------- Impresion: vuelve a claro ----------
+   Los comprobantes y reportes se imprimen en papel blanco. Sin esta
+   regla, el remapeo oscuro de bg-white saldria en tinta negra maciza. */
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  .bg-white, .bg-slate-50, .bg-slate-100, .bg-slate-200, .bg-slate-800,
+  .bg-slate-900, .bg-slate-950, table, tbody tr, thead th, td, th {
+    background-color: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+  }
+  .text-white, .text-slate-200, .text-slate-300, .text-slate-400,
+  .text-slate-500, .text-slate-600, .text-slate-700, .text-slate-800 {
+    color: #000 !important;
+  }
+  .border-slate-100, .border-slate-200, .border-slate-300,
+  .border-slate-600, .border-slate-700, .border-slate-800 {
+    border-color: #999 !important;
+  }
+  .no-print, .nx-no-print { display: none !important; }
+}
