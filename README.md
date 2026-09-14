@@ -87,17 +87,33 @@ Colecciones adicionales migradas sin cambios de nombre de campo: `cash_flow_audi
 `lin_tickets`, `lin_ticket_claims`, `credit_pins`, `credit_pin_attempts`, `password_reset_otps`,
 `password_reset_rate_limits`, `play_tester_requests`, `notifications`, `settings`.
 
-### Migración ejecutada (Firestore → MongoDB)
+### Migración ejecutada
 
-Corrida real verificada: **27 colecciones / 57 805 documentos**.
+**Base destino: 27 colecciones / 57 845 documentos** (verificado con conteo real).
 
 ```bash
 cd server
-npm run migrate:dry                                  # simulacro, no escribe
-npm run migrate:firestore                            # migración completa
-npm run migrate:firestore -- --only=orders,settings   # reanudar colecciones puntuales
-npm run migrate:derive                               # regenerar derivados (items/currencies/categories)
+
+# MongoDB -> MongoDB (recomendado: no depende de credenciales de Firebase)
+$env:MONGO_SOURCE_URI='mongodb://giuli:<clave>@<host>:7752/pos_cate?authSource=admin&directConnection=true'
+npm run mongo:copy
+npm run mongo:copy -- --dry-run          # solo cuenta, no escribe
+
+# Firestore -> MongoDB (ETL original, requiere service account vigente)
+npm run migrate:dry
+npm run migrate:firestore
+npm run migrate:derive                   # regenera order_items / currencies / categories
+
+# Replica set
+npm run mongo:replica:status             # diagnostico (no escribe)
+$env:REPLICA_HOST='mongo:27017'
+npm run mongo:replica:init               # una sola vez
 ```
+
+> **El keyFile es obligatorio.** `mongod` se niega a arrancar con `--auth` + `--replSet` sin él
+> (`BadValue: security.keyFile is required when authorization is enabled with replica sets`).
+> Sin el keyfile el contenedor entra en crash-loop y **ningún puerto se publica**, que es un sintoma
+> facil de confundir con un problema de red o de mapeo de puertos.
 
 | Destino | Documentos |
 | --- | --- |
