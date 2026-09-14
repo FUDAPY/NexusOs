@@ -135,6 +135,7 @@ Si da **502**, mirá los **Logs** del servicio `api`. Causas típicas:
 | --- | --- |
 | `Configuracion de entorno invalida -> JWT_SECRET debe tener al menos 32 caracteres` | Falta `JWT_SECRET` en Environment, o tiene menos de 32 caracteres. |
 | `MongooseServerSelectionError` o timeout | El replica set no está inicializado (sección siguiente), o la clave de `MONGO_URI` no coincide con la de mongo. |
+| `MongoParseError: Password contains unescaped characters` o `Protocol and host list are required` | La contraseña tiene `@ : / ? # [ ] %` sin codificar y el driver rechaza la URI. Definí `MONGO_PASSWORD` (el API la codifica sola) en vez de `MONGO_URI`. |
 | `ECONNREFUSED redis:6379` | `REDIS_PASSWORD` no coincide con la que arrancó redis. Redis fija la clave al crear el volumen: si la cambiaste, hay que borrar el volumen `redis-data`. |
 | `EACCES` o el contenedor se reinicia en bucle | El `JWT_SECRET` tiene caracteres que YAML interpreta. Entrecomillalo. |
 
