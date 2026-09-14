@@ -63,6 +63,7 @@ __appImage-x64/
 mobile/android/app/build/
 mobile/android/build/
 mobile/android/.gradle/
+mobile/android/.idea/
 mobile/android/local.properties
 mobile/android/app/release/
 mobile/android/capacitor-cordova-android-plugins/
@@ -84,6 +85,8 @@ _*.txt
 _*.json
 _*.cmd
 _*.mjs
+_*.py
+_*.ps1
 _*.done
 tmp/
 temp/

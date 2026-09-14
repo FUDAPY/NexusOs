@@ -1,0 +1,49 @@
+# ===================================================================
+# POS CATE - Infraestructura
+# ===================================================================
+# Lo consume el servicio "Docker Compose" de Dokploy, que clona el repo y ejecuta:
+#   docker compose -p <proyecto> --env-file .env -f ./docker-compose.yml up -d --build
+#
+# Contiene SOLO infraestructura (MongoDB + Redis).
+# El API va como servicio "Application" aparte, para poder usar Railpack 0.15.4.
+#
+# Las variables ${...} se resuelven desde el Environment de Dokploy
+# (Dokploy las escribe en el .env que pasa con --env-file).
+# ===================================================================
+
+services:
+  mongo:
+    image: mongo:8
+    # --replSet es OBLIGATORIO: habilita las transacciones ACID.
+    # Sin este flag, withTransaction() degrada a ejecucion directa y
+    # "crear orden + descontar stock + audit_log" deja de ser atomico.
+    # Se pasa como lista para que cada flag llegue como argumento separado.
+    command: ["mongod", "--replSet", "rs0", "--auth", "--bind_ip_all"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME:-giuli}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD:?definir MONGO_INITDB_ROOT_PASSWORD en Environment}"
+      MONGO_INITDB_DATABASE: "${MONGO_INITDB_DATABASE:-pos_cate}"
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    ports:
+      - "${MONGO_EXTERNAL_PORT:-5220}:27017"
+    restart: unless-stopped
+
+  # Sin puertos publicados a proposito: Redis solo se consume desde la red interna.
+  redis:
+    image: redis:7
+    command:
+      - redis-server
+      - --requirepass
+      - "${REDIS_PASSWORD:?definir REDIS_PASSWORD en Environment}"
+      - --appendonly
+      - "yes"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  mongo-config:
+  redis-data:
