@@ -100,22 +100,31 @@ const main = async (): Promise<void> => {
     'Estado actual del nodo',
   );
 
-  // Inventario del contenido: util para saber si el volumen ya tiene la migracion.
-  const handle = mongoose.connection.getClient().db(env.MONGO_DB_NAME);
-  const collections = await handle.listCollections().toArray();
-  let documentos = 0;
-  for (const collection of collections) {
-    documentos += await handle.collection(collection.name).countDocuments();
+  // Inventario del contenido: es INFORMATIVO y no debe abortar la inicializacion.
+  // En un nodo con --replSet pero sin rs.initiate(), listCollections falla con
+  // "node is not in primary or recovering state".
+  try {
+    const handle = mongoose.connection.getClient().db(env.MONGO_DB_NAME);
+    const collections = await handle.listCollections().toArray();
+    let documentos = 0;
+    for (const collection of collections) {
+      documentos += await handle.collection(collection.name).countDocuments();
+    }
+    logger.info(
+      {
+        db: env.MONGO_DB_NAME,
+        colecciones: collections.length,
+        documentos,
+        orders: await handle.collection('orders').countDocuments(),
+      },
+      'Inventario de la base destino',
+    );
+  } catch (error) {
+    logger.warn(
+      { err: error instanceof Error ? error.message.split('\n')[0] : String(error) },
+      'Inventario no disponible (esperado si el replica set aun no esta inicializado)',
+    );
   }
-  logger.info(
-    {
-      db: env.MONGO_DB_NAME,
-      colecciones: collections.length,
-      documentos,
-      orders: await handle.collection('orders').countDocuments(),
-    },
-    'Inventario de la base destino',
-  );
 
   if (before.setName === REPLICA_SET_NAME) {
     logger.info({ replicaSetName: REPLICA_SET_NAME }, 'Ya es miembro del replica set: nada que hacer');
