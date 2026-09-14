@@ -1308,6 +1308,30 @@
                 });
             },
 
+            obtenerPrecioItem: function(item) {
+                // El precio del item puede venir bajo distintos nombres segun la
+                // version del POS que guardo el ticket. Si se lee solo 'precio' y
+                // el ticket usa otro campo, Number(undefined) da NaN y el impacto
+                // de la anulacion termina mostrandose como 0.
+                if (!item) return 0;
+                const candidatos = [
+                    item.precio, item.precioUnitario, item.precioAplicado,
+                    item.precioVenta, item.precioFinal, item.precioBase
+                ];
+                for (const valor of candidatos) {
+                    const n = Number(valor);
+                    if (Number.isFinite(n) && n > 0) return n;
+                }
+                // Ultimo recurso: derivarlo del subtotal del propio item.
+                const subtotal = Number(item.subtotal ?? item.total ?? item.totalLinea ?? 0);
+                const cantidad = Math.max(1, Number(item.cantidad || 1));
+                if (Number.isFinite(subtotal) && subtotal > 0) return subtotal / cantidad;
+                return 0;
+            },
+            obtenerNombreItem: function(item) {
+                if (!item) return 'Producto';
+                return item.nombre || item.nombreProducto || item.producto || item.descripcion || 'Producto';
+            },
             cantidadStockADevolver: function(item, venta, cantidadSolicitada = null) {
                 if (venta?.stockDevueltoAnulacion === true) return 0;
                 if (!item || item.controlado !== true || !item.id) return 0;
@@ -2036,7 +2060,7 @@
                         <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200 hover:border-red-200 transition group">
                             <div>
                                 <p class="font-bold text-slate-800 text-sm leading-tight"><span class="text-orange-500 mr-1 font-black">${item.cantidad}x</span> ${item.nombre}</p>
-                                <p class="text-xs text-slate-500 mt-1">Subtotal: Gs. ${this.formatoMoneda(item.precio * item.cantidad)}</p>
+                                <p class="text-xs text-slate-500 mt-1">Subtotal: Gs. ${this.formatoMoneda(this.obtenerPrecioItem(item) * (Number(item.cantidad) || 1))}</p>
                             </div>
                             <button onclick="DashboardModule.restarProductoTicket(${index})" class="bg-white border border-slate-300 text-red-500 hover:bg-red-600 hover:text-white hover:border-red-600 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition" title="Quitar 1 unidad del ticket">
                                 <i class="fa-solid fa-minus mr-1"></i> 1 Unidad
@@ -2775,8 +2799,23 @@
 
                 const v = this.datosVentaGestion;
                 const item = v.items[indexItem];
-                const precioUnitario = Number(item.precio);
-                const nuevoTotalTicket = v.total - precioUnitario;
+                // El precio puede venir bajo otro nombre de campo segun la version
+                // del POS que creo el ticket. Se resuelve una sola vez.
+                const precioUnitario = this.obtenerPrecioItem(item);
+                if (precioUnitario <= 0) {
+                    // Antes esto seguia: NaN - NaN dejaba el ticket en 0 y el registro
+                    // de auditoria con impacto 0. Mejor no tocar nada y avisar.
+                    this.mostrarToast('No se pudo leer el precio de este producto. Anulacion cancelada.', 'error');
+                    return;
+                }
+                const totalActualTicket = Number(v.total || 0);
+                const nuevoTotalTicket = Math.max(0, totalActualTicket - precioUnitario);
+
+                // Normaliza el item en memoria: asi los DOS registros de auditoria
+                // (parcial y parcial_a_total) y el propio modal muestran el nombre
+                // y el precio reales, sin caer en "Producto" ni en 0.
+                item.nombre = this.obtenerNombreItem(item);
+                item.precio = precioUnitario;
                 
                 try {
                     const batch = writeBatch(db);
