@@ -116,7 +116,11 @@ services:
   # Sirve frontend/ como estatico y hace de reverse proxy hacia el API.
   # -------------------------------------------------------------------
   web:
-    image: nginx:1.27-alpine
+    build:
+      # Contexto: la RAIZ del repo. El .dockerignore de la raiz deja fuera
+      # todo lo que no sea frontend/ y deploy/nginx/.
+      context: .
+      dockerfile: deploy/nginx/Dockerfile
     # nginx resuelve el nombre del upstream AL ARRANCAR: si "api" no existe
     # todavia, falla con "host not found in upstream". depends_on garantiza
     # que el contenedor del API este creado antes.
@@ -124,20 +128,7 @@ services:
       - api
     environment:
       # host:puerto del API dentro de la red del proyecto.
-      #   - API en este mismo compose        -> api:3000
-      #   - API como Application de Dokploy  -> <nombre-interno>:3000
-      #     (lo ves en el panel del Application)
       API_UPSTREAM: "${API_UPSTREAM:-api:3000}"
-      # nginx solo procesa la plantilla de /etc/nginx/templates AL ARRANCAR.
-      # Si cambiás deploy/nginx/default.conf.template, este valor hace que la
-      # definicion del servicio cambie y compose RECREE el contenedor; sin el,
-      # nginx seguiria corriendo con la config vieja en memoria.
-      NGINX_ENTRYPOINT_QUIET_LOGS: "1"
-    volumes:
-      # El repo clonado por Dokploy vive en el host: no hace falta hornear
-      # el frontend en una imagen. El mount es de solo lectura.
-      - ./frontend:/usr/share/nginx/html:ro
-      - ./deploy/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
     restart: unless-stopped
 
 volumes:

@@ -24,19 +24,38 @@ docker-compose.yml
   mongo-keyfile   (tarea)
   mongo           (base de datos)
   redis           (caché)
-  api             (Node/Express)   build: ./server
-  web             (nginx)  <-- ÚNICO con dominio
-        ├── sirve ./frontend como estático  (24 páginas)
+  api             build: ./server            -> Node/Express
+  web             build: . (Dockerfile en deploy/nginx/)   <-- ÚNICO con dominio
+        ├── sirve el frontend EMBEBIDO en la imagen
         └── proxy /api/, /health, /realtime  ->  api:3000
-deploy/nginx/default.conf.template
 server/Dockerfile
+deploy/nginx/Dockerfile
+deploy/nginx/default.conf.template
+.dockerignore                        (raíz: recorta el contexto de web)
 ```
-
-El frontend se monta desde `./frontend` (el repo clonado ya está en el host): **no hace falta
-hornearlo en una imagen**. Cambiás un HTML, redesplegás y aparece.
 
 Un solo dominio sirve la app **y** el API, así que **no hay CORS** y el APK apunta siempre al
 mismo host.
+
+### Por qué el frontend va DENTRO de la imagen y no por bind mount
+
+La primera versión montaba `./frontend` con un bind mount. En Dokploy eso falla en silencio: si la
+ruta relativa no resuelve, o si los permisos del directorio clonado no son legibles para el usuario
+`nginx` (uid 101), **Docker crea un directorio vacío en vez de dar error**. El resultado es un
+nginx que arranca sin problemas pero no sirve nada:
+
+```text
+/            -> 403   directory index of "/usr/share/nginx/html/" is forbidden
+/favicon.ico -> 404
+```
+
+Embebiendo `frontend/` en la imagen (`COPY frontend/ /usr/share/nginx/html/`) desaparece toda
+dependencia del host. Además el Dockerfile hace `chmod -R a+rX` para garantizar legibilidad sin
+importar los permisos del origen.
+
+Efecto secundario bueno: como la config y el frontend viajan en la imagen, **cualquier cambio
+invalida la capa `COPY` y fuerza el rebuild**. Ya no puede quedar un nginx corriendo con la
+configuración vieja.
 
 ### Por qué el API va dentro del compose
 
@@ -150,6 +169,8 @@ Si da **502**, mirá los **Logs** del servicio `api`. Causas típicas:
 | `Configuracion de entorno invalida -> JWT_SECRET debe tener al menos 32 caracteres` | Falta `JWT_SECRET` en Environment, o tiene menos de 32 caracteres. |
 | `MongooseServerSelectionError` o timeout | El replica set no está inicializado (sección siguiente), o la clave de `MONGO_URI` no coincide con la de mongo. |
 | `MongoParseError: Password contains unescaped characters` o `Protocol and host list are required` | La contraseña tiene `@ : / ? # [ ] %` sin codificar y el driver rechaza la URI. Definí `MONGO_PASSWORD` (el API la codifica sola) en vez de `MONGO_URI`. |
+| `/` responde **403** y los assets **404** | nginx está sirviendo un directorio vacío. Con el frontend embebido ya no puede pasar; si lo ves, el contenedor `web` corre una imagen vieja. Verificá con `docker exec pos-system-<id>-web-1 ls /usr/share/nginx/html \| head`. |
+| `/` responde **502** | Traefik no alcanza nginx. Revisá en **Domains** que el *Service Name* sea `web` y el *Container Port* sea `80`. |
 | `ECONNREFUSED redis:6379` | `REDIS_PASSWORD` no coincide con la que arrancó redis. Redis fija la clave al crear el volumen: si la cambiaste, hay que borrar el volumen `redis-data`. |
 | `EACCES` o el contenedor se reinicia en bucle | El `JWT_SECRET` tiene caracteres que YAML interpreta. Entrecomillalo. |
 

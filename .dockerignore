@@ -1,0 +1,89 @@
+# ===================================================================
+# .dockerignore · contexto de build del servicio "web" (raiz del repo)
+# ===================================================================
+# El servicio "api" NO usa este archivo: su contexto es ./server y le aplica
+# server/.dockerignore.
+#
+# Objetivo: que a la imagen "web" solo viajen frontend/ y deploy/nginx/.
+# Sin esto, el contexto incluiria el proyecto Android, los restos de Firebase
+# y -peligroso- los secretos y keystores que hay en el arbol local.
+#
+# OJO CON LOS PATRONES SIN '/' INICIAL:
+#   un patron como "favicon.ico" matchea en CUALQUIER nivel, y excluiria
+#   tambien frontend/favicon.ico (que SI hace falta). Los archivos de la raiz
+#   que tienen equivalente dentro de frontend/ van anclados con '/'.
+
+# --- Control de versiones y editor ---
+.git
+.github
+.vscode
+.gitignore
+
+# --- Dependencias y artefactos de build (en cualquier nivel) ---
+node_modules
+dist
+coverage
+
+# --- El API se construye aparte (contexto ./server) ---
+/server
+
+# --- Proyecto Android ---
+/mobile
+
+# --- Restos de la etapa Firebase y herramientas locales ---
+/functions
+/backend
+/js
+/.firebase
+/.firebaserc
+/firebase.json
+/firestore.indexes.json
+/escpos-service.js
+/main.js
+/control_center_config.json
+/settings.local.json
+tmp_*
+*.tmp
+*.pdf
+
+# --- Archivos de la raiz que NO son parte del sitio servido ---
+/favicon.ico
+/club_lin_logo.jpg
+/club_lin_logo_animado_suave.gif
+/PortableGit*
+
+# --- Documentacion ---
+*.md
+
+# --- SECRETOS: nunca deben entrar a una imagen ---
+*.jks
+*.keystore
+*.jceks
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.p12
+*.pfx
+*release-key*
+*upload-key*
+*upload-cert*
+deployment_cert*
+*-firebase-adminsdk-*.json
+*service-account*.json
+*serviceAccount*.json
+*.gserviceaccount.json
+google-services*.json
+GoogleService-Info.plist
+secrets/
+.secrets/
+.env
+.env.*
+
+# --- Herramientas de diagnostico local ---
+_*.cmd
+_*.ps1
+_*.py
+_*.js
+_*.txt
