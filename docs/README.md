@@ -223,7 +223,7 @@ Firestore notifica cambios solos. La API no. Hay 3 casos que dependen de eso:
 | **Migrar `pos.html` y romper la venta** | Es lo último del Bloque B. Endpoints transaccionales probados antes de tocarlo. |
 | **Perder el tiempo real y que el KDS no se entere de pedidos** | Etapa 3 antes del Bloque B. Plan B con refetch al recuperar foco. |
 | **Datos que no coinciden entre Firestore y Mongo** | Etapa 2 solo lee. Comparar `GET /products` contra Firestore producto por producto antes de escribir nada. |
-| **Las reglas de Firestore bloquean algo más** | Ya pasó con `cashFlows`. Revisar las 34 reglas y listar cuáles son `write: false`. |
+| **Las reglas de Firestore bloquean algo más** | **Ya pasó con `cashFlows`.** Auditoría hecha: de 33 colecciones con `match`, **4 están bloqueadas para escritura**: `cashFlows`, `cashFlowContributions`, `cashFlowAudits`, `systemAlerts`. Cualquier página que escriba en ellas va a fallar con `Missing or insufficient permissions`. |
 | **Doble escritura silenciosa** | Regla 2: lectura y escritura se cambian juntas en la misma página. |
 | **El rol de usuario se pierde al migrar auth** | Los 5 roles de `firestore.rules` tienen que existir en el JWT. Probarlo antes del Bloque B. |
 
