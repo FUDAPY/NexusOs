@@ -33,11 +33,11 @@ body {
 .bg-slate-800  { background-color: var(--nx-surface-2) !important; }
 .bg-slate-900  { background-color: var(--nx-surface)   !important; }
 .bg-slate-950  { background-color: var(--nx-bg)        !important; }
-.bg-slate-800\/50 { background-color: rgba(22, 31, 51, 0.62) !important; }
-.bg-slate-900\/50 { background-color: rgba(15, 22, 38, 0.62) !important; }
-.bg-slate-900\/80 { background-color: rgba(15, 22, 38, 0.86) !important; }
-.bg-black\/50  { background-color: rgba(3, 6, 14, 0.7) !important; }
-.bg-black\/70  { background-color: rgba(3, 6, 14, 0.82) !important; }
+.bg-slate-800\/50 { background-color: var(--nx-surface-translucent) !important; }
+.bg-slate-900\/50 { background-color: var(--nx-surface-translucent) !important; }
+.bg-slate-900\/80 { background-color: var(--nx-surface-translucent-strong) !important; }
+.bg-black\/50  { background-color: var(--nx-overlay) !important; }
+.bg-black\/70  { background-color: var(--nx-overlay) !important; }
 
 /* ---------- Texto ---------- */
 .text-white      { color: var(--nx-text)       !important; }
@@ -72,13 +72,13 @@ body {
 .hover\:bg-orange-600:hover { background-color: var(--nx-brand-hover) !important; }
 .hover\:bg-orange-500:hover { background-color: var(--nx-brand) !important; }
 .text-orange-500, .text-orange-600 { color: var(--nx-brand) !important; }
-.text-orange-200, .text-orange-300 { color: #fdba74 !important; }
+.text-orange-200, .text-orange-300 { color: var(--nx-brand-strong) !important; }
 .border-orange-500 { border-color: var(--nx-brand) !important; }
 .border-orange-200, .border-orange-300 { border-color: rgba(249,115,22,.35) !important; }
 .focus\:border-orange-500:focus { border-color: var(--nx-brand) !important; }
 .focus\:ring-orange-500:focus { --tw-ring-color: var(--nx-brand) !important; }
 .bg-orange-500\/10 { background-color: var(--nx-brand-soft) !important; }
-.bg-orange-500\/20 { background-color: rgba(249,115,22,.2) !important; }
+.bg-orange-500\/20 { background-color: var(--nx-brand-soft-strong) !important; }
 
 /* ---------- Estados semanticos ---------- */
 .text-amber-700, .text-amber-600, .text-amber-500 { color: var(--nx-warning) !important; }
@@ -91,7 +91,7 @@ body {
 .bg-red-500, .bg-red-600 { background-color: var(--nx-danger) !important; }
 .bg-red-500\/10, .bg-red-500\/20 { background-color: var(--nx-danger-soft) !important; }
 .border-red-500, .border-red-400, .border-red-300 { border-color: rgba(239,68,68,.4) !important; }
-.hover\:bg-red-600:hover { background-color: #dc2626 !important; }
+.hover\:bg-red-600:hover { background-color: var(--nx-danger-hover) !important; }
 
 .text-green-500, .text-green-600, .text-emerald-500, .text-emerald-600 { color: var(--nx-success) !important; }
 .bg-green-500, .bg-emerald-500, .bg-green-600, .bg-emerald-600 { background-color: var(--nx-success) !important; }
@@ -156,11 +156,11 @@ input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px var(--nx-bg) inset !important;
   caret-color: var(--nx-brand);
 }
+/* El icono del selector de fecha/hora lo pinta el navegador segun la
+   propiedad 'color-scheme' que fija nexus-theme-toggle.js. Antes habia un
+   filter: invert(0.75) que en modo claro dejaba el icono casi invisible. */
 input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.75);
-  cursor: pointer;
-}
+input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--nx-brand); }
 
 /* ---------- Tablas nativas ---------- */
@@ -183,7 +183,7 @@ tbody td { color: var(--nx-text); border-color: var(--nx-border-soft) !important
   border-radius: var(--nx-radius-full);
   border: 2px solid var(--nx-bg);
 }
-::-webkit-scrollbar-thumb:hover { background: #2c3a58; }
+::-webkit-scrollbar-thumb:hover { background: var(--nx-border); }
 * { scrollbar-color: var(--nx-surface-3) transparent; scrollbar-width: thin; }
 
 /* ---------- Modales / overlays existentes ---------- */

@@ -27,7 +27,6 @@
                 { label: "Notificaciones", href: "notificaciones.html", icon: "fa-bell", route: "notificaciones.html" },
                 { label: "Auditoria de Transacciones", href: "auditoria_transacciones.html", icon: "fa-shield-halved", route: "auditoria_transacciones.html" },
                 { label: "Relatorio de Cierres", href: "relatorio_cierres.html", icon: "fa-scale-balanced", route: "relatorio_cierres.html" },
-                { label: "Testers Google Play", href: "play_testers.html", icon: "fa-google-play", route: "play_testers.html" },
                 { label: "Monitor de Problemas", href: "monitor_problemas.html", icon: "fa-triangle-exclamation", route: "monitor_problemas.html" }
             ]
         }

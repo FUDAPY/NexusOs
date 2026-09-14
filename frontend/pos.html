@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -15,7 +15,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Coffee POS ERP - Terminal de Venta V2</title>
+    <title>NexusOS - Terminal de Venta V2</title>
     <link rel="icon" href="favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -88,7 +88,7 @@
         </div>
         <div id="legal-footer" class="rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
             Todos los derechos reservados 2026 -
-            <a href="https://dev.grupooh.online" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Otelax Dev</a>
+            <a href="https://github.com/FUDAPY" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Giuliano Catella</a>
         </div>
     </header>
 
@@ -1880,10 +1880,23 @@
                     }))
                     .filter(ajuste => ajuste.cantidad > 0);
             },
+            esControlado: function(valor) {
+                // El POS decide descontar stock segun este campo, pero en la base
+                // puede venir como booleano, numero o texto segun como se cargo el
+                // producto. Comparar con === true hace que 1 o "true" NO descuenten:
+                // el cajero ve la venta normal pero el stock nunca baja y queda
+                // descuadrado contra inventario.
+                if (valor === true || valor === 1) return true;
+                if (typeof valor === 'string') {
+                    const v = valor.trim().toLowerCase();
+                    return v === 'true' || v === '1' || v === 'si' || v === 'sí';
+                }
+                return false;
+            },
             obtenerDescuentosStockPendientes: function(items = []) {
                 const ajustes = new Map();
                 items.forEach((item) => {
-                    if (!item || item.controlado !== true || !item.id) return;
+                    if (!item || !this.esControlado(item.controlado) || !item.id) return;
                     const cantidad = Math.max(0, Math.floor(Number(item.cantidad || 0)));
                     const descontada = this.cantidadStockADevolver(item);
                     const pendiente = Math.max(0, cantidad - descontada);
@@ -1896,7 +1909,7 @@
             },
             marcarItemsConStockDescontado: function(items = []) {
                 return items.map((item) => {
-                    if (item?.controlado !== true) return { ...item, stockDescontado: false, stockDescontadoCantidad: 0 };
+                    if (!this.esControlado(item?.controlado)) return { ...item, stockDescontado: false, stockDescontadoCantidad: 0 };
                     const cantidad = Math.max(0, Math.floor(Number(item.cantidad || 0)));
                     return { ...item, stockDescontado: cantidad > 0, stockDescontadoCantidad: cantidad };
                 });
@@ -1910,7 +1923,7 @@
                     lecturas.push({ ajuste, ref, data: snap.data() || {} });
                 }
                 lecturas.forEach(({ ajuste, ref, data }) => {
-                    if (data.controlado !== true) return;
+                    if (!this.esControlado(data.controlado)) return;
                     const stockActual = Number(data.stock || 0);
                     const cantidad = Math.max(0, Math.floor(Number(ajuste.cantidad || 0)));
                     if (stockActual < cantidad) {
@@ -2027,7 +2040,7 @@
             },
 
             cantidadStockADevolver: function(item, cantidadSolicitada = null) {
-                if (!item || item.controlado !== true || !item.id) return 0;
+                if (!item || !this.esControlado(item.controlado) || !item.id) return 0;
                 const cantidadItem = Math.max(0, Number(cantidadSolicitada ?? item.cantidad ?? 0));
                 const cantidadMarcada = Number(item.stockDescontadoCantidad || 0);
                 if (cantidadMarcada > 0) return Math.min(cantidadItem, cantidadMarcada);
@@ -2078,7 +2091,7 @@
                 if (!produccionDisponible) return;
                 if (p.controlado) {
                     const cantidadEnCarrito = this.carrito
-                        .filter(item => item.id === id && item.controlado === true)
+                        .filter(item => item.id === id && this.esControlado(item.controlado))
                         .reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
                     const disponible = await this.detectorConflictoStock(id, cantidadEnCarrito + 1);
                     if (!disponible) return;
@@ -3905,7 +3918,7 @@
                 if(this.productosVisibles.length === 0) { grid.innerHTML = `<div class="col-span-full text-center mt-20 opacity-30"><i class="fa-solid fa-box-open text-7xl mb-4"></i><p class="text-2xl font-black uppercase tracking-widest">Catalogo Vacio</p></div>`; return; }
 
                 grid.innerHTML = this.productosVisibles.map(p => {
-                    const sinStock = (p.controlado === true && (p.stock === null || p.stock <= 0));
+                    const sinStock = (this.esControlado(p.controlado) && (p.stock === null || p.stock <= 0));
                     const esInterno = p.visibilidad === 'interno';
 
                     const claseContenedor = sinStock ? "bg-slate-200 border border-slate-300 opacity-60 cursor-not-allowed grayscale filter" : "bg-white border border-slate-200 hover:border-orange-400 cursor-pointer transform hover:-translate-y-1 shadow-sm hover:shadow-lg";
