@@ -19,15 +19,17 @@ nada del otro lado.
 
 ## Qué se agregó
 
-```
+```text
 docker-compose.yml
   mongo-keyfile   (tarea)
   mongo           (base de datos)
   redis           (caché)
+  api             (Node/Express)   build: ./server
   web             (nginx)  <-- ÚNICO con dominio
         ├── sirve ./frontend como estático  (24 páginas)
-        └── proxy /api/, /health, /realtime  ->  el API
+        └── proxy /api/, /health, /realtime  ->  api:3000
 deploy/nginx/default.conf.template
+server/Dockerfile
 ```
 
 El frontend se monta desde `./frontend` (el repo clonado ya está en el host): **no hace falta
@@ -35,6 +37,16 @@ hornearlo en una imagen**. Cambiás un HTML, redesplegás y aparece.
 
 Un solo dominio sirve la app **y** el API, así que **no hay CORS** y el APK apunta siempre al
 mismo host.
+
+### Por qué el API va dentro del compose
+
+El **nombre del servicio es el nombre del host** en la red de Docker. Poniendo todo en un mismo
+compose, `api` alcanza a `mongo` y `redis` sin configuración de red extra, y nginx alcanza a `api`.
+No hay que copiar nombres internos de un panel a otro ni depurar si dos servicios comparten red.
+
+El costo: el API pierde Railpack y se construye con `server/Dockerfile`. A cambio, un solo
+`Deploy` levanta la stack entera y el `MONGO_URI` se arma con las **mismas variables** que usa
+mongo, así la clave vive en un solo lugar.
 
 ## Paso a paso en Dokploy
 
@@ -45,20 +57,27 @@ Subí el repo. En Dokploy → tu proyecto → servicio **Docker Compose** → **
 En la pestaña **Environment** tienen que estar:
 
 ```
-MONGO_INITDB_ROOT_USERNAME=giuli
-MONGO_INITDB_ROOT_PASSWORD=<tu_clave>
+MONGO_INITDB_ROOT_USERNAME=<usuario>
+MONGO_INITDB_ROOT_PASSWORD=<clave_larga_y_aleatoria>
 MONGO_INITDB_DATABASE=pos_cate
 MONGO_EXTERNAL_PORT=5220
-REDIS_PASSWORD=<tu_clave_redis>
+REDIS_PASSWORD=<clave_larga_y_aleatoria>
+JWT_SECRET=<secreto_de_48_bytes>
 API_UPSTREAM=api:3000
+CORS_ORIGINS=
 ```
 
-> `API_UPSTREAM` es a dónde nginx manda `/api/`, `/health` y `/realtime`. Si el API todavía no
-> está desplegado, deja `api:3000`: nginx arranca igual y solo esas rutas dan 502. El resto del
-> sitio funciona.
+> Generá `JWT_SECRET` con:
+> ```bash
+> node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+> ```
+> Si falta, el compose **aborta con un mensaje claro** en vez de arrancar con un secreto débil.
 
-Después del deploy, en la lista de servicios del compose tenés que ver **4**: `mongo-keyfile`,
-`mongo`, `redis` y `web`.
+> `API_UPSTREAM` es a dónde nginx manda `/api/`, `/health` y `/realtime`. Con el API dentro de este
+> compose queda en `api:3000` y no hace falta tocarlo.
+
+Después del deploy, en la lista de servicios del compose tenés que ver **5**: `mongo-keyfile`,
+`mongo`, `redis`, `api` y `web`.
 
 ### 2. Apuntar el DNS al servidor
 
@@ -100,58 +119,24 @@ curl https://pos.tudominio.com/health      # {"success":true,...}  (502 si el AP
 En el navegador tenés que ver la pantalla de acceso. Si ves **404 de Traefik**, el `Service Name`
 no es `web`. Si ves **502**, el contenedor `web` no arrancó: revisá sus logs.
 
-## Conectar el API
+## El API ya está conectado
 
-El API todavía no está desplegado. Cuando lo hagas, hay dos caminos:
+El compose construye el API con `server/Dockerfile` y lo une a `mongo` y `redis`. No hay nada que
+copiar entre paneles: `API_UPSTREAM=api:3000` ya funciona.
 
-### Opción A — API como *Application* aparte (mantiene Railpack 0.15.4)
-
-1. Dokploy → **Create Service → Application**. Repositorio el mismo.
-2. **Build Path**: `server/` · **Builder**: Railpack 0.15.4
-3. **Environment** (tomado de `server/.env.app.example`):
-
-```
-NODE_ENV=production
-PORT=3000
-API_PREFIX=/api/v1
-MONGO_URI=mongodb://giuli:<clave>@mongo:27017/pos_cate?authSource=admin&replicaSet=rs0
-REDIS_URL=redis://default:<clave>@redis:6379/0
-JWT_SECRET=<secreto de 48 bytes>
-CORS_ORIGINS=https://pos.tudominio.com
+```bash
+curl https://pos.tudominio.com/health
+# {"success":true,"data":{"status":"ok","uptime":123.4}}
 ```
 
-4. Copiá el **nombre interno** que Dokploy le asigna y ponelo en el compose:
+Si da **502**, mirá los **Logs** del servicio `api`. Causas típicas:
 
-```
-API_UPSTREAM=<nombre-interno-del-application>:3000
-```
-
-5. Redesplegá el compose para que nginx tome el nuevo valor.
-
-### Opción B — API dentro del mismo compose
-
-Más simple de conectar (comparte red, sin nombres mágicos), pero pierde Railpack: hay que escribir
-un `Dockerfile` para el API. Quedaría así:
-
-```yaml
-  api:
-    build:
-      context: ./server
-    environment:
-      NODE_ENV: production
-      PORT: "3000"
-      API_PREFIX: /api/v1
-      MONGO_URI: "mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_INITDB_DATABASE}?authSource=admin&replicaSet=rs0"
-      REDIS_URL: "redis://default:${REDIS_PASSWORD}@redis:6379/0"
-      JWT_SECRET: "${JWT_SECRET:?definir JWT_SECRET}"
-      CORS_ORIGINS: "https://pos.tudominio.com"
-    depends_on:
-      - mongo
-      - redis
-    restart: unless-stopped
-```
-
-Con esto `API_UPSTREAM=api:3000` funciona sin tocar nada más.
+| Mensaje en los logs | Causa |
+| --- | --- |
+| `Configuracion de entorno invalida -> JWT_SECRET debe tener al menos 32 caracteres` | Falta `JWT_SECRET` en Environment, o tiene menos de 32 caracteres. |
+| `MongooseServerSelectionError` o timeout | El replica set no está inicializado (sección siguiente), o la clave de `MONGO_URI` no coincide con la de mongo. |
+| `ECONNREFUSED redis:6379` | `REDIS_PASSWORD` no coincide con la que arrancó redis. Redis fija la clave al crear el volumen: si la cambiaste, hay que borrar el volumen `redis-data`. |
+| `EACCES` o el contenedor se reinicia en bucle | El `JWT_SECRET` tiene caracteres que YAML interpreta. Entrecomillalo. |
 
 ## Inicializar el replica set (una sola vez)
 
@@ -164,3 +149,35 @@ npm run mongo:replica:init     # inicializa si falta
 ```
 
 Tiene que reportar `writablePrimary: true` y `replSetStatus: ok`.
+
+> El puerto 5220 se publica justamente para poder correr esto desde tu máquina. Cuando termines
+> podés quitar el `ports` del servicio `mongo`: el API lo alcanza igual por la red interna.
+
+## ⚠️ Antes de desplegar: rotá la contraseña de Mongo
+
+La contraseña real de Mongo quedó escrita en `server/.env.app.example` y `server/.env.database.example`
+durante varias versiones. Hoy está en el **historial de Git** de este repositorio público:
+
+```bash
+git log --all -S '<la_clave_vieja>' --oneline   # la lista sin problemarse
+```
+
+Reemplazar esos archivos por placeholders (ya hecho) **no la borra del historial**: cualquiera que
+clone el repo puede recuperarla. La única mitigación real es **cambiarla en la base**.
+
+1. Generá una clave nueva y larga:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+   ```
+2. Cambiala en Mongo (por `mongosh` contra el puerto 5220, o desde el contenedor):
+   ```javascript
+   use admin
+   db.changeUserPassword("<usuario>", "<clave_nueva>")
+   ```
+3. Actualizá `MONGO_INITDB_ROOT_PASSWORD` en el **Environment** de Dokploy.
+   > El `MONGO_URI` del API se arma con esa misma variable, así que se actualiza solo.
+4. Redesplegá el compose.
+
+De paso, poné una `REDIS_PASSWORD` propia y larga: hoy está como placeholder.
+> Ojo: si cambiás `REDIS_PASSWORD` después de que el volumen `redis-data` ya existe, redis sigue
+> arrancando con la clave vieja. Borrá el volumen `redis-data` para que tome la nueva.

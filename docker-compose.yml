@@ -76,11 +76,46 @@ services:
     restart: unless-stopped
 
   # -------------------------------------------------------------------
+  # API Node/Express. Habla con mongo y redis por nombre de servicio.
+  # No publica puertos: el unico acceso publico pasa por "web".
+  # -------------------------------------------------------------------
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      API_PREFIX: /api/v1
+      # Una sola fuente de verdad: las MISMAS variables que usa mongo.
+      # Asi la clave no se duplica (ni se desincroniza) en dos lugares.
+      MONGO_URI: "mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_INITDB_DATABASE}?authSource=admin&replicaSet=rs0"
+      MONGO_MAX_POOL_SIZE: "20"
+      MONGO_DB_NAME: "${MONGO_INITDB_DATABASE}"
+      REDIS_URL: "redis://default:${REDIS_PASSWORD}@redis:6379/0"
+      REDIS_STOCK_LOCK_TTL_MS: "5000"
+      JWT_SECRET: "${JWT_SECRET:?definir JWT_SECRET en Environment (minimo 32 caracteres)}"
+      JWT_EXPIRES_IN: "12h"
+      BCRYPT_ROUNDS: "12"
+      # El frontend se sirve desde el MISMO origen, asi que no hay CORS que
+      # resolver. Vacio = acepta cualquier origen.
+      CORS_ORIGINS: "${CORS_ORIGINS:-}"
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------
   # Servicio HTTP publico. Es el UNICO al que se le asigna dominio.
   # Sirve frontend/ como estatico y hace de reverse proxy hacia el API.
   # -------------------------------------------------------------------
   web:
     image: nginx:1.27-alpine
+    # nginx resuelve el nombre del upstream AL ARRANCAR: si "api" no existe
+    # todavia, falla con "host not found in upstream". depends_on garantiza
+    # que el contenedor del API este creado antes.
+    depends_on:
+      - api
     environment:
       # host:puerto del API dentro de la red del proyecto.
       #   - API en este mismo compose        -> api:3000
