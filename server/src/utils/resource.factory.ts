@@ -31,6 +31,10 @@ export interface OpcionesRecurso<TDoc> {
   ordenPorDefecto?: string;
   /** Coleccion solo lectura: no expone POST ni PATCH. */
   soloLectura?: boolean;
+  /** Campos que NUNCA se devuelven al cliente (ej: passwordHash). */
+  excluir?: readonly string[];
+  /** Campos que el cliente NUNCA puede escribir, aunque los mande. */
+  noEscribible?: readonly string[];
   /** Tope de documentos por respuesta (default 500). */
   limiteMaximo?: number;
 }
@@ -109,6 +113,20 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
   const router = Router();
   const limiteMaximo = opts.limiteMaximo ?? LIMITE_MAXIMO_POR_DEFECTO;
 
+  // Proyeccion de exclusion: '-passwordHash -otroCampo'. Si no hay, se
+  // devuelve el documento completo.
+  const proyeccion = (opts.excluir ?? []).map((c) => `-${c}`).join(' ');
+
+  /** Quita los campos que el cliente no puede escribir. */
+  const limpiarCuerpo = (cuerpo: unknown): Record<string, unknown> => {
+    const fuente = (cuerpo ?? {}) as Record<string, unknown>;
+    const prohibidos = opts.noEscribible ?? [];
+    if (prohibidos.length === 0) return fuente;
+    const limpio: Record<string, unknown> = { ...fuente };
+    for (const campo of prohibidos) delete limpio[campo];
+    return limpio;
+  };
+
   // GET / -> lista paginada
   router.get(
     '/',
@@ -118,8 +136,9 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
       const limit = parsearEntero(req.query['limit'], LIMITE_POR_DEFECTO, limiteMaximo);
       const offset = parsearEntero(req.query['offset'], 0, Number.MAX_SAFE_INTEGER);
 
+      const consulta = opts.modelo.find(filtro).sort(orden).skip(offset).limit(limit).lean();
       const [datos, total] = await Promise.all([
-        opts.modelo.find(filtro).sort(orden).skip(offset).limit(limit).lean().exec(),
+        proyeccion === '' ? consulta.exec() : consulta.select(proyeccion).exec(),
         opts.modelo.countDocuments(filtro).exec(),
       ]);
 
@@ -131,7 +150,8 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
   router.get(
     '/:id',
     asyncHandler(async (req: Request, res: Response) => {
-      const doc = await opts.modelo.findById(req.params.id).lean().exec();
+      const consulta = opts.modelo.findById(req.params.id).lean();
+      const doc = await (proyeccion === '' ? consulta.exec() : consulta.select(proyeccion).exec());
       if (doc === null) {
         throw new AppError(`No existe el documento ${String(req.params.id)} en ${opts.coleccion}`, 404, 'NOT_FOUND');
       }
@@ -143,7 +163,7 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
     router.post(
       '/',
       asyncHandler(async (req: Request, res: Response) => {
-        const creado = await opts.modelo.create(req.body);
+        const creado = await opts.modelo.create(limpiarCuerpo(req.body));
         sendOk(res, creado, 201);
       }),
     );
@@ -152,7 +172,7 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
       '/:id',
       asyncHandler(async (req: Request, res: Response) => {
         const actualizado = await opts.modelo
-          .findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true, runValidators: true })
+          .findByIdAndUpdate(req.params.id, { $set: limpiarCuerpo(req.body) }, { new: true, runValidators: true })
           .lean()
           .exec();
         if (actualizado === null) {

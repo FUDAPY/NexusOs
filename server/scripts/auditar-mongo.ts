@@ -88,10 +88,13 @@ const auditarColeccion = async (nombre: string, muestras: number): Promise<InfoC
   }
 
   const indicesRaw = await col.indexes().catch((): Record<string, unknown>[] => []);
-  const indices = indicesRaw.map((i) => ({
-    nombre: String(i['name'] ?? ''),
-    campos: Object.keys((i['key'] ?? {}) as Record<string, unknown>),
-  }));
+  const indices = indicesRaw.map((i) => {
+    const nombre = i['name'];
+    return {
+      nombre: typeof nombre === 'string' ? nombre : '',
+      campos: Object.keys((i['key'] ?? {}) as Record<string, unknown>),
+    };
+  });
 
   return { coleccion: nombre, documentos, muestreados: docs.length, campos, indices };
 };

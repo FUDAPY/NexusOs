@@ -42,3 +42,42 @@ export type { IAuditLog, AuditLogDocument, AuditSeveridad, AuditPayload } from '
 
 export { CashShift, SHIFT_ESTADOS } from './CashShift.js';
 export type { ICashShift, CashShiftDocument, ShiftEstado } from './CashShift.js';
+
+export { CashClose } from './CashClose.js';
+export type { ICashClose, CashCloseDocument } from './CashClose.js';
+
+export { InventoryMovement } from './InventoryMovement.js';
+export type { IInventoryMovement, InventoryMovementDocument } from './InventoryMovement.js';
+
+export { ProductionBatch } from './ProductionBatch.js';
+export type { IProductionBatch, ProductionBatchDocument } from './ProductionBatch.js';
+
+export { ProductionConfig } from './ProductionConfig.js';
+export type { IProductionConfig, ProductionConfigDocument } from './ProductionConfig.js';
+
+export { LinTicket } from './LinTicket.js';
+export type { ILinTicket, LinTicketDocument } from './LinTicket.js';
+
+export { LinTicketClaim } from './LinTicketClaim.js';
+export type { ILinTicketClaim, LinTicketClaimDocument } from './LinTicketClaim.js';
+
+export { CreditPin } from './CreditPin.js';
+export type { ICreditPin, CreditPinDocument } from './CreditPin.js';
+
+export { CreditPinAttempt } from './CreditPinAttempt.js';
+export type { ICreditPinAttempt, CreditPinAttemptDocument } from './CreditPinAttempt.js';
+
+export { PublicGoal } from './PublicGoal.js';
+export type { IPublicGoal, PublicGoalDocument } from './PublicGoal.js';
+
+export { SupportAlert } from './SupportAlert.js';
+export type { ISupportAlert, SupportAlertDocument } from './SupportAlert.js';
+
+export { SyncLog } from './SyncLog.js';
+export type { ISyncLog, SyncLogDocument } from './SyncLog.js';
+
+export { Notification } from './Notification.js';
+export type { INotification, NotificationDocument } from './Notification.js';
+
+export { Setting } from './Setting.js';
+export type { ISetting, SettingDocument } from './Setting.js';
