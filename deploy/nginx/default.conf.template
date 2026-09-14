@@ -22,6 +22,13 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Docker resuelve los nombres de servicio en su DNS interno, siempre 127.0.0.11.
+    # SIN esto, nginx fija la IP del API al arrancar y la conserva: si el
+    # contenedor del API se recrea y cambia de IP, nginx sigue apuntando a la
+    # vieja y devuelve 502 hasta que alguien reinicie nginx a mano.
+    # Con resolver + proxy_pass con variable, re-resuelve cada 10s.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+
     # Codificacion de los .html en espanol
     charset utf-8;
 
@@ -45,7 +52,8 @@ server {
 
     # ================= API REST =================
     location /api/ {
-        proxy_pass http://${API_UPSTREAM};
+        set $api_upstream "${API_UPSTREAM}";
+        proxy_pass http://$api_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
@@ -57,7 +65,8 @@ server {
 
     # ================= Health del API =================
     location = /health {
-        proxy_pass http://${API_UPSTREAM};
+        set $api_upstream "${API_UPSTREAM}";
+        proxy_pass http://$api_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
@@ -71,7 +80,8 @@ server {
     # Requiere el Upgrade de WebSocket y timeouts largos: la conexion del
     # monitor de cocina queda abierta horas.
     location /realtime/ {
-        proxy_pass http://${API_UPSTREAM};
+        set $api_upstream "${API_UPSTREAM}";
+        proxy_pass http://$api_upstream;
         proxy_http_version 1.1;
         proxy_set_header Upgrade           $http_upgrade;
         proxy_set_header Connection        "upgrade";
@@ -121,6 +131,8 @@ server {
         try_files $uri $uri.html $uri/ /index.html;
     }
 
-    # Pagina de error propia si el frontend trae una
-    error_page 500 502 503 504 /index.html;
+    # Sin error_page hacia /index.html a proposito:
+    # redirigir 500-504 al index haria que un fallo del API devuelva la pantalla
+    # de login con codigo 502, ocultando el error real. Mejor que el 502 llegue
+    # tal cual para que el frontend lo detecte y avise.
 }

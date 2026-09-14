@@ -35,6 +35,11 @@ RUN npm prune --omit=dev
 FROM node:22-alpine AS runtime
 WORKDIR /app
 
+# bash no viene en alpine y la terminal web de Dokploy lo invoca por defecto:
+#   exec failed: exec: "bash": executable file not found in $PATH (exit 127)
+# Son ~1.5 MB y hace que la consola del panel funcione para depurar.
+RUN apk add --no-cache bash
+
 ENV NODE_ENV=production \
     NODE_OPTIONS=--enable-source-maps
 

@@ -168,7 +168,51 @@ Tiene que reportar `writablePrimary: true` y `replSetStatus: ok`.
 > El puerto 5220 se publica justamente para poder correr esto desde tu máquina. Cuando termines
 > podés quitar el `ports` del servicio `mongo`: el API lo alcanza igual por la red interna.
 
-## ⚠️ Antes de desplegar: rotá la contraseña de Mongo
+## Usar la terminal de Dokploy
+
+Si la consola de un servicio dice:
+
+```
+exec failed: unable to start container process: exec: "bash": executable file not found in $PATH
+Container closed with code: 127
+```
+
+es porque ese contenedor usa `alpine`, que trae `sh` pero no `bash`, y la terminal web invoca
+`bash` por defecto. **Qué terminal usar según el caso:**
+
+| Servicio | Imagen | Terminal sirve? | Para qué |
+| --- | --- | --- | --- |
+| `mongo` | `mongo:8` (Debian) | ✅ sí, trae `bash` y `mongosh` | **rotar contraseñas**, inspeccionar la base |
+| `redis` | `redis:7` (Debian) | ✅ sí | `redis-cli` |
+| `api` | `node:22-alpine` | ✅ tras el rebuild (se le agregó `bash`) | depurar el servicio |
+| `web` | `nginx:1.27-alpine` | ❌ no tiene `bash` | — |
+
+Si la terminal igual no responde, en Dokploy el campo **Run Command** (pestaña Advanced) sirve
+para ejecutar un comando puntual dentro del contenedor, y forzar `/bin/sh` en vez de `bash`.
+
+## Rotar la contraseña de Mongo (con la terminal del panel)
+
+**Servicio `mongo` → Terminal.** Ya entrás autenticado como root del contenedor:
+
+```bash
+mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin
+```
+
+```javascript
+use admin
+db.changeUserPassword("giuli", "laClaveNuevaLargaYRandom")
+```
+
+Después:
+
+1. Actualizá `MONGO_INITDB_ROOT_PASSWORD` en el **Environment** del compose.
+   > El `MONGO_URI` del API se arma con esa misma variable: se actualiza solo.
+2. **Redesplegá.**
+
+> `MONGO_INITDB_ROOT_PASSWORD` solo se aplica cuando el volumen está **vacío**. Si ya existe
+> `mongo-data`, cambiar la variable NO cambia la clave del usuario: hay que usar
+> `changeUserPassword` como arriba.
+
 
 La contraseña real de Mongo quedó escrita en `server/.env.app.example` y `server/.env.database.example`
 durante varias versiones. Hoy está en el **historial de Git** de este repositorio público:
