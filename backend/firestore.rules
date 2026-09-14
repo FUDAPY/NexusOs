@@ -505,9 +505,13 @@ service cloud.firestore {
       allow update, delete: if hasRole('admin');
     }
 
+    // El POS mantiene el estado del turno: lo abre el cajero y lo cierra al
+    // hacer el Cierre Z. Antes era 'allow write: if false' y el cierre fallaba
+    // con 'Missing or insufficient permissions' (pos.html:2824).
     match /cashFlows/{turnoId} {
       allow read: if isStaff();
-      allow write: if false;
+      allow create, update: if hasRole('admin') || hasRole('cajero');
+      allow delete: if hasRole('admin');
     }
 
     match /cashFlowContributions/{saleId} {

@@ -7,6 +7,7 @@ import { logger } from './utils/logger.js';
 import { orderRouter } from './routes/order.routes.js';
 import { errorHandler, notFound } from './middlewares/errorHandler.js';
 import { auditRouter } from './routes/audit.routes.js';
+import { resourceRouter } from './routes/resource.routes.js';
 
 export const buildApp = (): Express => {
   const app = express();
@@ -30,6 +31,7 @@ export const buildApp = (): Express => {
 
   app.use(`${env.API_PREFIX}/orders`, orderRouter);
   app.use(`${env.API_PREFIX}/audit-logs`, auditRouter);
+  app.use(env.API_PREFIX, resourceRouter);
 
   app.use(notFound);
   app.use(errorHandler);
