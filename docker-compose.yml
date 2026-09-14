@@ -1,11 +1,16 @@
 # ===================================================================
-# POS CATE - Infraestructura
+# POS CATE - Infraestructura + servicio web
 # ===================================================================
 # Lo consume el servicio "Docker Compose" de Dokploy, que clona el repo y ejecuta:
 #   docker compose -p <proyecto> --env-file .env -f ./docker-compose.yml up -d --build
 #
-# Contiene SOLO infraestructura (MongoDB + Redis).
+# Contiene:
+#   - mongo, redis, mongo-keyfile : infraestructura
+#   - web (nginx)                 : UNICO servicio con dominio asignado.
+#                                   Sirve frontend/ y hace de reverse proxy al API.
+#
 # El API va como servicio "Application" aparte, para poder usar Railpack 0.15.4.
+# Ver deploy/README.md para el paso a paso del dominio.
 #
 # Las variables ${...} se resuelven desde el Environment de Dokploy
 # (Dokploy las escribe en el .env que pasa con --env-file).
@@ -68,6 +73,25 @@ services:
       - "yes"
     volumes:
       - redis-data:/data
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------
+  # Servicio HTTP publico. Es el UNICO al que se le asigna dominio.
+  # Sirve frontend/ como estatico y hace de reverse proxy hacia el API.
+  # -------------------------------------------------------------------
+  web:
+    image: nginx:1.27-alpine
+    environment:
+      # host:puerto del API dentro de la red del proyecto.
+      #   - API en este mismo compose        -> api:3000
+      #   - API como Application de Dokploy  -> <nombre-interno>:3000
+      #     (lo ves en el panel del Application)
+      API_UPSTREAM: "${API_UPSTREAM:-api:3000}"
+    volumes:
+      # El repo clonado por Dokploy vive en el host: no hace falta hornear
+      # el frontend en una imagen. El mount es de solo lectura.
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./deploy/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
     restart: unless-stopped
 
 volumes:
