@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { ESTADOS_COCINA, Order } from '../models/index.js';
 import { createOrderInputSchema, listOrdersQuerySchema } from '../schemas/order.schema.js';
 import { createOrder } from '../services/order.service.js';
+import { cancelOrder } from '../services/orderCierre.service.js';
 import { AppError, sendOk } from '../utils/response.js';
 
 export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -76,6 +77,54 @@ export const updateKdsState = async (
     if (!order) throw new AppError('Orden no encontrada', 404, 'ORDER_NOT_FOUND');
 
     sendOk(res, order.toObject());
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const cancel = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    if (typeof id !== 'string' || id === '') {
+      throw new AppError('Falta el id de la orden', 400, 'MISSING_ORDER_ID');
+    }
+
+    const body = req.body as {
+      motivo?: string;
+      tipo?: 'total' | 'parcial';
+      cantidades?: Record<string, number>;
+      autorizadoPor?: string;
+      autorizadoPorNombre?: string;
+    };
+
+    if (typeof body.motivo !== 'string' || body.motivo.trim() === '') {
+      throw new AppError('El motivo de anulacion es obligatorio', 400, 'MISSING_REASON');
+    }
+
+    const tipo: 'total' | 'parcial' = body.tipo === 'parcial' ? 'parcial' : 'total';
+    const cantidades = body.cantidades ?? {};
+    if (tipo === 'parcial' && Object.keys(cantidades).length === 0) {
+      throw new AppError('La anulacion parcial necesita cantidades', 400, 'MISSING_QUANTITIES');
+    }
+
+    const resultado = await cancelOrder(
+      {
+        orderId: id,
+        motivo: body.motivo.trim(),
+        tipo,
+        cantidades,
+        autorizadoPor: body.autorizadoPor,
+        autorizadoPorNombre: body.autorizadoPorNombre,
+      },
+      { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
+    );
+
+    sendOk(res, resultado);
   } catch (error) {
     next(error);
   }
