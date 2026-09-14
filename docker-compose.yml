@@ -128,6 +128,11 @@ services:
       #   - API como Application de Dokploy  -> <nombre-interno>:3000
       #     (lo ves en el panel del Application)
       API_UPSTREAM: "${API_UPSTREAM:-api:3000}"
+      # nginx solo procesa la plantilla de /etc/nginx/templates AL ARRANCAR.
+      # Si cambiás deploy/nginx/default.conf.template, este valor hace que la
+      # definicion del servicio cambie y compose RECREE el contenedor; sin el,
+      # nginx seguiria corriendo con la config vieja en memoria.
+      NGINX_ENTRYPOINT_QUIET_LOGS: "1"
     volumes:
       # El repo clonado por Dokploy vive en el host: no hace falta hornear
       # el frontend en una imagen. El mount es de solo lectura.
