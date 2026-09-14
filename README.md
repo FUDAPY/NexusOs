@@ -1,5 +1,16 @@
 # NexusOS · POS / ERP / CRM
 
+**NexusOS** es una plataforma unificada de código abierto diseñada para centralizar y escalar operaciones comerciales. Combina un punto de venta (POS) táctil, un back-office administrativo y financiero, gestión de clientes (CRM) y un monitor de producción (KDS), operando sobre una robusta API propia multi-sucursal.
+
+Diseñado bajo estándares estrictos de concurrencia y transaccionalidad, NexusOS garantiza integridad de datos en tiempo real y puede desplegarse tanto en web como en dispositivos móviles nativos.
+
+## 🚀 Características Principales
+
+* **Operación en Tiempo Real:** Sincronización instantánea entre cajas y áreas de producción (Namespace KDS vía Socket.IO).
+* **Integridad Transaccional:** Operaciones críticas resguardadas mediante transacciones ACID y bloqueos anti-sobreventa en MongoDB.
+* **Multi-plataforma:** SPA (Single Page Application) servida estáticamente, lista para producción web y empaquetable como App Android mediante Capacitor.
+* **Auditoría Inmutable:** Registro de transacciones append-only con retención a largo plazo.
+
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A522-5FA04E?logo=nodedotjs&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
