@@ -62,16 +62,30 @@ MONGO_INITDB_ROOT_PASSWORD=<clave_larga_y_aleatoria>
 MONGO_INITDB_DATABASE=pos_cate
 MONGO_EXTERNAL_PORT=5220
 REDIS_PASSWORD=<clave_larga_y_aleatoria>
-JWT_SECRET=<secreto_de_48_bytes>
+JWT_SECRET=REEMPLAZAR_ESTO
 API_UPSTREAM=api:3000
 CORS_ORIGINS=
 ```
 
-> Generá `JWT_SECRET` con:
-> ```bash
-> node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+> **`JWT_SECRET` tiene que ser un secreto real, no el texto del ejemplo.** Si pegás
+> `REEMPLAZAR_ESTO` el contenedor `api` arranca, se cae y entra en bucle con:
+> `Configuracion de entorno invalida -> JWT_SECRET: JWT_SECRET debe tener al menos 32 caracteres`
+>
+> Generalo así (cualquiera de las tres funciona):
+>
+> ```powershell
+> # PowerShell (Windows, sin instalar nada)
+> -join (1..64 | ForEach-Object { [char]((65..90)+(97..122)+(48..57) | Get-Random) })
 > ```
-> Si falta, el compose **aborta con un mensaje claro** en vez de arrancar con un secreto débil.
+>
+> ```bash
+> # Node
+> node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+> # Python
+> python -c "import secrets; print(secrets.token_urlsafe(48))"
+> ```
+>
+> Copiá la salida y pegala como valor. Tiene que tener **32 caracteres o más**.
 
 > `API_UPSTREAM` es a dónde nginx manda `/api/`, `/health` y `/realtime`. Con el API dentro de este
 > compose queda en `api:3000` y no hace falta tocarlo.
