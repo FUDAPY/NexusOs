@@ -8,6 +8,7 @@ import { orderRouter } from './routes/order.routes.js';
 import { errorHandler, notFound } from './middlewares/errorHandler.js';
 import { auditRouter } from './routes/audit.routes.js';
 import { resourceRouter } from './routes/resource.routes.js';
+import { cashShiftRouter } from './routes/cashShift.routes.js';
 
 export const buildApp = (): Express => {
   const app = express();
@@ -31,6 +32,9 @@ export const buildApp = (): Express => {
 
   app.use(`${env.API_PREFIX}/orders`, orderRouter);
   app.use(`${env.API_PREFIX}/audit-logs`, auditRouter);
+  // Va ANTES que resourceRouter: necesita resolver POST /cash-shifts/cerrar
+  // antes de que el CRUD generico tome el prefijo.
+  app.use(`${env.API_PREFIX}/cash-shifts`, cashShiftRouter);
   app.use(env.API_PREFIX, resourceRouter);
 
   app.use(notFound);

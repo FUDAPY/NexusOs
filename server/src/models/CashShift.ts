@@ -21,6 +21,8 @@ export interface ICashShift {
   transferencia: number;
   credito: number;
   ventaTotalBruta: number;
+  /** Fondo fijo con el que el cajero abrio el turno. Suma al esperado en efectivo. */
+  fondoInicial?: number;
 
   totalProductos: number;
   totalTickets: number;
@@ -55,6 +57,7 @@ const cashShiftSchema = new Schema<ICashShift, Model<ICashShift>>(
     sucursalesActivas: { type: [String], default: [] },
 
     efectivo: money,
+    fondoInicial: money,
     tarjetaPOS: money,
     transferencia: money,
     credito: money,
