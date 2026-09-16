@@ -34,6 +34,24 @@ const bootstrap = async (): Promise<void> => {
 };
 
 bootstrap().catch((error: unknown) => {
-  logger.fatal({ err: error }, 'Fallo el arranque del servicio');
+  /* Se agrega a donde intento conectarse, sin la contrasena.
+     Sin esto, un log de arranque fallido dice "Authentication failed" y no
+     permite distinguir "la credencial esta mal" de "no llego al servidor" -
+     que es la mayoria de las caidas y costaba horas ubicar. Usuario, host, base
+     y replica set alcanzan para saber contra QUE se autentico.
+     NUNCA loguear env.MONGO_URI: lleva la contrasena embebida. */
+  logger.fatal(
+    {
+      err: error,
+      mongo: {
+        usuario: env.MONGO_USER ?? null,
+        host: env.MONGO_HOST,
+        base: env.MONGO_DB_NAME,
+        replicaSet: env.MONGO_REPLICA_SET.trim() === '' ? null : env.MONGO_REPLICA_SET,
+        authSource: env.MONGO_AUTH_SOURCE,
+      },
+    },
+    'Fallo el arranque del servicio',
+  );
   process.exit(1);
 });
