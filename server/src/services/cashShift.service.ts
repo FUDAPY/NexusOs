@@ -1,6 +1,7 @@
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { AuditLog, CashClose, CashShift, Order } from '../models/index.js';
+import { emitTurnoEvent } from '../sockets/kds.js';
 
 export interface CerrarTurnoInput {
   turnoId: string;
@@ -52,8 +53,12 @@ const normalizar = (valor: unknown): string => {
 export const cerrarTurno = async (
   input: CerrarTurnoInput,
   context: { ip: string; userAgent: string },
-): Promise<CerrarTurnoResult> =>
-  withTransaction(async (session) => {
+): Promise<CerrarTurnoResult> => {
+  // Se captura aca para poder emitir el evento DESPUES del commit, cuando la
+  // variable `turno` que vive dentro de la transaccion ya no esta en alcance.
+  let sucursalTurno = '';
+
+  const resultado = await withTransaction(async (session) => {
     const opciones = session ? { session } : {};
 
     const turno = await CashShift.findOne({ turnoId: input.turnoId }).session(session).exec();
@@ -63,6 +68,7 @@ export const cerrarTurno = async (
     if (turno.estadoTurno === 'cerrado') {
       throw new AppError('El turno ya estaba cerrado', 409, 'SHIFT_ALREADY_CLOSED');
     }
+    sucursalTurno = turno.sucursal ?? '';
 
     // --- Totales reales, recalculados desde las ordenes del turno ---
     // Se excluyen las anuladas y las que no afectan caja (canjes gratuitos).
@@ -230,3 +236,15 @@ export const cerrarTurno = async (
       ticketsContados: ticketsTurnoIds.length,
     };
   });
+
+  // Se emite DESPUES del commit: si se emitiera adentro, el frontend pediria
+  // datos que todavia no estan confirmados y veria el estado viejo otra vez.
+  emitTurnoEvent(sucursalTurno, 'turno:cerrado', {
+    turnoId: input.turnoId,
+    id: resultado.cierreId,
+    total: resultado.declarado.total,
+    estadoPago: 'cerrado',
+  });
+
+  return resultado;
+};

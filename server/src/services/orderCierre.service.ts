@@ -2,6 +2,7 @@ import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { AuditLog, InventoryMovement, Order, OrderItem, Product } from '../models/index.js';
 import type { IOrder } from '../models/index.js';
+import { emitTurnoEvent } from '../sockets/kds.js';
 
 export interface CancelOrderInput {
   orderId: string;
@@ -16,6 +17,8 @@ export interface CancelOrderInput {
 
 export interface CancelOrderResult {
   order: IOrder;
+  /** Id del documento; se expone aparte porque IOrder no declara _id. */
+  orderId: string;
   unidadesDevueltas: number;
   productosAfectados: string[];
 }
@@ -30,8 +33,8 @@ export interface CancelOrderResult {
 export const cancelOrder = async (
   input: CancelOrderInput,
   context: { ip: string; userAgent: string },
-): Promise<CancelOrderResult> =>
-  withTransaction(async (session) => {
+): Promise<CancelOrderResult> => {
+  const resultado = await withTransaction(async (session) => {
     const order = await Order.findById(input.orderId).session(session).exec();
     if (!order) {
       throw new AppError(`No existe la orden ${input.orderId}`, 404, 'ORDER_NOT_FOUND');
@@ -144,7 +147,26 @@ export const cancelOrder = async (
 
     return {
       order: actualizada.toObject() as IOrder,
+      orderId: String(actualizada._id),
       unidadesDevueltas,
       productosAfectados: [...aDevolver.keys()],
     };
   });
+
+  // Se emite DESPUES del commit: si se emitiera adentro, el frontend pediria
+  // datos que todavia no estan confirmados y veria el estado viejo otra vez.
+  emitTurnoEvent(resultado.order.sucursal ?? '', 'venta:anulada', {
+    turnoId: resultado.order.turnoId ?? null,
+    id: resultado.orderId,
+    ticketId: resultado.order.ticket_id ?? null,
+    total: Number(resultado.order.total ?? 0),
+    estadoPago: 'anulado',
+    // Las cantidades devueltas por producto: el POS puede refrescar solo las
+    // tarjetas que cambiaron en vez de pedir el catalogo entero.
+    productos: resultado.order.items
+      .filter((item) => item.controlado === true)
+      .map((item) => ({ productoId: String(item.id ?? ''), cantidad: Number(item.cantidad ?? 0) })),
+  });
+
+  return resultado;
+};
