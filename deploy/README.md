@@ -217,29 +217,45 @@ el conjunto con ese nombre:
 El host guardado **tiene que ser `mongo:27017`** (el nombre del servicio en `docker-compose.yml`),
 que es estable mientras no cambie el proyecto de Dokploy.
 
-**Cómo confirmarlo** (servicio `mongo` → Terminal):
+### Por qué el host del conjunto TIENE que ser `mongo:27017`
+
+En Compose el **nombre del servicio es el alias DNS** dentro de la red `<proyecto>_default`, y no
+depende del nombre del proyecto que le asigne Dokploy. Por eso:
+
+- el `api` se conecta con `MONGO_URI = mongodb://...@mongo:27017/...` (viene de `MONGO_HOST` en
+  `docker-compose.yml`);
+- nginx proxya a `api:3000` (`API_UPSTREAM`) por el mismo mecanismo.
+
+El driver de Mongo **primero** conecta al host de la URI y **después** lee el config del conjunto y
+se conecta a los hosts *anunciados* por cada miembro. Si el anunciado es un nombre que ya no existe,
+el descubrimiento de topología nunca termina: `serverSelectionTimeoutMS` (10s) expira, `mongoose.connect`
+lanza, `bootstrap` hace `process.exit(1)` **antes de `server.listen()`**, y nginx devuelve 502 en todas
+las rutas. Por eso el host anunciado y `MONGO_HOST` tienen que ser **el mismo valor estable**.
+
+**Cómo confirmarlo.** Desde la Terminal del stack (Dokploy → Docker Compose → Terminal), o con la
+consola del host:
 
 ```bash
-mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin
+# <proyecto> es el que usa Dokploy en `docker compose -p <proyecto>`
+docker compose -p <proyecto> exec mongo mongosh --quiet \
+  -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin \
+  --eval 'rs.status().members.map(m => m.name + " = " + m.stateStr)'
 ```
 
-```javascript
-rs.status().members.map(m => m.name + ' = ' + m.stateStr)
-// Si aparece el nombre viejo, o el estado nunca llega a PRIMARY, es esto.
+Si aparece un nombre tipo `pos-erppos-3yohnd:27017`, o el estado nunca llega a `PRIMARY`, es esto.
+
+**Cómo arreglarlo** (mismo contenedor):
+
+```bash
+docker compose -p <proyecto> exec mongo mongosh --quiet \
+  -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin \
+  --eval 'const c = rs.conf(); c.members[0].host = "mongo:27017"; rs.reconfigure(c, true); rs.status().members[0].stateStr'
 ```
 
-**Cómo arreglarlo:**
+`force: true` es obligatorio: un conjunto de un solo nodo cuyo único miembro es inalcanzable **no
+puede** elegir primary, y `replSetReconfig` normal exige ser primary.
 
-```javascript
-cfg = rs.conf()
-cfg.members[0].host = "mongo:27017"
-rs.reconfigure(cfg, true)   // force: un nodo solo e inalcanzable no puede ser primary
-
-// Verificar que se promueva
-rs.status().members[0].stateStr   // -> "PRIMARY"
-```
-
-Después, **reiniciar el servicio `api`** para que `connectDatabase()` funcione, y confirmar con:
+Por último, **redeploy del stack** para que el `api` vuelva a arrancar, y verificar:
 
 ```bash
 curl -s https://<tu-dominio>/health
