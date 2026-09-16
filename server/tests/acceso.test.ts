@@ -281,3 +281,131 @@ describe('marcar ticket como abonado (/orders/:id/abonar)', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('cierre Z del cajero (/cash-shifts/cerrar)', () => {
+  /**
+   * Este endpoint NO lleva guard dentro del router: el requiereAuth se aplica al
+   * montar cashShiftRouter en app.ts. El test existe justamente por eso, para
+   * detectar si alguien reordena los routers y deja el Cierre Z abierto.
+   */
+  const url = `${env.API_PREFIX}/cash-shifts/cerrar`;
+
+  it('sin token responde 401', async () => {
+    const res = await request(app).post(url).send({ turnoId: 'T1', cajero: 'Ana' });
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('SIN_TOKEN');
+  });
+
+  it('exige turnoId y cajero (400 antes de tocar la base)', async () => {
+    for (const body of [{}, { turnoId: 'T1' }, { cajero: 'Ana' }, { turnoId: '  ', cajero: 'Ana' }]) {
+      const res = await request(app)
+        .post(url)
+        .set('Authorization', 'Bearer ' + tokenValido)
+        .send(body);
+      expect(res.status).toBe(400);
+      expect(['MISSING_SHIFT_ID', 'MISSING_CASHIER']).toContain(res.body.code);
+    }
+  });
+
+  it('rechaza una declaracion con valores no numericos (422)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenValido)
+      .send({ turnoId: 'T1', cajero: 'Ana', declaracion: { efectivo: 'mucho' } });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('INVALID_DECLARATION');
+  });
+});
+
+describe('cierre forzado de sucursal (/cash-shifts/forzar-cierre)', () => {
+  const url = `${env.API_PREFIX}/cash-shifts/forzar-cierre`;
+
+  it('sin token responde 401', async () => {
+    const res = await request(app).post(url).send({ sucursal: 'Centro', motivo: 'x' });
+    expect(res.status).toBe(401);
+  });
+
+  /**
+   * Cierra el turno de OTRA persona y mueve el arqueo completo: no es algo que
+   * deba poder hacer un cajero.
+   */
+  it('un cajero NO puede forzar el cierre (403)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ sucursal: 'Centro', motivo: 'se fue sin cerrar' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  /**
+   * Deliberado: supervisor puede escribir la config global (tasas, limites) pero
+   * NO cerrar turnos ajenos. Son permisos distintos aunque los dos sean "de
+   * encargado"; si esto cambia tiene que ser una decision consciente.
+   */
+  it('un supervisor tampoco (403), aunque si pueda tocar /config/sistema', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('supervisor'))
+      .send({ sucursal: 'Centro', motivo: 'cierre de fin de dia' });
+    expect(res.status).toBe(403);
+  });
+
+  it('un rol cocina NO puede (403)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cocina'))
+      .send({ sucursal: 'Centro', motivo: 'x' });
+    expect(res.status).toBe(403);
+  });
+
+  it('exige sucursal y motivo (400 antes de tocar la base)', async () => {
+    const casos: Array<[Record<string, unknown>, string]> = [
+      [{}, 'MISSING_SUCURSAL'],
+      [{ sucursal: '   ' }, 'MISSING_SUCURSAL'],
+      [{ sucursal: 'Centro' }, 'MISSING_MOTIVO'],
+      [{ sucursal: 'Centro', motivo: '  ' }, 'MISSING_MOTIVO'],
+    ];
+    for (const [body, code] of casos) {
+      const res = await request(app)
+        .post(url)
+        .set('Authorization', 'Bearer ' + tokenValido)
+        .send(body);
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe(code);
+    }
+  });
+
+  /** dryRun no es una puerta trasera: sigue siendo solo para admin. */
+  it('dryRun no salta el control de rol', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ sucursal: 'Centro', motivo: 'simulacion', dryRun: true });
+    expect(res.status).toBe(403);
+  });
+
+  /** dryRun tampoco salta la validacion del body. */
+  it('dryRun no salta la validacion del body', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenValido)
+      .send({ dryRun: true });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('MISSING_SUCURSAL');
+  });
+
+  it('un admin SI pasa el control de rol', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenValido)
+      .send({
+        sucursal: 'Centro',
+        motivo: 'cierre de fin de dia',
+        declaracion: { fondoInicial: 50_000, efectivo: 120_000, tarjeta: 30_000 },
+        dryRun: true,
+      });
+    // Sin Mongo da 500 al buscar las ordenes, pero no 403: el rol fue aceptado.
+    expect(res.status).not.toBe(403);
+  });
+});
