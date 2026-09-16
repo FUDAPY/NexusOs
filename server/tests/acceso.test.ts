@@ -315,6 +315,45 @@ describe('cierre Z del cajero (/cash-shifts/cerrar)', () => {
     expect(res.status).toBe(422);
     expect(res.body.code).toBe('INVALID_DECLARATION');
   });
+
+  /**
+   * El cajero tiene que poder cerrar SU caja: es la operacion con la que termina
+   * su sesion. Si este test empieza a dar 403, el cierre de caja dejo de ser
+   * posible para quien realmente lo hace.
+   */
+  it('un cajero SI puede cerrar su caja (no 403)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ turnoId: 'T1', cajero: 'Ana' });
+    // Sin Mongo da 500 al buscar el turno, pero no 403: el rol fue aceptado.
+    expect(res.status).not.toBe(403);
+  });
+
+  it('un supervisor tambien (no 403)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('supervisor'))
+      .send({ turnoId: 'T1', cajero: 'Ana' });
+    expect(res.status).not.toBe(403);
+  });
+
+  it('un cliente NO puede cerrar una caja (403)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cliente'))
+      .send({ turnoId: 'T1', cajero: 'Ana' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('un rol cocina tampoco (403)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cocina'))
+      .send({ turnoId: 'T1', cajero: 'Ana' });
+    expect(res.status).toBe(403);
+  });
 });
 
 describe('cierre forzado de sucursal (/cash-shifts/forzar-cierre)', () => {

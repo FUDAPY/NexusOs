@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { filtroPorId } from '../utils/mongoId.js';
@@ -54,6 +55,13 @@ export const cancelOrder = async (
       const productoId = String(item.productoId ?? '');
       if (productoId === '') continue;
       if (item.controlado !== true) continue;
+      /* Mismo guard que applyStockMovements (order.service.ts): `productoId` es
+         el id que manda el POS, y NO siempre es un ObjectId (los de Firestore
+         tienen 20 caracteres, ej. `003Jljv7OSqMjmpcAvgm`). Sin este chequeo,
+         `Product.findById` tira CastError, la transaccion aborta y la anulacion
+         falla entera por un item que ademas nunca descontó stock: si la venta
+         no lo descontó, no hay nada que devolver. */
+      if (!Types.ObjectId.isValid(productoId)) continue;
 
       const cantidadOrden = Number(item.cantidad ?? 0);
       const pedida =

@@ -218,3 +218,59 @@ a `/api/v1`, asi que servidor y frontend se despliegan en cualquier orden.
 - La logica de caja completa ya estaba server-side en `functions/index.js`.
 - La formula de "esperado" del arqueo esta en `utils/cashFlow.ts` con la cita de
   la linea original de cada funcion. **No cambiarla sin hablarlo.**
+
+---
+
+## Correcciones de caja y anulacion (verificadas)
+
+### ✅ El cierre del cajero ahora cierra las ventas
+
+`cerrarTurno` sumaba las ventas del turno, creaba el `cash_close`, pasaba el
+`cash_shift` a `cerrado`... y **nunca marcaba las ordenes como `arqueado`**.
+`arqueado` se escribia en un solo lugar de todo el servidor
+(`cashForzado.service.ts:220`), asi que el Cierre Z dejaba los tickets abiertos.
+
+Consecuencia: el cierre "cerraba" la caja pero las ventas seguian contando.
+`calcularAporte` (`utils/cashFlow.ts`) solo excluye `arqueado === true`, y el
+cierre forzado filtra `{ arqueado: { $ne: true } }` — o sea que un cierre forzado
+posterior **volvia a contar las ventas ya cerradas**.
+
+Arreglado con un `Order.updateMany` dentro de la misma transaccion, con la MISMA
+consulta con la que se calcularon los totales: lo que se cierra es exactamente lo
+que se conto. El cierre forzado ya lo hacia; ahora los dos caminos coinciden.
+
+### ✅ Anular ya no falla por `CastError`
+
+`order_items.productoId` es un **String** (`OrderItem.ts:63`), y guarda el id que
+manda el POS — que no siempre es un ObjectId (los de Firestore tienen 20
+caracteres). `applyStockMovements` lo sabe y lo guarda explicitamente
+(`order.service.ts:86`), pero `cancelOrder` hacia `Product.findById(productoId)`
+sin ese chequeo: CastError, la transaccion abortaba y la anulacion fallaba entera.
+
+Se replico el guard. Ademas es lo **correcto**, no solo lo mas simple: si la venta
+no descontó stock de ese item (porque tampoco era ObjectId), devolverlo inflaria
+el stock. Se devuelve exactamente lo que se descontó.
+
+### ✅ `/cash-shifts/cerrar` ahora tiene control de rol
+
+No tenia ninguno: cualquier usuario autenticado (incluido `cliente`) podia cerrar
+una caja. Ahora es `admin`/`supervisor`/`cajero`, el mismo conjunto que ya usaban
+`/orders/:id/cobro` y `/orders/:id/abonar`. Un test fija que **el cajero siga
+pudiendo** cerrar su propia caja: si eso da 403, se rompio la operacion que cierra
+su sesion.
+
+### ⏳ Pendiente de decision: estas dos cosas NO las cambie solo
+
+1. **`/orders/:id/anular` no tiene control de rol.** Solo exige estar autenticado,
+   asi que un `cliente` puede anular una venta (y devolver stock). Lo mismo que
+   arreglamos en `/cerrar` aplica aca, pero **no lo toque**: si el flujo de la app
+   cliente anula sus propios pedidos, poner el guard lo rompe. Hay que confirmar
+   si eso pasa antes de cerrarlo.
+
+2. **La anulacion parcial no baja el total de la orden.** Para `tipo: 'parcial'`
+   `cancelOrder` devuelve el stock y deja `motivoAnulacion`/`fechaAnulacion`, pero
+   **no toca `total` ni `subtotal`**. Entonces el ticket sigue valiendo lo mismo
+   con menos productos: el arqueo espera plata que ya no se va a cobrar.
+   Es un cambio de plata, y por eso va aparte y con el visto bueno. El arreglo
+   seria recalcular `subtotal` sumando los items que quedan y
+   `total = max(subtotal - discountAmount, 0)`, igual que hace `prepareItems`.

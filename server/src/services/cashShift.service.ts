@@ -187,6 +187,28 @@ export const cerrarTurno = async (
       throw new AppError('No se pudo crear el cierre de caja', 500, 'CLOSE_CREATE_FAILED');
     }
 
+    /* Cerrar el turno tiene que CERRAR las ventas, no solo sumarlas.
+       Sin esto las ordenes quedan con arqueado:false para siempre y siguen
+       contando en el flujo de caja, que es justo lo que el cajero espera que
+       deje de pasar al cerrar su caja:
+         - utils/cashFlow.ts (calcularAporte) solo excluye las arqueado === true
+         - cashForzado.service.ts filtra { arqueado: { $ne: true } }, asi que un
+           cierre forzado posterior volveria a contar estas mismas ventas
+       Se usa la MISMA consulta con la que se calcularon los totales: lo que se
+       cierra es exactamente lo que se conto, ni una venta mas ni una menos.
+       Va dentro de la transaccion por el mismo motivo que en el cierre forzado
+       (ver escribirCierre): tickets marcados sin cierre guardado es plata que
+       desaparece del flujo sin quedar auditada en ningun lado. */
+    await Order.updateMany(
+      {
+        turnoId: input.turnoId,
+        estadoPago: { $ne: 'anulado' },
+        noAfectaCaja: { $ne: true },
+      },
+      { $set: { arqueado: true, fechaArqueo: ahora } },
+      opciones,
+    );
+
     await CashShift.updateOne(
       { _id: turno._id },
       { $set: { estadoTurno: 'cerrado', closedAt: ahora, updatedAt: ahora } },

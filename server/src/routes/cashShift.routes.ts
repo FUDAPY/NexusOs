@@ -15,8 +15,14 @@ import { requiereAuth, requiereRol } from '../middlewares/auth.js';
  */
 export const cashShiftRouter: Router = Router();
 
-/** Cierre Z del cajero. Ver cashShift.service.ts para los detalles. */
-cashShiftRouter.post('/cerrar', asyncHandler(cerrar));
+/**
+ * Cierre Z del cajero. Ver cashShift.service.ts para los detalles.
+ *
+ * Se limita a quien maneja plata: un `cliente` o un rol de `cocina` no deberia
+ * poder cerrar una caja. Es el mismo conjunto que ya usan /orders/:id/cobro y
+ * /orders/:id/abonar.
+ */
+cashShiftRouter.post('/cerrar', requiereRol('admin', 'supervisor', 'cajero'), asyncHandler(cerrar));
 
 /**
  * Cierre forzado de una sucursal desde el panel.
