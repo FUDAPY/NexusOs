@@ -25,6 +25,8 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <script src="nexus-realtime.js"></script>
+    <script src="nexus-data.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="admin_sidebar.js" defer></script>
     <script src="cierre_caja_normalizer.js"></script>
@@ -625,6 +627,8 @@
             unsubscribeVentasTurno: null,
             unsubscribeCierresTurno: null,
             unsubscribeAuditoria: null,
+            /* Fase 4: desuscriptor del refresco de config cuando la fuente es Mongo. */
+            detenerConfigSistema: null,
             ventasFallbackIntervalId: null,
             ventasServidorCargando: false,
             ultimoRespaldoServidorAt: 0,
@@ -956,10 +960,19 @@
             },
             cargarSucursalesDisponibles: async function() {
                 try {
-                    const snapshot = await getDocs(collection(db, 'branches'));
-                    this.sucursalesDisponibles = Array.from(new Set(snapshot.docs.map((docSnap) => {
-                        const data = docSnap.data() || {};
-                        return String(data.nombre || data.name || data.branchName || docSnap.id || '').trim();
+                    /* Fase 4: con la pagina en 'mongo' se lee del API; en 'firestore'
+                       se mantiene el camino viejo. Las dos ramas devuelven la MISMA
+                       forma ({ id, ...datos }) para que lo de abajo sea identico. */
+                    let filas;
+                    if (NexusData.esMongo('dashboard')) {
+                        // branches casi no cambia: la cache de 8s ahorra una query por recarga.
+                        filas = await NexusData.leer('branches', { limit: 200, cache: true });
+                    } else {
+                        const snapshot = await getDocs(collection(db, 'branches'));
+                        filas = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() || {}) }));
+                    }
+                    this.sucursalesDisponibles = Array.from(new Set(filas.map((data) => {
+                        return String(data.nombre || data.name || data.branchName || data.id || '').trim();
                     }).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
                     this.poblarFiltroSucursalesVentas();
                 } catch (error) {
@@ -1446,9 +1459,9 @@
             },
 
             cargarConfiguracionSistema: function() {
-                const configRef = doc(db, 'config', 'sistema');
-                onSnapshot(configRef, (configSnap) => {
-                    const config = configSnap.exists() ? (configSnap.data() || {}) : {};
+                /* Fase 4: el cuerpo vive en `pintar` y lo alimentan las dos ramas.
+                   Evita duplicar los ~40 campos del formulario. */
+                const pintar = (config) => {
                     const divisas = config.divisas || {};
                     const tasaUsd = document.getElementById('tasa-usd');
                     const tasaArs = document.getElementById('tasa-ars');
@@ -1489,6 +1502,37 @@
                             ? `<i class="fa-solid fa-clock-rotate-left"></i> Cambio actualizado: ${this.formatDateTime24(fecha)}`
                             : `<i class="fa-solid fa-clock-rotate-left"></i> Sin actualizaciones registradas.`;
                     }
+                };
+
+                if (NexusData.esMongo('dashboard')) {
+                    /* La config global es un documento unico (Firestore config/sistema
+                       -> Mongo settings). Se usa /config/sistema y no el CRUD de
+                       settings porque ese endpoint resuelve el fallback por legacyId
+                       o por presencia de `divisas`. No hay evento de socket para la
+                       config, asi que se re-lee en cada resync. */
+                    if (this.detenerConfigSistema) this.detenerConfigSistema();
+                    const recargar = () => {
+                        NexusAPI.get('/config/sistema', undefined, { ttl: 0 })
+                            .then((respuesta) => pintar(respuesta.data || {}))
+                            .catch((error) => {
+                                this.manejarErrorOperativo(error, {
+                                    origen: 'dashboard',
+                                    tipo: 'configuracion_no_disponible',
+                                    mensaje: 'No se pudo sincronizar la configuracion del sistema.',
+                                    detalle: { coleccion: 'config/sistema' }
+                                });
+                            });
+                    };
+                    recargar();
+                    this.detenerConfigSistema = window.NexusRealtime
+                        ? NexusRealtime.on('resync', recargar)
+                        : null;
+                    return;
+                }
+
+                const configRef = doc(db, 'config', 'sistema');
+                onSnapshot(configRef, (configSnap) => {
+                    pintar(configSnap.exists() ? (configSnap.data() || {}) : {});
                 }, (error) => {
                     this.manejarErrorOperativo(error, {
                         origen: 'dashboard',
@@ -1502,9 +1546,8 @@
             iniciarEscuchaEnVivo: function() {
                 this.iniciarEscuchaResumenTurno();
                 if (this.unsubscribeCierresTurno) this.unsubscribeCierresTurno();
-                const cierresQuery = query(collection(db, 'cierresCaja'), orderBy('fechaCierre', 'desc'), limit(100));
-                this.unsubscribeCierresTurno = onSnapshot(cierresQuery, (snapshot) => {
-                    const cierres = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                /* Fase 4: el mismo cuerpo alimenta las dos fuentes. */
+                const aplicarCierres = (cierres) => {
                     this.cierresTurnoCache = cierres;
                     this.actualizarIniciosTurnoDesdeCierres(cierres);
                     this.actualizarResumenesTurnoVisibles();
@@ -1513,6 +1556,20 @@
                         cierresLeidos: cierres.length,
                         sucursalesConCierre: this.iniciosTurnoPorSucursal.size
                     });
+                };
+
+                if (NexusData.esMongo('dashboard')) {
+                    this.unsubscribeCierresTurno = NexusData.vigilar(
+                        'cierresCaja',
+                        { orderBy: ['fechaCierre', 'desc'], limit: 100 },
+                        aplicarCierres
+                    );
+                    return;
+                }
+
+                const cierresQuery = query(collection(db, 'cierresCaja'), orderBy('fechaCierre', 'desc'), limit(100));
+                this.unsubscribeCierresTurno = onSnapshot(cierresQuery, (snapshot) => {
+                    aplicarCierres(snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })));
                 }, (error) => {
                     this.manejarErrorOperativo(error, {
                         origen: 'dashboard',
@@ -1526,13 +1583,27 @@
 
             iniciarEscuchaResumenTurno: function() {
                 if (this.unsubscribeResumenTurno) this.unsubscribeResumenTurno();
-                const resumenQuery = query(collection(db, 'cashFlows'), where('estadoTurno', '==', 'abierto'));
-                this.unsubscribeResumenTurno = onSnapshot(resumenQuery, (snapshot) => {
+                /* Fase 4: el mismo cuerpo alimenta las dos fuentes. */
+                const aplicarResumen = (resumenes) => {
                     this.marcarSincronizacionOk('resumen_flujo_turno');
-                    this.resumenesTurnoBrutosCache = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+                    this.resumenesTurnoBrutosCache = resumenes;
                     this.actualizarResumenesTurnoVisibles();
                     this.iniciarEscuchaVentasTurno();
                     this.reconciliarResumenesFaltantes();
+                };
+
+                if (NexusData.esMongo('dashboard')) {
+                    this.unsubscribeResumenTurno = NexusData.vigilar(
+                        'cashFlows',
+                        { where: [['estadoTurno', '==', 'abierto']], limit: 200 },
+                        aplicarResumen
+                    );
+                    return;
+                }
+
+                const resumenQuery = query(collection(db, 'cashFlows'), where('estadoTurno', '==', 'abierto'));
+                this.unsubscribeResumenTurno = onSnapshot(resumenQuery, (snapshot) => {
+                    aplicarResumen(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
                 }, (error) => {
                     this.manejarErrorOperativo(error, {
                         origen: 'dashboard',
@@ -1662,13 +1733,28 @@
                     limit(250)
                 );
 
-                if (this.unsubscribeAuditoria) this.unsubscribeAuditoria();
-                this.unsubscribeAuditoria = onSnapshot(qAuditoria, (snapshot) => {
+                const aplicarAuditoria = (filas) => {
                     this.marcarSincronizacionOk('auditoria_dashboard');
-                    this.anulacionesCache = snapshot.docs
-                        .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+                    this.anulacionesCache = filas
                         .filter((item) => String(item.tipo || '').toLowerCase() === 'anulacion_ticket');
                     this.renderizarAnulaciones();
+                };
+
+                if (this.unsubscribeAuditoria) this.unsubscribeAuditoria();
+                if (NexusData.esMongo('dashboard')) {
+                    /* El limit(250) de Firestore va con orderBy fecha desc: en Mongo se
+                       pide lo mismo para que la cache traiga las anulaciones RECIENTES
+                       y no 250 filas cualesquiera. */
+                    this.unsubscribeAuditoria = NexusData.vigilar(
+                        'auditoria',
+                        { orderBy: ['fecha', 'desc'], limit: 250 },
+                        aplicarAuditoria
+                    );
+                    return;
+                }
+
+                this.unsubscribeAuditoria = onSnapshot(qAuditoria, (snapshot) => {
+                    aplicarAuditoria(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
                 }, (error) => {
                     this.registrarAlertaOperativa({
                         tipo: 'firestore_auditoria_dashboard',
@@ -1689,15 +1775,28 @@
                 if (Date.now() - this.metricasEstaticasCargadasAt < 300000) return;
                 this.metricasEstaticasCargadasAt = Date.now();
                 try {
-                    const [prodSnap, userSnap] = await Promise.all([
-                        getCountFromServer(collection(db, "products")),
-                        getCountFromServer(query(collection(db, "users"), where("rol", "==", "cliente"), where("estadoBeneficios", "==", "pendiente")))
-                    ]);
+                    /* Fase 4: contar() pide limit=1 y devuelve el `total` que el
+                       backend calcula con countDocuments, no el tamaño de pagina. */
+                    let totalProductos;
+                    let totalPendientes;
+                    if (NexusData.esMongo('dashboard')) {
+                        [totalProductos, totalPendientes] = await Promise.all([
+                            NexusData.contar('products'),
+                            NexusData.contar('users', { where: [['rol', '==', 'cliente'], ['estadoBeneficios', '==', 'pendiente']] })
+                        ]);
+                    } else {
+                        const [prodSnap, userSnap] = await Promise.all([
+                            getCountFromServer(collection(db, "products")),
+                            getCountFromServer(query(collection(db, "users"), where("rol", "==", "cliente"), where("estadoBeneficios", "==", "pendiente")))
+                        ]);
+                        totalProductos = prodSnap.data().count;
+                        totalPendientes = userSnap.data().count;
+                    }
                     const elProducts = document.getElementById('metric-products');
-                    if(elProducts) elProducts.innerText = `${prodSnap.data().count}`;
+                    if(elProducts) elProducts.innerText = `${totalProductos}`;
 
                     const elPending = document.getElementById('metric-pending');
-                    if(elPending) elPending.innerText = `${userSnap.data().count}`;
+                    if(elPending) elPending.innerText = `${totalPendientes}`;
                     this.marcarSincronizacionOk('metricas_dashboard');
 
                 } catch(e) {
@@ -1749,10 +1848,18 @@
                 try {
                     const fechaKey = document.getElementById('relatorio-cierre-fecha')?.value || this.obtenerFechaKey(new Date());
                     const sucursal = CierreCajaNormalizer.normalizarSucursal(document.getElementById('relatorio-cierre-sucursal')?.value).id;
-                    const snapshot = await getDocs(collection(db, "cierresCaja"));
+                    let filas;
+                    if (NexusData.esMongo('dashboard')) {
+                        /* cash_closes crece con cada cierre: sin limite la pantalla
+                           se traeria la coleccion entera. El orden lo rearma el
+                           .sort() de mas abajo, asi que no se pide orderBy. */
+                        filas = await NexusData.leer('cierresCaja', { limit: 2000 });
+                    } else {
+                        const snapshot = await getDocs(collection(db, "cierresCaja"));
+                        filas = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+                    }
 
-                    this.cierresCajaCache = snapshot.docs
-                        .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+                    this.cierresCajaCache = filas
                         .filter(cierre => CierreCajaNormalizer.esSucursalAuditada(cierre.sucursal));
                     const cierres = this.cierresCajaCache
                         .filter((cierre) => {
@@ -2157,10 +2264,15 @@
                 });
 
                 try {
-                    const snap = await getDocs(collection(db, "branches"));
-                    snap.forEach((docSnap) => {
-                        const data = docSnap.data() || {};
-                        const nombre = String(data.nombre || data.name || data.branchName || docSnap.id || '').trim();
+                    let filas;
+                    if (NexusData.esMongo('dashboard')) {
+                        filas = await NexusData.leer('branches', { limit: 200, cache: true });
+                    } else {
+                        const snap = await getDocs(collection(db, "branches"));
+                        filas = snap.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() || {}) }));
+                    }
+                    filas.forEach((data) => {
+                        const nombre = String(data.nombre || data.name || data.branchName || data.id || '').trim();
                         if (nombre) nombres.add(nombre);
                     });
                 } catch (error) {
@@ -2183,10 +2295,26 @@
 
             obtenerContextoCierreForzado: async function(sucursal) {
                 const sucursalNormalizada = this.normalizarTextoComparacion(sucursal);
-                const cierresQuery = query(collection(db, 'cierresCaja'), where('sucursal', '==', sucursal));
-                const flujosQuery = query(collection(db, 'cashFlows'), where('sucursal', '==', sucursal));
-                const [cierresSnap, flujosSnap] = await Promise.all([getDocs(cierresQuery), getDocs(flujosQuery)]);
-                const convertirRegistro = (docSnap) => ({ id: docSnap.id, ...docSnap.data() });
+                /* Fase 4: las dos ramas dejan cierresFilas/flujosFilas con la misma
+                   forma ({ id, ...datos }); de ahi para abajo el codigo no cambia. */
+                let cierresFilas;
+                let flujosFilas;
+                if (NexusData.esMongo('dashboard')) {
+                    // El mismo filtro del where() de abajo, traducido a query params.
+                    const opciones = { where: [['sucursal', '==', sucursal]], limit: 200 };
+                    const [cierresMongo, flujosMongo] = await Promise.all([
+                        NexusData.leer('cierresCaja', opciones),
+                        NexusData.leer('cashFlows', opciones)
+                    ]);
+                    cierresFilas = cierresMongo;
+                    flujosFilas = flujosMongo;
+                } else {
+                    const cierresQuery = query(collection(db, 'cierresCaja'), where('sucursal', '==', sucursal));
+                    const flujosQuery = query(collection(db, 'cashFlows'), where('sucursal', '==', sucursal));
+                    const [cierresSnap, flujosSnap] = await Promise.all([getDocs(cierresQuery), getDocs(flujosQuery)]);
+                    cierresFilas = cierresSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+                    flujosFilas = flujosSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+                }
                 const fechaRegistro = (registro, campos = []) => {
                     for (const campo of campos) {
                         const fecha = this.normalizarFecha(registro?.[campo]);
@@ -2194,13 +2322,11 @@
                     }
                     return new Date(0);
                 };
-                const cierres = cierresSnap.docs
-                    .map(convertirRegistro)
+                const cierres = cierresFilas
                     .filter((cierre) => this.normalizarTextoComparacion(cierre.sucursal) === sucursalNormalizada)
                     .filter((cierre) => cierre.anulado !== true && cierre.eliminado !== true)
                     .sort((a, b) => fechaRegistro(b, ['fechaCierre', 'closedAt', 'creadoEn', 'createdAt', 'timestamp']) - fechaRegistro(a, ['fechaCierre', 'closedAt', 'creadoEn', 'createdAt', 'timestamp']));
-                const flujosAbiertos = flujosSnap.docs
-                    .map(convertirRegistro)
+                const flujosAbiertos = flujosFilas
                     .filter((flujo) => this.normalizarTextoComparacion(flujo.sucursal) === sucursalNormalizada)
                     .filter((flujo) => String(flujo.estadoTurno || '').toLowerCase() === 'abierto')
                     .sort((a, b) => fechaRegistro(b, ['fechaApertura', 'updatedAt', 'createdAt']) - fechaRegistro(a, ['fechaApertura', 'updatedAt', 'createdAt']));
