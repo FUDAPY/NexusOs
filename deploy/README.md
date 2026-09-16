@@ -189,6 +189,66 @@ Tiene que reportar `writablePrimary: true` y `replSetStatus: ok`.
 > El puerto 5220 se publica justamente para poder correr esto desde tu máquina. Cuando termines
 > podés quitar el `ports` del servicio `mongo`: el API lo alcanza igual por la red interna.
 
+### ⚠️ 502 en TODO (incluido `/health`) después de un redeploy
+
+**Síntoma:** el frontend carga bien (nginx sirve los estáticos, se ve la pantalla de login), pero
+**cualquier** ruta del API devuelve `502 Bad Gateway`, incluido `/health`. Desde la consola del
+navegador se ve `Failed to load resource: 502` y `Error al iniciar sesión: HTTP 502`.
+
+**Qué NO es:** no es el login, ni el rate limiter, ni la base caída. Un 502 en `/health` significa
+que nginx no puede hablar con la API: no hay nada escuchando en el puerto 3000.
+
+**Por qué la API no abre el puerto:** `src/index.ts` hace `server.listen()` **después** de
+`connectDatabase()`. Si Mongo no responde, `mongoose.connect` lanza, `bootstrap` hace
+`process.exit(1)` y el contenedor entra en bucle de reinicio **sin haber abierto nunca el puerto**.
+
+**La causa más probable — el host del replica set quedó viejo:**
+
+El config del replica set se guarda en los volúmenes `mongo-data`/`mongo-config`, así que
+**sobrevive a los redeploys**. Pero el hostname que Dokploy le da al contenedor
+(`pos-erppos-3yohnd`) es **aleatorio y cambia en cada deploy**. Si en algún momento se inicializó
+el conjunto con ese nombre:
+
+1. queda guardado `members[0].host = "pos-erppos-3yohnd:27017"` en el volumen;
+2. el siguiente redeploy recrea el contenedor con otro nombre;
+3. mongod busca un miembro que ya no existe → el conjunto **nunca elige primary**;
+4. el API exige primary escribible → timeout de 10s → `process.exit(1)` → bucle → **502**.
+
+El host guardado **tiene que ser `mongo:27017`** (el nombre del servicio en `docker-compose.yml`),
+que es estable mientras no cambie el proyecto de Dokploy.
+
+**Cómo confirmarlo** (servicio `mongo` → Terminal):
+
+```bash
+mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin
+```
+
+```javascript
+rs.status().members.map(m => m.name + ' = ' + m.stateStr)
+// Si aparece el nombre viejo, o el estado nunca llega a PRIMARY, es esto.
+```
+
+**Cómo arreglarlo:**
+
+```javascript
+cfg = rs.conf()
+cfg.members[0].host = "mongo:27017"
+rs.reconfigure(cfg, true)   // force: un nodo solo e inalcanzable no puede ser primary
+
+// Verificar que se promueva
+rs.status().members[0].stateStr   // -> "PRIMARY"
+```
+
+Después, **reiniciar el servicio `api`** para que `connectDatabase()` funcione, y confirmar con:
+
+```bash
+curl -s https://<tu-dominio>/health
+```
+
+**Para que no vuelva a pasar:** `npm run mongo:replica:init` ahora detecta el host viejo y lo
+reescribe solo (`repararHostSiHaceFalta`). El default es `mongo:27017`; si necesitás otro nombre,
+pasá `REPLICA_HOST=<host:puerto>` — pero **nunca** el nombre que genera Dokploy.
+
 ## Usar la terminal de Dokploy
 
 Si la consola de un servicio dice:
