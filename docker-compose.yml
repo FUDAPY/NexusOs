@@ -58,8 +58,21 @@ services:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
       - mongo-keyfile:/keyfile:ro
-    ports:
-      - "${MONGO_EXTERNAL_PORT:-5220}:27017"
+    # SIN `ports` A PROPOSITO: Mongo no se publica a internet.
+    #
+    # Con el puerto abierto, la contrasena del root es la UNICA barrera. Eso
+    # convierte cualquier debilidad en explotable desde afuera: una clave corta,
+    # o una que haya quedado en el historial de un repo publico (que es
+    # exactamente lo que paso en este proyecto, ver deploy/README.md).
+    #
+    # El `api` lo alcanza igual por la red interna (`mongo:27017`, que es el
+    # nombre del servicio) y los scripts de diagnostico corren DESDE el
+    # contenedor, sin necesitar el puerto.
+    #
+    # Para exponerlo TEMPORALMENTE (una migracion puntual), descomentar estas
+    # dos lineas, terminar el trabajo y volver a comentarlas:
+    # ports:
+    #   - "${MONGO_EXTERNAL_PORT:-5220}:27017"
     restart: unless-stopped
 
   # Sin puertos publicados a proposito: Redis solo se consume desde la red interna.

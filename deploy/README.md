@@ -186,8 +186,11 @@ npm run mongo:replica:init     # inicializa si falta
 
 Tiene que reportar `writablePrimary: true` y `replSetStatus: ok`.
 
-> El puerto 5220 se publica justamente para poder correr esto desde tu máquina. Cuando termines
-> podés quitar el `ports` del servicio `mongo`: el API lo alcanza igual por la red interna.
+> El puerto 5220 **ya no se publica** (ver `docker-compose.yml`): Mongo no queda expuesto a
+> internet, porque con el puerto abierto la contraseña del root es la **única** barrera. Para correr
+> estos scripts desde tu máquina, descomentá el `ports` del servicio `mongo` **temporalmente** y
+> volvé a comentarlo al terminar; o corré los comandos `mongosh` desde la terminal del contenedor,
+> que no necesita el puerto.
 
 ### ⚠️ 502 en TODO (incluido `/health`) después de un redeploy
 
@@ -216,6 +219,70 @@ el conjunto con ese nombre:
 
 El host guardado **tiene que ser `mongo:27017`** (el nombre del servicio en `docker-compose.yml`),
 que es estable mientras no cambie el proyecto de Dokploy.
+
+### ⚠️ 502 en TODO y en los logs `Authentication failed` (code 18)
+
+**Síntoma:** igual que el caso anterior (502 en todo, incluido `/health`), pero en los logs del `api`:
+
+```json
+"err":{"type":"MongoServerError","message":"Authentication failed."},
+"errorResponse":{"code":18,"codeName":"AuthenticationFailed"},
+"msg":"Fallo el arranque del servicio"
+```
+
+**Qué significa:** Mongo **respondió** y **rechazó la credencial**. No es red, ni topología, ni el
+replica set: es que la contraseña que usa el `api` no es la que tiene el usuario dentro del volumen.
+
+**La causa — y es la trampa más cara de este proyecto:**
+
+| Variable | Quién la usa | Cuándo |
+| --- | --- | --- |
+| `MONGO_INITDB_ROOT_PASSWORD` | el contenedor `mongo` | **solo la primera vez**, con el volumen **vacío** |
+| `MONGO_PASSWORD` (→ `MONGO_URI`) | el contenedor `api` | **en cada arranque** |
+
+Las dos salen de la **misma** variable del Environment, así que **es imposible que los contenedores
+tengan contraseñas distintas**. La discrepancia es entre **la variable** y **lo que quedó guardado en
+el volumen `mongo-data`**.
+
+Si alguien cambia `MONGO_INITDB_ROOT_PASSWORD` en Dokploy y redespliega:
+
+- `api` y `mongo` pasan a usar la nueva → el `api` intenta con la nueva;
+- el usuario `giuli` **sigue con la vieja**, porque `MONGO_INITDB_ROOT_*` ya no se aplica;
+- → `AuthenticationFailed` en bucle → el puerto 3000 nunca se abre → **502**.
+
+**Cómo confirmarlo.** Dentro del contenedor `mongo` (Dokploy → Docker Compose → Terminal):
+
+```bash
+# ¿Cuál es la que Mongo tiene de verdad? Probá la que está en el Environment.
+mongosh --quiet -u giuli -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin \
+  --eval 'db.runCommand({connectionStatus:1}).ok'
+```
+
+Si eso falla pero el `api` existía antes, buscá la clave anterior en el historial del repo:
+
+```bash
+git log --all -p -- '*.example' | grep -iE 'MONGO_INITDB_ROOT_PASSWORD|MONGO_PASSWORD' | sort -u
+```
+
+**Cómo arreglarlo.** Con la clave vieja, alineá Mongo con lo que ya está en Dokploy:
+
+```bash
+mongosh --quiet -u giuli -p '<CLAVE_VIEJA>' --authenticationDatabase admin \
+  --eval 'db.getSiblingDB("admin").changeUserPassword("giuli", "<CLAVE_NUEVA>")'
+```
+
+Después actualizá `MONGO_INITDB_ROOT_PASSWORD` en el Environment con el **mismo** valor y redesplegá.
+Los dos lados tienen que quedar alineados: si cambiás Mongo y dejás la variable vieja, el `api` falla
+exactamente igual y parece que no hiciste nada.
+
+**Regla para no repetirlo:** cambiar `MONGO_INITDB_ROOT_PASSWORD` en Dokploy **no cambia ninguna
+contraseña existente**. Hay que hacer las dos cosas: `changeUserPassword` en Mongo **y** la variable
+en el Environment.
+
+> **Nunca pongas la contraseña real en un `*.example`.** Este proyecto ya perdió acceso una vez por
+> eso: la clave quedó en el historial de un repo **público** y fue la única forma de recuperarla.
+> Los `.example` van con placeholders; si una credencial llegó a un commit, la única mitigación real
+> es rotarla.
 
 ### Por qué el host del conjunto TIENE que ser `mongo:27017`
 
