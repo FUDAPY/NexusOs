@@ -1,0 +1,62 @@
+import { Router } from 'express';
+import { cambiarClave, editarPerfil, entrar, registrarCliente, verPerfil } from '../controllers/auth.controller.js';
+import { requiereAuth, requiereRol } from '../middlewares/auth.js';
+import { limitarIntentos } from '../middlewares/rateLimit.js';
+
+export const authRouter = Router();
+
+/**
+ * Login publico. Devuelve JWT + datos del usuario.
+ * Si el usuario es migrado y todavia no tiene contraseña, responde 409
+ * REQUIERE_PASSWORD.
+ *
+ * Va con limite de intentos: sin el, una sola IP puede probar contraseñas
+ * contra los 62 usuarios migrados sin ningun freno.
+ */
+authRouter.post(
+  '/login',
+  limitarIntentos({
+    maximo: 10,
+    ventanaMs: 5 * 60 * 1000,
+    mensaje: 'Demasiados intentos de ingreso.',
+  }),
+  entrar,
+);
+
+/**
+ * Alta publica de cliente desde index.html. El rol se fuerza a 'cliente' en el
+ * servidor; ver auth.service.ts.
+ */
+authRouter.post(
+  '/registro',
+  limitarIntentos({
+    maximo: 5,
+    ventanaMs: 15 * 60 * 1000,
+    mensaje: 'Demasiados registros desde esta conexion.',
+  }),
+  registrarCliente,
+);
+
+/**
+ * Autoservicio: cada usuario cambia su propio nombre y contraseña.
+ *
+ * Los usuarios migrados de Firebase no pueden entrar hasta tener contraseña,
+ * asi que para ellos la via es la de administracion de abajo.
+ */
+authRouter.get('/perfil', requiereAuth, verPerfil);
+authRouter.patch('/perfil', requiereAuth, editarPerfil);
+authRouter.post(
+  '/password',
+  requiereAuth,
+  // Mas laxo que el login: aca el usuario ya esta autenticado y puede
+  // equivocarse escribiendo la contraseña actual.
+  limitarIntentos({ maximo: 20, ventanaMs: 5 * 60 * 1000, mensaje: 'Demasiados intentos.' }),
+  cambiarClave,
+);
+
+/**
+ * Administracion: un admin o supervisor cambia el nombre o la contraseña de
+ * cualquier usuario existente, incluidos los migrados que todavia no tienen.
+ */
+authRouter.patch('/usuarios/:id/perfil', requiereAuth, requiereRol('admin', 'supervisor'), editarPerfil);
+authRouter.post('/usuarios/:id/password', requiereAuth, requiereRol('admin', 'supervisor'), cambiarClave);

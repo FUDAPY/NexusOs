@@ -3,6 +3,7 @@ import { Order, OrderItem, Product, type IOrder, type IOrderItem } from '../mode
 import type { CreateOrderInput } from '../schemas/order.schema.js';
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
+import { emitTurnoEvent } from '../sockets/kds.js';
 import { recordAudit } from './audit.service.js';
 
 type OrderItemInput = CreateOrderInput['items'][number];
@@ -112,14 +113,16 @@ const buildTicketId = (): string => `T-${Math.floor(Math.random() * 900_000) + 1
 
 export interface CreateOrderResult {
   order: IOrder;
+  /** Id del documento; se expone aparte porque IOrder no declara _id. */
+  orderId: string;
   itemIds: string[];
 }
 
 export const createOrder = async (
   input: CreateOrderInput,
   context: { ip: string; userAgent: string },
-): Promise<CreateOrderResult> =>
-  withTransaction(async (session) => {
+): Promise<CreateOrderResult> => {
+  const resultado = await withTransaction(async (session) => {
     const { prepared, bruto } = await prepareItems(input, session);
     const items = prepared.map((entry) => entry.item);
     const total = Math.max(bruto - input.discountAmount, 0);
@@ -198,5 +201,26 @@ export const createOrder = async (
       session,
     );
 
-    return { order: orderDoc.toObject() as IOrder, itemIds: itemDocs.map((doc) => String(doc._id)) };
+    return {
+      order: orderDoc.toObject() as IOrder,
+      orderId: String(orderDoc._id),
+      itemIds: itemDocs.map((doc) => String(doc._id)),
+    };
   });
+
+  // Se emite DESPUES del commit: si se emitiera adentro, el frontend pediria
+  // datos que todavia no estan confirmados y veria el estado viejo.
+  // De esto depende que el "turno actual" del dashboard se actualice solo.
+  emitTurnoEvent(resultado.order.sucursal ?? input.sucursal, 'venta:creada', {
+    turnoId: resultado.order.turnoId ?? input.turnoId ?? null,
+    id: resultado.orderId,
+    ticketId: resultado.order.ticket_id ?? null,
+    total: Number(resultado.order.total ?? 0),
+    estadoPago: resultado.order.estadoPago ?? null,
+    productos: resultado.order.items
+      .filter((item) => item.controlado === true)
+      .map((item) => ({ productoId: String(item.id ?? ''), cantidad: Number(item.cantidad ?? 0) })),
+  });
+
+  return resultado;
+};

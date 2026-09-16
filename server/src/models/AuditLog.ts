@@ -42,6 +42,9 @@ export interface IAuditLog {
 
   sucursal: string;
 
+  /** Origen de la peticion. Se usa sobre todo en los registros de login. */
+  ip: string;
+  userAgent: string;
   // Tickets internos de soporte (ex coleccion systemAlerts).
   mensaje: string;
   nivel: string;
@@ -92,6 +95,9 @@ const auditLogSchema = new Schema<IAuditLog, Model<IAuditLog>>(
 
     sucursal: { type: String, default: 'Unificado', index: true },
 
+    ip: { type: String, default: '', maxlength: 60 },
+    userAgent: { type: String, default: '', maxlength: 400 },
+
     mensaje: { type: String, default: '', maxlength: 500 },
     nivel: { type: String, default: '', index: true },
     estado: { type: String, default: '', index: true },
@@ -119,8 +125,23 @@ auditLogSchema.index({ sucursal: 1, fecha: -1 });
 auditLogSchema.index({ adminId: 1, fecha: -1 });
 auditLogSchema.index({ ticketId: 1, fecha: -1 });
 auditLogSchema.index({ nivel: 1, estado: 1, fecha: -1 });
-// Retencion de 5 anios.
-auditLogSchema.index({ fecha: 1, tipo: 1 }, { expireAfterSeconds: 157_680_000 });
+
+/**
+ * Indice de consulta por rango de fecha + tipo.
+ *
+ * OJO con lo que decia antes: este indice llevaba
+ * `{ expireAfterSeconds: 157_680_000 }` con la intencion de retener 5 anios,
+ * pero MongoDB IGNORA el TTL en indices compuestos (solo lo soporta en indices
+ * de UN campo), asi que esa limpieza nunca se ejecuto: la coleccion crecio sin
+ * limite creyendo que estaba acotada.
+ *
+ * No se activa la retencion automatica a proposito. Borrar auditoria es una
+ * decision fiscal/legal, no tecnica, y un TTL borra del lado del servidor sin
+ * pasar por los hooks de append-only de abajo. Si se quiere retencion
+ * automatica, va como indice de un solo campo sobre `fecha` y decidido de
+ * forma explicita.
+ */
+auditLogSchema.index({ fecha: 1, tipo: 1 });
 
 // Append-only: bloquea updates y borrados.
 const blockMutation = (next: (error?: Error) => void): void => {

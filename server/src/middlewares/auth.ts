@@ -1,10 +1,11 @@
-import type { Request } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { redis } from '../config/redis.js';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/response.js';
 
 export interface AuthenticatedRequest extends Request {
-  auth?: { userId: string; rol: string; sucursalId: string | null };
+  auth?: { userId: string; rol: string; sucursalId: string | null; nombre: string };
 }
 
 /** Restringe endpoints internos por token de servicio (header x-service-token). */
@@ -33,3 +34,56 @@ export const invalidateCache = async (pattern: string): Promise<void> => {
   const keys = await redis.keys(pattern);
   if (keys.length > 0) await redis.del(...keys);
 };
+
+/* ------------------------------------------------------------------ */
+/* Autenticacion de usuarios por JWT                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Verifica el JWT del header Authorization y deja el usuario en `req.auth`.
+ *
+ * Reemplaza a lo que hoy hace `firestore.rules`: el rol pasa a validarse en el
+ * servidor, que es el unico que puede confiar en su propio dato.
+ *
+ * El payload del token lo firma auth.service.ts con: sub, rol, sucursal, nombre.
+ */
+export const requiereAuth = (req: Request, _res: Response, next: NextFunction): void => {
+  const header = req.headers.authorization ?? '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+
+  if (token === '') {
+    next(new AppError('Falta el token de acceso', 401, 'SIN_TOKEN'));
+    return;
+  }
+
+  try {
+    const payload = jwt.verify(token, env.JWT_SECRET) as jwt.JwtPayload;
+    (req as AuthenticatedRequest).auth = {
+      userId: String(payload.sub ?? ''),
+      rol: String(payload['rol'] ?? ''),
+      sucursalId: payload['sucursal'] === undefined ? null : String(payload['sucursal']),
+      // El nombre sale del token, no del body: la auditoria tiene que registrar
+      // quien hizo la operacion segun el servidor, no segun el cliente.
+      nombre: String(payload['nombre'] ?? ''),
+    };
+    next();
+  } catch {
+    next(new AppError('Token invalido o vencido', 401, 'TOKEN_INVALIDO'));
+  }
+};
+
+/** Exige que el usuario tenga uno de los roles indicados. */
+export const requiereRol =
+  (...roles: string[]) =>
+  (req: Request, _res: Response, next: NextFunction): void => {
+    const auth = (req as AuthenticatedRequest).auth;
+    if (auth === undefined) {
+      next(new AppError('No autenticado', 401, 'SIN_USUARIO'));
+      return;
+    }
+    if (!roles.includes(auth.rol)) {
+      next(new AppError(`El rol ${auth.rol} no tiene permiso para esta accion`, 403, 'SIN_PERMISO'));
+      return;
+    }
+    next();
+  };

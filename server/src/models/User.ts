@@ -41,6 +41,15 @@ export interface IUser {
   playStoreUrl: string;
 
   uid?: string;
+  /**
+   * Hash bcrypt de la contraseña.
+   *
+   * Vacio en los usuarios migrados: en Firebase las contraseñas NO vivian en
+   * Firestore sino en Firebase Auth, asi que no se pudieron migrar. El primer
+   * cambio de contraseña las establece (ver auth.service.ts).
+   */
+  passwordHash?: string;
+  passwordActualizadoEn?: Date | null;
   legacyId?: string;
   creadoEn?: Date;
   actualizadoEn?: Date;
@@ -53,6 +62,8 @@ const userSchema = new Schema<IUser, Model<IUser>>(
     nombre: { type: String, required: true, trim: true, maxlength: 140 },
     email: { type: String, required: true, trim: true, lowercase: true },
     telefono: { type: String, default: '', trim: true, maxlength: 40 },
+    passwordHash: { type: String, default: '', select: false },
+    passwordActualizadoEn: { type: Date, default: null },
     rol: { type: String, enum: USER_ROLES, default: 'cliente', index: true },
     tipoCliente: { type: String, enum: USER_TIPOS, default: 'estandar', index: true },
     estadoBeneficios: { type: String, enum: USER_BENEFICIOS, default: 'pendiente', index: true },

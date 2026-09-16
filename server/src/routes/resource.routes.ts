@@ -37,6 +37,28 @@ import { crearRecurso } from '../utils/resource.factory.js';
  */
 export const resourceRouter: Router = Router();
 
+/**
+ * Lectura PUBLICA y sin token, montada aparte en app.ts.
+ *
+ * Existe por metas-publicas.html, que muestra las metas sin pedir login. Al ser
+ * `soloLectura: true` no expone POST ni PATCH, asi que una peticion de escritura
+ * cae al resourceRouter protegido (Express sigue si el router no matchea) y ahi
+ * si exige token.
+ */
+export const publicResourceRouter: Router = Router();
+
+publicResourceRouter.use(
+  '/public-goals',
+  crearRecurso({
+    coleccion: 'public_goals',
+    modelo: PublicGoal,
+    filtros: ['sucursal', 'sucursalKey', 'month'],
+    ordenables: ['month', 'sucursalKey'],
+    ordenPorDefecto: 'month',
+    soloLectura: true,
+  }),
+);
+
 /* ---------------- Catalogo ---------------- */
 
 resourceRouter.use(
@@ -92,13 +114,18 @@ resourceRouter.use(
  * sobrescribirlo. Por eso se excluye de la respuesta y se bloquea del cuerpo.
  * `puntos`, `deuda` y `saldo` tampoco son escribibles desde el cliente: los
  * mueve la logica de venta, no un PATCH suelto.
+ *
+ * Los filtros salen del uso real del dashboard: pide el conteo de
+ * clientes con `rol: 'cliente'` + `estadoBeneficios: 'pendiente'`. Antes
+ * declaraba `estado`, que NO existe en el modelo, y le faltaba
+ * `estadoBeneficios`, asi que ese conteo era imposible de reproducir por API.
  */
 resourceRouter.use(
   '/users',
   crearRecurso({
     coleccion: 'users',
     modelo: User,
-    filtros: ['rol', 'sucursal', 'estado', 'tipoCliente'],
+    filtros: ['rol', 'sucursal', 'estadoBeneficios', 'tipoCliente', 'email', 'rfid'],
     ordenables: ['nombre', 'rol'],
     campoBusqueda: 'nombre',
     ordenPorDefecto: 'nombre',

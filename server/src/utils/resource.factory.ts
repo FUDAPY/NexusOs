@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import type { Model, FilterQuery, SortOrder } from 'mongoose';
 import { AppError, asyncHandler, sendOk } from './response.js';
+import { filtroPorId } from './mongoId.js';
 
 /**
  * Fabrica de rutas CRUD para una coleccion.
@@ -51,6 +52,28 @@ const parsearEntero = (valor: unknown, porDefecto: number, maximo: number): numb
 const escaparRegex = (texto: string): string => texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
+ * Normaliza el valor de un query param a una lista de strings.
+ *
+ * Es la defensa contra la inyeccion de operadores NoSQL. Express usa el parser
+ * `qs` (extended), asi que `?rol[$ne]=admin` NO llega como texto: llega como el
+ * OBJETO `{ $ne: 'admin' }`. Si ese objeto se asignara al filtro, Mongo lo
+ * interpretaria como operador y el cliente podria saltarse cualquier condicion.
+ * Filtrando solo valores `string`, un objeto no sobrevive y el campo
+ * simplemente no se filtra.
+ *
+ * Soporta las dos formas de repetir un campo:
+ *   ?sucursal=Centro&sucursal=Este   y   ?sucursal=Centro,Este
+ */
+const aValoresEscalares = (valor: unknown): string[] => {
+  const lista = Array.isArray(valor) ? valor : [valor];
+  return lista
+    .filter((item): item is string => typeof item === 'string')
+    .flatMap((item) => item.split(','))
+    .map((item) => item.trim())
+    .filter((item) => item !== '');
+};
+
+/**
  * Arma el filtro de MongoDB a partir de los query params.
  * Solo se aceptan los campos declarados en `filtros`: cualquier otro se ignora,
  * asi un cliente no puede filtrar por un campo interno.
@@ -62,11 +85,9 @@ export const construirFiltro = <TDoc>(
   const filtro: Record<string, unknown> = {};
 
   for (const campo of opts.filtros ?? []) {
-    const valor = query[campo];
-    if (valor === undefined || valor === '') continue;
-    filtro[campo] = typeof valor === 'string' && valor.includes(',')
-      ? { $in: valor.split(',').filter(Boolean) }
-      : valor;
+    const valores = aValoresEscalares(query[campo]);
+    if (valores.length === 0) continue;
+    filtro[campo] = valores.length === 1 ? valores[0] : { $in: valores };
   }
 
   if (opts.campoBusqueda !== undefined && typeof query['q'] === 'string' && query['q'].trim() !== '') {
@@ -127,6 +148,23 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
     return limpio;
   };
 
+  /**
+   * Quita de la respuesta los campos excluidos.
+   *
+   * Hace falta si o si en POST y PATCH: la proyeccion `select('-campo')` solo se
+   * aplica en las consultas de lectura, no al documento que devuelve
+   * `create()` ni `findByIdAndUpdate()`. Sin esto, un PATCH con cuerpo vacio
+   * sobre /credit-pins devolvia el PIN del cliente en texto plano, aunque
+   * `excluir` lo declarara oculto.
+   */
+  const ocultar = <TDocRespuesta>(doc: TDocRespuesta): TDocRespuesta => {
+    const excluidos = opts.excluir ?? [];
+    if (excluidos.length === 0) return doc;
+    const plano = doc as Record<string, unknown>;
+    for (const campo of excluidos) delete plano[campo];
+    return doc;
+  };
+
   // GET / -> lista paginada
   router.get(
     '/',
@@ -150,7 +188,10 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
   router.get(
     '/:id',
     asyncHandler(async (req: Request, res: Response) => {
-      const consulta = opts.modelo.findById(req.params.id).lean();
+      // findOne(filtroPorId(...)) y no findById: el frontend manda ids de
+      // Firestore (20 caracteres) que no son ObjectId, y findById tiraba
+      // CastError con ellos.
+      const consulta = opts.modelo.findOne(filtroPorId(String(req.params.id))).lean();
       const doc = await (proyeccion === '' ? consulta.exec() : consulta.select(proyeccion).exec());
       if (doc === null) {
         throw new AppError(`No existe el documento ${String(req.params.id)} en ${opts.coleccion}`, 404, 'NOT_FOUND');
@@ -164,7 +205,9 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
       '/',
       asyncHandler(async (req: Request, res: Response) => {
         const creado = await opts.modelo.create(limpiarCuerpo(req.body));
-        sendOk(res, creado, 201);
+        // toObject() antes de ocultar: el documento de Mongoose no se puede
+        // mutar sin ensuciar la instancia.
+        sendOk(res, ocultar(creado.toObject() as unknown as Record<string, unknown>), 201);
       }),
     );
 
@@ -172,13 +215,17 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
       '/:id',
       asyncHandler(async (req: Request, res: Response) => {
         const actualizado = await opts.modelo
-          .findByIdAndUpdate(req.params.id, { $set: limpiarCuerpo(req.body) }, { new: true, runValidators: true })
+          .findOneAndUpdate(
+            filtroPorId(String(req.params.id)),
+            { $set: limpiarCuerpo(req.body) },
+            { new: true, runValidators: true },
+          )
           .lean()
           .exec();
         if (actualizado === null) {
           throw new AppError(`No existe el documento ${String(req.params.id)} en ${opts.coleccion}`, 404, 'NOT_FOUND');
         }
-        sendOk(res, actualizado);
+        sendOk(res, ocultar(actualizado as unknown as Record<string, unknown>));
       }),
     );
   }

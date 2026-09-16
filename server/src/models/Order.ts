@@ -14,7 +14,7 @@ export const METODOS_PAGO = [
 ] as const;
 export type MetodoPago = (typeof METODOS_PAGO)[number];
 
-export const ESTADOS_PAGO = ['pagado', 'pendiente', 'anulado', 'parcial'] as const;
+export const ESTADOS_PAGO = ['pagado', 'pendiente', 'anulado', 'parcial', 'rechazado'] as const;
 export type EstadoPago = (typeof ESTADOS_PAGO)[number];
 
 export const TIPOS_TRANSACCION = [
@@ -66,6 +66,25 @@ export interface IOrder {
   requiereConfirmacionCaja: boolean;
   confirmadoPorCaja: boolean;
   fechaConfirmacionCaja?: Date | null;
+
+  /**
+   * Aprobacion del cobro de un abono de deuda.
+   *
+   * Estos campos los escribe el dashboard y NO estaban declarados. Como el
+   * schema es `strict: true`, Mongoose los descartaba en silencio: el panel
+   * creia haber aprobado el cobro y la bandera no quedaba guardada, con lo que
+   * la deuda del cliente se podia descontar dos veces.
+   */
+  estadoAprobacionCobro?: string;
+  deudaAplicada?: boolean;
+  aprobadoPor?: string;
+  fechaAprobacionCobro?: Date | null;
+
+  /** Ticket excluido del flujo de caja sin anularse (abonado). */
+  marcadoComoAbonado?: boolean;
+  motivoMarcadoAbonado?: string;
+  marcadoComoAbonadoPor?: string;
+  fechaMarcadoComoAbonado?: Date | null;
 
   // Credito CRM
   creditoProcesado: boolean;
@@ -154,6 +173,17 @@ const orderSchema = new Schema<IOrder, Model<IOrder>>(
     requiereConfirmacionCaja: flag,
     confirmadoPorCaja: flag,
     fechaConfirmacionCaja: { type: Date, default: null },
+
+    // Ver el comentario en IOrder: sin declararlos, strict los descartaba.
+    estadoAprobacionCobro: { type: String, default: undefined, index: true },
+    deudaAplicada: { type: Boolean, default: undefined },
+    aprobadoPor: { type: String, default: undefined },
+    fechaAprobacionCobro: { type: Date, default: null },
+
+    marcadoComoAbonado: { type: Boolean, default: undefined, index: true },
+    motivoMarcadoAbonado: { type: String, default: undefined },
+    marcadoComoAbonadoPor: { type: String, default: undefined },
+    fechaMarcadoComoAbonado: { type: Date, default: null },
 
     creditoProcesado: flag,
     creditoPinRequerido: flag,

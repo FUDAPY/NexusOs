@@ -26,7 +26,8 @@
     "mongo:copy": "tsx scripts/copy-mongo.ts",
     "auditar:mongo": "tsx scripts/auditar-mongo.ts",
     "mongo:indices": "tsx scripts/mantener-mongo.ts --indices",
-    "mongo:normalizar": "tsx scripts/mantener-mongo.ts --normalizar"
+    "mongo:normalizar": "tsx scripts/mantener-mongo.ts --normalizar",
+    "auth:pass": "tsx scripts/establecer-password.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

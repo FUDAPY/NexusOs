@@ -37,6 +37,21 @@ export const errorHandler = (
     return;
   }
 
+  /**
+   * Un id con formato invalido (ej. GET /products/abc cuando el _id es un
+   * ObjectId) hacia caer esta rama al 500 generico: el cliente recibia "Error
+   * interno del servidor" por lo que en realidad es un dato mal formado.
+   */
+  if (error instanceof mongoose.Error.CastError) {
+    sendFail(
+      res,
+      400,
+      `Valor invalido para el campo "${error.path}": ${String(error.value)}`,
+      'CAST_ERROR',
+    );
+    return;
+  }
+
   const mongoError = error as MongoServerError;
   if (mongoError.code === 11000) {
     const campo = Object.keys(mongoError.keyValue ?? {}).join(', ');

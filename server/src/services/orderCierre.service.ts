@@ -1,5 +1,6 @@
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
+import { filtroPorId } from '../utils/mongoId.js';
 import { AuditLog, InventoryMovement, Order, OrderItem, Product } from '../models/index.js';
 import type { IOrder } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
@@ -35,7 +36,7 @@ export const cancelOrder = async (
   context: { ip: string; userAgent: string },
 ): Promise<CancelOrderResult> => {
   const resultado = await withTransaction(async (session) => {
-    const order = await Order.findById(input.orderId).session(session).exec();
+    const order = await Order.findOne(filtroPorId(input.orderId)).session(session).exec();
     if (!order) {
       throw new AppError(`No existe la orden ${input.orderId}`, 404, 'ORDER_NOT_FOUND');
     }

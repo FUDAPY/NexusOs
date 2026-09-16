@@ -27,6 +27,8 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <!-- Fase 5: sesion y login contra la API (reemplaza firebase.auth). -->
+    <script src="nexus-auth.js"></script>
     <style>
         :root {
             --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
@@ -419,9 +421,13 @@
     </div>
 
     <script type="module">
+        /* Fase 5: el login y la sesion YA NO usan Firebase; los maneja
+           nexus-auth.js contra POST /api/v1/auth/login.
+           Quedan firebase-app + firebase-functions SOLO para el flujo de
+           "olvide mi contrasena", que todavia llama a la cloud function
+           restablecerPasswordConCodigo. Cuando ese flujo se implemente en el
+           backend, estos dos imports tambien se pueden sacar. */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, browserLocalPersistence, setPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
 
         // Configuración de Firebase
@@ -436,12 +442,10 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const cloudFunctions = getFunctions(app, "us-central1");
-        const db = initializeFirestore(app, {
-            experimentalForceLongPolling: true,
-            useFetchStreams: false
-        });
+
+        /* Ya no hay `auth` ni `db`: la sesion la lleva NexusAuth en localStorage
+           y los datos los sirve la API en /api/v1. */
 
         window.AuthModule = {
             autoRedirectEnCurso: false,
@@ -635,26 +639,31 @@
             },
 
             prepararSesionPersistente: async function() {
-                try {
-                    await setPersistence(auth, browserLocalPersistence);
-                } catch (error) {
-                    console.error("No se pudo fijar persistencia local", error);
-                }
+                /* Antes fijaba `browserLocalPersistence` en Firebase Auth. NexusAuth
+                   ya guarda la sesion y el JWT en localStorage, asi que no hay nada
+                   que preparar. Se conserva el metodo porque DOMContentLoaded lo
+                   llama y no conviene tocar ese arranque. */
+                return true;
             },
 
             observarSesionGuardada: function() {
-                onAuthStateChanged(auth, async (user) => {
-                    if (this.autoRedirectEnCurso) return;
+                /* Antes esto era onAuthStateChanged. Ahora la sesion vive en
+                   localStorage['__pos_session'] y NexusAuth la rehidrata sola al
+                   cargar, asi que la lectura es sincrona: no hay nada a lo que
+                   suscribirse.
 
-                    if (!user) {
-                        this.actualizarEstadoLogin("Tu sesion quedara abierta hasta cerrar sesion manualmente.");
-                        this.ocultarSplashSesion();
-                        return;
-                    }
+                   Tampoco se consulta el perfil: la respuesta del login ya trae el
+                   rol, asi que la sesion guardada lo tiene y esta espera desaparece. */
+                const sesion = window.NexusAuth ? window.NexusAuth.sesion() : null;
 
-                    this.actualizarEstadoLogin("Sesion detectada. Redirigiendo...");
-                    await this.enrutarUsuario(user.uid, user.email || "");
-                });
+                if (!sesion) {
+                    this.actualizarEstadoLogin("Tu sesion quedara abierta hasta cerrar sesion manualmente.");
+                    this.ocultarSplashSesion();
+                    return;
+                }
+
+                this.actualizarEstadoLogin("Sesion detectada. Redirigiendo...");
+                this.redirigirPorRol(sesion);
             },
 
             mostrarError: function(mensaje) {
@@ -874,23 +883,17 @@
                 if (this.autoRedirectEnCurso) return false;
                 this.autoRedirectEnCurso = true;
                 try {
-                    const docSnap = await getDoc(doc(db, "users", uid));
-                    if (!docSnap.exists()) {
+                    /* Antes: await getDoc(doc(db, "users", uid)) para sacar el rol.
+                       Ya no hace falta: NexusAuth escribio la sesion completa
+                       (uid, nombre, rol, sucursal) cuando el login respondio, asi
+                       que se lee de ahi. Una consulta menos por ingreso. */
+                    const sesionLocal = this.obtenerSesionLocalValida(uid, email);
+                    if (!sesionLocal) {
                         this.autoRedirectEnCurso = false;
                         this.ocultarSplashSesion();
-                        this.mostrarError("Error: Perfil de usuario no encontrado en la base de datos.");
+                        this.mostrarError("Error: no se encontro el perfil del usuario.");
                         return false;
                     }
-
-                    const data = docSnap.data();
-                    const sesionLocal = {
-                        uid: uid,
-                        email: email,
-                        nombre: data.nombre || 'Usuario',
-                        rol: data.rol,
-                        sucursal: data.sucursal || 'Centro'
-                    };
-                    localStorage.setItem('__pos_session', JSON.stringify(sesionLocal));
                     this.redirigirPorRol(sesionLocal);
                     return true;
                 } catch (e) {
@@ -925,26 +928,23 @@
                 btn.disabled = true;
 
                 try {
-                    await this.prepararSesionPersistente();
-                    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-                    const redirigido = await this.enrutarUsuario(userCredential.user.uid, email);
+                    /* NexusAuth habla con POST /auth/login y deja la sesion y el
+                       JWT guardados. Desaparecen el paso de persistencia y la
+                       lectura del perfil: el rol viene en la respuesta. */
+                    await window.NexusAuth.entrar(email, pass);
+                    const redirigido = await this.enrutarUsuario(window.NexusAuth.usuarioId(), email);
                     if (!redirigido) {
                         btn.innerHTML = btnOriginal;
                         btn.disabled = false;
                     }
                 } catch (error) {
-                    if (['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(error.code)) {
-                        this.mostrarError("Correo o contrasena incorrectos. Verifica los datos o usa 'Olvide mi contrasena'.");
-                    } else if (error.code === 'auth/user-disabled') {
-                        this.mostrarError("Esta cuenta esta deshabilitada. Contacta al administrador.");
-                    } else if (error.code === 'auth/network-request-failed') {
-                        this.mostrarError("No pudimos conectar con Firebase. Verifica internet o vuelve a intentar.");
-                    } else if (error.code === 'auth/too-many-requests') {
-                        this.mostrarError("Demasiados intentos. Intenta más tarde.");
-                    } else {
-                        console.error('Error inesperado al iniciar sesion', error);
-                        this.mostrarError("Ocurrió un error al iniciar sesión.");
-                    }
+                    /* mensajeDe() traduce los codigos del backend
+                       (CREDENCIALES_INVALIDAS, REQUIERE_PASSWORD,
+                       DEMASIADOS_INTENTOS, NETWORK, TOKEN_INVALIDO) a algo que
+                       el cajero pueda entender. Antes esto era una cadena de
+                       comparaciones contra los codigos de Firebase. */
+                    console.error('Error al iniciar sesion', error);
+                    this.mostrarError(window.NexusAuth.mensajeDe(error));
                     btn.innerHTML = btnOriginal;
                     btn.disabled = false;
                 }
@@ -978,48 +978,26 @@
                 btn.disabled = true;
 
                 try {
-                    await this.prepararSesionPersistente();
-                    // 1. Crear en Firebase Auth
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-                    const uid = userCredential.user.uid;
+                    /* Un solo POST reemplaza los dos pasos anteriores (Firebase Auth
+                       y despues Firestore). Aquellos eran dos escrituras: si la
+                       segunda fallaba quedaba una cuenta sin perfil y el usuario no
+                       podia entrar a ninguna pantalla.
 
-                    // 2. Crear Perfil en Firestore
-                    await setDoc(doc(db, "users", uid), {
+                       El rol NO se manda: el backend lo fuerza a 'cliente'. */
+                    await window.NexusAuth.registrar({
                         nombre: nombre,
                         email: email,
+                        password: pass,
                         telefono: telefono,
-                        rol: "cliente", // Obligatoriamente nace como cliente
-                        tipoCliente: "fiel",
-                        estadoBeneficios: "pendiente",
-                        puntos: 0,
-                        deuda: 0,
-                        direccion: solicitudPremium.direccionExacta,
-                        fechaRegistro: new Date().toISOString(),
-                        solicitudPremium,
-                        solicitudPremiumActualizadaAt: new Date(),
-                        terminosAceptados: true,
-                        terminosAceptadosAt: new Date().toISOString(),
-                        origenRegistro: "crear_cuenta_cliente",
-                        playTesterStatus: "pending",
-                        playTesterRequestedAt: new Date().toISOString(),
-                        playTesterGroupEmail: "club-lin-testers@googlegroups.com",
-                        playStoreUrl: "https://play.google.com/store/apps/details?id=com.lingroup.clublin"
+                        solicitudPremium: solicitudPremium
                     });
 
-                    // 3. Enrutar directamente a la App Cliente
-                    await this.enrutarUsuario(uid, email);
+                    // 3. NexusAuth ya dejo la sesion y el token guardados.
+                    await this.enrutarUsuario(window.NexusAuth.usuarioId(), email);
 
                 } catch (error) {
-                    console.error(error);
-                    if (error.code === 'auth/email-already-in-use') {
-                        this.mostrarError("Este correo ya está registrado. Por favor, inicia sesión.");
-                    } else if (error.code === 'auth/weak-password') {
-                        this.mostrarError("La contraseña es muy débil. Usa al menos 6 caracteres.");
-                    } else if (error.code === 'auth/network-request-failed') {
-                        this.mostrarError("No pudimos conectar con Firebase. Verifica internet o vuelve a intentar.");
-                    } else {
-                        this.mostrarError("Ocurrió un error al crear la cuenta.");
-                    }
+                    console.error('Error al crear la cuenta', error);
+                    this.mostrarError(window.NexusAuth.mensajeDe(error));
                     btn.innerHTML = btnOriginal;
                     btn.disabled = false;
                 }

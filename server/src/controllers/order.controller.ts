@@ -4,6 +4,74 @@ import { createOrderInputSchema, listOrdersQuerySchema } from '../schemas/order.
 import { createOrder } from '../services/order.service.js';
 import { cancelOrder } from '../services/orderCierre.service.js';
 import { AppError, sendOk } from '../utils/response.js';
+import { marcarComoAbonado, resolverCobro } from '../services/cobro.service.js';
+
+/**
+ * POST /orders/:id/cobro  { accion: 'aprobar' | 'rechazar', autorizadoPor?, autorizadoPorNombre? }
+ *
+ * Reemplaza el `writeBatch` del dashboard que tocaba `users.deuda` y `sales` a
+ * la vez: en Mongo eso es una transaccion y por eso vive en el servidor.
+ */
+export const resolverCobroHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const body = req.body as { accion?: unknown; autorizadoPor?: string; autorizadoPorNombre?: string };
+    const accion = String(body.accion ?? '');
+
+    if (accion !== 'aprobar' && accion !== 'rechazar') {
+      throw new AppError("`accion` tiene que ser 'aprobar' o 'rechazar'", 422, 'ACCION_INVALIDA');
+    }
+
+    const resultado = await resolverCobro(
+      {
+        orderId: String(req.params.id),
+        accion,
+        autorizadoPor: body.autorizadoPor,
+        autorizadoPorNombre: body.autorizadoPorNombre,
+      },
+      { ip: req.ip ?? '', userAgent: req.header('user-agent') ?? '' },
+    );
+
+    sendOk(res, resultado);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /orders/:id/abonar  { motivo, autorizadoPor?, autorizadoPorNombre? }
+ * Excluye el ticket del flujo de caja sin anularlo (no devuelve stock).
+ */
+export const marcarAbonado = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const body = req.body as { motivo?: unknown; autorizadoPor?: string; autorizadoPorNombre?: string };
+
+    if (typeof body.motivo !== 'string' || body.motivo.trim() === '') {
+      throw new AppError('Falta el motivo', 400, 'MISSING_MOTIVO');
+    }
+
+    const resultado = await marcarComoAbonado(
+      {
+        orderId: String(req.params.id),
+        motivo: body.motivo,
+        autorizadoPor: body.autorizadoPor,
+        autorizadoPorNombre: body.autorizadoPorNombre,
+      },
+      { ip: req.ip ?? '', userAgent: req.header('user-agent') ?? '' },
+    );
+
+    sendOk(res, resultado);
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
