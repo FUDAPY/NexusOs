@@ -3530,6 +3530,83 @@
                     const nuevaVentaRef = this.idTicketRecuperado ? null : doc(collection(db, rutaPrivada));
                     let pedidoClienteNotificacion = null;
                     let ventaMetaPublica = null;
+                    if (!this.idTicketRecuperado) {
+                        /* VENTA NUEVA por la API (Paso C de la migracion).
+                           Antes esto era un runTransaction contra Firestore, que
+                           ya no autoriza. POST /orders hace lo mismo del lado del
+                           servidor y en UNA transaccion: resuelve los productos,
+                           descuenta stock SOLO de los controlados (igual que hacia
+                           el POS), crea la orden y mueve puntos y deuda del
+                           cliente.
+
+                           Los campos estadoPago, creditoLibre, fechaAperturaTurno
+                           y detallesPago se agregaron a la API justamente para
+                           que este paso NO cambie el comportamiento del POS. */
+                        const ticketID = 'T-' + Math.floor(Math.random() * 1000000);
+                        const itemsApi = itemsCobro.map(it => ({
+                            id: String(it.id || ''),
+                            nombre: String(it.nombre || 'Producto'),
+                            categoria: String(it.categoria || 'Sin Categoria'),
+                            cantidad: Math.max(1, Math.floor(Number(it.cantidad || 1))),
+                            precio: Math.max(0, Number(it.precio || 0)),
+                            controlado: it.controlado === true,
+                            descuento: Math.max(0, Number(it.descuento || 0)),
+                            descuentoVip: Math.max(0, Number(it.descuentoVip || 0)),
+                            descuentoBogo: Math.max(0, Number(it.descuentoBogo || 0)),
+                            promocionBogo: it.promocionBogo === true,
+                            codigo: String(it.codigo || ''),
+                            icono: String(it.icono || 'fa-box'),
+                            obsProd: String(it.obsProd || '')
+                        }));
+                        const payloadApi = {
+                            ticket_id: ticketID,
+                            tipoTransaccion: esPagoGratis ? 'producto_gratis' : 'venta_comida',
+                            sucursal: this.sesion.sucursal,
+                            ...(/^[a-f\d]{24}$/i.test(String(this.sucursalIdActual || '')) ? { sucursalId: String(this.sucursalIdActual) } : {}),
+                            turnoId: this.obtenerTurnoActualId(),
+                            ...(this.fechaAperturaSesionTs ? { fechaAperturaTurno: new Date(this.fechaAperturaSesionTs).toISOString() } : {}),
+                            cajero: this.sesion.nombre,
+                            cliente: this.clienteActual ? this.clienteActual.id : 'ocasional',
+                            clienteId: this.clienteActual ? this.clienteActual.id : '',
+                            nombreCliente: this.clienteActual ? this.clienteActual.nombre : 'Ocasional',
+                            items: itemsApi,
+                            metodoPago: metodoElegido,
+                            // Igual que el POS legacy: la venta queda PAGADA y la
+                            // deuda del cliente se registra aparte. Si quedara
+                            // 'pendiente' apareceria como mesa abierta.
+                            estadoPago: 'pagado',
+                            creditoLibre: creditoLibreSucursal,
+                            estadoCocina: this.carritoTieneItemsDeCocina() ? 'pendiente' : 'listo',
+                            observacion: observacionInput,
+                            discountAmount: descuentoPremiumMonto,
+                            puntosOtorgados: puntosGanados,
+                            puntosCanjeados,
+                            noAfectaCaja: esPagoGratis,
+                            motivoNoAfectaCaja: esPagoGratis ? 'LIN Ticket / canje gratuito' : '',
+                            ...(detalleEfectivo ? { detalleEfectivo } : {}),
+                            ...(detallesPagoVenta ? { detallesPago: detallesPagoVenta } : {})
+                        };
+                        const respuestaVenta = await NexusAPI.post('/orders', payloadApi, { ttl: 0, retries: 0 });
+                        const datosVenta = (respuestaVenta && respuestaVenta.data) || {};
+                        this.ultimaVentaImprimir = {
+                            ...(datosVenta.order || {}),
+                            id: datosVenta.orderId,
+                            ticket_id: ticketID,
+                            items: itemsCobro,
+                            total: totalCobro,
+                            subtotal: subtotalSinDescuentoPremium,
+                            metodoPago: metodoElegido,
+                            estadoPago: 'pagado',
+                            puntosOtorgados: puntosGanados,
+                            puntosCanjeados,
+                            puntosAcumulados: this.clienteActual ? Math.max(0, (this.clienteActual.puntos || 0) + deltaPuntosCliente) : 0,
+                            observacion: observacionInput,
+                            creditoLibreSucursal,
+                            sucursalCreditoLibre: creditoLibreSucursal ? this.sesion.sucursal : null,
+                            turnoId: this.obtenerTurnoActualId()
+                        };
+                        ventaMetaPublica = this.ultimaVentaImprimir;
+                    } else {
                     await runTransaction(db, async (transaction) => {
                     const batch = transaction;
                     const ventaIdStock = this.idTicketRecuperado || nuevaVentaRef.id;
@@ -3594,6 +3671,8 @@
                     }
 
                     });
+                    }
+
                     if (ventaMetaPublica && !esPagoGratis) {
                         try {
                             await this.registrarMetaPublica(ventaMetaPublica);
