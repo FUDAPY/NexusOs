@@ -17,6 +17,8 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <script src="nexus-auth.js"></script>
+    <script src="nexus-data.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -199,7 +201,7 @@
 
             init() {
                 onAuthStateChanged(auth, user => {
-                    if (!user) {
+                    if (!user && !(window.NexusAuth && window.NexusAuth.autenticado())) {
                         window.location.replace('index.html');
                         return;
                     }

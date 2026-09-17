@@ -21,6 +21,8 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <script src="nexus-auth.js"></script>
+    <script src="nexus-data.js"></script>
     <script src="date_time_utils.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="admin_sidebar.js" defer></script>
@@ -327,7 +329,7 @@
                 if (this.usuarioActual.rol !== 'admin') return window.location.replace('index.html');
 
                 onAuthStateChanged(auth, (user) => {
-                    if (!user) return window.location.replace('index.html');
+                    if (!user && !(window.NexusAuth && window.NexusAuth.autenticado())) return window.location.replace('index.html');
                     document.getElementById('app-body').classList.remove('opacity-0');
                     this.cargarAlertas();
                 });

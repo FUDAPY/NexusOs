@@ -22,6 +22,8 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <script src="nexus-auth.js"></script>
+    <script src="nexus-data.js"></script>
     <script src="date_time_utils.js"></script>
     <script src="print_utils.js"></script>
     <script src="cierre_caja_normalizer.js"></script>
@@ -266,7 +268,7 @@
                 document.getElementById('user-role').innerText = `Rol: ${String(this.usuarioActual.rol || 'admin').toUpperCase()}`;
 
                 onAuthStateChanged(auth, (user) => {
-                    if (!user) return window.location.replace('index.html');
+                    if (!user && !(window.NexusAuth && window.NexusAuth.autenticado())) return window.location.replace('index.html');
                     document.getElementById('app-body').classList.remove('opacity-0');
                     this.cargarSucursales();
                     this.cargarProductos();

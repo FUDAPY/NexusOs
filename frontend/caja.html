@@ -21,6 +21,8 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <script src="nexus-auth.js"></script>
+    <script src="nexus-data.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="admin_sidebar.js" defer></script>
     <script src="date_time_utils.js"></script>
@@ -301,7 +303,7 @@
             
             init: function() { 
                 onAuthStateChanged(auth, async (user) => {
-                    if(user) { 
+                    if (user || (window.NexusAuth && window.NexusAuth.autenticado())) { 
                         const sesionStr = localStorage.getItem('__pos_session'); 
                         if(sesionStr) { 
                             this.sesion = JSON.parse(sesionStr); 

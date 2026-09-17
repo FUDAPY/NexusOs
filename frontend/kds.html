@@ -19,6 +19,8 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <script src="nexus-auth.js"></script>
+    <script src="nexus-data.js"></script>
     <script src="date_time_utils.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -176,7 +178,7 @@
                 document.getElementById('lbl-sucursal').innerText = this.sesion.sucursal;
 
                 onAuthStateChanged(auth, (user) => {
-                    if (user) {
+                    if (user || (window.NexusAuth && window.NexusAuth.autenticado())) {
                         document.getElementById('app-body').classList.remove('opacity-0');
                         this.conectarFirebaseEnVivo();
                     } else {
