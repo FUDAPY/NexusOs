@@ -588,7 +588,7 @@ describe('cobro de una mesa pendiente (/orders/:id/cerrar-cuenta)', () => {
   const idOrden = '507f1f77bcf86cd799439011';
   const bodyOk = {
     metodoPago: 'Efectivo',
-    items: [{ id: 'prod-1', cantidad: 1, controlado: false }],
+    items: [{ id: 'prod-1', nombre: 'Milanesa', cantidad: 1, precio: 1000, controlado: false }],
   };
 
   it('sin token responde 401', async () => {
@@ -629,14 +629,31 @@ describe('cobro de una mesa pendiente (/orders/:id/cerrar-cuenta)', () => {
     }
   });
 
-  it('exige al menos un item con id (400 antes de tocar la base)', async () => {
-    for (const items of [undefined, [], 'x', [{}], [{ nombre: 'sin id' }]]) {
+  it('exige al menos un item (400 antes de tocar la base)', async () => {
+    for (const items of [undefined, [], 'x']) {
       const res = await request(app)
         .post(url(idOrden))
         .set('Authorization', 'Bearer ' + tokenValido)
         .send({ ...bodyOk, items });
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('MISSING_ITEMS');
+    }
+  });
+
+  /**
+   * Los items se validan con el MISMO contrato que POST /orders, y no es capricho:
+   * el servicio recalcula el total con ellos. Si llegaran solo con id y cantidad no
+   * habria con que calcular la plata que se cobra.
+   */
+  it('rechaza items a los que les falta el precio (422)', async () => {
+    const invalidos = [[{}], [{ nombre: 'sin precio', cantidad: 1 }], [{ nombre: 'x', cantidad: 1, precio: -5 }]];
+    for (const items of invalidos) {
+      const res = await request(app)
+        .post(url(idOrden))
+        .set('Authorization', 'Bearer ' + tokenValido)
+        .send({ ...bodyOk, items });
+      expect(res.status).toBe(422);
+      expect(res.body.code).toBe('VALIDATION_ERROR');
     }
   });
 

@@ -4,20 +4,25 @@ import { withTransaction } from '../utils/withTransaction.js';
 import { filtroPorId } from '../utils/mongoId.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
 import { recordAudit } from './audit.service.js';
-import { aplicarSaldoCliente } from './order.service.js';
-
-export interface CerrarCuentaItem {
-  id: string;
-  cantidad: number;
-  controlado?: boolean;
-}
+import { aplicarSaldoCliente, applyStockMovements, prepareItems } from './order.service.js';
+import type { CreateOrderInput } from '../schemas/order.schema.js';
 
 export interface CerrarCuentaInput {
   metodoPago: string;
-  items: CerrarCuentaItem[];
+  /**
+   * Los items que se venden, con el MISMO contrato que POST /orders.
+   *
+   * Son los del carrito en el momento de cobrar, no los de la orden guardada: el
+   * cajero puede haber agregado algo a la mesa antes de pasar por caja. El total
+   * se recalcula con ellos del lado del servidor, asi que el valor que mande el
+   * navegador no decide nada.
+   */
+  items: CreateOrderInput['items'];
   cajero?: string;
   puntosOtorgados?: number;
   puntosCanjeados?: number;
+  /** Descuento global (premium). Los descuentos por item vienen dentro de cada item. */
+  discountAmount?: number;
   observacion?: string;
   creditoLibre?: boolean;
   clienteId?: string;
@@ -42,23 +47,6 @@ export interface CerrarCuentaResult {
   total: number;
   estadoPago: string;
 }
-
-/**
- * Firma de cantidades por producto controlado, para comparar dos listas.
- */
-const firmaControlados = (
-  items: { id: string; cantidad: number; controlado?: boolean }[],
-): string => {
-  const mapa = new Map<string, number>();
-  for (const item of items) {
-    if (item.controlado !== true) continue;
-    mapa.set(item.id, (mapa.get(item.id) ?? 0) + Math.max(0, Math.floor(Number(item.cantidad || 0))));
-  }
-  return [...mapa.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, n]) => `${id}:${n}`)
-    .join('|');
-};
 
 /**
  * Cierra (cobra) una cuenta pendiente: la mesa que quedo abierta.
@@ -98,22 +86,26 @@ export const cerrarCuentaPendiente = async (
       );
     }
 
-    // Los items tienen que coincidir. Si no, este endpoint no es el que
-    // corresponde: cerrar con el carrito cambiado moveria la plata pero no el
-    // stock, y eso se descubre recien en el proximo inventario.
-    const originales = (orden.items ?? []) as unknown as CerrarCuentaItem[];
-    if (firmaControlados(originales) !== firmaControlados(input.items)) {
-      throw new AppError(
-        'La cuenta cambio de items: por ahora solo se puede cerrar sin cambios, porque hay que ajustar el stock.',
-        409,
-        'CUENTA_CON_CAMBIOS',
-      );
-    }
+    /* Los items del cuerpo son los que se venden, y el total se recalcula con ellos
+       igual que en una venta directa: el navegador no decide la plata. Ademas se
+       guardan en la orden, asi lo que queda registrado es lo que se cobro.
+       Esto es lo que permite AGREGAR algo a una mesa ya abierta: el cajero suma el
+       postre en el POS y cobra, sin pasar por un ajuste de stock por diferencia. */
+    const { prepared, bruto } = await prepareItems({ items: input.items }, session);
+    const items = prepared.map((p) => p.item);
+    const total = Math.max(bruto - (input.discountAmount ?? Number(orden.discountAmount ?? 0)), 0);
+
+    /* El stock de la mesa se mueve ACA, al cobrarla: al abrirla no se toco (ver el
+       comentario en createOrder). Es el mismo movimiento que hace una venta directa,
+       con el mismo guard de concurrencia contra sobreventa. */
+    await applyStockMovements(prepared, session);
 
     const esCredito = input.metodoPago === 'Credito' || input.metodoPago === 'Crédito';
-    const total = Number(orden.total ?? 0);
 
     orden.estadoPago = 'pagado';
+    orden.items = items;
+    orden.subtotal = bruto;
+    orden.total = total;
     // El metodo llega como string del POS; el modelo lo tiene como union de
     // literales, asi que se castea en el unico lugar donde se asigna.
     orden.metodoPago = input.metodoPago as typeof orden.metodoPago;

@@ -3696,16 +3696,27 @@
                            eso y mueve puntos y deuda del cliente en la misma
                            transaccion del servidor: el POS ya no toca `users` a mano. */
                         const mesaId = this.idTicketRecuperado;
+                        /* Items con el MISMO contrato que una venta directa: el servidor
+                           recalcula el total con ellos y descuenta el stock con ellos.
+                           Son los del carrito EN ESTE MOMENTO, no los de la orden
+                           guardada: eso es justo lo que permite agregar un postre a una
+                           mesa ya abierta y cobrarlo todo junto, sin tocar el stock por
+                           diferencia ni bloquear el cobro. */
                         const itemsMesa = itemsCobro.map(it => ({
                             id: String(it.id || ''),
+                            nombre: String(it.nombre || 'Producto'),
+                            categoria: String(it.categoria || 'Sin Categoria'),
                             cantidad: Math.max(1, Math.floor(Number(it.cantidad || 1))),
-                            controlado: it.controlado === true
+                            precio: Math.max(0, Number(it.precio || 0)),
+                            controlado: it.controlado === true,
+                            descuento: Math.max(0, Number(it.descuento || 0)),
+                            descuentoVip: Math.max(0, Number(it.descuentoVip || 0)),
+                            descuentoBogo: Math.max(0, Number(it.descuentoBogo || 0)),
+                            promocionBogo: it.promocionBogo === true,
+                            codigo: String(it.codigo || ''),
+                            icono: String(it.icono || 'fa-box'),
+                            obsProd: String(it.obsProd || '')
                         }));
-                        /* Los items van solo para que el servidor VALIDE que la cuenta
-                           no cambio. Si cambio, responde 409 CUENTA_CON_CAMBIOS: hay
-                           que ajustar el stock por diferencia y esa parte todavia no
-                           esta migrada, asi que preferimos fallar antes que cerrar la
-                           cuenta con el stock mal y descubrirlo en el proximo conteo. */
                         const respuestaCierre = await NexusAPI.post(
                             '/orders/' + encodeURIComponent(mesaId) + '/cerrar-cuenta',
                             {
@@ -3717,6 +3728,7 @@
                                 observacion: observacionInput,
                                 puntosOtorgados: puntosGanados,
                                 puntosCanjeados,
+                                discountAmount: descuentoPremiumMonto,
                                 /* La venta se muda al turno donde se COBRA la mesa.
                                    Una mesa abierta de noche y pagada a la manana tiene
                                    que contar en el turno donde entra la plata: si

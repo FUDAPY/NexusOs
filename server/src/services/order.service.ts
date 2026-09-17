@@ -19,8 +19,8 @@ const descuentoItem = (item: OrderItemInput): number =>
   item.descuento + item.descuentoVip + item.descuentoBogo;
 
 /** Calcula subtotales por item y valida existencia/stock contra el catalogo. */
-const prepareItems = async (
-  input: CreateOrderInput,
+export const prepareItems = async (
+  input: Pick<CreateOrderInput, 'items'>,
   session: ClientSession | null,
 ): Promise<{ prepared: PreparedItem[]; bruto: number }> => {
   const ids = [...new Set(input.items.map((item) => item.id))].filter((id) =>
@@ -78,7 +78,7 @@ const prepareItems = async (
   return { prepared, bruto };
 };
 
-const applyStockMovements = async (
+export const applyStockMovements = async (
   prepared: PreparedItem[],
   session: ClientSession | null,
 ): Promise<void> => {
@@ -197,7 +197,19 @@ export const createOrder = async (
     const items = prepared.map((entry) => entry.item);
     const total = Math.max(bruto - input.discountAmount, 0);
 
-    await applyStockMovements(prepared, session);
+    /* El stock se mueve cuando la venta se COBRA, no cuando se abre la cuenta.
+       Una cuenta pendiente (mesa) es mercaderia servida pero todavia no vendida.
+       El POS legacy lo hacia asi y los documentos migrados cuentan con eso: nunca
+       se les desconto stock al abrir. Descontarlo aca Y otra vez al cobrar en
+       /orders/:id/cerrar-cuenta bajaria el stock DOS veces por la misma mesa.
+
+       Ojo: esto NO aplica a una venta a credito. Una venta a credito es una venta
+       TERMINADA (la mercaderia se fue, la deuda queda registrada), asi que su stock
+       SI se mueve. Por eso el corte es por `origenCuentaPendiente` y no por
+       `estadoPago`, que en las dos cosas vale 'pendiente'. */
+    if (input.origenCuentaPendiente !== true) {
+      await applyStockMovements(prepared, session);
+    }
 
     const esCredito = input.metodoPago === 'Credito' || input.metodoPago === 'Crédito';
     const ticketId = input.ticket_id ?? buildTicketId();

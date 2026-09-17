@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
+import { z } from 'zod';
 import { cerrarCuentaPendiente } from '../services/cuentaCierre.service.js';
+import { orderItemInputSchema } from '../schemas/order.schema.js';
 import { AppError, sendOk } from '../utils/response.js';
 
 /**
@@ -39,19 +41,22 @@ export const cerrarCuenta = async (
       throw new AppError('Falta el metodo de pago', 400, 'MISSING_METODO_PAGO');
     }
 
+    /* Mismo contrato de items que POST /orders: el servicio recalcula el total con
+       ellos, asi que tienen que traer precio y descuentos, no solo id y cantidad.
+       Se valida aca para poder responder con el motivo concreto. */
     const crudos = Array.isArray(body['items']) ? (body['items'] as unknown[]) : [];
-    const items = crudos
-      .filter((i): i is Record<string, unknown> => typeof i === 'object' && i !== null)
-      .map((i) => ({
-        id: String(i['id'] ?? ''),
-        cantidad: Number(i['cantidad'] ?? 0),
-        controlado: i['controlado'] === true,
-      }))
-      .filter((i) => i.id !== '');
-
-    if (items.length === 0) {
+    if (crudos.length === 0) {
       throw new AppError('La cuenta necesita al menos un item', 400, 'MISSING_ITEMS');
     }
+    const itemsParsed = z.array(orderItemInputSchema).safeParse(crudos);
+    if (!itemsParsed.success) {
+      throw new AppError(
+        itemsParsed.error.issues.map((issue) => issue.message).join(' | '),
+        422,
+        'VALIDATION_ERROR',
+      );
+    }
+    const items = itemsParsed.data;
 
     const numero = (valor: unknown): number => {
       const n = Number(valor);
@@ -83,6 +88,7 @@ export const cerrarCuenta = async (
           detallesPago: objeto(body['detallesPago']),
           turnoId: typeof body['turnoId'] === 'string' ? body['turnoId'] : undefined,
           fechaAperturaTurno: fechaValida(body['fechaAperturaTurno']),
+          discountAmount: numero(body['discountAmount']),
         },
         { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
       ),
