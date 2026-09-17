@@ -7,6 +7,7 @@ import {
   resolverCobroHandler,
   updateKdsState,
 } from '../controllers/order.controller.js';
+import { cerrarCuenta } from '../controllers/cuentaCierre.controller.js';
 import { asyncHandler } from '../utils/response.js';
 import { requiereAuth, requiereRol } from '../middlewares/auth.js';
 
@@ -36,6 +37,18 @@ orderRouter.post(
   '/:id/cobro',
   requiereRol('admin', 'supervisor', 'cajero'),
   asyncHandler(resolverCobroHandler),
+);
+
+/**
+ * Cierra (cobra) una cuenta pendiente: la mesa que quedo abierta.
+ * Pasa la orden a pagada en vez de crear otra.
+ *
+ * Mismo conjunto de roles que /cobro y /abonar: cobra quien maneja plata.
+ */
+orderRouter.post(
+  '/:id/cerrar-cuenta',
+  requiereRol('admin', 'supervisor', 'cajero'),
+  asyncHandler(cerrarCuenta),
 );
 
 /**

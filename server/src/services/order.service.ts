@@ -136,20 +136,25 @@ export interface CreateOrderResult {
  * input (dependen del carrito, que trae los descuentos por item); lo que hace el
  * servidor es exigir saldo suficiente para el canje.
  */
-const aplicarSaldoCliente = async (
-  input: CreateOrderInput,
+export const aplicarSaldoCliente = async (
+  params: {
+    clienteId?: string;
+    puntosOtorgados?: number;
+    puntosCanjeados?: number;
+    creditoLibre?: boolean;
+  },
   total: number,
   esCredito: boolean,
   session: ClientSession | null,
 ): Promise<void> => {
-  const clienteId = String(input.clienteId ?? '').trim();
+  const clienteId = String(params.clienteId ?? '').trim();
   if (clienteId === '' || clienteId === 'ocasional') return;
 
-  const canjeados = Math.max(0, input.puntosCanjeados);
-  const deltaPuntos = Math.max(0, input.puntosOtorgados) - canjeados;
+  const canjeados = Math.max(0, params.puntosCanjeados ?? 0);
+  const deltaPuntos = Math.max(0, params.puntosOtorgados ?? 0) - canjeados;
   // Credito libre en la sucursal: el POS sumaba la deuda y la restaba en la
   // misma transaccion (neto 0). Aca directamente no se suma.
-  const deltaDeuda = esCredito && input.creditoLibre !== true ? total : 0;
+  const deltaDeuda = esCredito && params.creditoLibre !== true ? total : 0;
 
   if (deltaPuntos === 0 && deltaDeuda === 0) return;
 
@@ -250,7 +255,17 @@ export const createOrder = async (
 
     // El saldo del cliente (puntos y deuda) va con la venta, en la MISMA
     // transaccion: ver aplicarSaldoCliente.
-    await aplicarSaldoCliente(input, total, esCredito, session);
+    await aplicarSaldoCliente(
+      {
+        clienteId: input.clienteId,
+        puntosOtorgados: input.puntosOtorgados,
+        puntosCanjeados: input.puntosCanjeados,
+        creditoLibre: input.creditoLibre,
+      },
+      total,
+      esCredito,
+      session,
+    );
 
     await recordAudit(
       {
