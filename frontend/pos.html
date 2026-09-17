@@ -693,9 +693,21 @@
                     ? ['Mr Lin Restaurante', 'San Benito']
                     : [];
                 try {
-                    const snap = await getDocs(collection(db, 'branches'));
-                    snap.forEach((branchDoc) => {
-                        const data = branchDoc.data() || {};
+                    /* Sucursales por la API (antes: getDocs de Firestore, que ya no
+                       autoriza). No es cosmetico: de aca salen `sucursalIds` y
+                       `sucursalNombres`, que son con lo que productoPerteneceASucursal
+                       decide si un producto se muestra. Si falta el ObjectId de la
+                       sucursal, los productos que lo guardan en `sucursalId`
+                       desaparecen del catalogo sin ningun error visible.
+                       El catch de abajo se mantiene: el POS tiene que arrancar con los
+                       datos de la sesion aunque esta consulta falle. */
+                    const respSucursales = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
+                    const datosSucursales = (respSucursales && respSucursales.data) || {};
+                    const filasSucursales = Array.isArray(datosSucursales) ? datosSucursales : (datosSucursales.items || []);
+                    filasSucursales.forEach((data) => {
+                        // Se arma el mismo contrato que daba un snapshot de Firestore
+                        // (`id` + `data()`), asi el cuerpo de abajo no se toca.
+                        const branchDoc = { id: String(data._id || data.id || ''), data: () => data };
                         const nombre = String(data.nombre || data.name || data.branchName || branchDoc.id || '').trim();
                         const infoNombre = this.obtenerSucursalNormalizada(nombre);
                         const infoId = this.obtenerSucursalNormalizada(data.sucursalId || data.branchId || branchDoc.id);
@@ -2236,52 +2248,21 @@
                 if (!autorizacion) return false;
 
                 try {
-                    const ticketActual = this.listaCuentasPendientes.find(x => x.id === this.idTicketRecuperado) || {};
-                    const itemsOriginales = JSON.parse(JSON.stringify(this.carrito || []));
-                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const batch = writeBatch(db);
-                    const ticketRef = doc(db, rutaPrivada, this.idTicketRecuperado);
+                    /* ANULACION por la API (antes: writeBatch a Firestore, que ya no
+                       autoriza, asi que anular una mesa fallaba: no habia forma de
+                       deshacer una cuenta abierta por error, salvo terminarla).
 
-                    const devoluciones = {};
-                    itemsOriginales.forEach(item => {
-                        const cantidad = this.cantidadStockADevolver(item);
-                        if (cantidad > 0) devoluciones[item.id] = (devoluciones[item.id] || 0) + cantidad;
-                    });
-                    const devolucionesProduccion = this.obtenerAjustesProduccionDesdeItems(itemsOriginales);
-
-                    batch.update(ticketRef, {
-                        estadoPago: 'anulado',
-                        estadoCocina: 'anulado',
-                        motivoAnulacion: autorizacion.motivo,
-                        fechaAnulacion: new Date(),
-                        anuladoPor: this.sesion?.uid || this.sesion?.id || null,
-                        anuladoPorNombre: this.sesion?.nombre || 'POS',
-                        origenAnulacion: 'pos',
-                        autorizadoPorRfid: true,
-                        stockDevueltoAnulacion: true
-                    });
-
-                    Object.entries(devoluciones).forEach(([productoId, cantidad]) => {
-                        batch.update(doc(db, "products", productoId), { stock: increment(Number(cantidad)) });
-                    });
-                    this.aplicarAjustesProduccionEnBatch(batch, devolucionesProduccion, 1);
-
-                    this.registrarAuditoriaAnulacionPosEnBatch(batch, {
-                        subtipo: 'total',
-                        motivo: autorizacion.motivo,
-                        ticketId: ticketActual.ticket_id || this.idTicketRecuperado,
-                        ventaId: this.idTicketRecuperado,
-                        clienteId: ticketActual.cliente || (this.clienteActual?.id || null),
-                        nombreCliente: ticketActual.nombreCliente || (this.clienteActual?.nombre || 'Cliente'),
-                        aliasReferencia: ticketActual.aliasReferencia || '',
-                        metodoPago: ticketActual.metodoPago || 'Por Cobrar',
-                        estadoPago: ticketActual.estadoPago || 'pendiente',
-                        totalAntes: Number(ticketActual.total || this.totalActual || 0),
-                        totalDespues: 0,
-                        itemsOriginales
-                    });
-
-                    await batch.commit();
+                       POST /orders/:id/anular hace del lado del servidor lo mismo que
+                       hacia este bloque: pasa la orden a 'anulado', DEVUELVE el stock
+                       de los items controlados y deja la auditoria. Encaja con que
+                       ahora el stock se descuente al ABRIR la mesa: anular lo devuelve.
+                       Solo viaja el motivo; la autorizacion por RFID sigue siendo
+                       local, porque el lector no lo conoce el servidor. */
+                    await NexusAPI.post(
+                        '/orders/' + encodeURIComponent(this.idTicketRecuperado) + '/anular',
+                        { motivo: autorizacion.motivo || 'anulacion total desde POS', tipo: 'total' },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.reservasActivas = {};
                     this.reservasProduccionActivas = {};
                     this.limpiarPantallaLocal();

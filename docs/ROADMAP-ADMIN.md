@@ -336,6 +336,67 @@ plata es a propósito: es la pieza donde un error se cobra mal.
    comparar cierres viejos contra nuevos:** los migrados ya venían con los gastos restados,
    así que ahora son comparables; antes no lo habrían sido.
 
+---
+
+## 9. Estado medido del frontend · qué falta
+
+Medido contando llamadas a Firestore (`onSnapshot`, `writeBatch`, `getDocs`, `updateDoc`, `doc(db`,
+`httpsCallable`…) y a la capa nueva (`NexusAPI.` / `NexusData.`) archivo por archivo. No es una
+estimación de memoria.
+
+### POS (`pos.html`) — el salón y la caja
+
+| Flujo | Estado |
+| --- | --- |
+| Entrar · catálogo (API) · abrir turno | ✅ |
+| Venta directa (efectivo / tarjeta / transferencia) | ✅ |
+| Cliente: puntos, deuda, VIP | ✅ |
+| Abrir mesa (`POST /orders`) | ✅ |
+| Cobrar mesa (`POST /orders/:id/cerrar-cuenta`) | ✅ |
+| Anular mesa (`POST /orders/:id/anular`) | ✅ |
+| Cerrar caja (Cierre Z) | ✅ |
+| **Editar una mesa abierta** | ⬜ el caso más común del salón: agregar un postre |
+| **PIN de crédito** | ⬜ `httpsCallable` a una Cloud Function que ya no existe |
+| Pago de deuda del cliente | ⬜ `procesarPagoDeuda` |
+| Insumos de producción | ⬜ Paso D |
+| Reservas de stock al arrancar · meta pública · sync log | ⬜ secundarios |
+
+### Panel admin — páginas que siguen sin migrar
+
+| Página | Llamadas a Firestore | Fase |
+| --- | --- | --- |
+| `dashboard.html` | 64 | 2 |
+| `app_cliente.html` | 32 | app del cliente |
+| `clientes.html` | 21 | 4 (toca saldos) |
+| `app_delivery.html` | 16 | delivery |
+| `inventario.html` · `produccion.html` | 12 | 3 |
+| `caja.html` | 11 | 4 (arqueo) |
+| `reportes.html` · `lin_tickets.html` | 10 | 3 |
+| `kds.html` | 9 | 4 (tiempo real) |
+| `solicitud_premium.html` | 8 | 3 |
+| `usuarios.html` | 7 | residual |
+| `auditoria_transacciones.html` · `relatorio_cierres.html` | 5 | residual |
+| `index.html` | 4 | solo el **código de recuperación de contraseña** |
+| `metas-publicas.html` · `monitor_problemas.html` | 4 | 3 |
+| `stock.html` | 3 | residual |
+| `notificaciones.html` | 2 | residual |
+
+**Ya sin Firestore:** `sucursales.html`, `condiciones.html`, `terminos.html` y toda la capa `.js`
+(`nexus-api`, `nexus-auth`, `nexus-data`, `turno_actual`, `print_utils`…).
+
+> `index.html` merece una aclaración: el **login ya usa la API** (`NexusAuth` + JWT). Lo que queda de
+> Firebase ahí son las dos Cloud Functions del **código de recuperación de contraseña**, que ya no
+> existen, y un mensaje de error viejo que dice "no se pudo conectar con Firebase Authentication".
+
+### Bloqueos fuera del frontend
+
+| Qué | Por qué importa |
+| --- | --- |
+| `npm run mongo:indices` | En producción `autoIndex` es `false`: los índices no se crean solos |
+| Limpiar `turnoId` duplicados | Bloquea el índice único de arriba (Fase 5.2 / 5.3) |
+| Recuperación de contraseña por código | Las Cloud Functions ya no existen (el panel sí puede resetear) |
+| Rotar los 3 secretos | Siguen en el historial de un repositorio público |
+
 
 **Regla para este bloque:** un flujo por vez, nunca dos. Cada uno se prueba contra la
 base con un producto de prueba y se confirma que el stock, el saldo del cliente y el
