@@ -147,7 +147,9 @@ const aplicarSaldoCliente = async (
 
   const canjeados = Math.max(0, input.puntosCanjeados);
   const deltaPuntos = Math.max(0, input.puntosOtorgados) - canjeados;
-  const deltaDeuda = esCredito ? total : 0;
+  // Credito libre en la sucursal: el POS sumaba la deuda y la restaba en la
+  // misma transaccion (neto 0). Aca directamente no se suma.
+  const deltaDeuda = esCredito && input.creditoLibre !== true ? total : 0;
 
   if (deltaPuntos === 0 && deltaDeuda === 0) return;
 
@@ -211,7 +213,7 @@ export const createOrder = async (
           estadoCocina: input.estadoCocina,
           observacion: input.observacion,
           metodoPago: input.metodoPago,
-          estadoPago: esCredito ? 'pendiente' : 'pagado',
+          estadoPago: input.estadoPago ?? (esCredito ? 'pendiente' : 'pagado'),
 
           subtotal: bruto,
           discountAmount: input.discountAmount,
@@ -221,8 +223,8 @@ export const createOrder = async (
           puntosOtorgados: input.puntosOtorgados,
           puntosCanjeados: input.puntosCanjeados,
 
-          detalleEfectivo: input.detalleEfectivo ?? null,
-          turnoId: input.turnoId,
+          detalleEfectivo: input.detalleEfectivo ?? null, detallesPago: input.detallesPago ?? null,
+          turnoId: input.turnoId, fechaAperturaTurno: input.fechaAperturaTurno ?? null,
           sucursal: input.sucursal,
           sucursalId: input.sucursalId ? new Types.ObjectId(input.sucursalId) : null,
         },

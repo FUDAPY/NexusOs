@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ESTADOS_COCINA, METODOS_PAGO, TIPOS_TRANSACCION } from '../models/Order.js';
+import { ESTADOS_COCINA, ESTADOS_PAGO, METODOS_PAGO, TIPOS_TRANSACCION } from '../models/Order.js';
 
 export const orderItemInputSchema = z.object({
   id: z.string().default(''),
@@ -50,6 +50,35 @@ export const createOrderInputSchema = z.object({
 
   metodoPago: z.enum(METODOS_PAGO).default('Efectivo'),
   estadoCocina: z.enum(ESTADOS_COCINA).default('pendiente'),
+
+  /**
+   * Estado de pago. Si NO viene, se deriva del metodo: Crédito queda
+   * 'pendiente' y el resto 'pagado' (comportamiento actual de la API).
+   *
+   * Por que es opcional y no fijo: el POS legacy marcaba la venta **'pagado'
+   * SIEMPRE** y sumaba la deuda del cliente por separado. Migrar la venta sin
+   * esto cambiaria dos cosas en silencio: el arqueo, y que **cada venta a
+   * credito apareceria como una MESA ABIERTA** — porque 'pendiente' es
+   * justamente lo que el POS usa para las cuentas abiertas.
+   *
+   * Dejarlo opcional permite que el POS conserve el comportamiento viejo sin
+   * cambiarle el comportamiento a los otros consumidores de POST /orders.
+   */
+  estadoPago: z.enum(ESTADOS_PAGO).optional(),
+
+  /**
+   * El cliente tiene credito libre en la sucursal: NO se le suma deuda.
+   *
+   * El POS legacy sumaba y restaba la deuda en la misma transaccion (neto 0).
+   * Sin este campo, migrar la venta le sumaria deuda donde antes no le sumaba.
+   */
+  creditoLibre: z.boolean().default(false),
+
+  /** Cuando se abrio el turno. El cierre forzado lo usa para fechar la apertura. */
+  fechaAperturaTurno: z.coerce.date().optional(),
+
+  /** Detalle del pago mixto, tal como lo manda el POS. */
+  detallesPago: z.record(z.unknown()).optional(),
   observacion: z.string().max(400).default(''),
   discountAmount: z.number().min(0).default(0),
   detalleEfectivo: detalleEfectivoSchema.optional(),
