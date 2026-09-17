@@ -3098,18 +3098,66 @@
                 const observacionInput = obsInput ? obsInput.value.trim() : '';
                 const tieneItemsCocina = this.carritoTieneItemsDeCocina();
 
-                const ventaPayload = {
-                    ticket_id: ticketID, tipoTransaccion: "venta_comida", total: this.totalActual, sucursal: this.sesion.sucursal, sucursalId: this.sucursalIdActual || this.obtenerSucursalNormalizada(this.sesion.sucursal).id || null, cajero: this.sesion.nombre,
-                    cliente: this.clienteActual ? this.clienteActual.id : 'ocasional', nombreCliente: nombreClienteTicket, aliasReferencia: aliasMesa,
-                    items: this.carrito, fecha: new Date(), estadoPago: "pendiente", metodoPago: "Por Cobrar", estadoCocina: tieneItemsCocina ? "pendiente" : "listo",
-                    observacion: observacionInput, origenCuentaPendiente: true, turnoId: this.obtenerTurnoActualId(), fechaAperturaTurno: this.fechaAperturaSesionTs ? new Date(this.fechaAperturaSesionTs) : new Date()
+                /* MESA por la API (antes: writeBatch a Firestore, que ya no autoriza,
+                   asi que abrir una mesa fallaba SIEMPRE).
+
+                   Mapeo al contrato de POST /orders:
+                     - metodoPago 'Por Cobrar' es el valor legacy de una cuenta
+                       abierta y NO es un medio de pago: el cierre de caja no lo
+                       cuenta en ningun total, que es justo lo que se quiere de una
+                       mesa sin cobrar. Mandando 'Efectivo' cada mesa abierta
+                       inflaria la caja como si ya estuviera cobrada.
+                     - estadoPago 'pendiente' es lo que la marca como cuenta abierta,
+                       que es lo que lista la pantalla de mesas.
+                     - origenCuentaPendiente distingue una mesa de una venta a
+                       credito, que tambien queda 'pendiente'.
+                     - El total NO se manda: lo recalcula el servidor desde los items.
+
+                   DIFERENCIA CONSCIENTE con el POS viejo: aca el stock SI se
+                   descuenta al abrir la mesa (lo hace el servidor al crear la
+                   orden), porque la mercaderia ya salio de la cocina. El POS legacy
+                   lo descontaba recien al cobrar, asi que una mesa que nunca se
+                   cobraba dejaba el stock sin mover. */
+                const itemsApi = this.carrito.map(it => ({
+                    id: String(it.id || ''),
+                    nombre: String(it.nombre || 'Producto'),
+                    categoria: String(it.categoria || 'Sin Categoria'),
+                    cantidad: Math.max(1, Math.floor(Number(it.cantidad || 1))),
+                    precio: Math.max(0, Number(it.precio || 0)),
+                    controlado: it.controlado === true,
+                    descuento: Math.max(0, Number(it.descuento || 0)),
+                    descuentoVip: Math.max(0, Number(it.descuentoVip || 0)),
+                    descuentoBogo: Math.max(0, Number(it.descuentoBogo || 0)),
+                    promocionBogo: it.promocionBogo === true,
+                    codigo: String(it.codigo || ''),
+                    icono: String(it.icono || 'fa-box'),
+                    obsProd: String(it.obsProd || '')
+                }));
+                const payloadApi = {
+                    ticket_id: ticketID,
+                    tipoTransaccion: 'venta_comida',
+                    sucursal: this.sesion.sucursal,
+                    ...(/^[a-f\d]{24}$/i.test(String(this.sucursalIdActual || '')) ? { sucursalId: String(this.sucursalIdActual) } : {}),
+                    cajero: this.sesion.nombre,
+                    cliente: this.clienteActual ? this.clienteActual.id : 'ocasional',
+                    clienteId: this.clienteActual ? this.clienteActual.id : '',
+                    nombreCliente: nombreClienteTicket,
+                    aliasReferencia: aliasMesa,
+                    items: itemsApi,
+                    metodoPago: 'Por Cobrar',
+                    estadoPago: 'pendiente',
+                    estadoCocina: tieneItemsCocina ? 'pendiente' : 'listo',
+                    observacion: observacionInput,
+                    origenCuentaPendiente: true,
+                    // Sin puntos y sin deuda: una cuenta abierta todavia no es una venta.
+                    puntosOtorgados: 0,
+                    puntosCanjeados: 0,
+                    turnoId: this.obtenerTurnoActualId(),
+                    ...(this.fechaAperturaSesionTs ? { fechaAperturaTurno: new Date(this.fechaAperturaSesionTs).toISOString() } : {})
                 };
 
                 try {
-                    const batch = writeBatch(db);
-                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    batch.set(doc(collection(db, rutaPrivada)), ventaPayload);
-                    await batch.commit();
+                    await NexusAPI.post('/orders', payloadApi, { ttl: 0, retries: 0 });
                     this.reservasActivas = {};
                     this.reservasProduccionActivas = {};
 
@@ -3688,6 +3736,13 @@
                                 observacion: observacionInput,
                                 puntosOtorgados: puntosGanados,
                                 puntosCanjeados,
+                                /* La venta se muda al turno donde se COBRA la mesa.
+                                   Una mesa abierta de noche y pagada a la manana tiene
+                                   que contar en el turno donde entra la plata: si
+                                   quedara en el turno donde se abrio, ese cierre ya paso
+                                   y la venta no se contaria en ningun arqueo. */
+                                turnoId: this.obtenerTurnoActualId(),
+                                ...(this.fechaAperturaSesionTs ? { fechaAperturaTurno: new Date(this.fechaAperturaSesionTs).toISOString() } : {}),
                                 ...(detalleEfectivo ? { detalleEfectivo } : {}),
                                 ...(detallesPagoVenta ? { detallesPago: detallesPagoVenta } : {})
                             },

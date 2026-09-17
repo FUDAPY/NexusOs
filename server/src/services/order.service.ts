@@ -224,6 +224,7 @@ export const createOrder = async (
           discountAmount: input.discountAmount,
           noAfectaCaja: input.noAfectaCaja || input.metodoPago === 'Gratis',
           motivoNoAfectaCaja: input.motivoNoAfectaCaja,
+          origenCuentaPendiente: input.origenCuentaPendiente,
 
           puntosOtorgados: input.puntosOtorgados,
           puntosCanjeados: input.puntosCanjeados,

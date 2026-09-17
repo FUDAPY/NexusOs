@@ -59,6 +59,12 @@ export const cerrarCuenta = async (
     };
     const objeto = (valor: unknown): Record<string, unknown> | undefined =>
       typeof valor === 'object' && valor !== null ? (valor as Record<string, unknown>) : undefined;
+    /** Fecha valida o undefined: una fecha rota no debe romper el cobro. */
+    const fechaValida = (valor: unknown): Date | undefined => {
+      if (typeof valor !== 'string' && !(valor instanceof Date)) return undefined;
+      const fecha = new Date(valor as string | Date);
+      return Number.isNaN(fecha.getTime()) ? undefined : fecha;
+    };
 
     sendOk(
       res,
@@ -75,6 +81,8 @@ export const cerrarCuenta = async (
           clienteId: typeof body['clienteId'] === 'string' ? body['clienteId'] : undefined,
           detalleEfectivo: objeto(body['detalleEfectivo']),
           detallesPago: objeto(body['detallesPago']),
+          turnoId: typeof body['turnoId'] === 'string' ? body['turnoId'] : undefined,
+          fechaAperturaTurno: fechaValida(body['fechaAperturaTurno']),
         },
         { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
       ),

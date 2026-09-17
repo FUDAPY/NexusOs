@@ -86,6 +86,15 @@ export const createOrderInputSchema = z.object({
   puntosCanjeados: z.number().int().min(0).default(0),
   noAfectaCaja: z.boolean().default(false),
   motivoNoAfectaCaja: z.string().max(200).default(''),
+
+  /**
+   * La orden es una CUENTA ABIERTA (mesa), no una venta cerrada.
+   *
+   * El POS lo escribe al guardar una mesa y el modelo ya declara el campo; lo
+   * que faltaba era dejarlo pasar por la validacion. Sin esto zod lo descartaba
+   * en silencio y la orden quedaba sin la marca.
+   */
+  origenCuentaPendiente: z.boolean().default(false),
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderInputSchema>;

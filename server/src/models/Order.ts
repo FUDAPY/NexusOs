@@ -11,6 +11,22 @@ export const METODOS_PAGO = [
   'Mixto',
   'Gratis',
   'Retiro',
+  /**
+   * Cuenta abierta (mesa): todavia NO se cobro.
+   *
+   * Evidencia: el POS escribe exactamente este metodo al abrir una mesa
+   * (pos.html, confirmarGuardadoPendiente) y los documentos migrados de
+   * Firestore lo tienen. Sin declararlo, POST /orders rechazaba la creacion de
+   * la mesa por validacion del enum, y la unica salida era mandar otro metodo.
+   *
+   * NO es un medio de pago, y por eso el cierre de caja lo ignora: el
+   * normalizador de cashShift.service.ts busca 'efectivo'/'tarjeta'/
+   * 'transferencia' y este valor no coincide con ninguno, asi que una mesa sin
+   * cobrar no entra en los totales del arqueo. Si en su lugar se mandara
+   * 'Efectivo', cada mesa abierta inflaria la caja como si fuera una venta ya
+   * cobrada.
+   */
+  'Por Cobrar',
 ] as const;
 export type MetodoPago = (typeof METODOS_PAGO)[number];
 

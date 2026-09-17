@@ -660,3 +660,43 @@ describe('cobro de una mesa pendiente (/orders/:id/cerrar-cuenta)', () => {
   });
 });
 
+describe('metodos de pago al crear una orden (POST /orders)', () => {
+  const url = `${env.API_PREFIX}/orders`;
+  const item = { nombre: 'Milanesa', cantidad: 1, precio: 1000 };
+
+  /**
+   * 'Por Cobrar' es el metodo con el que el POS abre una MESA (cuenta abierta).
+   * Tiene que estar en el enum: sin el, crear una mesa devuelve 422 y el salon no
+   * puede tomar pedidos. Y no es un dato decorativo: al no coincidir con
+   * efectivo/tarjeta/transferencia, el cierre de caja no lo cuenta en ningun
+   * total, que es justo lo que se quiere de una cuenta sin cobrar.
+   */
+  it('acepta una cuenta abierta con metodo Por Cobrar (nunca 422)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({
+        sucursal: 'Centro',
+        cajero: 'Ana',
+        nombreCliente: 'Mesa 1',
+        metodoPago: 'Por Cobrar',
+        estadoPago: 'pendiente',
+        origenCuentaPendiente: true,
+        items: [item],
+      });
+    // Sin Mongo la transaccion no arranca, pero el enum tiene que aceptarlo.
+    expect(res.status).not.toBe(422);
+  });
+
+  /** Guarda contra ampliar el enum de mas: un metodo inventado sigue fallando. */
+  it('sigue rechazando un metodo que no existe (422)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ sucursal: 'Centro', cajero: 'Ana', metodoPago: 'Bitcoin', items: [item] });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('VALIDATION_ERROR');
+  });
+});
+
+

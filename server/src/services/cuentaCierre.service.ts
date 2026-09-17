@@ -23,6 +23,17 @@ export interface CerrarCuentaInput {
   clienteId?: string;
   detalleEfectivo?: Record<string, unknown>;
   detallesPago?: Record<string, unknown>;
+  /**
+   * Turno en el que se esta COBRANDO la mesa.
+   *
+   * Una mesa se abre en un turno y se puede cobrar en otro (queda abierta de
+   * noche y se paga a la manana). La venta tiene que quedar en el turno donde
+   * ENTRA LA PLATA, no donde se abrio: si quedara en el turno viejo, su cierre ya
+   * paso y esa venta no se contaria en ningun arqueo. El POS legacy hacia
+   * exactamente esto al cobrar.
+   */
+  turnoId?: string;
+  fechaAperturaTurno?: Date;
 }
 
 export interface CerrarCuentaResult {
@@ -111,6 +122,12 @@ export const cerrarCuentaPendiente = async (
     if (typeof input.observacion === 'string') orden.observacion = input.observacion;
     orden.confirmadoPorCaja = true;
     orden.fechaConfirmacionCaja = new Date();
+
+    // La venta se muda al turno donde se cobra (ver el comentario del input).
+    if (typeof input.turnoId === 'string' && input.turnoId.trim() !== '') {
+      orden.turnoId = input.turnoId.trim();
+    }
+    if (input.fechaAperturaTurno) orden.fechaAperturaTurno = input.fechaAperturaTurno;
 
     if (input.detalleEfectivo) {
       const d = input.detalleEfectivo;
