@@ -25,6 +25,11 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <!-- nexus-auth.js va aca y no mas abajo: al cargarse rehidrata el JWT en
+         NexusAPI (rehidratar()), asi que necesita que nexus-api.js ya exista.
+         Sin este script, window.NexusAuth queda undefined y el guard de esta
+         pagina cerraria la sesion en cada carga. -->
+    <script src="nexus-auth.js"></script>
     <script src="nexus-realtime.js"></script>
     <script src="nexus-data.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -1435,15 +1440,33 @@
                 this.iniciarEscuchaEnVivo();
                 this.iniciarRespaldoLecturaVentas();
                 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        this.iniciarEscuchaEnVivo();
-                        this.iniciarEscuchaAuditoria();
-                        this.cargarVentasTurnoDesdeServidor();
-                    } else {
-                        this.cerrarSesion();
-                    }
-                });
+                /* La sesion viva la lleva NexusAuth (JWT en __pos_token +
+                   __pos_session), y __pos_session ya se valido al principio de
+                   init().
+
+                   Antes esto era onAuthStateChanged de Firebase, y ademas de
+                   arrancar las escuchas servia para cerrar sesion si Firebase
+                   dejaba de tener usuario. Pero index.html ya NO autentica
+                   contra Firebase, asi que ese callback recibe SIEMPRE
+                   user === null: en cada carga el dashboard llamaba a
+                   cerrarSesion(), que borra __pos_session y vuelve al login.
+
+                   O sea: tiraba una sesion perfectamente VALIDA y dejaba el
+                   panel inaccesible (login -> dashboard -> login, en bucle).
+                   No era una sesion vencida: era el guard mirando donde ya no
+                   hay nada.
+
+                   No se comprueba aca si el token vencio: si paso, la primera
+                   llamada al API responde 401 y el frontend ya sabe reaccionar. */
+                if (!window.NexusAuth || !window.NexusAuth.autenticado()) {
+                    this.cerrarSesion();
+                    return;
+                }
+
+                // Estas dos si dependian de que hubiera sesion: se mantienen.
+                // (iniciarEscuchaEnVivo() ya se llamo mas arriba.)
+                this.iniciarEscuchaAuditoria();
+                this.cargarVentasTurnoDesdeServidor();
             },
 
             detenerEscuchas: function() {
