@@ -293,6 +293,55 @@ export const cambiarPassword = async (
   return { establecida: true, primeraVez };
 };
 
+/**
+ * Restablece la contraseña de OTRO usuario desde el panel de admin.
+ *
+ * Por que NO reusa `cambiarPassword`: esa exige la contraseña actual cuando el
+ * usuario ya tiene una, y el admin no la conoce — ese es justamente el caso de
+ * uso (un cajero que la olvidó). Meter un flag para saltear ese control dejaria
+ * una puerta trasera en el camino de autoservicio; una funcion aparte deja
+ * explicito que aca la autorizacion NO viene de conocer la clave anterior, sino
+ * del rol, y eso lo exige la ruta con `requiereRol('admin','supervisor')`.
+ *
+ * La auditoria queda a nombre de `quienLoHace` (el admin del token), no del
+ * afectado: si se registrara como "Contraseña cambiada" a nombre del cajero, se
+ * perderia el rastro de quien reseteo que cuenta.
+ */
+export const resetearPassword = async (
+  identificador: string,
+  nueva: string,
+  context: { ip: string; userAgent: string },
+  quienLoHace: { nombre: string; rol: string },
+): Promise<{ establecida: boolean; primeraVez: boolean; usuario: string }> => {
+  if (nueva.length < 6) {
+    throw new AppError('La contraseña tiene que tener al menos 6 caracteres', 422, 'PASSWORD_CORTA');
+  }
+
+  const user = await buscarUsuario(identificador);
+  if (!user) throw new AppError('Usuario no encontrado', 404, 'USUARIO_NO_ENCONTRADO');
+
+  const primeraVez = (user.passwordHash ?? '') === '';
+
+  user.passwordHash = await bcrypt.hash(nueva, env.BCRYPT_ROUNDS);
+  user.passwordActualizadoEn = new Date();
+  await user.save();
+
+  await AuditLog.create({
+    tipo: 'usuario_editado',
+    origen: 'api',
+    motivo:
+      `${primeraVez ? 'Contraseña establecida' : 'Contraseña restablecida'} por ` +
+      `${quienLoHace.nombre} (${quienLoHace.rol}) para ${user.nombre}`,
+    sucursal: user.sucursal,
+    adminNombre: quienLoHace.nombre,
+    ip: context.ip,
+    userAgent: context.userAgent,
+    fecha: new Date(),
+  });
+
+  return { establecida: true, primeraVez, usuario: user.nombre };
+};
+
 /** Perfil actual, para que el frontend sepa si tiene que pedir la contraseña. */
 export const perfil = async (identificador: string): Promise<SesionUsuario> => {
   const user = await buscarUsuario(identificador).lean().exec();

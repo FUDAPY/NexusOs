@@ -1,5 +1,12 @@
 import type { NextFunction, Request, Response } from 'express';
-import { cambiarNombre, cambiarPassword, login, perfil, registrar } from '../services/auth.service.js';
+import {
+  cambiarNombre,
+  cambiarPassword,
+  login,
+  perfil,
+  registrar,
+  resetearPassword,
+} from '../services/auth.service.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.js';
 import { env } from '../config/env.js';
 import { AppError, sendOk } from '../utils/response.js';
@@ -118,6 +125,47 @@ export const cambiarClave = async (req: Request, res: Response, next: NextFuncti
     }
     const resultado = await cambiarPassword(identificadorDe(req), body.actual, body.nueva, contextoDe(req));
     sendOk(res, resultado);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/v1/auth/usuarios/:id/reset-password  { nueva }
+ *
+ * Reseteo desde el panel de admin (Personal). La ruta exige rol admin o
+ * supervisor; aca solo se arma la entrada.
+ *
+ * A diferencia de /auth/password, NO pide la contraseña actual del afectado: el
+ * admin no la conoce, y ese es el caso de uso (un cajero que la olvidó).
+ */
+export const resetearClaveDeUsuario = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const id = req.params['id'];
+    if (typeof id !== 'string' || id === '') {
+      throw new AppError('Falta el usuario', 400, 'SIN_USUARIO');
+    }
+
+    const body = req.body as { nueva?: string };
+    if (typeof body.nueva !== 'string' || body.nueva === '') {
+      throw new AppError('Falta la contraseña nueva', 400, 'MISSING_NEW_PASSWORD');
+    }
+
+    // El nombre y el rol salen del token, NUNCA del body: es lo que hace que la
+    // auditoria diga la verdad sobre quien reseteo la cuenta.
+    const auth = (req as AuthenticatedRequest).auth;
+
+    sendOk(
+      res,
+      await resetearPassword(id, body.nueva, contextoDe(req), {
+        nombre: auth?.nombre ?? '',
+        rol: auth?.rol ?? '',
+      }),
+    );
   } catch (error) {
     next(error);
   }

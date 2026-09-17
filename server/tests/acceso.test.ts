@@ -448,3 +448,83 @@ describe('cierre forzado de sucursal (/cash-shifts/forzar-cierre)', () => {
     expect(res.status).not.toBe(403);
   });
 });
+
+describe('cambio de contraseña de un usuario (/auth/usuarios/:id/reset-password)', () => {
+  const url = (id: string): string => `${env.API_PREFIX}/auth/usuarios/${id}/reset-password`;
+
+  it('sin token responde 401', async () => {
+    const res = await request(app).post(url('abc')).send({ nueva: 'ClaveSegura123' });
+    expect(res.status).toBe(401);
+  });
+
+  /**
+   * Es la operacion mas sensible del panel: reemplaza la credencial de acceso de
+   * otra persona SIN pedir la anterior. Si un cajero pudiera hacerla, se quedaria
+   * con la cuenta de cualquier compañero —incluido el admin— en dos clics.
+   */
+  it('un cajero NO puede resetear la contraseña de nadie (403)', async () => {
+    const res = await request(app)
+      .post(url('abc'))
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ nueva: 'ClaveSegura123' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('un cliente tampoco (403)', async () => {
+    const res = await request(app)
+      .post(url('abc'))
+      .set('Authorization', 'Bearer ' + tokenDe('cliente'))
+      .send({ nueva: 'ClaveSegura123' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('un admin SI pasa el control de rol', async () => {
+    const res = await request(app)
+      .post(url('abc'))
+      .set('Authorization', 'Bearer ' + tokenValido)
+      .send({ nueva: 'ClaveSegura123' });
+    // Sin Mongo da 500 al buscar al usuario, pero no 401 ni 403.
+    expect(res.status).not.toBe(401);
+    expect(res.status).not.toBe(403);
+  });
+
+  /**
+   * Supervisor tambien: es el rol de encargado, el que atiende el mostrador
+   * cuando alguien olvida la contraseña.
+   */
+  it('un supervisor tambien (400 por body vacio, no 403)', async () => {
+    const res = await request(app)
+      .post(url('abc'))
+      .set('Authorization', 'Bearer ' + tokenDe('supervisor'))
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('MISSING_NEW_PASSWORD');
+  });
+
+  it('exige la contraseña nueva (400 antes de tocar la base)', async () => {
+    for (const nueva of [undefined, '', 12_345]) {
+      const res = await request(app)
+        .post(url('abc'))
+        .set('Authorization', 'Bearer ' + tokenValido)
+        .send({ nueva });
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('MISSING_NEW_PASSWORD');
+    }
+  });
+
+  /**
+   * El minimo de 6 caracteres se valida ANTES de buscar al usuario, asi que el
+   * 422 llega sin que exista el id en la base. Si ese orden se invirtiera, este
+   * test empezaria a devolver 500 y delataria el cambio.
+   */
+  it('rechaza una contraseña corta (422) sin llegar a la base', async () => {
+    const res = await request(app)
+      .post(url('abc'))
+      .set('Authorization', 'Bearer ' + tokenValido)
+      .send({ nueva: 'corta' });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('PASSWORD_CORTA');
+  });
+});

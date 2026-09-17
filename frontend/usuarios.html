@@ -18,11 +18,16 @@
     <link rel="stylesheet" href="nexus.css">
     <link rel="stylesheet" href="nexus-theme.css">
     <script src="nexus-api.js"></script>
+    <!-- nexus-auth.js rehidrata el JWT en NexusAPI al cargar. Hace falta en CADA
+         pagina: sin el, las peticiones salen sin `Authorization` y la API
+         responde 401. nexus-data.js traduce las lecturas de colecciones a la API. -->
+    <script src="nexus-auth.js"></script>
+    <script src="nexus-data.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="admin_sidebar.js" defer></script>
 </head>
 
-<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800" id="app-body">
+<body class="bg-slate-50 h-screen overflow-hidden flex font-sans text-slate-800" id="app-body" data-nexus-pagina="usuarios">
     <div class="fixed bottom-3 right-4 z-[120] rounded-full bg-white/95 border border-slate-200 px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-lg">
         Todos los derechos reservados 2026 -
         <a href="https://github.com/FUDAPY" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">Giuliano Catella</a>
@@ -194,6 +199,50 @@
         </div>
     </div>
 
+    <!-- Cambio de contraseña de un usuario existente. Es un modal aparte del de
+         alta porque no comparte nada: aca no se crea nada, solo se reemplaza la
+         credencial de acceso de una cuenta que ya existe. -->
+    <div id="modal-password" class="fixed inset-0 bg-slate-900/60 hidden justify-center items-center z-50 backdrop-blur-sm">
+        <div class="bg-white w-[480px] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+                <h3 class="text-xl font-bold"><i class="fa-solid fa-key text-orange-400 mr-2"></i>Cambiar Contrasena</h3>
+                <button onclick="UsuariosModule.cerrarModalPassword()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <form id="form-password" onsubmit="UsuariosModule.guardarPassword(event)" class="p-6 space-y-4">
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p class="text-sm font-bold text-slate-800" id="pwd-usuario-nombre">Usuario</p>
+                    <p class="text-xs text-slate-500 font-mono break-all" id="pwd-usuario-email"></p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Contrasena Nueva</label>
+                    <input type="text" id="pwd-nueva" required minlength="6" autocomplete="new-password" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-mono" placeholder="Minimo 6 caracteres">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Repetir Contrasena</label>
+                    <input type="text" id="pwd-repetir" required minlength="6" autocomplete="new-password" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-orange-500 outline-none transition font-mono" placeholder="La misma de arriba">
+                </div>
+
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    <i class="fa-solid fa-circle-info text-orange-500 mr-1"></i>
+                    Se reemplaza la contrasena de acceso de esta cuenta. <b>No se pide la anterior</b>:
+                    justamente sirve para el caso en que el usuario la olvido. La nueva se aplica desde
+                    el proximo ingreso.
+                </p>
+
+                <div class="pt-4 border-t border-slate-200 mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="UsuariosModule.cerrarModalPassword()" class="px-6 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition">Cancelar</button>
+                    <button type="submit" id="btn-guardar-password" class="px-6 py-3 bg-orange-500 text-white font-bold rounded-xl shadow-md hover:bg-orange-600 transition flex items-center gap-2">
+                        <i class="fa-solid fa-key"></i> Cambiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -222,43 +271,53 @@
         // NO iniciamos base de datos secundaria, usamos la db principal que tiene la sesion de Admin valida.
 
         window.UsuariosModule = {
-            usuariosFirebase: [],
+            /** Usuarios traidos de la API (antes: usuariosFirebase, de Firestore). */
+            usuarios: [],
             pestanaActual: 'empleados',
+            /** Usuario cuyo modal de contrasena esta abierto. */
+            passwordUsuarioId: null,
 
+            /**
+             * Arranque de la pagina.
+             *
+             * La sesion la lleva NexusAuth: escribe `__pos_session` y el JWT en
+             * `__pos_token`. Antes la sesion viva se confirmaba con
+             * `onAuthStateChanged` de Firebase, y eso dejo de funcionar cuando
+             * index.html paso a autenticar contra la API: ya no se inicia sesion
+             * en Firebase, asi que ese callback recibia siempre `user === null`
+             * y la pagina rebotaba al login en cada carga.
+             */
             init: function() {
-                const sesionStr = localStorage.getItem('__pos_session');
-                if (!sesionStr) return window.location.replace('index.html');
-                const sesion = JSON.parse(sesionStr);
+                if (!window.NexusAuth || !window.NexusAuth.autenticado()) {
+                    return window.location.replace('index.html');
+                }
+                const sesion = window.NexusAuth.sesion();
                 if (sesion.rol !== 'admin') {
                     if (sesion.rol === 'cobrador') return window.location.replace('clientes.html?view=cobranzas');
                     if (sesion.rol === 'produccion') return window.location.replace('produccion.html');
                     return window.location.replace('index.html');
                 }
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        this.cargarUsuarios();
-                        this.cargarSucursalesParaSelect(); 
-                    } else {
-                        window.location.replace('index.html');
-                    }
-                });
+                this.cargarUsuarios();
+                this.cargarSucursalesParaSelect();
             },
 
             cargarSucursalesParaSelect: async function() {
                 try {
-                    const snap = await getDocs(collection(db, "branches"));
+                    // Las sucursales tambien vienen de la API: `getDocs` contra
+                    // Firestore ya no esta autorizado.
                     const selectEl = document.getElementById('usr-sucursal');
-                    
+                    const sucursales = await NexusData.leer('branches', { limit: 200, orderBy: ['nombre', 'asc'] });
+
                     let opcionesHtml = `
                         <option value="N/A">No aplica (Es Cliente)</option>
                         <option value="Todas las Sucursales">Todas las Sucursales (Admin)</option>
                     `;
-                    
-                    snap.forEach(doc => {
-                        const nombreSucursal = doc.data().nombre;
+
+                    sucursales.forEach(sucursal => {
+                        const nombreSucursal = sucursal.nombre;
                         opcionesHtml += `<option value="${nombreSucursal}">${nombreSucursal}</option>`;
                     });
-                    
+
                     selectEl.innerHTML = opcionesHtml;
                 } catch (error) {
                     console.error("Error cargando sucursales para el menu: ", error);
@@ -299,15 +358,16 @@
                 spinner.classList.remove('hidden'); spinner.classList.add('flex');
                 
                 try {
-                    const snap = await getDocs(collection(db, "users"));
-                    this.usuariosFirebase = [];
-                    let clientesPendientes = 0;
-                    
-                    snap.forEach((doc) => {
-                        const data = doc.data();
-                        this.usuariosFirebase.push({ id: doc.id, ...data });
-                        if(data.rol === 'cliente' && data.estadoBeneficios === 'pendiente') clientesPendientes++;
-                    });
+                    // Se lee del API (Mongo), no de Firestore: la sesion ya no es
+                    // de Firebase, asi que `getDocs` respondia permission-denied y
+                    // la tabla quedaba vacia. El id publico es `uid` (el que se uso
+                    // en Firestore) y se cae a `_id` para los creados despues.
+                    const filas = await NexusData.leer('users', { limit: 500, orderBy: ['nombre', 'asc'] });
+                    this.usuarios = filas.map(f => ({ ...f, id: f.uid || f._id }));
+
+                    const clientesPendientes = this.usuarios.filter(
+                        u => u.rol === 'cliente' && u.estadoBeneficios === 'pendiente'
+                    ).length;
                     
                     const badge = document.getElementById('badge-pendientes');
                     if(clientesPendientes > 0) {
@@ -318,7 +378,11 @@
 
                     this.renderizarTabla();
                 } catch (error) {
-                    console.error("Error Firebase:", error);
+                    console.error("Error cargando usuarios:", error);
+                    this.mostrarToast(
+                        window.NexusAuth ? NexusAuth.mensajeDe(error) : "No se pudieron cargar los usuarios.",
+                        "error"
+                    );
                 } finally {
                     spinner.classList.add('hidden'); spinner.classList.remove('flex');
                 }
@@ -326,7 +390,7 @@
 
             renderizarTabla: function() {
                 const tbody = document.getElementById('users-table-body');
-                const lista = this.usuariosFirebase.filter(u => this.pestanaActual === 'empleados' ? u.rol !== 'cliente' : u.rol === 'cliente');
+                const lista = this.usuarios.filter(u => this.pestanaActual === 'empleados' ? u.rol !== 'cliente' : u.rol === 'cliente');
 
                 if (lista.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-bold">No hay registros en esta categoria.</td></tr>`;
@@ -343,14 +407,18 @@
                     if(usr.rol === 'cliente') { rolEstilo = "bg-slate-100 text-slate-700"; icono = "fa-star"; }
 
                     let estadoHtml = `<span class="font-semibold text-slate-700">${usr.sucursal || 'Sin Asignar'}</span>`;
-                    let accionHtml = `<button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><i class="fa-solid fa-trash"></i></button>`;
+
+                    // La llave es el cambio de contrasena. Va primera porque es la
+                    // accion de soporte mas pedida (el cajero que la olvido).
+                    const btnPassword = `<button onclick="UsuariosModule.abrirModalPassword('${usr.id}')" title="Cambiar contrasena" class="w-8 h-8 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-500 hover:text-white transition shadow-sm border border-orange-100 mr-2"><i class="fa-solid fa-key"></i></button>`;
+                    let accionHtml = `${btnPassword}<button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><i class="fa-solid fa-trash"></i></button>`;
 
                     if(usr.rol === 'cliente') {
                         if(usr.estadoBeneficios === 'pendiente') {
                             estadoHtml = `<span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold border border-red-200"><i class="fa-solid fa-clock"></i> Pendiente App</span>`;
                             accionHtml = `
                                 <button onclick="UsuariosModule.aprobarCliente('${usr.id}')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 font-bold text-xs transition shadow-sm"><i class="fa-solid fa-check mr-1"></i> Aprobar</button>
-                                <button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100 ml-2"><i class="fa-solid fa-trash"></i></button>
+                                ${btnPassword}<button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100 ml-2"><i class="fa-solid fa-trash"></i></button>
                             `;
                         } else {
                             estadoHtml = `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200">Aprobado</span>`;
@@ -380,6 +448,103 @@
 
             cerrarModalFormulario: function() {
                 document.getElementById('modal-formulario').classList.add('hidden');
+            },
+
+            /* ------------------------------------------------------------------
+               Contrasena
+               ------------------------------------------------------------------ */
+
+            /**
+             * Abre el modal precargado con el usuario elegido.
+             * Se guarda el id en `passwordUsuarioId` para no tener que volver a
+             * resolverlo al enviar el formulario.
+             */
+            abrirModalPassword: function(id) {
+                const usr = this.usuarios.find(u => u.id === id);
+                if (!usr) return this.mostrarToast("No se encontro el usuario.", "error");
+
+                this.passwordUsuarioId = id;
+                document.getElementById('pwd-usuario-nombre').innerText = usr.nombre || 'Sin nombre';
+                document.getElementById('pwd-usuario-email').innerText = usr.email || '';
+                document.getElementById('form-password').reset();
+
+                const modal = document.getElementById('modal-password');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('pwd-nueva').focus();
+            },
+
+            cerrarModalPassword: function() {
+                this.passwordUsuarioId = null;
+                const modal = document.getElementById('modal-password');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            },
+
+            /**
+             * Cambia la contrasena del usuario elegido.
+             *
+             * Pega contra POST /auth/usuarios/:id/reset-password, que NO pide la
+             * contrasena anterior: el admin no la conoce, y ESO es el caso de uso
+             * (el cajero que la olvido). La ruta exige rol admin o supervisor y la
+             * accion queda auditada a nombre del admin que la hizo.
+             *
+             * `retries: 0` a proposito: un fallo de permisos o de validacion no
+             * mejora reintentando, y cada reintento consume cupo del limitador de
+             * intentos del servidor.
+             */
+            guardarPassword: async function(event) {
+                event.preventDefault();
+
+                const id = this.passwordUsuarioId;
+                if (!id) return this.mostrarToast("No hay usuario seleccionado.", "error");
+
+                const nueva = document.getElementById('pwd-nueva').value;
+                const repetir = document.getElementById('pwd-repetir').value;
+
+                // El backend tambien valida el minimo, pero avisar aca evita el
+                // ida y vuelta y da un mensaje mas claro (el html solo aplica
+                // `minlength` si el formulario se envia de forma nativa).
+                if (nueva.length < 6) {
+                    return this.mostrarToast("La contrasena tiene que tener al menos 6 caracteres.", "error");
+                }
+                if (nueva !== repetir) {
+                    return this.mostrarToast("Las dos contrasenas no coinciden.", "error");
+                }
+
+                const btn = document.getElementById('btn-guardar-password');
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Cambiando...`;
+                btn.disabled = true;
+
+                try {
+                    const respuesta = await NexusAPI.post(
+                        '/auth/usuarios/' + encodeURIComponent(id) + '/reset-password',
+                        { nueva: nueva },
+                        { ttl: 0, retries: 0 }
+                    );
+
+                    // `primeraVez` distingue "se la asigno" de "se la cambio": los
+                    // usuarios migrados de Firebase no tenian contrasena, y es
+                    // util saber que esta cuenta acaba de habilitarse.
+                    const primeraVez = respuesta.data && respuesta.data.primeraVez === true;
+                    this.mostrarToast(
+                        primeraVez
+                            ? "Contrasena establecida. El usuario ya puede entrar."
+                            : "Contrasena cambiada correctamente."
+                    );
+
+                    this.cerrarModalPassword();
+                    this.cargarUsuarios();
+                } catch (error) {
+                    console.error(error);
+                    this.mostrarToast(
+                        window.NexusAuth ? NexusAuth.mensajeDe(error) : "No se pudo cambiar la contrasena.",
+                        "error"
+                    );
+                } finally {
+                    btn.innerHTML = `<i class="fa-solid fa-key"></i> Cambiar`;
+                    btn.disabled = false;
+                }
             },
 
             guardarUsuario: async function(event) {
@@ -439,10 +604,15 @@
 
             aprobarCliente: async function(id) {
                 try {
-                    await updateDoc(doc(db, "users", id), { estadoBeneficios: "activo" });
+                    // PATCH /users/:id. `estadoBeneficios` no esta en `noEscribible`
+                    // del recurso, asi que la via generica sirve.
+                    await NexusData.actualizar('users', id, { estadoBeneficios: 'activo' });
                     this.mostrarToast("Cliente aprobado. Ya puede acumular puntos.");
                     this.cargarUsuarios();
-                } catch(e) { console.error(e); this.mostrarToast("Error al aprobar.", "error"); }
+                } catch(e) {
+                    console.error(e);
+                    this.mostrarToast(window.NexusAuth ? NexusAuth.mensajeDe(e) : "Error al aprobar.", "error");
+                }
             },
 
             eliminarUsuario: async function(id) {

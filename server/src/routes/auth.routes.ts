@@ -1,5 +1,12 @@
 import { Router } from 'express';
-import { cambiarClave, editarPerfil, entrar, registrarCliente, verPerfil } from '../controllers/auth.controller.js';
+import {
+  cambiarClave,
+  editarPerfil,
+  entrar,
+  registrarCliente,
+  resetearClaveDeUsuario,
+  verPerfil,
+} from '../controllers/auth.controller.js';
 import { requiereAuth, requiereRol } from '../middlewares/auth.js';
 import { limitarIntentos } from '../middlewares/rateLimit.js';
 
@@ -57,6 +64,26 @@ authRouter.post(
 /**
  * Administracion: un admin o supervisor cambia el nombre o la contraseña de
  * cualquier usuario existente, incluidos los migrados que todavia no tienen.
+ *
+ * `/usuarios/:id/password` exige la contraseña ACTUAL del afectado, porque
+ * reusa la misma logica que el autoservicio. Sirve cuando el admin la conoce.
+ *
+ * `/usuarios/:id/reset-password` NO la pide, y es la que usa el panel de
+ * Personal: el caso tipico es el cajero que la olvido. Ahi la autorizacion sale
+ * del rol, no de conocer la clave anterior.
  */
 authRouter.patch('/usuarios/:id/perfil', requiereAuth, requiereRol('admin', 'supervisor'), editarPerfil);
 authRouter.post('/usuarios/:id/password', requiereAuth, requiereRol('admin', 'supervisor'), cambiarClave);
+authRouter.post(
+  '/usuarios/:id/reset-password',
+  requiereAuth,
+  requiereRol('admin', 'supervisor'),
+  // Sin freno, una sesion de admin robada podria cambiar en bucle la
+  // contraseña de toda la plantilla y quedarse con las cuentas.
+  limitarIntentos({
+    maximo: 20,
+    ventanaMs: 5 * 60 * 1000,
+    mensaje: 'Demasiados cambios de contraseña.',
+  }),
+  resetearClaveDeUsuario,
+);
