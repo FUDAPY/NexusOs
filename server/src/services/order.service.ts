@@ -1,5 +1,5 @@
 import { Types, type ClientSession } from 'mongoose';
-import { Order, OrderItem, Product, type IOrder, type IOrderItem } from '../models/index.js';
+import { Order, OrderItem, Product, User, type IOrder, type IOrderItem } from '../models/index.js';
 import type { CreateOrderInput } from '../schemas/order.schema.js';
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
@@ -118,6 +118,69 @@ export interface CreateOrderResult {
   itemIds: string[];
 }
 
+/**
+ * Mueve puntos y deuda del cliente, DENTRO de la transaccion de la venta.
+ *
+ * POR QUE EXISTE
+ * El POS hacia esto desde el navegador, en su propio runTransaction. Al migrar
+ * el cobro a este endpoint, el saldo del cliente quedaba afuera: el ticket se
+ * guardaba con `puntosOtorgados` pero el cliente no sumaba nada. Es el peor tipo
+ * de error, porque no se nota al momento: aparece semanas despues como un saldo
+ * mal, sin forma de saber que venta lo causo.
+ *
+ * Meter los dos documentos en la MISMA transaccion es lo que garantiza que o
+ * quedan los dos bien, o no queda ninguno.
+ *
+ * La DEUDA la calcula el servidor desde el total de la orden: un total que llega
+ * del navegador no es confiable para tocar una deuda. Los PUNTOS si vienen del
+ * input (dependen del carrito, que trae los descuentos por item); lo que hace el
+ * servidor es exigir saldo suficiente para el canje.
+ */
+const aplicarSaldoCliente = async (
+  input: CreateOrderInput,
+  total: number,
+  esCredito: boolean,
+  session: ClientSession | null,
+): Promise<void> => {
+  const clienteId = String(input.clienteId ?? '').trim();
+  if (clienteId === '' || clienteId === 'ocasional') return;
+
+  const canjeados = Math.max(0, input.puntosCanjeados);
+  const deltaPuntos = Math.max(0, input.puntosOtorgados) - canjeados;
+  const deltaDeuda = esCredito ? total : 0;
+
+  if (deltaPuntos === 0 && deltaDeuda === 0) return;
+
+  // Mismo criterio que filtroPorId: el id puede ser un uid de Firestore o un
+  // ObjectId de Mongo, y el frontend manda los dos segun el origen del cliente.
+  const filtro: Record<string, unknown> = Types.ObjectId.isValid(clienteId)
+    ? { $or: [{ uid: clienteId }, { _id: new Types.ObjectId(clienteId) }] }
+    : { uid: clienteId };
+
+  // El saldo se exige en el MISMO filtro que la escritura. Con un `if` previo
+  // habria una ventana entre leer y escribir donde otro cobro podria gastar los
+  // mismos puntos.
+  if (deltaPuntos < 0) filtro['puntos'] = { $gte: canjeados };
+
+  const actualizado = await User.findOneAndUpdate(
+    filtro,
+    { $inc: { puntos: deltaPuntos, deuda: deltaDeuda } },
+    { new: true, session: session ?? undefined },
+  ).exec();
+
+  if (actualizado === null) {
+    // No se pudo mover el saldo y la venta le iba a mover algo: se corta en vez
+    // de guardar el ticket y perder el movimiento en silencio.
+    throw new AppError(
+      deltaPuntos < 0
+        ? 'No se pudo canjear: el cliente no existe o no tiene puntos suficientes'
+        : 'No se pudo actualizar el saldo del cliente',
+      409,
+      'SALDO_CLIENTE_NO_APLICADO',
+    );
+  }
+};
+
 export const createOrder = async (
   input: CreateOrderInput,
   context: { ip: string; userAgent: string },
@@ -182,6 +245,10 @@ export const createOrder = async (
       })),
       session ? { session, ordered: true } : { ordered: true },
     );
+
+    // El saldo del cliente (puntos y deuda) va con la venta, en la MISMA
+    // transaccion: ver aplicarSaldoCliente.
+    await aplicarSaldoCliente(input, total, esCredito, session);
 
     await recordAudit(
       {

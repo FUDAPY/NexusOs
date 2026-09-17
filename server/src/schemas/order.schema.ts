@@ -35,6 +35,14 @@ export const createOrderInputSchema = z.object({
   cajero: z.string().min(1).max(140),
   cajeroCobro: z.string().max(140).default(''),
   cliente: z.string().max(140).default('ocasional'),
+  /**
+   * Cliente CRM al que hay que moverle puntos y deuda.
+   *
+   * Va aparte de `cliente` (que es el nombre que se imprime en el ticket)
+   * porque el saldo vive en un documento de `users` y hay que identificarlo.
+   * Vacio u 'ocasional' = venta de mostrador, no hay saldo que mover.
+   */
+  clienteId: z.string().max(60).default(''),
   nombreCliente: z.string().max(140).default('Fisico 1'),
   aliasReferencia: z.string().max(140).default(''),
 
