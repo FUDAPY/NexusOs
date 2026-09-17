@@ -19,6 +19,8 @@
     <link rel="icon" href="favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="nexus-api.js"></script>
+    <script src="nexus-auth.js"></script>
     <script src="date_time_utils.js"></script>
     <script src="print_utils.js"></script>
     <script src="cierre_caja_normalizer.js"></script>
@@ -802,7 +804,22 @@
                 });
 
                 onAuthStateChanged(auth, async (user) => {
-                    if (user) {
+                    /* `user` es de Firebase, y desde que index.html autentica
+                       contra la API ese callback recibe SIEMPRE null.
+
+                       Por eso la condicion mira tambien la sesion de NexusAuth
+                       (el JWT). Sin esto se tomaba la rama else, que llama a
+                       cerrarSesion(): esa borra __pos_session y devuelve al
+                       login. O sea que el POS tiraba una sesion VALIDA y
+                       ademas la destruia, con lo que el cajero no podia entrar
+                       a nada.
+
+                       OJO: el cuerpo de este bloque sigue leyendo de Firestore
+                       (onSnapshot de products y users), asi que el catalogo y
+                       los clientes van a quedar vacios hasta que se migren. Eso
+                       es la etapa 1 del POS, pendiente. Lo que se arregla aca es
+                       que la pagina deje de expulsar y de borrar la sesion. */
+                    if (user || (window.NexusAuth && window.NexusAuth.autenticado())) {
                         try {
                             const qProd = query(collection(db, "products"), where("estado", "==", "Activo"));
                             if (this.unsubscribeProductos) this.unsubscribeProductos();
