@@ -3099,6 +3099,24 @@
                         }
                     }
 
+                    /* ANULACION TOTAL por la API.
+                       El servidor hace TODO lo que hacia el batch de abajo, en una
+                       transaccion: marca la orden 'anulado' (no la borra: una venta
+                       anulada tiene que quedar para la auditoria, y el arqueo ya
+                       excluye las anuladas), devuelve el stock con su kardex y revierte
+                       la deuda o los puntos del cliente.
+                       El `return` corta el bloque viejo: las escrituras de abajo ya se
+                       habian agregado al batch, pero nunca se commitea, asi que se
+                       descartan solas. Se borra el bloque cuando esto este verificado. */
+                    await NexusAPI.post(
+                        '/orders/' + encodeURIComponent(v.id) + '/anular',
+                        { motivo, tipo: 'total', autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin' },
+                        { ttl: 0, retries: 0 }
+                    );
+                    this.mostrarToast('Ticket anulado, stock devuelto y saldo del cliente ajustado.', 'success');
+                    this.cerrarModalGestor();
+                    return;
+
                     // 2. REVERTIR INVENTARIO COMPLETO
                     if(v.items && Array.isArray(v.items)) {
                         const stockARestaurar = {};
