@@ -2968,6 +2968,26 @@
                         [consumoProduccion.branchKey]: consumoProduccion
                     });
 
+                    /* ANULACION PARCIAL por la API: se va 1 unidad de este producto.
+                       El servidor devuelve el stock con su kardex, SACA la unidad del
+                       ticket (items embebidos y order_items), ajusta el total y revierte
+                       la deuda o los puntos del cliente.
+                       El `return` corta el bloque viejo: lo que alcanzo a sumarse al
+                       batch no se commitea nunca, asi que se descarta solo. */
+                    await NexusAPI.post(
+                        '/orders/' + encodeURIComponent(v.id) + '/anular',
+                        {
+                            motivo,
+                            tipo: 'parcial',
+                            cantidades: { [item.id]: 1 },
+                            autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin'
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
+                    this.mostrarToast('Unidad anulada: stock devuelto y ticket ajustado.', 'success');
+                    this.cerrarModalGestor();
+                    return;
+
                     // 2. ACTUALIZAR LISTA DE ITEMS DEL TICKET
                     let itemsNuevos = [...v.items];
                     if (itemsNuevos[indexItem].cantidad > 1) {

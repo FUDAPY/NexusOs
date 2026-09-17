@@ -3,7 +3,7 @@ import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { filtroPorId } from '../utils/mongoId.js';
 import { AuditLog, InventoryMovement, Order, OrderItem, Product } from '../models/index.js';
-import type { IOrder } from '../models/index.js';
+import type { IOrder, IOrderItem } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
 import { aplicarSaldoCliente } from './order.service.js';
 
@@ -169,6 +169,66 @@ export const cancelOrder = async (
           esCredito ? -montoAnulado : 0,
           esCredito,
           session,
+        );
+      }
+    }
+
+    /* Anulacion PARCIAL: ademas de devolver stock hay que SACAR del ticket lo
+       anulado. Faltaba, y no es cosmetico: el stock volvia pero la orden seguia
+       mostrando el producto, asi que el ticket y el inventario quedaban diciendo
+       cosas distintas. Se tocan los items embebidos Y los order_items (la copia
+       normalizada), para que las dos vistas del mismo dato coincidan.
+       Si al sacar no queda nada, o el total queda en 0, la orden pasa a anulada:
+       es el caso que el panel llamaba `parcial_a_total`. */
+    if (!esTotal && aDevolver.size > 0) {
+      const porSacar = new Map(aDevolver);
+      const reducidos: IOrderItem[] = [];
+      let quitado = 0;
+
+      for (const item of (order.items ?? []) as IOrderItem[]) {
+        const pid = String(item.id ?? '');
+        const cantidad = Number(item.cantidad ?? 0);
+        const aSacar = porSacar.get(pid) ?? 0;
+        if (aSacar <= 0) {
+          reducidos.push(item);
+          continue;
+        }
+        porSacar.set(pid, Math.max(0, aSacar - cantidad));
+        const queda = Math.max(0, cantidad - aSacar);
+        const unitario = cantidad > 0 ? Number(item.subtotal ?? 0) / cantidad : 0;
+        quitado += unitario * (cantidad - queda);
+        if (queda === 0) continue;
+        reducidos.push({ ...item, cantidad: queda, subtotal: Math.round(unitario * queda) });
+      }
+
+      const totalNuevo = Math.max(0, Math.round(Number(order.total ?? 0) - quitado));
+      const sinNada = reducidos.length === 0 || totalNuevo === 0;
+
+      await Order.updateOne(
+        { _id: order._id },
+        {
+          $set: {
+            items: reducidos,
+            subtotal: reducidos.reduce((acc, it) => acc + Number(it.subtotal ?? 0), 0),
+            total: totalNuevo,
+            ...(sinNada ? { estadoPago: 'anulado', estadoCocina: 'anulado' } : {}),
+          },
+        },
+        { session: session ?? undefined },
+      );
+
+      await OrderItem.deleteMany({ orderId: order._id }, session ? { session } : {});
+      if (reducidos.length > 0) {
+        await OrderItem.insertMany(
+          reducidos.map((item) => ({
+            ...item,
+            orderId: order._id,
+            productoId: item.id,
+            ticket_id: order.ticket_id,
+            sucursal: order.sucursal,
+            fecha: order.fecha,
+          })),
+          session ? { session, ordered: true } : { ordered: true },
         );
       }
     }
