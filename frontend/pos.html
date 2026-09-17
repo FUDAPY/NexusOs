@@ -3607,16 +3607,93 @@
                         };
                         ventaMetaPublica = this.ultimaVentaImprimir;
                     } else {
-                    await runTransaction(db, async (transaction) => {
-                    const batch = transaction;
-                    const ventaIdStock = this.idTicketRecuperado || nuevaVentaRef.id;
-                    const ajustesStockPago = this.obtenerDescuentosStockPendientes(itemsCobro);
-                    await this.aplicarDescuentoStockEnTransaccion(transaction, ajustesStockPago, ventaIdStock);
-                    const itemsCobroGuardado = this.marcarItemsConStockDescontado(itemsCobro);
+                        /* COBRO DE MESA PENDIENTE por la API (Paso B de la migracion).
+                           Antes esto era un runTransaction contra Firestore, que ya no
+                           autoriza.
 
-                    let estadoCocinaFinal = this.carritoTieneItemsDeCocina() ? "pendiente" : "listo";
+                           POR QUE UN ENDPOINT Y NO POST /orders: POST /orders siempre
+                           CREA. Cobrar una mesa tiene que PASAR ESA ORDEN a pagada; si
+                           creara otra, la venta quedaria DUPLICADA (la mesa abierta MAS
+                           una venta nueva). /orders/:id/cerrar-cuenta hace justamente
+                           eso y mueve puntos y deuda del cliente en la misma
+                           transaccion del servidor: el POS ya no toca `users` a mano. */
+                        const mesaId = this.idTicketRecuperado;
+                        const itemsMesa = itemsCobro.map(it => ({
+                            id: String(it.id || ''),
+                            cantidad: Math.max(1, Math.floor(Number(it.cantidad || 1))),
+                            controlado: it.controlado === true
+                        }));
+                        /* Los items van solo para que el servidor VALIDE que la cuenta
+                           no cambio. Si cambio, responde 409 CUENTA_CON_CAMBIOS: hay
+                           que ajustar el stock por diferencia y esa parte todavia no
+                           esta migrada, asi que preferimos fallar antes que cerrar la
+                           cuenta con el stock mal y descubrirlo en el proximo conteo. */
+                        const respuestaCierre = await NexusAPI.post(
+                            '/orders/' + encodeURIComponent(mesaId) + '/cerrar-cuenta',
+                            {
+                                metodoPago: metodoElegido,
+                                items: itemsMesa,
+                                cajero: this.sesion.nombre,
+                                clienteId: this.clienteActual ? this.clienteActual.id : undefined,
+                                creditoLibre: creditoLibreSucursal,
+                                observacion: observacionInput,
+                                puntosOtorgados: puntosGanados,
+                                puntosCanjeados,
+                                ...(detalleEfectivo ? { detalleEfectivo } : {}),
+                                ...(detallesPagoVenta ? { detallesPago: detallesPagoVenta } : {})
+                            },
+                            { ttl: 0, retries: 0 }
+                        );
+                        const datosCierre = (respuestaCierre && respuestaCierre.data) || {};
+                        ventaMetaPublica = {
+                            ...oldDoc,
+                            ...datosCierre,
+                            items: itemsCobro,
+                            subtotal: subtotalSinDescuentoPremium,
+                            total: totalCobro,
+                            metodoPago: metodoElegido,
+                            estadoPago: 'pagado',
+                            puntosOtorgados: puntosGanados,
+                            puntosCanjeados,
+                            observacion: observacionInput,
+                            creditoLibreSucursal,
+                            sucursalCreditoLibre: creditoLibreSucursal ? this.sesion.sucursal : null,
+                            sucursal: oldDoc?.sucursal || this.sesion.sucursal
+                        };
+                        if (oldDoc?.tipoTransaccion === 'app_delivery' && oldDoc?.cliente && oldDoc.cliente !== 'ocasional') {
+                            pedidoClienteNotificacion = {
+                                clienteId: oldDoc.cliente,
+                                saleId: oldDoc.id,
+                                titulo: 'Pago confirmado',
+                                mensaje: `Tu pedido fue confirmado en caja como ${metodoElegido}.`
+                            };
+                        }
+                        this.ultimaVentaImprimir = {
+                            ...oldDoc,
+                            items: itemsCobro,
+                            total: totalCobro,
+                            metodoPago: metodoElegido,
+                            detallesPago: detallesPagoVenta || oldDoc?.detallesPago,
+                            detalleEfectivo: detalleEfectivo || oldDoc?.detalleEfectivo,
+                            puntosOtorgados: puntosGanados,
+                            puntosCanjeados,
+                            puntosAcumulados: this.clienteActual ? Math.max(0, (this.clienteActual.puntos || 0) + deltaPuntosCliente) : 0,
+                            observacion: observacionInput,
+                            creditoLibreSucursal,
+                            sucursalCreditoLibre: creditoLibreSucursal ? this.sesion.sucursal : null,
+                            origenCuentaPendiente: true,
+                            confirmadoPorCaja: true
+                        };
 
+                    /* ==================================================================
+                       CODIGO VIEJO (Firestore) COMENTADO - TEMPORAL, NO SE EJECUTA.
+                       Se borra en el commit siguiente a verificar el cobro de mesas.
+                       Queda aca unos dias para poder comparar el comportamiento viejo
+                       con el nuevo sin tener que ir a git. Ojo: el camino nuevo NO
+                       toca Firestore, ni el stock, ni `users`; de todo eso se encarga
+                       el servidor en su propia transaccion.
                     if(this.idTicketRecuperado) {
+
                         const ref = doc(db, rutaPrivada, this.idTicketRecuperado);
                         const ajustesStock = this.calcularAjustesStockTicketRecuperado();
                         const ajustesProduccion = this.calcularAjustesProduccionTicketRecuperado();
@@ -3671,6 +3748,8 @@
                     }
 
                     });
+                    }
+                    ==================== FIN DEL CODIGO VIEJO COMENTADO ==================== */
                     }
 
                     if (ventaMetaPublica && !esPagoGratis) {

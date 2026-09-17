@@ -581,3 +581,82 @@ describe('apertura de turno de caja (/cash-shifts/abrir)', () => {
     expect(res.status).not.toBe(403);
   });
 });
+
+describe('cobro de una mesa pendiente (/orders/:id/cerrar-cuenta)', () => {
+  const url = (id: string): string => `${env.API_PREFIX}/orders/${id}/cerrar-cuenta`;
+  /** Un id con forma valida, para no depender de como filtra el id invalido. */
+  const idOrden = '507f1f77bcf86cd799439011';
+  const bodyOk = {
+    metodoPago: 'Efectivo',
+    items: [{ id: 'prod-1', cantidad: 1, controlado: false }],
+  };
+
+  it('sin token responde 401', async () => {
+    const res = await request(app).post(url(idOrden)).send(bodyOk);
+    expect(res.status).toBe(401);
+  });
+
+  /**
+   * Cerrar una cuenta mueve plata y el saldo del cliente en la misma
+   * transaccion. Un rol que no maneja caja no puede hacerlo.
+   */
+  it('un cliente NO puede cerrar una cuenta (403)', async () => {
+    const res = await request(app)
+      .post(url(idOrden))
+      .set('Authorization', 'Bearer ' + tokenDe('cliente'))
+      .send(bodyOk);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('cocina tampoco (403)', async () => {
+    const res = await request(app)
+      .post(url(idOrden))
+      .set('Authorization', 'Bearer ' + tokenDe('cocina'))
+      .send(bodyOk);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('exige el metodo de pago (400 antes de tocar la base)', async () => {
+    for (const metodoPago of [undefined, '', '   ']) {
+      const res = await request(app)
+        .post(url(idOrden))
+        .set('Authorization', 'Bearer ' + tokenValido)
+        .send({ ...bodyOk, metodoPago });
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('MISSING_METODO_PAGO');
+    }
+  });
+
+  it('exige al menos un item con id (400 antes de tocar la base)', async () => {
+    for (const items of [undefined, [], 'x', [{}], [{ nombre: 'sin id' }]]) {
+      const res = await request(app)
+        .post(url(idOrden))
+        .set('Authorization', 'Bearer ' + tokenValido)
+        .send({ ...bodyOk, items });
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('MISSING_ITEMS');
+    }
+  });
+
+  it('un cajero SI pasa el control de rol', async () => {
+    const res = await request(app)
+      .post(url(idOrden))
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send(bodyOk);
+    // Sin Mongo la transaccion no arranca, pero no puede cortar por rol.
+    expect(res.status).not.toBe(401);
+    expect(res.status).not.toBe(403);
+  });
+
+  it('un supervisor tambien pasa el control de rol', async () => {
+    const res = await request(app)
+      .post(url(idOrden))
+      .set('Authorization', 'Bearer ' + tokenDe('supervisor'))
+      .send(bodyOk);
+    expect(res.status).not.toBe(401);
+    expect(res.status).not.toBe(403);
+  });
+});
+
