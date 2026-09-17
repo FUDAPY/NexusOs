@@ -21,6 +21,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="nexus-api.js"></script>
     <script src="nexus-auth.js"></script>
+    <script src="nexus-data.js"></script>
     <script src="date_time_utils.js"></script>
     <script src="print_utils.js"></script>
     <script src="cierre_caja_normalizer.js"></script>
@@ -821,9 +822,12 @@
                        que la pagina deje de expulsar y de borrar la sesion. */
                     if (user || (window.NexusAuth && window.NexusAuth.autenticado())) {
                         try {
-                            const qProd = query(collection(db, "products"), where("estado", "==", "Activo"));
                             if (this.unsubscribeProductos) this.unsubscribeProductos();
-                            this.unsubscribeProductos = onSnapshot(qProd, (snapshot) => {
+                            /* El catalogo se lee de la API (Mongo), no de Firestore.
+                               Ver escucharProductosDesdeApi(): entrega el mismo
+                               objeto que entregaba onSnapshot, asi que la logica
+                               de abajo no cambia. */
+                            this.unsubscribeProductos = this.escucharProductosDesdeApi((snapshot) => {
                                 const productosAnteriores = [...this.catalogoFirebase];
                                 this.catalogoFirebase = [];
                                 this.catalogoPizzas = [];
@@ -4099,6 +4103,55 @@
                 if(m1) { m1.classList.add('hidden'); m1.classList.remove('flex'); }
                 const m2 = document.getElementById('modal-preview-impresion');
                 if(m2) m2.classList.add('hidden');
+            },
+
+            /**
+             * Catalogo desde la API (Mongo), con la MISMA forma que entregaba
+             * el onSnapshot de Firestore.
+             *
+             * Por que no se usa onSnapshot: Firestore ya no autoriza (no hay
+             * sesion de Firebase), y ademas la API no expone tiempo real
+             * incremental. En vez de reescribir las decenas de lineas que
+             * consumen el snapshot, se les entrega un objeto con la misma forma:
+             *
+             *   forEach(cb)   recorre las filas        (data() devuelve la fila)
+             *   docChanges()  devuelve []              (la API no difea)
+             *   size          cantidad de filas
+             *
+             * Efecto: el catalogo VUELVE A CARGAR, que es lo que estaba roto. Lo
+             * que se pierde son los avisos incrementales de "stock/precio
+             * actualizado" del panel de sincronizacion; se recuperan cuando la
+             * vigencia pase a NexusRealtime (refetch por evento).
+             *
+             * Devuelve `detener()`, igual que onSnapshot.
+             */
+            escucharProductosDesdeApi: function(alCambiar) {
+                if (!window.NexusData) {
+                    Logger.warn('NexusData no esta cargado: el catalogo no se puede leer.');
+                    return function detener() {};
+                }
+
+                let vivo = true;
+
+                const leer = () => {
+                    // El backend topea la pagina en 500 (limiteMaximo del recurso).
+                    NexusData.leer('products', { where: [['estado', '==', 'Activo']], limit: 500 })
+                        .then((filas) => {
+                            if (!vivo) return;
+                            alCambiar({
+                                forEach: (cb) => filas.forEach((f) => cb({ id: String(f.uid || f._id), data: () => f })),
+                                docChanges: () => [],
+                                size: filas.length,
+                            });
+                        })
+                        .catch((e) => Logger.error('Catalogo: no se pudo leer de la API', e && e.message));
+                };
+
+                leer();
+
+                return function detener() {
+                    vivo = false;
+                };
             },
 
             cerrarSesion: async function () { await signOut(auth); localStorage.removeItem('__pos_session'); window.location.replace('index.html'); }
