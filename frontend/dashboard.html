@@ -2853,29 +2853,19 @@
                 if (!confirm(`Se excluira del flujo el ticket ${venta.ticket_id || venta.id} por Gs. ${this.formatoMoneda(venta._aporteFlujo || venta.total || 0)}.\n\nDeseas continuar?`)) return;
 
                 try {
-                    const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const ticketRef = doc(db, rutaVentas, venta.id);
-                    await updateDoc(ticketRef, {
-                        marcadoComoAbonado: true,
-                        motivoMarcadoAbonado: motivoLimpio,
-                        marcadoComoAbonadoPor: this.usuarioActual?.nombre || 'Admin',
-                        fechaMarcadoComoAbonado: new Date()
-                    });
-
-                    const auditRef = doc(collection(db, "auditoria"));
-                    await setDoc(auditRef, {
-                        tipo: 'marcado_abonado_flujo',
-                        ventaId: venta.id,
-                        ticketId: venta.ticket_id || venta.id,
-                        sucursal: venta.sucursal || '',
-                        nombreCliente: venta.nombreCliente || 'Cliente Ocasional',
-                        total: Number(venta._aporteFlujo || venta.total || 0),
-                        metodoPago: venta.metodoPago || '',
-                        motivo: motivoLimpio,
-                        adminNombre: this.usuarioActual?.nombre || 'Admin',
-                        fecha: new Date(),
-                        timestamp: new Date()
-                    });
+                    /* POST /orders/:id/abonar (antes: updateDoc del ticket + setDoc de la
+                       auditoria a Firestore, que ya no autoriza, asi que marcar un
+                       ticket como abonado NUNCA funcionaba).
+                       El servidor hace las dos cosas en una transaccion, incluida la
+                       auditoria: por eso el setDoc de abajo desaparece. */
+                    await NexusAPI.post(
+                        '/orders/' + encodeURIComponent(venta.id) + '/abonar',
+                        {
+                            motivo: motivoLimpio,
+                            autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin'
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
 
                     this.mostrarToast('Ticket marcado como abonado y excluido del flujo.', 'success');
                 } catch (error) {
@@ -2891,24 +2881,20 @@
                 if (!confirm(`Aprobar el cobro de Gs. ${this.formatoMoneda(venta.total)} para ${venta.nombreCliente || 'el cliente'}?`)) return;
 
                 try {
-                    const userRef = doc(db, "users", venta.cliente);
-                    const userSnap = await getDoc(userRef);
-                    if (!userSnap.exists()) throw new Error('Cliente no encontrado');
-                    const deudaActual = Number(userSnap.data().deuda || 0);
-                    const nuevaDeuda = Math.max(0, deudaActual - Number(venta.total || 0));
-
-                    const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const ticketRef = doc(db, rutaVentas, venta.id);
-                    const batch = writeBatch(db);
-                    batch.update(userRef, { deuda: nuevaDeuda });
-                    batch.update(ticketRef, {
-                        estadoAprobacionCobro: 'aprobado',
-                        deudaAplicada: true,
-                        estadoPago: 'pagado',
-                        aprobadoPor: this.usuarioActual?.nombre || 'Admin',
-                        fechaAprobacionCobro: new Date()
-                    });
-                    await batch.commit();
+                    /* POST /orders/:id/cobro (antes: un writeBatch que tocaba users.deuda y
+                       el ticket a la vez, que ya no autoriza, asi que aprobar un cobro
+                       NUNCA funcionaba).
+                       Este endpoint existe exactamente para esto: mueve la deuda del
+                       cliente y marca el ticket en UNA transaccion. Es lo que impide que
+                       la deuda se descuente dos veces si el admin reintenta. */
+                    await NexusAPI.post(
+                        '/orders/' + encodeURIComponent(venta.id) + '/cobro',
+                        {
+                            accion: 'aprobar',
+                            autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin'
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.mostrarToast('Cobro aprobado y deuda actualizada.', 'success');
                     this.cerrarModalGestor();
                 } catch (error) {
@@ -2924,14 +2910,14 @@
                 if (!confirm(`Rechazar el cobro registrado para ${venta.nombreCliente || 'el cliente'}?`)) return;
 
                 try {
-                    const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    await updateDoc(doc(db, rutaVentas, venta.id), {
-                        estadoAprobacionCobro: 'rechazado',
-                        deudaAplicada: false,
-                        estadoPago: 'rechazado',
-                        aprobadoPor: this.usuarioActual?.nombre || 'Admin',
-                        fechaAprobacionCobro: new Date()
-                    });
+                    await NexusAPI.post(
+                        '/orders/' + encodeURIComponent(venta.id) + '/cobro',
+                        {
+                            accion: 'rechazar',
+                            autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin'
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.mostrarToast('Cobro rechazado.', 'success');
                     this.cerrarModalGestor();
                 } catch (error) {
