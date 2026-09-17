@@ -1711,13 +1711,24 @@
             },
 
             cargarVentasTurnoDesdeServidor: async function() {
-                if (this.ventasServidorCargando || !auth.currentUser) return false;
+                /* El guard era `!auth.currentUser`: con Firebase Auth fuera de juego
+                   da siempre true, asi que la funcion salia sin cargar NADA. Ahora mira
+                   la sesion de NexusAuth, que es la que existe. */
+                if (this.ventasServidorCargando || !window.NexusAuth || !NexusAuth.sesion()) return false;
                 this.ventasServidorCargando = true;
                 try {
-                    const respuesta = await obtenerVentasFlujoActualFn();
-                    const ventas = Array.isArray(respuesta.data?.sales) ? respuesta.data.sales : [];
-                    const resumenes = Array.isArray(respuesta.data?.summaries) ? respuesta.data.summaries : [];
-                    const leyoVentas = this.aplicarVentasLeidas(ventas, 'callable');
+                    /* GET /orders (antes: la Cloud Function obtenerVentasFlujoActual,
+                       que ya no existe). Se piden las ultimas ventas, que es lo que esta
+                       pantalla necesita para armar el flujo del turno.
+                       Los `summaries` que devolvia la Cloud Function NO se reemplazan a
+                       proposito: eran redundantes, porque los turnos ya se derivan de
+                       las propias ventas (turnosDetectadosDesdeVentas). Al quedar
+                       vacios, el codigo toma esa rama, que es la que siempre funciono. */
+                    const respuesta = await NexusAPI.get('/orders', { limit: 200 }, { ttl: 0, retries: 0 });
+                    const filas = (respuesta && respuesta.data && respuesta.data.items) || [];
+                    const ventas = filas.map((orden) => ({ id: String(orden._id || orden.id || ''), ...orden }));
+                    const resumenes = [];
+                    const leyoVentas = this.aplicarVentasLeidas(ventas, 'api');
                     if (resumenes.length) {
                         this.resumenesServidorFlujo = resumenes;
                         this.turnosServidorDetectados = new Map(resumenes
