@@ -5,8 +5,12 @@ coverage
 .env.*
 !.env.example
 secrets
+# tests NO se copian: no son una herramienta de operacion.
 tests
-scripts
+# scripts SI van al runtime (ver Dockerfile): son la via de RECUPERACION.
+# `auth:pass` es lo unico que puede establecer una contrasena cuando nadie
+# puede entrar, y `auditar:mongo` / `mongo:indices` / `mongo:normalizar` son el
+# diagnostico de la base. Excluirlos dejo produccion sin forma de recuperarse.
 *.md
 .git
 .vscode
