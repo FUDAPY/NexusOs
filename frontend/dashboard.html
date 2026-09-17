@@ -3232,18 +3232,19 @@
                 }
 
                 try {
-                    // Cargar config actual
-                    const configRef = doc(db, 'config', 'sistema');
-                    const configSnap = await getDoc(configRef);
-                    const config = configSnap.data() || {};
-
-                    // Actualizar tasa
-                    if (!config.divisas) config.divisas = {};
-                    config.divisas[divisa] = nuevaTasa;
-                    config.fechaActualizacionCambio = new Date().getTime();
-
-                    // Guardar
-                    await setDoc(configRef, config, { merge: true });
+                    /* PATCH /config/sistema (antes: setDoc a Firestore, que ya no
+                       autoriza, asi que la tasa NUNCA se guardaba).
+                       El endpoint aplana el cuerpo a rutas con punto, asi que mandar
+                       { divisas: { USD: 7500 } } toca SOLO esa divisa y no pisa las
+                       otras ni el resto de la configuracion. */
+                    await NexusAPI.patch(
+                        '/config/sistema',
+                        {
+                            divisas: { [divisa]: nuevaTasa },
+                            fechaActualizacionCambio: new Date().getTime()
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.mostrarToast(`Tasa ${divisa} actualizada a ${nuevaTasa}`, 'success');
                     console.log(`Tasa de cambio actualizada: ${divisa} = ${nuevaTasa}`);
                 } catch (e) {
@@ -3266,13 +3267,14 @@
                 }
 
                 try {
-                    const configRef = doc(db, 'config', 'sistema');
-                    const configSnap = await getDoc(configRef);
-                    const config = configSnap.data() || {};
-
-                    config.creditoMaximoCliente = nuevoLimite;
-
-                    await setDoc(configRef, config, { merge: true });
+                    /* Misma clave que ya usa esta pantalla (`creditoMaximoCliente`), no
+                       `limiteCredito`: el POS lee la del documento, y renombrarla aca
+                       dejaria al POS leyendo un campo que ya nadie escribe. */
+                    await NexusAPI.patch(
+                        '/config/sistema',
+                        { creditoMaximoCliente: nuevoLimite },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.mostrarToast(`Limite de credito actualizado a ${this.formatoMoneda(nuevoLimite)}`, 'success');
                     console.log(`Limite de credito actualizado: ${nuevoLimite}`);
                 } catch (e) {
@@ -3295,13 +3297,11 @@
                 }
 
                 try {
-                    const configRef = doc(db, 'config', 'sistema');
-                    const configSnap = await getDoc(configRef);
-                    const config = configSnap.data() || {};
-
-                    config.descuentoEfectivoAppPct = nuevoDescuento;
-
-                    await setDoc(configRef, config, { merge: true });
+                    await NexusAPI.patch(
+                        '/config/sistema',
+                        { descuentoEfectivoAppPct: nuevoDescuento },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.mostrarToast(`Descuento app en efectivo actualizado a ${nuevoDescuento}%`, 'success');
                 } catch (e) {
                     console.error('Error actualizar descuento efectivo app:', e);
@@ -3318,8 +3318,13 @@
 
                 const nuevoCodigo = String(input.value || '').trim();
                 try {
-                    const configRef = doc(db, 'config', 'sistema');
-                    await setDoc(configRef, { codigoRfidAnulacion: nuevoCodigo }, { merge: true });
+                    /* El POS usa este codigo para autorizar una anulacion, asi que este
+                       guardado es el que habilita la anulacion por RFID en el salon. */
+                    await NexusAPI.patch(
+                        '/config/sistema',
+                        { codigoRfidAnulacion: nuevoCodigo },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.mostrarToast(nuevoCodigo ? 'Codigo RFID de anulacion actualizado.' : 'Codigo RFID de anulacion limpiado.', 'success');
                 } catch (e) {
                     console.error('Error actualizar codigo RFID:', e);

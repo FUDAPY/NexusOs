@@ -216,6 +216,52 @@ describe('configuracion global (/config/sistema)', () => {
     expect(res.status).toBe(401);
   });
 
+  /**
+   * La config guarda valores que mueven plata (tasa de cambio, limite de credito,
+   * descuentos) y el codigo RFID con el que el POS autoriza una anulacion. El
+   * dashboard la escribe con este PATCH: si estos tests empiezan a dar 403, el
+   * panel dejo de poder configurar el sistema.
+   */
+  it('un cajero NO puede escribir la config (403)', async () => {
+    const res = await request(app)
+      .patch(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ creditoMaximoCliente: 500000 });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('un cliente tampoco (403)', async () => {
+    const res = await request(app)
+      .patch(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cliente'))
+      .send({ creditoMaximoCliente: 500000 });
+    expect(res.status).toBe(403);
+  });
+
+  it('un body vacio no se acepta como un cambio silencioso', async () => {
+    const res = await request(app)
+      .patch(url)
+      .set('Authorization', 'Bearer ' + tokenValido)
+      .send({});
+    /* Ojo con el orden real del endpoint: primero BUSCA el documento y recien
+       despues valida que haya cambios, asi que sin Mongo no se llega al
+       SIN_CAMBIOS. Lo que este test fija es lo importante: que un body vacio no
+       responda 200 como si hubiera guardado algo. */
+    expect(res.status).not.toBe(200);
+    expect(res.status).not.toBe(403);
+  });
+
+  it('un admin SI pasa el control de rol', async () => {
+    const res = await request(app)
+      .patch(url)
+      .set('Authorization', 'Bearer ' + tokenValido)
+      .send({ creditoMaximoCliente: 500000 });
+    // Sin Mongo no encuentra el documento de config, pero no puede cortar por rol.
+    expect(res.status).not.toBe(401);
+    expect(res.status).not.toBe(403);
+  });
+
   it('un cajero NO puede cambiar la config (403)', async () => {
     const res = await request(app)
       .patch(url)
