@@ -272,7 +272,7 @@
             cargarHistorial: function() {
                 const q = query(collection(db, "notifications"), orderBy("fecha", "desc"), limit(20));
 
-                onSnapshot(q, (snapshot) => {
+                NexusData.vigilarComoFirestore('notifications', { orderBy: ['fecha', 'desc'], limit: 20 }, (snapshot) => {
                     const lista = document.getElementById("lista-historial");
                     const contador = document.getElementById("contador-historial");
                     contador.innerText = `${snapshot.size} enviados`;
@@ -318,7 +318,7 @@
             eliminar: async function(id) {
                 if (!confirm("Borrar esta notificacion del historial? Desaparecera de la app de los clientes.")) return;
                 try {
-                    await deleteDoc(doc(db, "notifications", id));
+                    await NexusData.eliminar('notifications', id);
                     this.mostrarToast("Mensaje eliminado.");
                 } catch (error) {
                     console.error(error);

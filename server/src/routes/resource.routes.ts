@@ -300,6 +300,9 @@ resourceRouter.use(
     ordenables: ['fecha'],
     campoFecha: 'fecha',
     ordenPorDefecto: 'fecha',
+    // El panel tiene boton de borrar en cada aviso: es feed de operacion, no
+    // historial contable.
+    borrable: true,
   }),
 );
 

@@ -329,7 +329,7 @@
 
             cargarSucursales: function() {
                 this.unsubscribeSucursales?.();
-                this.unsubscribeSucursales = onSnapshot(collection(db, 'branches'), (snap) => {
+                this.unsubscribeSucursales = NexusData.vigilarComoFirestore('branches', {}, (snap) => {
                     this.sucursales = [];
                     snap.forEach((docSnap) => {
                         const data = docSnap.data() || {};
@@ -355,7 +355,7 @@
 
             cargarProductos: function() {
                 this.unsubscribeProductos?.();
-                this.unsubscribeProductos = onSnapshot(collection(db, 'products'), (snap) => {
+                this.unsubscribeProductos = NexusData.vigilarComoFirestore('products', { limit: 500 }, (snap) => {
                     this.productos = [];
                     snap.forEach((docSnap) => this.productos.push({ id: docSnap.id, ...docSnap.data() }));
                     this.actualizarFiltroCategorias();
@@ -389,7 +389,7 @@
 
             cargarProduccion: function() {
                 this.unsubscribeProduccion?.();
-                this.unsubscribeProduccion = onSnapshot(collection(db, 'produccionConfig'), (snap) => {
+                this.unsubscribeProduccion = NexusData.vigilarComoFirestore('productionConfig', {}, (snap) => {
                     this.produccion = [];
                     snap.forEach((docSnap) => this.produccion.push({ id: docSnap.id, ...docSnap.data() }));
                     this.renderizarTodo();

@@ -376,6 +376,46 @@
     };
   }
 
+  /**
+   * Envuelve filas en un objeto con la MISMA FORMA que el snapshot de Firestore.
+   *
+   * Es la pieza que permite migrar una pagina cambiando UNA linea: el consumidor
+   * sigue escribiendo `snapshot.forEach(doc => ...)`, `doc.data()` y
+   * `snapshot.docChanges()`, sin que haya que reescribir su logica.
+   */
+  function aSnapshot(filas) {
+    return {
+      forEach: function (cb) {
+        for (var i = 0; i < filas.length; i += 1) {
+          cb({ id: String(filas[i].uid || filas[i]._id || ''), data: function (f) { return function () { return f; }; }(filas[i]) });
+        }
+      },
+      // La API no entrega cambios incrementales: se refetchea entero.
+      // Devolver [] hace que las ramas de diff (avisos de "actualizado") no
+      // disparen, que es correcto: no hay diff que informar.
+      docChanges: function () { return []; },
+      size: filas.length,
+    };
+  }
+
+  /**
+   * Como `vigilar()`, pero entrega el resultado con la forma del snapshot de
+   * Firestore en vez de un array de filas.
+   *
+   * Existe porque varias paginas se suscriben con
+   *   onSnapshot(collection(db, 'x'), (snap) => { snap.forEach(...) })
+   * y migrarlas una por una obligaria a reescribir ese cuerpo entero. Con esto
+   * alcanza con cambiar la llamada:
+   *   NexusData.vigilarComoFirestore('x', {}, (snap) => { snap.forEach(...) })
+   *
+   * Devuelve `detener()`, igual que `onSnapshot`.
+   */
+  function vigilarComoFirestore(coleccion, opciones, alCambiar) {
+    return vigilar(coleccion, opciones || {}, function (filas) {
+      alCambiar(aSnapshot(filas));
+    });
+  }
+
   global.NexusData = {
     /* mapa y rutas */
     COLECCIONES: COLECCIONES,
@@ -408,5 +448,7 @@
 
     /* tiempo real */
     vigilar: vigilar,
+    /** `vigilar()` que entrega la forma del snapshot de Firestore. */
+    vigilarComoFirestore: vigilarComoFirestore,
   };
 })(window);
