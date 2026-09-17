@@ -17,6 +17,14 @@ export interface CerrarTurnoInput {
   observacion?: string;
   forzado?: boolean;
   motivoForzado?: string;
+  /**
+   * Ticket Z ya renderizado por el POS.
+   *
+   * Se guarda tal cual para que el relatorio pueda reimprimir el MISMO ticket
+   * que se le dio al cliente, igual que cuando el POS escribia el cierre a
+   * Firestore. Es informativo: NO entra en ningun calculo.
+   */
+  htmlTicket?: string;
 }
 
 export interface CerrarTurnoResult {
@@ -107,7 +115,14 @@ export const cerrarTurno = async (
     }
 
     const fondoInicial = Number(turno.fondoInicial ?? 0);
-    const esperadoEfectivo = redondear(fondoInicial + efectivo);
+    const gastos = redondear(input.declaracion.gastos ?? 0);
+    /* Los gastos SALEN del cajon: el cajero los pago en efectivo.
+       Se restan del esperado, que es lo que hacia el POS legacy
+       (totalEsperadoEfectivo = fondo + ventas efectivo - gastos) y por lo tanto
+       lo que ya quedo guardado en los cierres migrados. Sin restarlos, la
+       diferencia de un cierre nuevo no seria comparable con la de los viejos:
+       con Gs. 100.000 de gastos, el MISMO arqueo daria 100.000 de mas. */
+    const esperadoEfectivo = redondear(fondoInicial + efectivo - gastos);
     const esperadoTarjeta = redondear(tarjeta);
     const esperadoTransferencia = redondear(transferencia);
     const esperadoTotal = redondear(esperadoEfectivo + esperadoTarjeta + esperadoTransferencia);
@@ -115,7 +130,6 @@ export const cerrarTurno = async (
     const declEfectivo = redondear(input.declaracion.efectivo);
     const declTarjeta = redondear(input.declaracion.tarjeta);
     const declTransferencia = redondear(input.declaracion.transferencia);
-    const gastos = redondear(input.declaracion.gastos ?? 0);
     const declaradoTotal = redondear(declEfectivo + declTarjeta + declTransferencia);
 
     const difEfectivo = redondear(declEfectivo - esperadoEfectivo);
@@ -173,6 +187,7 @@ export const cerrarTurno = async (
           ticketsContados: ticketsTurnoIds.length,
           ticketsTurnoIds,
           versionEsquemaFinanciero: 2,
+          htmlTicket: input.htmlTicket ?? '',
 
           cierreForzado: input.forzado === true,
           motivoCierreForzado: input.forzado === true ? (input.motivoForzado ?? '') : '',

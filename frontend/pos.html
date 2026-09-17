@@ -2655,16 +2655,26 @@
 
                 const fechaCierreDate = new Date();
                 const fechaAperturaDate = this.fechaAperturaSesionTs ? new Date(this.fechaAperturaSesionTs) : null;
-                const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                const snap = await getDocs(query(collection(db, rutaVentas), where("turnoId", "==", this.obtenerTurnoActualId())));
+                /* VENTAS DEL TURNO por la API (antes: getDocs de Firestore, que ya no
+                   autoriza -> el Cierre Z moria aca, antes de escribir nada).
+
+                   Son las mismas ordenes que el servidor va a usar al cerrar, asi
+                   que el ticket Z que se imprime describe lo mismo que el cierre
+                   que se guarda. El limite de la lista es 200: si un turno tuviera
+                   mas ventas el TICKET saldria incompleto, pero el cierre guardado
+                   no, porque los totales los recalcula el servidor desde la base. */
+                const respVentas = await NexusAPI.orders.list(
+                    { turnoId: this.obtenerTurnoActualId(), limit: 200 },
+                    { ttl: 0, retries: 0 }
+                );
+                const ventasDelTurno = (respVentas && respVentas.data && respVentas.data.items) || [];
                 const ticketsTurno = [];
                 const totalesTurno = { efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0 };
                 const productosTurno = {};
 
-                snap.forEach(docSnap => {
-                    const v = docSnap.data();
+                ventasDelTurno.forEach(v => {
                     if (this.ventaValidaParaCierre(v)) {
-                        ticketsTurno.push({ id: docSnap.id, ref: docSnap.ref, ...v });
+                        ticketsTurno.push({ id: v._id || v.id, ...v });
                         this.acumularVentaEnCierre(totalesTurno, v);
 
                         if (v.items && Array.isArray(v.items)) {
@@ -2781,6 +2791,44 @@
                 `;
 
                 try {
+                    /* CIERRE por la API (antes: writeBatch a Firestore, que ya no
+                       autoriza). El servidor recalcula los totales desde las ordenes
+                       del turno y, EN UNA TRANSACCION: guarda el cierre, marca las
+                       ventas como arqueadas y cierra el turno.
+
+                       Solo se manda lo CONTADO. El esperado NO se manda a proposito:
+                       lo calcula el servidor para que nadie pueda declarar un
+                       esperado falso. Las formulas son las mismas que usa este
+                       ticket (fondo + ventas efectivo - gastos), asi que lo impreso
+                       y lo guardado dicen lo mismo. */
+                    const respCierre = await NexusAPI.post(
+                        '/cash-shifts/cerrar',
+                        {
+                            turnoId: this.obtenerTurnoActualId(),
+                            cajero: this.sesion.nombre || 'Cajero',
+                            cajeroId: this.sesion.uid || null,
+                            declaracion: {
+                                efectivo: decEfe,
+                                tarjeta: decTar,
+                                transferencia: decTrans,
+                                gastos: decGastos
+                            },
+                            htmlTicket: htmlZ
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
+                    const datosCierre = (respCierre && respCierre.data) || {};
+                    /* Si estos dos numeros no coinciden, el ticket impreso y el cierre
+                       guardado describen conjuntos de ventas distintos. Queda en la
+                       consola para poder investigarlo despues, en vez de fallar en
+                       silencio. (Pueden diferir por diseno: la lista de la API trae
+                       las anuladas y las que no afectan caja, que este filtro saca.) */
+                    console.info('Cierre Z ' + (datosCierre.turnoId || '') + ': el POS listo ' + ticketsTurno.length + ' tickets, el servidor conto ' + (datosCierre.ticketsContados === undefined ? '?' : datosCierre.ticketsContados) + '.');
+
+                    /* ==================================================================
+                       CODIGO VIEJO (writeBatch a Firestore) COMENTADO - TEMPORAL.
+                       No se ejecuta: es un bloque de comentario. Se borra en el
+                       commit siguiente a verificar el cierre de caja en produccion.
                     const batch = writeBatch(db);
                     ticketsTurno.forEach(ticket => {
                         batch.update(ticket.ref, { arqueado: true, fechaArqueo: fechaCierreDate, turnoId: this.obtenerTurnoActualId() });
@@ -2849,6 +2897,7 @@
                         updatedAt: fechaCierreDate
                     }, { merge: true });
                     await batch.commit();
+                       ==================== FIN DEL CODIGO VIEJO COMENTADO ==================== */
 
                     localStorage.removeItem('__pos_fondo_fijo'); localStorage.removeItem('__pos_hora_apertura'); localStorage.removeItem('__pos_apertura_ts'); localStorage.removeItem('__pos_turno_id');
                     this.fondoInicialSesion = 0;

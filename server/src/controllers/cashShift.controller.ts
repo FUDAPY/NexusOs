@@ -146,11 +146,13 @@ export const abrir = async (req: Request, res: Response, next: NextFunction): Pr
  *     cajeroId?: string,
  *     observacion?: string,
  *     forzado?: boolean,
- *     motivoForzado?: string
+ *     motivoForzado?: string,
+ *     htmlTicket?: string   // ticket Z ya renderizado; solo se guarda
  *   }
  *
  * Los totales esperados NO se reciben: los recalcula el servicio desde las
- * ordenes del turno.
+ * ordenes del turno. `gastos` si se recibe porque es plata que el cajero pago
+ * del cajon: el servicio la resta del efectivo esperado.
  */
 export const cerrar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -162,6 +164,7 @@ export const cerrar = async (req: Request, res: Response, next: NextFunction): P
       observacion?: string;
       forzado?: boolean;
       motivoForzado?: string;
+      htmlTicket?: string;
     };
 
     if (typeof body.turnoId !== 'string' || body.turnoId.trim() === '') {
@@ -191,6 +194,7 @@ export const cerrar = async (req: Request, res: Response, next: NextFunction): P
         observacion: body.observacion,
         forzado: body.forzado === true,
         motivoForzado: body.motivoForzado,
+        htmlTicket: typeof body.htmlTicket === 'string' ? body.htmlTicket : undefined,
       },
       { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
     );
