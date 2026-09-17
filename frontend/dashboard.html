@@ -2412,7 +2412,15 @@
             cargarTicketsParaCierreForzado: async function(sucursal) {
                 const [contexto, respuesta] = await Promise.all([
                     this.obtenerContextoCierreForzado(sucursal),
-                    obtenerTicketsCierreForzadoFn({ sucursal })
+                    /* GET /orders por sucursal (antes: la Cloud Function
+                       obtenerTicketsCierreForzado, que ya no existe).
+                       Se piden las ultimas ventas de la sucursal y se mantiene la MISMA
+                       forma que devolvia la funcion ({ turnoId, tickets }), asi el resto
+                       de esta funcion no cambia. Cuales cuentan para el cierre lo decide
+                       ventaEsContableParaCierreForzado, abajo, que es donde siempre
+                       estuvo esa regla. El turno sale del contexto local, no de aca. */
+                    NexusAPI.get('/orders', { sucursal, limit: 200 }, { ttl: 0, retries: 0 })
+                        .then((r) => ({ data: { turnoId: '', tickets: (r && r.data && r.data.items) || [] } }))
                 ]);
                 this.contextoForzarCierre = contexto;
                 const turnoServidor = String(respuesta.data?.turnoId || '').trim();
