@@ -5,6 +5,7 @@ import { filtroPorId } from '../utils/mongoId.js';
 import { AuditLog, InventoryMovement, Order, OrderItem, Product } from '../models/index.js';
 import type { IOrder } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
+import { aplicarSaldoCliente } from './order.service.js';
 
 export interface CancelOrderInput {
   orderId: string;
@@ -128,6 +129,49 @@ export const cancelOrder = async (
       },
       { new: true, session: session ?? undefined },
     ).exec();
+
+    /* Reversion del saldo del cliente: FALTABA.
+       Sin esto, anular una venta a credito dejaba al cliente debiendo plata de una
+       venta que ya no existe: no se nota al momento y aparece semanas despues como
+       un saldo mal. Se copia la regla del dashboard, que ya corria en produccion:
+         - a credito: se le devuelve lo anulado;
+         - con puntos: se RECALCULAN con el total que queda (en la parcial no alcanza
+           con restar los originales: floor(total/1000) no es lineal).
+       Solo si la venta estaba PAGADA: en una mesa abierta nunca se movio el saldo. */
+    const clienteSaldo = String(order.cliente ?? '').trim();
+    if (order.estadoPago === 'pagado' && clienteSaldo !== '' && clienteSaldo !== 'ocasional') {
+      const metodo = String(order.metodoPago ?? '');
+      const esCredito = metodo === 'Credito' || metodo === 'Crédito';
+      const totalOrden = Number(order.total ?? 0);
+
+      // Monto anulado: la total es el total; la parcial, las unidades por su precio.
+      let montoAnulado = esTotal ? totalOrden : 0;
+      if (!esTotal) {
+        for (const item of items) {
+          const productoId = String(item.productoId ?? '');
+          const cantidad = aDevolver.get(productoId) ?? 0;
+          if (cantidad <= 0) continue;
+          const cantItem = Math.max(1, Number(item.cantidad ?? 1));
+          montoAnulado += (Number(item.subtotal ?? 0) / cantItem) * cantidad;
+        }
+      }
+      montoAnulado = Math.round(Math.max(0, montoAnulado));
+
+      const puntosOtorgados = Number(order.puntosOtorgados ?? 0);
+      const puntosQueQuedan = esTotal
+        ? 0
+        : Math.floor(Math.max(0, totalOrden - montoAnulado) / 1000);
+      const ajustePuntos = esCredito ? 0 : -Math.max(0, puntosOtorgados - puntosQueQuedan);
+
+      if (montoAnulado > 0 || ajustePuntos < 0) {
+        await aplicarSaldoCliente(
+          { clienteId: clienteSaldo, puntosOtorgados: 0, puntosCanjeados: 0, ajustePuntos },
+          esCredito ? -montoAnulado : 0,
+          esCredito,
+          session,
+        );
+      }
+    }
 
     await AuditLog.create(
       [

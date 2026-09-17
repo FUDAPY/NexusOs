@@ -142,6 +142,12 @@ export const aplicarSaldoCliente = async (
     puntosOtorgados?: number;
     puntosCanjeados?: number;
     creditoLibre?: boolean;
+    /**
+     * Ajuste de puntos que PUEDE ser negativo. Lo usa la anulacion para devolver
+     * los puntos de una venta que ya no existe. `puntosOtorgados` no sirve para
+     * eso: se clampea a 0.
+     */
+    ajustePuntos?: number;
   },
   total: number,
   esCredito: boolean,
@@ -151,7 +157,7 @@ export const aplicarSaldoCliente = async (
   if (clienteId === '' || clienteId === 'ocasional') return;
 
   const canjeados = Math.max(0, params.puntosCanjeados ?? 0);
-  const deltaPuntos = Math.max(0, params.puntosOtorgados ?? 0) - canjeados;
+  const deltaPuntos = Math.max(0, params.puntosOtorgados ?? 0) - canjeados + (params.ajustePuntos ?? 0);
   // Credito libre en la sucursal: el POS sumaba la deuda y la restaba en la
   // misma transaccion (neto 0). Aca directamente no se suma.
   const deltaDeuda = esCredito && params.creditoLibre !== true ? total : 0;
