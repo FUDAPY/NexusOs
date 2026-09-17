@@ -877,7 +877,7 @@
                             });
 
                             const qClientes = query(collection(db, "users"), where("rol", "==", "cliente"), where("estadoBeneficios", "==", "activo"));
-                            onSnapshot(qClientes, (snapshot) => {
+                            NexusData.vigilarComoFirestore('users', { where: [['rol', '==', 'cliente'], ['estadoBeneficios', '==', 'activo']], limit: 500 }, (snapshot) => {
                                 const clientesAnteriores = [...this.clientesFirebase];
                                 this.clientesFirebase = [];
                                 snapshot.forEach(doc => {
@@ -2931,7 +2931,7 @@
             escucharCuentasPendientes: function() {
                 const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
                 const q = query(collection(db, rutaPrivada), where("sucursal", "==", this.sesion.sucursal), where("estadoPago", "==", "pendiente"));
-                onSnapshot(q, (snapshot) => {
+                NexusData.vigilarComoFirestore('orders', { where: [['sucursal', '==', this.sesion.sucursal], ['estadoPago', '==', 'pendiente']], limit: 500 }, (snapshot) => {
                     this.listaCuentasPendientes = [];
                     snapshot.forEach(doc => { this.listaCuentasPendientes.push({ id: doc.id, ...doc.data() }); });
                     const badge = document.getElementById('badge-pendientes');
