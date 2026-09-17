@@ -35,6 +35,30 @@ export interface ICashShift {
   closedAt?: Date | null;
   updatedAt?: Date | null;
 
+  /**
+   * Quien abrio el turno.
+   *
+   * Faltaban los dos y el POS los necesita: recupera SU turno filtrando por
+   * `cajeroId` (pos.html). Sin declararlos, Mongoose los descartaba en silencio
+   * (strict: true) y ese filtro nunca coincidia: el cajero no podia encontrar su
+   * turno y por lo tanto no podia cerrarlo.
+   */
+  cajeroId?: string | null;
+  cajeroNombre?: string;
+
+  /**
+   * Vinculo con el documento de cierre y marcas de cierre forzado.
+   *
+   * Los escribe `cashForzado.service.ts` al forzar el cierre. Tampoco estaban
+   * declarados, asi que el `updateOne` final los descartaba: el turno quedaba
+   * 'cerrado' pero SIN el id del cierre y sin la marca de forzado, o sea un
+   * cierre a medias imposible de rastrear.
+   */
+  cierreCajaId?: string | null;
+  cerradoEn?: Date | null;
+  cierreForzado?: boolean;
+  cierreForzadoPorId?: string | null;
+
   origen: string;
   version: number;
 
@@ -73,6 +97,15 @@ const cashShiftSchema = new Schema<ICashShift, Model<ICashShift>>(
     fechaOperativa: { type: Date, default: null, index: true },
     closedAt: { type: Date, default: null, index: true },
     updatedAt: { type: Date, default: null },
+
+    // Ver el comentario en ICashShift: sin declararlos aca, `strict: true` los
+    // descarta en silencio y los cierres quedan a medias.
+    cajeroId: { type: String, default: null, index: true },
+    cajeroNombre: { type: String, default: '' },
+    cierreCajaId: { type: String, default: null },
+    cerradoEn: { type: Date, default: null },
+    cierreForzado: { type: Boolean, default: false },
+    cierreForzadoPorId: { type: String, default: null },
 
     origen: { type: String, default: 'pos' },
     version: { type: Number, default: 1 },
