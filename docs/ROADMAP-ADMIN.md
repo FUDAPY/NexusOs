@@ -305,10 +305,11 @@ plata es a propósito: es la pieza donde un error se cobra mal.
 | **C** | El POS: cambiar `runTransaction(...)` por `NexusAPI.post('/orders', ...)` **un flujo por vez**, empezando por **venta directa en efectivo** (el más simple y el más usado) | `pos.html` | 🔴 | ✅ venta directa `478bbd5` |
 | **D** | Insumos de producción (`produccionConfig`) | backend + POS | 🟡 | ⬜ |
 | **E** | PIN de crédito | backend | 🟡 | ⬜ |
+| **F** | El POS: **Cierre Z** por la API (`POST /cash-shifts/cerrar`) | backend + `pos.html` | 🔴 | ✅ `a6faa76` |
 
-**Orden sugerido:** A → C (solo venta directa) → B → D → E.
+**Orden sugerido:** A → C (solo venta directa) → B → F (cierre Z) → D → E.
 
-#### Dos deudas que quedaron abiertas a propósito
+#### Cuatro cosas que quedaron anotadas a propósito
 
 1. **B NO ajusta stock cuando la cuenta cambió.** `cerrarCuentaPendiente` compara las
    cantidades de los productos controlados (`firmaControlados`) y, si no coinciden,
@@ -317,10 +318,23 @@ plata es a propósito: es la pieza donde un error se cobra mal.
    orden y la colección `order_items`). Cerrar con el carrito cambiado movería la plata
    sin mover el stock, y eso se descubre recién en el próximo conteo. **Falla ruidoso.**
 
-2. **Código viejo comentado en `pos.html`.** La rama de mesas conserva el
-   `runTransaction` de Firestore como **bloque comentado** (líneas ~3688-3753), para poder
-   comparar el comportamiento viejo con el nuevo sin ir a git. **Se borra en el commit
-   siguiente a verificar el cobro de mesas en producción.**
+2. **Código viejo comentado en `pos.html` (dos bloques).** La rama de mesas conserva el
+   `runTransaction` de Firestore, y el Cierre Z conserva el `writeBatch` a `cierresCaja`.
+   Los dos quedan como **bloques comentados: no se ejecutan**. Se conservan unos días para
+   poder comparar el comportamiento viejo con el nuevo sin ir a git, y **se borran en el
+   commit siguiente a verificar cada flujo en producción.**
+
+3. **El ticket Z se arma con una lista de hasta 200 ventas.** `GET /orders` limita a 200
+   por página. Si un turno tuviera más ventas, el **ticket impreso** saldría incompleto
+   (el **cierre guardado** no, porque los totales los recalcula el servidor desde la
+   base). Se resuelve paginando si algún día pasa.
+
+4. **Cambio de comportamiento: los gastos ahora se restan.** Al migrar el Cierre Z se
+   encontró que el servidor calculaba `esperadoEfectivo = fondo + ventas efectivo` sin
+   restar los gastos, mientras el POS legacy (y los cierres ya guardados) usaban
+   `fondo + ventas efectivo - gastos`. Se corrigió en `cashShift.service.ts`. **Ojo al
+   comparar cierres viejos contra nuevos:** los migrados ya venían con los gastos restados,
+   así que ahora son comparables; antes no lo habrían sido.
 
 
 **Regla para este bloque:** un flujo por vez, nunca dos. Cada uno se prueba contra la
