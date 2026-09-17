@@ -2702,19 +2702,30 @@
                             <br><div class="center">____________________</div><div class="center">Firma responsable</div>
                         </body></html>`;
 
-                    const resultadoCierre = await forzarCierreCajaSucursalFn({
-                        sucursal,
-                        motivo: motivoLimpio,
-                        declaracion: {
-                            fondoInicial,
-                            efectivo: decEfe,
-                            tarjeta: decTar,
-                            transferencia: decTrans,
-                            gastos: decGastos
+                    /* POST /cash-shifts/forzar-cierre (antes: la Cloud Function de
+                       Firebase `forzarCierreCajaSucursal`, que ya no existe: el cierre
+                       forzado estaba muerto aunque el resto ya estuviera cableado).
+                       El contrato es el mismo a proposito: el endpoint se escribio
+                       copiando lo que mandaba esta pantalla. La diferencia es que los
+                       totales del SISTEMA NO se mandan: los recalcula el servidor desde
+                       las ordenes del turno, asi que nadie puede declarar un esperado
+                       falso. Por aca solo viaja lo contado. */
+                    await NexusAPI.post(
+                        '/cash-shifts/forzar-cierre',
+                        {
+                            sucursal,
+                            motivo: motivoLimpio,
+                            declaracion: {
+                                fondoInicial,
+                                efectivo: decEfe,
+                                tarjeta: decTar,
+                                transferencia: decTrans,
+                                gastos: decGastos
+                            },
+                            htmlTicket
                         },
-                        htmlTicket
-                    });
-                    if (!resultadoCierre.data?.ok) throw new Error('No se pudo confirmar el cierre forzado.');
+                        { ttl: 0, retries: 0 }
+                    );
                     this.imprimirHtmlTicket(htmlTicket);
                     this.mostrarToast(`Cierre forzado realizado para ${sucursal}.`, 'success');
                     this.cerrarModalForzarCierre();
