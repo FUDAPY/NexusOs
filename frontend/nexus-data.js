@@ -91,8 +91,20 @@
   };
 
   var state = {
-    /** Fuente global si la pagina no define la suya. */
-    fuentePorDefecto: 'firestore',
+    /**
+     * Fuente global si la pagina no define la suya.
+     *
+     * Es 'mongo' y no 'firestore' porque el dashboard YA esta migrado: las 9
+     * lecturas que dependian de esto tienen su rama NexusData escrita, y con el
+     * default en 'firestore' tomaban el camino viejo. Ese camino hoy no puede
+     * funcionar (index.html dejo de autenticar contra Firebase, asi que
+     * firestore.rules responde permission-denied) y el panel aparecia vacio con
+     * errores de permisos en lugar de mostrar nada.
+     *
+     * El interruptor se conserva: una pagina a medio migrar puede forzar
+     * 'firestore' con NexusData.usarMongo('pagina', false).
+     */
+    fuentePorDefecto: 'mongo',
     /** Colecciones con vigilancia activa, para saber que refetchear. */
     vigiladas: {},
   };
