@@ -118,9 +118,31 @@ server {
     }
 
     # ================= Assets estaticos =================
-    location ~* \.(css|js|mjs|png|jpe?g|gif|svg|ico|webp|woff2?|ttf|eot)$ {
+    location ~* \.(css|png|jpe?g|gif|svg|ico|webp|woff2?|ttf|eot)$ {
         expires 7d;
         add_header Cache-Control "public, max-age=604800, immutable";
+        access_log off;
+    }
+
+    # ================= JavaScript =================
+    # SIN `immutable` A PROPOSITO (antes estaba junto a los assets de arriba).
+    #
+    # Con `immutable, max-age=604800` el navegador NO vuelve a preguntar por el
+    # archivo en 7 dias. Eso rompe todo despliegue que solo cambie JavaScript:
+    # el HTML si llega (los .html van con no-store), pero el JS nuevo NO, con lo
+    # que la pagina nueva corre contra la libreria VIEJA en cache. El sintoma es
+    # "desplegue y sigue igual", y desde afuera parece que el despliegue fallo.
+    # Paso exactamente eso con nexus-auth.js y nexus-data.js.
+    #
+    # Con `no-cache` el navegador revalida siempre y nginx responde 304 cuando
+    # el archivo no cambio, que cuesta casi nada. Es la diferencia entre un fix
+    # que llega y uno que no.
+    #
+    # Va DESPUES del bloque de los service workers: nginx evalua las regex en
+    # orden de aparicion, asi que sw.js sigue recibiendo su no-store.
+    location ~* \.m?js$ {
+        add_header Cache-Control "no-cache" always;
+        expires -1;
         access_log off;
     }
 

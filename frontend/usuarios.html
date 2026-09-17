@@ -278,6 +278,43 @@
             passwordUsuarioId: null,
 
             /**
+             * Motivo por el que esta pagina no se puede abrir, o null si esta todo bien.
+             *
+             * Existe porque el guard anterior redirigia EN SILENCIO, y eso cuesta
+             * horas: la pagina te echaba al login sin decir por que, y desde
+             * afuera es imposible distinguir "no hay sesion" de "falta el token"
+             * o de "tu rol no es admin". Devolver el motivo lo vuelve diagnosticable.
+             */
+            motivoDeBloqueo: function() {
+                if (!window.NexusAuth) {
+                    // Ojo con esta rama: es la que aparece cuando el navegador
+                    // ejecuta un nexus-auth.js VIEJO de la cache. nginx sirve los
+                    // .js con `immutable`, asi que un despliegue que solo cambie
+                    // JavaScript no llega hasta que expire la cache.
+                    return 'no cargo nexus-auth.js (falta el script, no se sirve, o la copia en cache es vieja)';
+                }
+                if (typeof window.NexusAuth.autenticado !== 'function') {
+                    return 'la copia de nexus-auth.js en cache es VIEJA: no tiene autenticado().'
+                        + ' Forzar recarga con Ctrl+Shift+R';
+                }
+
+                const sesion = window.NexusAuth.sesion();
+                if (!sesion) {
+                    return 'no hay sesion en localStorage["__pos_session"]: hay que volver a entrar';
+                }
+                if (window.NexusAuth.token() === null) {
+                    // Caso tipico: la sesion quedo del login viejo (Firebase), que
+                    // no escribia __pos_token. El JWT solo lo escribe NexusAuth.
+                    return 'hay sesion (rol "' + sesion.rol + '") pero falta el token en __pos_token:'
+                        + ' la sesion es del login viejo, hay que volver a entrar';
+                }
+                if (sesion.rol !== 'admin') {
+                    return 'el rol de la sesion es "' + sesion.rol + '" y esta pagina pide "admin"';
+                }
+                return null;
+            },
+
+            /**
              * Arranque de la pagina.
              *
              * La sesion la lleva NexusAuth: escribe `__pos_session` y el JWT en
@@ -288,15 +325,27 @@
              * y la pagina rebotaba al login en cada carga.
              */
             init: function() {
-                if (!window.NexusAuth || !window.NexusAuth.autenticado()) {
+                const motivo = this.motivoDeBloqueo();
+
+                if (motivo !== null) {
+                    // La consola se borra al navegar, asi que el motivo se deja
+                    // tambien en sessionStorage: sobrevive al redirect y se puede
+                    // leer desde index.html con
+                    //   sessionStorage.getItem('nexus.motivo-bloqueo')
+                    console.warn('[Personal] No se abre:', motivo);
+                    try {
+                        sessionStorage.setItem('nexus.motivo-bloqueo', 'usuarios.html -> ' + motivo);
+                    } catch (e) { /* modo privado o storage bloqueado */ }
+
+                    const sesion = window.NexusAuth ? window.NexusAuth.sesion() : null;
+                    if (sesion && sesion.rol === 'cobrador') return window.location.replace('clientes.html?view=cobranzas');
+                    if (sesion && sesion.rol === 'produccion') return window.location.replace('produccion.html');
                     return window.location.replace('index.html');
                 }
-                const sesion = window.NexusAuth.sesion();
-                if (sesion.rol !== 'admin') {
-                    if (sesion.rol === 'cobrador') return window.location.replace('clientes.html?view=cobranzas');
-                    if (sesion.rol === 'produccion') return window.location.replace('produccion.html');
-                    return window.location.replace('index.html');
-                }
+
+                // Entro bien: se limpia el motivo de un intento anterior.
+                try { sessionStorage.removeItem('nexus.motivo-bloqueo'); } catch (e) { /* modo privado */ }
+
                 this.cargarUsuarios();
                 this.cargarSucursalesParaSelect();
             },
