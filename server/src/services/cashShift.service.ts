@@ -1,4 +1,5 @@
 import { AppError } from '../utils/response.js';
+import { sumarAportes, type TotalesCierre, type VentaCruda } from '../utils/cashFlow.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { AuditLog, CashClose, CashShift, Order } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
@@ -284,4 +285,80 @@ export const cerrarTurno = async (
   });
 
   return resultado;
+};
+
+export interface ReconciliarTurnoResult {
+  turnoId: string;
+  sucursal: string;
+  /** Totales recalculados desde los tickets reales del turno. */
+  summary: TotalesCierre;
+  /** Campo -> (recalculado - guardado). Solo los que cambiaron. */
+  differences: Record<string, number>;
+}
+
+/** Campos que la pantalla compara. Salen del resumen, no de una lista nueva. */
+const CAMPOS_RESUMEN = [
+  'ventaTotalBruta',
+  'efectivo',
+  'tarjetaPOS',
+  'transferencia',
+  'credito',
+  'totalTicketsFlujo',
+  'totalTicketsPagados',
+] as const;
+
+/**
+ * Recalcula el resumen de flujo de un turno DESDE SUS TICKETS REALES.
+ *
+ * Reemplaza la Cloud Function `reconciliarFlujoTurno`, que ya no existe. Los
+ * nombres y la forma del resultado son los mismos a proposito: la pantalla compara
+ * lo recalculado contra lo guardado y muestra la diferencia, y asi no hay que tocar
+ * esa logica.
+ *
+ * NO escribe nada, y es deliberado: el resumen es DERIVADO de los tickets. Guardar
+ * un derivado a mano es como aparecen los numeros que no cuadran con los tickets que
+ * los originaron: quedan los dos y no se sabe cual vale. Si hay que comparar algo,
+ * se compara contra lo guardado y se informa; la fuente de verdad son las ordenes.
+ */
+export const reconciliarFlujoTurno = async (turnoId: string): Promise<ReconciliarTurnoResult> => {
+  const id = String(turnoId ?? '').trim();
+  if (id === '') {
+    throw new AppError('Falta el turnoId', 400, 'MISSING_SHIFT_ID');
+  }
+
+  const turno = await CashShift.findOne({ turnoId: id }).lean().exec();
+  if (!turno) {
+    throw new AppError(`No existe el turno ${id}`, 404, 'SHIFT_NOT_FOUND');
+  }
+
+  // Mismo criterio que el cierre: fuera las anuladas y las que no afectan caja.
+  const ordenes = await Order.find({
+    turnoId: id,
+    estadoPago: { $ne: 'anulado' },
+    noAfectaCaja: { $ne: true },
+  })
+    .lean()
+    .exec();
+
+  const summary = sumarAportes(
+    ordenes.map((orden) => ({ id: String(orden._id), venta: orden as unknown as VentaCruda })),
+  );
+
+  /* `resumen` no esta declarado en el modelo, asi que se lee sin tipar: si falta, se
+     compara contra cero, que es justo lo que la pantalla espera cuando el resumen
+     todavia no se inicializo. */
+  const guardado = ((turno as unknown as { resumen?: Record<string, unknown> }).resumen ?? {}) as Record<
+    string,
+    unknown
+  >;
+
+  const differences: Record<string, number> = {};
+  const calculado = summary as unknown as Record<string, number>;
+  for (const campo of CAMPOS_RESUMEN) {
+    const nuevo = Number(calculado[campo] ?? 0);
+    const viejo = Number(guardado[campo] ?? 0);
+    if (nuevo !== viejo) differences[campo] = nuevo - viejo;
+  }
+
+  return { turnoId: id, sucursal: String(turno.sucursal ?? ''), summary, differences };
 };

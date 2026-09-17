@@ -1118,7 +1118,9 @@
                     });
                 turnosPendientes.slice(0, 4).forEach((turnoId) => {
                     this.reconciliacionesSolicitadas.add(turnoId);
-                    reconciliarFlujoTurnoFn({ turnoId }).catch((error) => {
+                    // POST /cash-shifts/reconciliar (antes: la Cloud Function
+                    // reconciliarFlujoTurno, que ya no existe).
+                    NexusAPI.post('/cash-shifts/reconciliar', { turnoId }, { ttl: 0, retries: 0 }).catch((error) => {
                         this.reconciliacionesSolicitadas.delete(turnoId);
                         console.error(`No se pudo inicializar el resumen ${turnoId}`, error);
                     });
@@ -1134,7 +1136,7 @@
                 if (!confirm(`Recalcular el resumen del turno ${turnoId} desde sus tickets reales?`)) return;
                 try {
                     this.mostrarToast('Reconciliando flujo del turno...', 'info');
-                    const resultado = await reconciliarFlujoTurnoFn({ turnoId });
+                    const resultado = await NexusAPI.post('/cash-shifts/reconciliar', { turnoId }, { ttl: 0, retries: 0 });
                     const diferencias = resultado.data?.differences || {};
                     const diferenciaMonetaria = ['ventaTotalBruta', 'efectivo', 'tarjetaPOS', 'transferencia', 'credito']
                         .reduce((sum, campo) => sum + Math.abs(Number(diferencias[campo] || 0)), 0);

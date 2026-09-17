@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { abrir, cerrar, forzarCierre } from '../controllers/cashShift.controller.js';
+import { abrir, cerrar, forzarCierre, reconciliar } from '../controllers/cashShift.controller.js';
 import { asyncHandler } from '../utils/response.js';
 import { requiereAuth, requiereRol } from '../middlewares/auth.js';
 
@@ -45,3 +45,12 @@ cashShiftRouter.post(
   requiereRol('admin'),
   asyncHandler(forzarCierre),
 );
+
+/**
+ * Reconciliar el resumen de un turno: recalcula desde sus tickets reales.
+ * Body: { turnoId }
+ *
+ * Solo admin y supervisor: es diagnostico de plata (el panel lo usa para avisar
+ * cuando el resumen guardado no coincide con los tickets).
+ */
+cashShiftRouter.post('/reconciliar', requiereRol('admin', 'supervisor'), asyncHandler(reconciliar));

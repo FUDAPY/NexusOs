@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { cerrarTurno } from '../services/cashShift.service.js';
+import { cerrarTurno, reconciliarFlujoTurno } from '../services/cashShift.service.js';
 import { abrirTurno } from '../services/cashApertura.service.js';
 import { forzarCierreSucursal } from '../services/cashForzado.service.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.js';
@@ -200,6 +200,33 @@ export const cerrar = async (req: Request, res: Response, next: NextFunction): P
     );
 
     sendOk(res, resultado, 201);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/v1/cash-shifts/reconciliar  { turnoId }
+ *
+ * Recalcula el resumen de flujo de un turno DESDE SUS TICKETS REALES y devuelve la
+ * diferencia contra lo guardado.
+ *
+ * NO escribe nada, a proposito: el resumen es derivado de los tickets, y guardar un
+ * derivado a mano es como aparecen los numeros que no cuadran con los tickets que
+ * los originaron. Reemplaza la Cloud Function `reconciliarFlujoTurno` (muerta).
+ */
+export const reconciliar = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const body = req.body as { turnoId?: unknown };
+    if (typeof body.turnoId !== 'string' || body.turnoId.trim() === '') {
+      throw new AppError('Falta el turnoId', 400, 'MISSING_SHIFT_ID');
+    }
+
+    sendOk(res, await reconciliarFlujoTurno(body.turnoId));
   } catch (error) {
     next(error);
   }
