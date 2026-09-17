@@ -298,15 +298,30 @@ plata es a propósito: es la pieza donde un error se cobra mal.
 
 ### Plan por pasos (cada uno verificable por separado)
 
-| Paso | Qué | Dónde | Riesgo |
-| --- | --- | --- | --- |
-| **A** | Que `createOrder` actualice **puntos y deuda del cliente** dentro de la MISMA transacción | backend | 🔴 pero acotado |
-| **B** | Endpoint para **cobrar una cuenta pendiente** (mesa): pasar la orden de `pendiente` a `pagado` descontando stock y ajustando al cliente | backend | 🔴 acotado |
-| **C** | El POS: cambiar `runTransaction(...)` por `NexusAPI.post('/orders', ...)` **un flujo por vez**, empezando por **venta directa en efectivo** (el más simple y el más usado) | `pos.html` | 🔴 |
-| **D** | Insumos de producción (`produccionConfig`) | backend + POS | 🟡 |
-| **E** | PIN de crédito | backend | 🟡 |
+| Paso | Qué | Dónde | Riesgo | Estado |
+| --- | --- | --- | --- | --- |
+| **A** | Que `createOrder` actualice **puntos y deuda del cliente** dentro de la MISMA transacción | backend | 🔴 pero acotado | ✅ `f619281` |
+| **B** | Endpoint para **cobrar una cuenta pendiente** (mesa): pasar la orden de `pendiente` a `pagado` ajustando al cliente | backend | 🔴 acotado | ✅ backend `9b05d77` · POS `62bdd48` |
+| **C** | El POS: cambiar `runTransaction(...)` por `NexusAPI.post('/orders', ...)` **un flujo por vez**, empezando por **venta directa en efectivo** (el más simple y el más usado) | `pos.html` | 🔴 | ✅ venta directa `478bbd5` |
+| **D** | Insumos de producción (`produccionConfig`) | backend + POS | 🟡 | ⬜ |
+| **E** | PIN de crédito | backend | 🟡 | ⬜ |
 
 **Orden sugerido:** A → C (solo venta directa) → B → D → E.
+
+#### Dos deudas que quedaron abiertas a propósito
+
+1. **B NO ajusta stock cuando la cuenta cambió.** `cerrarCuentaPendiente` compara las
+   cantidades de los productos controlados (`firmaControlados`) y, si no coinciden,
+   responde **409 `CUENTA_CON_CAMBIOS`** en vez de cerrar. Motivo: ajustar el stock por
+   diferencia es delicado y el stock vive en **dos lugares** (los items embebidos en la
+   orden y la colección `order_items`). Cerrar con el carrito cambiado movería la plata
+   sin mover el stock, y eso se descubre recién en el próximo conteo. **Falla ruidoso.**
+
+2. **Código viejo comentado en `pos.html`.** La rama de mesas conserva el
+   `runTransaction` de Firestore como **bloque comentado** (líneas ~3688-3753), para poder
+   comparar el comportamiento viejo con el nuevo sin ir a git. **Se borra en el commit
+   siguiente a verificar el cobro de mesas en producción.**
+
 
 **Regla para este bloque:** un flujo por vez, nunca dos. Cada uno se prueba contra la
 base con un producto de prueba y se confirma que el stock, el saldo del cliente y el
