@@ -655,15 +655,26 @@
                 this.alertasOperativasCache[clave] = ahora;
 
                 try {
-                    if (!auth.currentUser) return;
-                    await registrarAlertaOperativaFn({
-                        origen: 'dashboard',
-                        tipo,
-                        nivel,
-                        mensaje: mensajeLimpio,
-                        sucursal: this.obtenerSucursalSesion(),
-                        detalle
-                    });
+                    /* POST /support-alerts (antes: la Cloud Function
+                       `registrarAlertaOperativa`, que ya no existe).
+                       Y el guard de arriba era `if (!auth.currentUser) return;`: con
+                       Firebase Auth fuera de juego eso da SIEMPRE false, asi que la
+                       alerta no se registraba ni una vez. Ahora mira la sesion de
+                       NexusAuth, que es la que de verdad existe. */
+                    if (!window.NexusAuth || !NexusAuth.sesion()) return;
+                    await NexusAPI.post(
+                        '/support-alerts',
+                        {
+                            origen: 'dashboard',
+                            tipo,
+                            nivel,
+                            mensaje: mensajeLimpio,
+                            sucursal: this.obtenerSucursalSesion(),
+                            detalle,
+                            estado: 'abierta'
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
                 } catch (error) {
                     console.error('No se pudo registrar la alerta operativa del dashboard.', error);
                 }
