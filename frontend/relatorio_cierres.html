@@ -310,7 +310,7 @@
             async cargarSucursales() {
                 const sucursales = this.sucursalesBase();
                 this.renderSucursales(sucursales);
-                const snap = await getDocs(collection(db, 'branches'));
+                const snap = NexusData.aSnapshot(await NexusData.leer('branches', { limit: 500 }));
                 snap.forEach(d => {
                     const data = d.data();
                     const nombre = data.nombre || data.branchName || d.id;
@@ -336,12 +336,10 @@
                     desdeConsulta.setDate(desdeConsulta.getDate() - 2);
                     const hastaConsulta = new Date(rango.hasta);
                     hastaConsulta.setDate(hastaConsulta.getDate() + 2);
-                    const snap = await getDocs(query(
-                        collection(db, 'cierresCaja'),
-                        where('fechaCierre', '>=', desdeConsulta),
-                        where('fechaCierre', '<=', hastaConsulta),
-                        orderBy('fechaCierre', 'desc')
-                    ));
+                    const snap = NexusData.aSnapshot(await NexusData.leer('cierresCaja', { 
+                        where: [['fechaCierre', '>=', desdeConsulta], ['fechaCierre', '<=', hastaConsulta]],
+                        orderBy: ['fechaCierre', 'desc']
+                    }));
                     this.cierres = snap.docs
                         .map(d => ({ id: d.id, ...d.data() }))
                         .filter(cierre => CierreCajaNormalizer.esSucursalAuditada(cierre.sucursal));

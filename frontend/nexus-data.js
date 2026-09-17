@@ -384,17 +384,27 @@
    * `snapshot.docChanges()`, sin que haya que reescribir su logica.
    */
   function aSnapshot(filas) {
+    var docs = [];
+    for (var i = 0; i < filas.length; i += 1) {
+      var fila = filas[i];
+      docs.push({
+        id: String(fila.uid || fila._id || ''),
+        // `data()` devuelve la fila: misma forma que Firestore, sin copiar.
+        data: (function (f) { return function () { return f; }; })(fila),
+      });
+    }
     return {
+      // `docs` hace falta porque algunos consumidores hacen `snap.docs.map(...)`
+      // en vez de `snap.forEach(...)`.
+      docs: docs,
       forEach: function (cb) {
-        for (var i = 0; i < filas.length; i += 1) {
-          cb({ id: String(filas[i].uid || filas[i]._id || ''), data: function (f) { return function () { return f; }; }(filas[i]) });
-        }
+        for (var j = 0; j < docs.length; j += 1) cb(docs[j]);
       },
       // La API no entrega cambios incrementales: se refetchea entero.
       // Devolver [] hace que las ramas de diff (avisos de "actualizado") no
       // disparen, que es correcto: no hay diff que informar.
       docChanges: function () { return []; },
-      size: filas.length,
+      size: docs.length,
     };
   }
 
@@ -450,5 +460,12 @@
     vigilar: vigilar,
     /** `vigilar()` que entrega la forma del snapshot de Firestore. */
     vigilarComoFirestore: vigilarComoFirestore,
+    /**
+     * Envuelve filas en un objeto con la forma del snapshot de Firestore.
+     * Sirve para lecturas de una sola vez:
+     *   const snap = NexusData.aSnapshot(await NexusData.leer('x'));
+     *   snap.forEach(d => ... d.data() ...)      // el cuerpo no se toca
+     */
+    aSnapshot: aSnapshot,
   };
 })(window);

@@ -371,7 +371,7 @@
         async cargarSucursales() {
           const a = this.sucursalesBase();
           this.renderSucursales(a);
-          const snap = await getDocs(collection(db, "branches"));
+          const snap = NexusData.aSnapshot(await NexusData.leer('branches', { limit: 500 }));
           snap.forEach((d) => {
             const x = d.data() || {},
               n = x.nombre || x.name || x.branchName || d.id;
@@ -402,16 +402,19 @@
             orderBy("fecha", "desc"),
             limit(1000)
           );
-          this.unsub = onSnapshot(
-            q,
+          // La API (Mongo), no Firestore. El rango de fechas viaja como
+          // desde/hasta, que es lo que entiende /orders. `fin - 1ms` reproduce
+          // el `< fin` original: el backend solo tiene `<=` (inclusive).
+          this.unsub = NexusData.vigilarComoFirestore(
+            'orders',
+            {
+              where: [['fecha', '>=', ini], ['fecha', '<=', new Date(fin.getTime() - 1)]],
+              orderBy: ['fecha', 'desc'],
+              limit: 500,
+            },
             (s) => {
               this.ventas = s.docs.map((d) => ({ id: d.id, ...d.data() }));
               this.render();
-            },
-            (e) => {
-              console.error(e);
-              document.getElementById("tabla").innerHTML =
-                '<tr><td colspan="8" class="p-8 text-center text-red-500 font-bold">No se pudo cargar auditoria.</td></tr>';
             }
           );
         },
