@@ -262,7 +262,58 @@ Fase 4  clientes → caja → kds
 Fase 5.5 POS: la venta
 ```
 
-**Sugerencia:** arrancar por **Fase 0 + `sucursales.html`** en el mismo paso. Con
-eso el panel deja de expulsar al usuario y **una pantalla completa queda
-funcional**, que es la mejor forma de validar el patrón antes de repetirlo 12
-veces.
+---
+
+## 8. Fase 5.5 · La venta — análisis de huecos (medido, no estimado)
+
+El POS cobra con **un solo `runTransaction`** (`pos.html:3533` en adelante) que hace
+**cinco** cosas. El backend hoy cubre **dos y media**. Escribir esto antes de tocar
+plata es a propósito: es la pieza donde un error se cobra mal.
+
+### Lo que hace el POS (evidencia: `pos.html`)
+
+| Paso | Dónde |
+| --- | --- |
+| Descuenta stock y deja `inventoryMovements` | `aplicarDescuentoStockEnTransaccion`, `obtenerDescuentosStockPendientes` (~3536) |
+| **Crea** la venta, o **actualiza** el ticket pendiente si es una mesa recuperada | ~3542 |
+| Actualiza los **puntos y la deuda del CLIENTE** (`deltaPuntosCliente`) | ~3507 |
+| Descuenta **insumos de producción** (`produccionConfig`) | ~795-799 |
+| Valida el **PIN de crédito** | `confirmarPinCredito` (~1301) |
+
+### Lo que da `POST /orders` (`order.service.ts:121`)
+
+| Sí hace | No hace |
+| --- | --- |
+| Resuelve productos y valida stock (`prepareItems`) | ❌ **No actualiza los puntos ni la deuda del cliente** |
+| Descuenta stock **atómico** con guarda anti-sobreventa (`stock >= cantidad`) y marca `agotado` | ❌ **No actualiza tickets pendientes**: siempre CREA |
+| Crea la `Order` con `total`, `subtotal`, `discountAmount`, `noAfectaCaja`, `puntosOtorgados`, `puntosCanjeados`, `detalleEfectivo`, `turnoId` | ❌ **No toca `produccionConfig`** |
+| Marca `estadoPago: 'pendiente'` si el método es Crédito, `'pagado'` si no | ❌ **No valida el PIN de crédito** |
+| Todo dentro de **una transacción** | ❌ No hay endpoint para **cobrar una mesa** (cerrar el pendiente) |
+
+> **Ojo con esto:** `puntosOtorgados` y `puntosCanjeados` se guardan **en la orden**,
+> pero el **saldo del cliente es otro documento**. Hoy el POS mueve los dos; la API
+> solo el primero. Migrar solo la llamada dejaría **el ticket con los puntos pero al
+> cliente sin abonárselos**: inconsistencia silenciosa, que es lo peor que puede pasar
+> con plata.
+
+### Plan por pasos (cada uno verificable por separado)
+
+| Paso | Qué | Dónde | Riesgo |
+| --- | --- | --- | --- |
+| **A** | Que `createOrder` actualice **puntos y deuda del cliente** dentro de la MISMA transacción | backend | 🔴 pero acotado |
+| **B** | Endpoint para **cobrar una cuenta pendiente** (mesa): pasar la orden de `pendiente` a `pagado` descontando stock y ajustando al cliente | backend | 🔴 acotado |
+| **C** | El POS: cambiar `runTransaction(...)` por `NexusAPI.post('/orders', ...)` **un flujo por vez**, empezando por **venta directa en efectivo** (el más simple y el más usado) | `pos.html` | 🔴 |
+| **D** | Insumos de producción (`produccionConfig`) | backend + POS | 🟡 |
+| **E** | PIN de crédito | backend | 🟡 |
+
+**Orden sugerido:** A → C (solo venta directa) → B → D → E.
+
+**Regla para este bloque:** un flujo por vez, nunca dos. Cada uno se prueba contra la
+base con un producto de prueba y se confirma que el stock, el saldo del cliente y el
+ticket quedaron consistentes entre sí. Si algo no cuadra, se revierte ese paso y no se
+sigue.
+
+**Por qué no se hizo de una:** el cobro toca **stock + saldo del cliente + ticket** en
+una transacción. Un cambio mal hecho acá no se nota como un error: se nota semanas
+después como un descuadre de stock o un cliente con puntos de más, y a esa altura no
+se sabe qué venta lo causó.
