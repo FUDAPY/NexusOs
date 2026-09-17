@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { cerrar, forzarCierre } from '../controllers/cashShift.controller.js';
+import { abrir, cerrar, forzarCierre } from '../controllers/cashShift.controller.js';
 import { asyncHandler } from '../utils/response.js';
 import { requiereAuth, requiereRol } from '../middlewares/auth.js';
 
@@ -14,6 +14,17 @@ import { requiereAuth, requiereRol } from '../middlewares/auth.js';
  * resto cae al CRUD sin conflicto.
  */
 export const cashShiftRouter: Router = Router();
+
+/**
+ * Apertura del turno de caja.
+ *
+ * Idempotente: si la sucursal ya tiene un turno abierto devuelve ese, no crea
+ * otro. Es la unica forma de abrir un turno (antes lo hacia una Cloud Function
+ * de Firebase, que ya no puede funcionar).
+ *
+ * Mismo conjunto de roles que /cerrar: abre y cierra quien maneja plata.
+ */
+cashShiftRouter.post('/abrir', requiereRol('admin', 'supervisor', 'cajero'), asyncHandler(abrir));
 
 /**
  * Cierre Z del cajero. Ver cashShift.service.ts para los detalles.

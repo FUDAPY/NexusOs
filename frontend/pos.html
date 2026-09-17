@@ -2883,15 +2883,31 @@
                 const horaApertura = this.formatDateTime24(aperturaDate);
                 const turnoId = this.generarTurnoId(aperturaDate.getTime());
                 let aperturaPersistida;
+                let turnoIdPersistido = turnoId;
                 try {
-                    const registrarApertura = httpsCallable(functions, 'registrarAperturaCaja');
-                    const response = await registrarApertura({
-                        turnoId,
-                        sucursal: this.sesion.sucursal,
-                        cajero: this.sesion.nombre || 'Cajero',
-                        fondoInicial: val
-                    });
-                    aperturaPersistida = Number(response.data?.fechaAperturaMs || 0);
+                    // La API (Mongo), no la Cloud Function de Firebase: esa via ya
+                    // no funciona sin sesion de Firebase.
+                    //
+                    // El endpoint es IDEMPOTENTE: si la sucursal ya tiene un turno
+                    // abierto devuelve ESE. Por eso se adopta el turnoId que
+                    // responde y no el generado localmente: si no, el POS seguiria
+                    // apuntando a un turno inexistente y volveria el bug de los
+                    // turnos duplicados que dejo 13 cajas abiertas.
+                    const respuesta = await NexusAPI.post(
+                        '/cash-shifts/abrir',
+                        {
+                            turnoId,
+                            sucursal: this.sesion.sucursal,
+                            cajero: this.sesion.nombre || 'Cajero',
+                            fondoInicial: val
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
+                    aperturaPersistida = Number(respuesta?.data?.fechaAperturaMs || 0);
+                    turnoIdPersistido = String(respuesta?.data?.turnoId || turnoId);
+                    if (respuesta?.data?.creado === false) {
+                        this.mostrarToast("Ya habia una caja abierta: se continua ese turno.", "alert");
+                    }
                 } catch (error) {
                     console.error('No se pudo persistir la apertura de caja.', error);
                     this.mostrarToast('No se pudo guardar la apertura. Verifica la conexion e intenta nuevamente.', 'error');
@@ -2900,8 +2916,8 @@
                 const aperturaPersistidaDate = aperturaPersistida > 0 ? new Date(aperturaPersistida) : aperturaDate;
                 localStorage.setItem('__pos_fondo_fijo', val); localStorage.setItem('__pos_hora_apertura', this.formatDateTime24(aperturaPersistidaDate));
                 localStorage.setItem('__pos_apertura_ts', String(aperturaPersistidaDate.getTime()));
-                localStorage.setItem('__pos_turno_id', turnoId);
-                this.fondoInicialSesion = val; this.horaAperturaSesion = this.formatDateTime24(aperturaPersistidaDate); this.fechaAperturaSesionTs = aperturaPersistidaDate.getTime(); this.turnoActualId = turnoId;
+                localStorage.setItem('__pos_turno_id', turnoIdPersistido);
+                this.fondoInicialSesion = val; this.horaAperturaSesion = this.formatDateTime24(aperturaPersistidaDate); this.fechaAperturaSesionTs = aperturaPersistidaDate.getTime(); this.turnoActualId = turnoIdPersistido;
                 this.calcularVentasSesion();
 
                 const modalApertura = document.getElementById('modal-apertura-caja');

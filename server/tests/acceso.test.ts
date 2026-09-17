@@ -528,3 +528,56 @@ describe('cambio de contraseña de un usuario (/auth/usuarios/:id/reset-password
     expect(res.body.code).toBe('PASSWORD_CORTA');
   });
 });
+
+describe('apertura de turno de caja (/cash-shifts/abrir)', () => {
+  const url = `${env.API_PREFIX}/cash-shifts/abrir`;
+
+  it('sin token responde 401', async () => {
+    const res = await request(app).post(url).send({ sucursal: 'Centro', fondoInicial: 0 });
+    expect(res.status).toBe(401);
+  });
+
+  /** Abrir una caja es manejar plata: un rol que no la maneja no puede. */
+  it('un cliente NO puede abrir la caja (403)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cliente'))
+      .send({ sucursal: 'Centro', fondoInicial: 0 });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('cocina tampoco (403)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cocina'))
+      .send({ sucursal: 'Centro', fondoInicial: 0 });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('exige la sucursal (400 antes de tocar la base)', async () => {
+    for (const sucursal of [undefined, '', '   ']) {
+      const res = await request(app)
+        .post(url)
+        .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+        .send({ sucursal, fondoInicial: 0 });
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('MISSING_SUCURSAL');
+    }
+  });
+
+  /**
+   * El cajero es quien abre la caja: si esto devolviera 403, el POS no podria
+   * vender. Es el rol que debe pasar.
+   */
+  it('un cajero SI pasa el control de rol', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ sucursal: 'San Benito Cafe Resto Bar', fondoInicial: 100_000 });
+    // Sin Mongo da 500 al buscar el turno abierto, pero no 401 ni 403.
+    expect(res.status).not.toBe(401);
+    expect(res.status).not.toBe(403);
+  });
+});

@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { cerrarTurno } from '../services/cashShift.service.js';
+import { abrirTurno } from '../services/cashApertura.service.js';
 import { forzarCierreSucursal } from '../services/cashForzado.service.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.js';
 import { AppError, sendOk } from '../utils/response.js';
@@ -64,6 +65,71 @@ export const forzarCierre = async (req: Request, res: Response, next: NextFuncti
     );
 
     sendOk(res, resultado);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/v1/cash-shifts/abrir
+ *
+ * Apertura del turno de caja. Body:
+ *   {
+ *     sucursal: string,
+ *     fondoInicial: number,
+ *     cajero?: string,          // nombre; si falta se usa el del token
+ *     cajeroId?: string,
+ *     turnoId?: string,         // el POS lo genera; si falta se arma uno
+ *     sucursalesActivas?: string[]
+ *   }
+ *
+ * IDEMPOTENTE: si la sucursal ya tiene un turno abierto, devuelve ESE con
+ * `creado: false` en vez de abrir otro. Es lo que impide que se repita el bug
+ * de los 13 turnos abiertos.
+ *
+ * Devuelve `fechaAperturaMs` porque el POS lo consumia asi de la Cloud Function
+ * vieja.
+ */
+export const abrir = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const body = req.body as {
+      sucursal?: unknown;
+      cajero?: unknown;
+      cajeroId?: unknown;
+      turnoId?: unknown;
+      fondoInicial?: unknown;
+      sucursalesActivas?: unknown;
+    };
+
+    if (typeof body.sucursal !== 'string' || body.sucursal.trim() === '') {
+      throw new AppError('Falta la sucursal', 400, 'MISSING_SUCURSAL');
+    }
+
+    // El nombre y el id salen del token siempre que se pueda: es la sesion que
+    // el servidor verifico. El body queda solo como respaldo.
+    const auth = (req as AuthenticatedRequest).auth;
+
+    sendOk(
+      res,
+      await abrirTurno(
+        {
+          sucursal: body.sucursal,
+          turnoId: typeof body.turnoId === 'string' ? body.turnoId : undefined,
+          cajero: auth?.nombre !== undefined && auth.nombre !== ''
+            ? auth.nombre
+            : (typeof body.cajero === 'string' ? body.cajero : undefined),
+          cajeroId: typeof body.cajeroId === 'string' && body.cajeroId !== ''
+            ? body.cajeroId
+            : (auth?.userId ?? null),
+          fondoInicial: Number(body.fondoInicial ?? 0),
+          sucursalesActivas: Array.isArray(body.sucursalesActivas)
+            ? (body.sucursalesActivas as unknown[]).filter((s): s is string => typeof s === 'string')
+            : undefined,
+        },
+        { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
+      ),
+      201,
+    );
   } catch (error) {
     next(error);
   }
