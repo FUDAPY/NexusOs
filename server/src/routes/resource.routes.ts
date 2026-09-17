@@ -134,6 +134,11 @@ resourceRouter.use(
     ordenPorDefecto: 'nombre',
     excluir: ['passwordHash', 'password', 'pin', 'tokenFcm', 'resetToken'],
     noEscribible: ['passwordHash', 'password', 'pin', 'puntos', 'deuda', 'saldo', 'legacyId'],
+    /* Borrado habilitado a proposito: el panel lo necesita para dar de baja un
+       usuario cargado por error. Es opt-in (no generico) porque borrar un usuario
+       deja huerfano su `cajeroId` en las ventas: por eso queda en admin/supervisor
+       y sin la creacion de documentos, igual que en branches. */
+    borrable: true,
   }),
 );
 

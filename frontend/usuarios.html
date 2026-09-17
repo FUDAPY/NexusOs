@@ -607,24 +607,31 @@
                 const rolSelect = document.getElementById('usr-rol').value;
 
                 try {
-                    // 1. Firebase Auth (Usa la App Secundaria para no desloguear al Admin)
-                    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-                    const nuevoUid = userCredential.user.uid;
-                    
-                    // IMPORTANTE: Cerramos la sesion secundaria inmediatamente para evitar conflictos
-                    await signOut(secondaryAuth); 
-
-                    // 2. Guardar perfil (Usa la BD principal que SI tiene permisos de Admin)
-                    await setDoc(doc(db, "users", nuevoUid), {
+                    /* Alta por la API, en DOS pasos. Antes usaba Firebase Auth
+                       (createUserWithEmailAndPassword), que ya no existe: crear un
+                       usuario fallaba en el primer renglon y el `setDoc` de abajo
+                       nunca llegaba a correr.
+                         1. POST /users crea el perfil. Va SIN contrasena a proposito:
+                            `passwordHash` esta en `noEscribible` del recurso.
+                         2. POST /auth/usuarios/:id/reset-password le pone la clave. Es
+                            el mismo camino que usa el panel para resetear, y el campo
+                            se llama `nueva` (no `password`). */
+                    const creado = await NexusData.crear('users', {
                         nombre: document.getElementById('usr-nombre').value,
                         email: email,
                         rol: rolSelect,
                         sucursal: document.getElementById('usr-sucursal').value,
                         estadoBeneficios: 'activo',
-                        puntos: 0,
-                        deuda: 0,
-                        datosCompletos: true // Evita que les pida llenar datos despues
+                        datosCompletos: true
                     });
+                    const idCreado = String((creado && (creado._id || creado.id)) || '');
+                    if (idCreado === '') throw new Error('La API no devolvio el id del usuario creado.');
+
+                    await NexusAPI.post(
+                        '/auth/usuarios/' + encodeURIComponent(idCreado) + '/reset-password',
+                        { nueva: pass },
+                        { ttl: 0, retries: 0 }
+                    );
 
                     this.mostrarToast("Cuenta creada exitosamente.");
                     this.cerrarModalFormulario();
@@ -667,7 +674,9 @@
             eliminarUsuario: async function(id) {
                 if(confirm("Estas seguro de eliminar este registro permanentemente? (Se eliminaran sus puntos y deudas)")) {
                     try {
-                        await deleteDoc(doc(db, "users", id));
+                        // DELETE /users/:id (antes: deleteDoc de Firestore, que ya no
+                        // autoriza, asi que borrar un usuario NUNCA funcionaba).
+                        await NexusData.eliminar('users', id);
                         this.mostrarToast("Registro eliminado con exito.");
                         this.cargarUsuarios();
                     } catch(e) { console.error(e); this.mostrarToast("Error al eliminar (Verifique permisos).", "error"); }
