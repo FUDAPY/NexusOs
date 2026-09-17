@@ -1,7 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import { cerrarCuentaPendiente } from '../services/cuentaCierre.service.js';
+import { ESTADOS_COCINA } from '../models/index.js';
+import { actualizarCuentaPendiente, cerrarCuentaPendiente } from '../services/cuentaCierre.service.js';
 import { orderItemInputSchema } from '../schemas/order.schema.js';
+import type { CreateOrderInput } from '../schemas/order.schema.js';
 import { AppError, sendOk } from '../utils/response.js';
 
 /**
@@ -89,6 +91,71 @@ export const cerrarCuenta = async (
           turnoId: typeof body['turnoId'] === 'string' ? body['turnoId'] : undefined,
           fechaAperturaTurno: fechaValida(body['fechaAperturaTurno']),
           discountAmount: numero(body['discountAmount']),
+        },
+        { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
+      ),
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/v1/orders/:id/cuenta-pendiente
+ *
+ * Guarda una cuenta abierta (mesa) SIN cobrarla: el "enviar a cocina" del salon,
+ * donde el cliente sigue comiendo y paga despues. Body:
+ *   { items: [...], observacion?, estadoCocina?, discountAmount?, cajero? }
+ *
+ * Los items REEMPLAZAN a los de la cuenta, no se suman. No mueve stock ni el saldo
+ * del cliente: eso pasa al cobrar.
+ */
+export const actualizarCuenta = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const id = req.params['id'];
+    if (typeof id !== 'string' || id === '') {
+      throw new AppError('Falta la orden', 400, 'MISSING_ORDER_ID');
+    }
+
+    const body = req.body as Record<string, unknown>;
+
+    const crudos = Array.isArray(body['items']) ? (body['items'] as unknown[]) : [];
+    if (crudos.length === 0) {
+      throw new AppError('La cuenta necesita al menos un item', 400, 'MISSING_ITEMS');
+    }
+    const itemsParsed = z.array(orderItemInputSchema).safeParse(crudos);
+    if (!itemsParsed.success) {
+      throw new AppError(
+        itemsParsed.error.issues.map((issue) => issue.message).join(' | '),
+        422,
+        'VALIDATION_ERROR',
+      );
+    }
+
+    const numero = (valor: unknown): number => {
+      const n = Number(valor);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const estadoCocinaCrudo = typeof body['estadoCocina'] === 'string' ? body['estadoCocina'] : '';
+    const estadoCocina = (ESTADOS_COCINA as readonly string[]).includes(estadoCocinaCrudo)
+      ? (estadoCocinaCrudo as CreateOrderInput['estadoCocina'])
+      : undefined;
+
+    sendOk(
+      res,
+      await actualizarCuentaPendiente(
+        id,
+        {
+          items: itemsParsed.data,
+          discountAmount: numero(body['discountAmount']),
+          observacion: typeof body['observacion'] === 'string' ? body['observacion'] : undefined,
+          estadoCocina,
+          cajero: typeof body['cajero'] === 'string' ? body['cajero'] : '',
         },
         { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
       ),

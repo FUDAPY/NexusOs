@@ -716,4 +716,46 @@ describe('metodos de pago al crear una orden (POST /orders)', () => {
   });
 });
 
+describe('guardar una cuenta abierta sin cobrarla (PATCH /orders/:id/cuenta-pendiente)', () => {
+  const url = (id: string): string => `${env.API_PREFIX}/orders/${id}/cuenta-pendiente`;
+  const idOrden = '507f1f77bcf86cd799439011';
+  const items = [{ id: 'prod-1', nombre: 'Milanesa', cantidad: 2, precio: 1000, controlado: false }];
+
+  it('sin token responde 401', async () => {
+    const res = await request(app).patch(url(idOrden)).send({ items });
+    expect(res.status).toBe(401);
+  });
+
+  /**
+   * Mandar items a cocina es parte de operar una cuenta, y una cuenta mueve plata al
+   * cerrarse. Mismo conjunto de roles que cobrar.
+   */
+  it('un cliente NO puede tocar una cuenta (403)', async () => {
+    const res = await request(app)
+      .patch(url(idOrden))
+      .set('Authorization', 'Bearer ' + tokenDe('cliente'))
+      .send({ items });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('exige items (400 antes de tocar la base)', async () => {
+    const res = await request(app)
+      .patch(url(idOrden))
+      .set('Authorization', 'Bearer ' + tokenValido)
+      .send({ items: [] });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('MISSING_ITEMS');
+  });
+
+  it('un cajero SI pasa el control de rol', async () => {
+    const res = await request(app)
+      .patch(url(idOrden))
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ items });
+    expect(res.status).not.toBe(401);
+    expect(res.status).not.toBe(403);
+  });
+});
+
 

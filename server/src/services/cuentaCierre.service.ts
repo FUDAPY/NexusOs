@@ -1,4 +1,4 @@
-import { Order } from '../models/index.js';
+import { Order, OrderItem } from '../models/index.js';
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { filtroPorId } from '../utils/mongoId.js';
@@ -183,5 +183,106 @@ export const cerrarCuentaPendiente = async (
     ticketId: resultado.ticketId,
     total: resultado.total,
     estadoPago: resultado.estadoPago,
+  };
+};
+
+export interface ActualizarCuentaInput {
+  items: CreateOrderInput['items'];
+  discountAmount?: number;
+  observacion?: string;
+  estadoCocina?: CreateOrderInput['estadoCocina'];
+  cajero?: string;
+}
+
+/**
+ * Guarda una cuenta abierta (mesa) SIN cobrarla: es el "enviar a cocina" del salon,
+ * donde el cliente sigue comiendo y paga despues.
+ *
+ * NO mueve stock ni plata, y es a proposito:
+ *  - el stock se mueve al COBRAR (ver createOrder y cerrarCuentaPendiente);
+ *  - el saldo del cliente, tambien.
+ * Por eso la operacion es un REEMPLAZO de los items, no una suma: repetirla no
+ * acumula nada y no puede descuadrar. El POS legacy hacia esto sobre Firestore
+ * calculando ajustes de stock por diferencia; con el stock moviendose al cobrar ese
+ * ajuste ya no hace falta, y con el desaparece la chance de equivocarse en un delta.
+ */
+export const actualizarCuentaPendiente = async (
+  ordenId: string,
+  input: ActualizarCuentaInput,
+  context: { ip: string; userAgent: string },
+): Promise<{ orderId: string; ticketId: string; total: number; estadoCocina: string }> => {
+  const resultado = await withTransaction(async (session) => {
+    const orden = await Order.findOne(filtroPorId(ordenId)).session(session).exec();
+    if (!orden) throw new AppError('No existe esa cuenta', 404, 'NOT_FOUND');
+    if (orden.estadoPago !== 'pendiente') {
+      throw new AppError(
+        `Esa cuenta ya no esta pendiente (${orden.estadoPago})`,
+        409,
+        'CUENTA_YA_CERRADA',
+      );
+    }
+
+    // prepareItems valida el stock disponible pero NO lo mueve: eso pasa al cobrar.
+    const { prepared, bruto } = await prepareItems({ items: input.items }, session);
+    const items = prepared.map((p) => p.item);
+    const total = Math.max(bruto - (input.discountAmount ?? Number(orden.discountAmount ?? 0)), 0);
+
+    orden.items = items;
+    orden.subtotal = bruto;
+    orden.total = total;
+    if (typeof input.observacion === 'string') orden.observacion = input.observacion;
+    if (input.estadoCocina) orden.estadoCocina = input.estadoCocina;
+    await orden.save({ session: session ?? undefined });
+
+    /* order_items es la copia normalizada que escribio createOrder. Se reemplaza
+       entera en vez de calcular diferencias: es mas simple y no puede quedar una
+       fila huerfana de un item que se saco de la mesa. */
+    await OrderItem.deleteMany({ orderId: orden._id }, session ? { session } : {});
+    await OrderItem.insertMany(
+      items.map((item) => ({
+        ...item,
+        orderId: orden._id,
+        productoId: item.id,
+        ticket_id: orden.ticket_id,
+        sucursal: orden.sucursal,
+        fecha: orden.fecha,
+      })),
+      session ? { session, ordered: true } : { ordered: true },
+    );
+
+    await recordAudit(
+      {
+        tipo: 'cuenta_actualizada',
+        origen: 'pos',
+        motivo: `Cuenta ${orden.ticket_id} actualizada sin cobrar (${items.length} items)`,
+        sucursal: orden.sucursal,
+        adminNombre: input.cajero ?? '',
+        ticketId: orden.ticket_id,
+        ventaId: String(orden._id),
+        nombreCliente: orden.nombreCliente,
+        estadoPago: orden.estadoPago,
+        totalDespues: total,
+        detalle: { ip: context.ip, userAgent: context.userAgent },
+      },
+      session,
+    );
+
+    return {
+      orderId: String(orden._id),
+      ticketId: orden.ticket_id,
+      total,
+      estadoCocina: orden.estadoCocina,
+      sucursal: orden.sucursal,
+    };
+  });
+
+  // La cocina tiene que enterarse de los items nuevos: mismo evento que una venta.
+  emitTurnoEvent(resultado.sucursal, 'venta:creada', { turnoId: null });
+
+  return {
+    orderId: resultado.orderId,
+    ticketId: resultado.ticketId,
+    total: resultado.total,
+    estadoCocina: resultado.estadoCocina,
   };
 };

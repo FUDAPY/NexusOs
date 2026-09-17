@@ -3177,17 +3177,39 @@
                 const tieneItemsCocina = this.carritoTieneItemsDeCocina();
 
                 try {
-                    const batch = writeBatch(db);
-                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const ticketRef = doc(db, rutaPrivada, this.idTicketRecuperado);
-                    const ajustesStock = this.calcularAjustesStockTicketRecuperado();
-                    const ajustesProduccion = this.calcularAjustesProduccionTicketRecuperado();
-                    batch.update(ticketRef, { items: this.carrito, total: this.totalActual, estadoCocina: tieneItemsCocina ? "pendiente" : "listo", observacion: observacionInput, origenCuentaPendiente: true, turnoId: this.obtenerTurnoActualId(), fechaAperturaTurno: this.fechaAperturaSesionTs ? new Date(this.fechaAperturaSesionTs) : new Date() });
-                    ajustesStock.forEach(ajuste => {
-                        batch.update(doc(db, "products", ajuste.productoId), { stock: increment(ajuste.cantidad) });
-                    });
-                    this.aplicarAjustesProduccionEnBatch(batch, ajustesProduccion, 1);
-                    await batch.commit();
+                    /* GUARDAR SIN COBRAR por la API (antes: writeBatch a Firestore, que ya
+                       no autoriza, asi que enviar a cocina fallaba).
+
+                       Los items REEMPLAZAN a los de la cuenta (no se suman) y NO se toca
+                       el stock: el stock se mueve al COBRAR. El POS legacy calculaba
+                       ajustes de stock por diferencia aca mismo; con el stock moviendose
+                       al cobrar ese ajuste ya no hace falta, y con el desaparece la
+                       chance de descuadrar por un delta mal calculado. */
+                    const itemsMesa = this.carrito.map(it => ({
+                        id: String(it.id || ''),
+                        nombre: String(it.nombre || 'Producto'),
+                        categoria: String(it.categoria || 'Sin Categoria'),
+                        cantidad: Math.max(1, Math.floor(Number(it.cantidad || 1))),
+                        precio: Math.max(0, Number(it.precio || 0)),
+                        controlado: it.controlado === true,
+                        descuento: Math.max(0, Number(it.descuento || 0)),
+                        descuentoVip: Math.max(0, Number(it.descuentoVip || 0)),
+                        descuentoBogo: Math.max(0, Number(it.descuentoBogo || 0)),
+                        promocionBogo: it.promocionBogo === true,
+                        codigo: String(it.codigo || ''),
+                        icono: String(it.icono || 'fa-box'),
+                        obsProd: String(it.obsProd || '')
+                    }));
+                    await NexusAPI.patch(
+                        '/orders/' + encodeURIComponent(this.idTicketRecuperado) + '/cuenta-pendiente',
+                        {
+                            items: itemsMesa,
+                            observacion: observacionInput,
+                            estadoCocina: tieneItemsCocina ? 'pendiente' : 'listo',
+                            cajero: this.sesion.nombre
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.reservasActivas = {};
                     this.reservasProduccionActivas = {};
 

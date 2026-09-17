@@ -7,7 +7,7 @@ import {
   resolverCobroHandler,
   updateKdsState,
 } from '../controllers/order.controller.js';
-import { cerrarCuenta } from '../controllers/cuentaCierre.controller.js';
+import { actualizarCuenta, cerrarCuenta } from '../controllers/cuentaCierre.controller.js';
 import { asyncHandler } from '../utils/response.js';
 import { requiereAuth, requiereRol } from '../middlewares/auth.js';
 
@@ -49,6 +49,19 @@ orderRouter.post(
   '/:id/cerrar-cuenta',
   requiereRol('admin', 'supervisor', 'cajero'),
   asyncHandler(cerrarCuenta),
+);
+
+/**
+ * Guarda una cuenta abierta (mesa) SIN cobrarla: el "enviar a cocina" del salon.
+ * Body: { items, observacion?, estadoCocina?, discountAmount? }
+ *
+ * Los items REEMPLAZAN a los de la cuenta, no se suman. No mueve stock ni el saldo
+ * del cliente: eso pasa al cobrar.
+ */
+orderRouter.patch(
+  '/:id/cuenta-pendiente',
+  requiereRol('admin', 'supervisor', 'cajero'),
+  asyncHandler(actualizarCuenta),
 );
 
 /**
