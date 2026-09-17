@@ -1,19 +1,22 @@
 # ===================================================================
-# POS CATE - Infraestructura + servicio web
+# POS CATE · Stack completa para Dokploy  (un solo docker-compose.yml)
 # ===================================================================
-# Lo consume el servicio "Docker Compose" de Dokploy, que clona el repo y ejecuta:
+# Dokploy lo ejecuta como servicio "Docker Compose":
 #   docker compose -p <proyecto> --env-file .env -f ./docker-compose.yml up -d --build
 #
-# Contiene:
-#   - mongo, redis, mongo-keyfile : infraestructura
-#   - web (nginx)                 : UNICO servicio con dominio asignado.
-#                                   Sirve frontend/ y hace de reverse proxy al API.
+# TODO el sistema vive aca: mongo, redis, api y web. No hay servicios
+# "Application" aparte: un solo Deploy levanta el POS entero. El nombre del
+# servicio ES el nombre del host dentro de la red del proyecto, asi que el api
+# alcanza a mongo y a redis, y nginx alcanza al api, sin configurar red alguna.
 #
-# El API va como servicio "Application" aparte, para poder usar Railpack 0.15.4.
-# Ver deploy/README.md para el paso a paso del dominio.
+# El unico servicio con dominio es "web": sirve frontend/ y hace de reverse
+# proxy al API. Un solo origen, entonces no hay CORS.
 #
-# Las variables ${...} se resuelven desde el Environment de Dokploy
-# (Dokploy las escribe en el .env que pasa con --env-file).
+# VARIABLES: se resuelven desde el Environment de Dokploy, que las escribe en el
+# .env que pasa con --env-file. Dokploy NO inyecta las variables en los
+# contenedores por su cuenta: hay que referenciarlas aca con ${...}.
+# La lista completa, con que significa cada una, esta en .env.example
+# y el paso a paso en deploy/DOKPLOY.md.
 # ===================================================================
 
 services:
@@ -22,6 +25,8 @@ services:
   # Es OBLIGATORIO: mongod se niega a arrancar con --auth + --replSet sin keyFile
   #   "BadValue: security.keyFile is required when authorization is enabled with replica sets"
   # Permisos exigidos en UNIX: 400 y propiedad del usuario que corre mongod.
+  # Idempotente: si ya existe no lo pisa (reenviar uno nuevo romperia el
+  # handshake entre nodos y el conjunto quedaria sin primary).
   # -------------------------------------------------------------------
   mongo-keyfile:
     image: mongo:8
@@ -58,6 +63,24 @@ services:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
       - mongo-keyfile:/keyfile:ro
+    # El healthcheck importa de verdad: `mongo-init` y `api` esperan a que mongod
+    # CONTESTE, no a que el contenedor exista. Sin esto el api arrancaba contra un
+    # mongod que todavia estaba creando el usuario root, y moria en el arranque
+    # (process.exit(1) ANTES de abrir el puerto -> 502 en todo el sitio, incluido
+    # /health, que es justo lo que impide diagnosticarlo rapido).
+    # mongosh necesita credenciales: el servidor corre con --auth.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet --host 127.0.0.1:27017
+          -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD"
+          --authenticationDatabase admin
+          --eval "db.adminCommand('ping').ok" | grep -q 1
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 40s
     # SIN `ports` A PROPOSITO: Mongo no se publica a internet.
     #
     # Con el puerto abierto, la contrasena del root es la UNICA barrera. Eso
@@ -65,14 +88,18 @@ services:
     # o una que haya quedado en el historial de un repo publico (que es
     # exactamente lo que paso en este proyecto, ver deploy/README.md).
     #
-    # El `api` lo alcanza igual por la red interna (`mongo:27017`, que es el
-    # nombre del servicio) y los scripts de diagnostico corren DESDE el
-    # contenedor, sin necesitar el puerto.
+    # El `api` lo alcanza igual por la red interna (`mongo:27017`, el nombre del
+    # servicio) y los scripts de diagnostico corren DESDE el contenedor, sin
+    # necesitar el puerto.
     #
-    # Para exponerlo TEMPORALMENTE (una migracion puntual), descomentar estas
-    # dos lineas, terminar el trabajo y volver a comentarlas:
+    # Para exponerlo TEMPORALMENTE (una migracion puntual), descomentar estas dos
+    # lineas, terminar el trabajo y volver a comentarlas:
     # ports:
     #   - "${MONGO_EXTERNAL_PORT:-5220}:27017"
+    #
+    # Los datos van en volúmenes CON NOMBRE, nunca en una ruta del repo: Dokploy
+    # borra el directorio clonado en cada deploy. Ademas, los volúmenes con
+    # nombre son los unicos que Dokploy puede respaldar (Volume Backups -> S3).
     restart: unless-stopped
 
   # Sin puertos publicados a proposito: Redis solo se consume desde la red interna.
@@ -86,13 +113,64 @@ services:
       - "yes"
     volumes:
       - redis-data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     restart: unless-stopped
+
+  # -------------------------------------------------------------------
+  # Inicializa el replica set. Es un paso PUNTUAL: corre y termina.
+  #
+  # POR QUE VIVE EN EL COMPOSE Y NO EN UN "npm run" A MANO:
+  # mongod arranca con --replSet, pero el conjunto NO queda inicializado solo.
+  # Sin replSetInitiate el nodo no tiene PRIMARY, y como el driver exige primary
+  # escribible: connectDatabase lanza, index.ts hace process.exit(1) ANTES de
+  # abrir el puerto, y nginx devuelve 502 en TODAS las rutas, /health incluido.
+  # Encima, las transacciones (venta, cobro de mesa, cierre de caja) no corren
+  # sin primary. O sea: sin este paso el sistema no queda operativo.
+  #
+  # Se reusa el script ya probado (scripts/init-replica-set.ts) en vez de escribir
+  # mongosh suelto aca: es idempotente y ademas REPARA solo el caso en que el host
+  # del conjunto quedo apuntando a un nombre que Dokploy reciclo (el hostname del
+  # contenedor cambia en cada deploy; la config del conjunto vive en el volumen y
+  # sobrevive). Correrlo en cada deploy es justo lo que evita ese 502 fantasma.
+  # El envoltorio .sh le agrega reintentos, porque en el primer arranque mongod
+  # esta creando el usuario root y todavia no acepta conexiones.
+  # -------------------------------------------------------------------
+  mongo-init:
+    image: pos-cate-api:local
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: ["sh", "scripts/init-replica-compose.sh"]
+    environment:
+      NODE_ENV: production
+      MONGO_HOST: "mongo:27017"
+      MONGO_USER: "${MONGO_INITDB_ROOT_USERNAME:-giuli}"
+      MONGO_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD:?definir MONGO_INITDB_ROOT_PASSWORD en Environment}"
+      MONGO_AUTH_SOURCE: "admin"
+      MONGO_REPLICA_SET: "rs0"
+      MONGO_DB_NAME: "${MONGO_INITDB_DATABASE:-pos_cate}"
+      # JWT_SECRET y REDIS_URL no se usan aca, pero el script importa
+      # src/config/env.ts, que valida TODO el esquema: sin estas dos no arranca.
+      REDIS_URL: "redis://default:${REDIS_PASSWORD:?definir REDIS_PASSWORD en Environment}@redis:6379/0"
+      JWT_SECRET: "${JWT_SECRET:?definir JWT_SECRET en Environment (minimo 32 caracteres)}"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
 
   # -------------------------------------------------------------------
   # API Node/Express. Habla con mongo y redis por nombre de servicio.
   # No publica puertos: el unico acceso publico pasa por "web".
   # -------------------------------------------------------------------
   api:
+    image: pos-cate-api:local
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -106,12 +184,12 @@ services:
       # Los defaults coinciden con los del servicio mongo.
       MONGO_HOST: "mongo:27017"
       MONGO_USER: "${MONGO_INITDB_ROOT_USERNAME:-giuli}"
-      MONGO_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
+      MONGO_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD:?definir MONGO_INITDB_ROOT_PASSWORD en Environment}"
       MONGO_AUTH_SOURCE: "admin"
       MONGO_REPLICA_SET: "rs0"
       MONGO_MAX_POOL_SIZE: "20"
       MONGO_DB_NAME: "${MONGO_INITDB_DATABASE:-pos_cate}"
-      REDIS_URL: "redis://default:${REDIS_PASSWORD}@redis:6379/0"
+      REDIS_URL: "redis://default:${REDIS_PASSWORD:?definir REDIS_PASSWORD en Environment}@redis:6379/0"
       REDIS_STOCK_LOCK_TTL_MS: "5000"
       JWT_SECRET: "${JWT_SECRET:?definir JWT_SECRET en Environment (minimo 32 caracteres)}"
       JWT_EXPIRES_IN: "12h"
@@ -120,32 +198,114 @@ services:
       # resolver. Vacio = acepta cualquier origen.
       CORS_ORIGINS: "${CORS_ORIGINS:-}"
     depends_on:
-      - mongo
-      - redis
+      # No alcanza con que los contenedores existan: el api necesita un mongo que
+      # conteste Y un conjunto con primary (lo garantiza mongo-init, que termina
+      # recien cuando el nodo se promovio).
+      mongo-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    # Los logs de un contenedor son ilimitados por defecto y llenan el disco del
+    # VPS: cuando pasa, MongoDB no puede escribir y se cae todo. Tope explicito.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   # -------------------------------------------------------------------
-  # Servicio HTTP publico. Es el UNICO al que se le asigna dominio.
+  # Servicio HTTP publico. Es el UNICO con dominio y el UNICO que se conecta a
+  # la red de Dokploy.
   # Sirve frontend/ como estatico y hace de reverse proxy hacia el API.
   # -------------------------------------------------------------------
   web:
+    image: pos-cate-web:local
     build:
       # Contexto: la RAIZ del repo. El .dockerignore de la raiz deja fuera
       # todo lo que no sea frontend/ y deploy/nginx/.
       context: .
       dockerfile: deploy/nginx/Dockerfile
+    # expose y no ports: el puerto queda alcanzable dentro de las redes, no
+    # publicado en el host. Es lo que recomienda Dokploy.
+    expose:
+      - "80"
     # nginx resuelve el nombre del upstream AL ARRANCAR: si "api" no existe
     # todavia, falla con "host not found in upstream". depends_on garantiza
     # que el contenedor del API este creado antes.
+    #
+    # service_started y NO service_healthy a proposito: si se exigiera healthy,
+    # un api lento en arrancar dejaria TAMBIEN el frontend afuera, y el sitio
+    # entero seria un 502 en vez de un login que carga y avisa. nginx ya
+    # re-resuelve el upstream cada 10s (ver resolver en default.conf.template),
+    # asi que se recupera solo cuando el api termina de levantar.
     depends_on:
-      - api
+      api:
+        condition: service_started
     environment:
       # host:puerto del API dentro de la red del proyecto.
       API_UPSTREAM: "${API_UPSTREAM:-api:3000}"
+    networks:
+      # Red del proyecto: por aca llega al api.
+      - default
+      # Red de Dokploy: por aca lo alcanza Traefik. Es la unica que la necesita;
+      # mongo, redis y api NO se conectan a esta red, porque no tienen por que
+      # ser alcanzables desde el proxy.
+      - dokploy-network
+    labels:
+      # ================= Dominio (Traefik) =================
+      # El dominio se declara ACA. NO lo agregues tambien en la pestaña Domains
+      # de Dokploy: esa pestaña inyecta sus propios labels y quedarian DOS
+      # routers para el mismo host. Elegi uno de los dos caminos, no los dos.
+      - "traefik.enable=true"
+      # Router HTTP: solo redirige a HTTPS. No sirve contenido sin cifrar.
+      - "traefik.http.routers.pos-web.rule=Host(`${DOMINIO:?definir DOMINIO en Environment, ej. pos.tudominio.com}`)"
+      - "traefik.http.routers.pos-web.entrypoints=web"
+      - "traefik.http.routers.pos-web.middlewares=pos-web-redirigir-https"
+      - "traefik.http.middlewares.pos-web-redirigir-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.pos-web-redirigir-https.redirectscheme.permanent=true"
+      # Router HTTPS: el certificado lo emite Lets Encrypt a traves del resolver
+      # que Dokploy configura (se llama letsencrypt).
+      - "traefik.http.routers.pos-webseguro.rule=Host(`${DOMINIO:?definir DOMINIO en Environment, ej. pos.tudominio.com}`)"
+      - "traefik.http.routers.pos-webseguro.entrypoints=websecure"
+      - "traefik.http.routers.pos-webseguro.tls.certresolver=letsencrypt"
+      # Puerto DENTRO del contenedor (nginx escucha en 80), no el publico.
+      # Los nombres de router/servicio van en minusculas y SIN variables: Traefik
+      # rechaza los que traen mayusculas, y el nombre del proyecto de Dokploy
+      # puede traerlas.
+      - "traefik.http.services.pos-web.loadbalancer.server.port=80"
+      # Con dos redes conectadas Traefik no sabe por cual entrar: se le dice.
+      - "traefik.docker.network=dokploy-network"
+    healthcheck:
+      # Ya viene definido en la imagen (curl a /); se hereda. Se deja explicito
+      # para que se vea en la pestaña Monitoring de Dokploy.
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
 volumes:
+  # Volúmenes CON NOMBRE y no rutas del repo: Dokploy borra el directorio clonado
+  # en cada deploy. Ademas estos son los unicos que Dokploy puede respaldar
+  # (Volume Backups -> S3), que es como se respalda la base.
   mongo-data:
   mongo-config:
   mongo-keyfile:
   redis-data:
+
+networks:
+  # La red que crea Dokploy al instalarse, donde vive Traefik. Es externa: la
+  # crea Dokploy, no este compose.
+  #
+  # En el VPS ya existe. Para levantar el stack en una maquina de desarrollo hay
+  # que crearla una vez:
+  #   docker network create dokploy-network
+  dokploy-network:
+    external: true
