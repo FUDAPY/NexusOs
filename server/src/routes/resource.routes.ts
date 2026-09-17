@@ -82,6 +82,9 @@ resourceRouter.use(
     ordenables: ['nombre'],
     campoBusqueda: 'nombre',
     ordenPorDefecto: 'nombre',
+    // Sucursales es catalogo: se puede borrar. Va explicito porque el DELETE es
+    // opt-in (ver resource.factory.ts).
+    borrable: true,
   }),
 );
 

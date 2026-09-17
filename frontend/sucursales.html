@@ -298,9 +298,12 @@
                 spinner.classList.add('flex');
                 
                 try {
-                    const snap = await getDocs(collection(db, "branches"));
-                    this.sucursalesFirebase = [];
-                    snap.forEach(doc => this.sucursalesFirebase.push({ id: doc.id, ...doc.data() }));
+                    // Se lee del API (Mongo), no de Firestore: la sesion ya no es
+                    // de Firebase, asi que getDocs respondia permission-denied.
+                    // El id publico es `uid` (el legado de Firestore) y se cae a
+                    // `_id` para las sucursales creadas tras la migracion.
+                    const filas = await NexusData.leer('branches', { limit: 500, orderBy: ['nombre', 'asc'] });
+                    this.sucursalesFirebase = filas.map(f => ({ ...f, id: String(f.uid || f._id) }));
                     this.renderizarGrilla();
                 } catch (error) {
                     console.error("Error Firebase:", error);
@@ -474,14 +477,15 @@
 
                 try {
                     if (id === "") {
-                        const nuevaSucursal = await addDoc(collection(db, "branches"), datos);
+                        const nueva = await NexusData.crear('branches', datos);
+                        const nuevoId = String(nueva.uid || nueva._id || '');
                         if (archivoImagen) {
-                            const urlImagen = await this.subirImagenSucursal(archivoImagen, nuevaSucursal.id);
-                            await updateDoc(doc(db, "branches", nuevaSucursal.id), { imagenLocalUrl: urlImagen });
+                            const urlImagen = await this.subirImagenSucursal(archivoImagen, nuevoId);
+                            await NexusData.actualizar('branches', nuevoId, { imagenLocalUrl: urlImagen });
                         }
                     } else {
                         if (archivoImagen) datos.imagenLocalUrl = await this.subirImagenSucursal(archivoImagen, id);
-                        await updateDoc(doc(db, "branches", id), datos);
+                        await NexusData.actualizar('branches', id, datos);
                     }
                     
                     this.mostrarToast("Sucursal guardada correctamente.");
@@ -516,7 +520,7 @@
                 btn.disabled = true;
 
                 try {
-                    await deleteDoc(doc(db, "branches", this.sucursalAEliminarId));
+                    await NexusData.eliminar('branches', this.sucursalAEliminarId);
                     this.mostrarToast("Sucursal eliminada.");
                     this.cerrarModalEliminar();
                     this.cargarSucursales();

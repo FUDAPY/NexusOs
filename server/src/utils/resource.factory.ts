@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import type { Model, FilterQuery, SortOrder } from 'mongoose';
 import { AppError, asyncHandler, sendOk } from './response.js';
 import { filtroPorId } from './mongoId.js';
+import { requiereRol } from '../middlewares/auth.js';
 
 /**
  * Fabrica de rutas CRUD para una coleccion.
@@ -38,6 +39,15 @@ export interface OpcionesRecurso<TDoc> {
   noEscribible?: readonly string[];
   /** Tope de documentos por respuesta (default 500). */
   limiteMaximo?: number;
+  /**
+   * Habilita `DELETE /:id` en ESTE recurso.
+   *
+   * Es opt-in a proposito (ver el comentario de la ruta): borrar es destructivo
+   * y en las colecciones de operacion romperia el historial contable.
+   */
+  borrable?: boolean;
+  /** Roles que pueden borrar. Por defecto `admin` y `supervisor`. */
+  rolesBorrado?: readonly string[];
 }
 
 const LIMITE_POR_DEFECTO = 50;
@@ -226,6 +236,41 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
           throw new AppError(`No existe el documento ${String(req.params.id)} en ${opts.coleccion}`, 404, 'NOT_FOUND');
         }
         sendOk(res, ocultar(actualizado as unknown as Record<string, unknown>));
+      }),
+    );
+  }
+
+  if (opts.borrable === true) {
+    /**
+     * DELETE opt-in, NO generico.
+     *
+     * El CRUD no expone DELETE a proposito: en las colecciones de operacion
+     * (orders, cash_shifts, cash_closes) borrar destruiria historial contable, y
+     * en users dejaria huerfanos los `cajeroId` que guardan los cierres. Por eso
+     * lo habilita cada coleccion de catalogo, una por una.
+     *
+     * Exige rol: lo monta el recurso con `requiereAuth` a nivel de prefijo, asi
+     * que sin este control cualquier usuario autenticado (un cajero) podria
+     * vaciar el catalogo.
+     */
+    router.delete(
+      '/:id',
+      requiereRol(...(opts.rolesBorrado ?? ['admin', 'supervisor'])),
+      asyncHandler(async (req: Request, res: Response) => {
+        const borrado = await opts.modelo
+          .findOneAndDelete(filtroPorId(String(req.params.id)))
+          .lean()
+          .exec();
+
+        if (borrado === null) {
+          throw new AppError(
+            `No existe el documento ${String(req.params.id)} en ${opts.coleccion}`,
+            404,
+            'NOT_FOUND',
+          );
+        }
+
+        sendOk(res, { borrado: true, coleccion: opts.coleccion, id: String(req.params.id) });
       }),
     );
   }

@@ -264,6 +264,19 @@
     return request(path, opts);
   }
 
+  /**
+   * DELETE.
+   *
+   * Solo funciona en las colecciones que lo habilitan en el backend
+   * (`borrable: true` en crearRecurso): el CRUD generico no expone borrado, y en
+   * las colecciones de operacion lo rechaza a proposito.
+   */
+  function del(path, options) {
+    var opts = options || {};
+    opts.method = 'DELETE';
+    return request(path, opts);
+  }
+
   /* ---------- Recursos del API ---------- */
   var orders = {
     list: function (query, options) { return get('/orders', query, options); },
@@ -290,7 +303,7 @@
 
     /* nucleo */
     request: request,
-    get: get, post: post, patch: patch,
+    get: get, post: post, patch: patch, del: del,
     on: on,
 
     /* utilidades */

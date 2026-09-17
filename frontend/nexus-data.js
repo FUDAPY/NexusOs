@@ -303,14 +303,18 @@
       .then(function (r) { return r.data; });
   }
 
+  /**
+   * Borra un documento.
+   *
+   * El CRUD generico NO expone DELETE: lo habilita cada coleccion en el backend
+   * con `borrable: true` (ver resource.factory.ts). Si la coleccion no lo tiene,
+   * la API responde 404/405 y el error llega tal cual, que es mejor que un
+   * borrado silencioso en una coleccion de operacion.
+   */
   function eliminar(coleccion, id) {
     verificarEscritura(coleccion);
-    // El backend NO expone DELETE en el CRUD generico: se desactiva por estado.
-    // Se avisa en vez de mandar una peticion que va a dar 404.
-    throw new Error(
-      'NexusData: el backend no expone DELETE para "' + coleccion + '". ' +
-      'Marcar el documento como inactivo con actualizar().'
-    );
+    return global.NexusAPI.del(rutaDe(coleccion) + '/' + encodeURIComponent(id), { ttl: 0 })
+      .then(function (r) { return r.data; });
   }
 
   /* ---------- Vigilancia (sustituto practico de onSnapshot) ---------- */
