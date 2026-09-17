@@ -134,6 +134,24 @@ Los datos viven en **volúmenes con nombre** (`mongo-data`, `mongo-config`, `red
 No se usan rutas del repo para los datos, y no es solo prolijidad: **Dokploy borra el directorio
 clonado en cada deploy**, así que unos datos ahí se perderían.
 
+## Probar el stack en tu máquina antes de desplegar
+
+El mismo compose se levanta local y se verifica solo:
+
+```bash
+# Desde la raíz del repo
+sh deploy/prueba-local.sh
+```
+
+Hace todo el ciclo: crea `dokploy-network` si falta, construye las dos imágenes, levanta el stack,
+espera a que el API conteste **a través de nginx**, prueba las rutas principales (login, POS, API sin
+token, ruta inexistente) y al final borra **solo** el proyecto de prueba (`pos-prueba`) con sus
+volúmenes. Si algo falla, imprime los logs de `mongo-init` y del `api`, que es donde está la causa.
+
+> Necesita el daemon de Docker corriendo. No usa Traefik ni el dominio real: prueba nginx → api →
+> mongo, que es la parte que puede fallar por el replica set. El dominio y el certificado solo se
+> prueban en el VPS, porque dependen de DNS público.
+
 ## Verificar que quedó bien
 
 ```bash
