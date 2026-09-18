@@ -2300,9 +2300,11 @@
                     });
                     await batch.commit();
                 } catch (e) {
-                    console.error(e);
-                    this.mostrarToast('No se pudo registrar la auditoria.', 'error');
-                    return;
+                    /* Aca habia un `return`, y con eso el carrito quedaba SIN VACIAR:
+                       el cajero no podia empezar de nuevo por un aviso de auditoria que
+                       ni siquiera se guarda (va a Firestore). La auditoria de un carrito
+                       que nunca se guardo no puede ser mas importante que eso. */
+                    console.error('No se pudo auditar el vaciado del carrito.', e);
                 }
 
                 this.limpiarPantallaLocal();
