@@ -554,9 +554,17 @@
                 const cajeroId = String(this.sesion?.uid || this.sesion?.id || this.sesion?.usuarioId || '').trim();
                 if (!sucursal || !cajeroId) return false;
                 try {
-                    const snap = await getDocs(query(collection(db, 'cashFlows'), where('estadoTurno', '==', 'abierto')));
-                    const candidatos = snap.docs
-                        .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }))
+                    /* GET /cash-shifts (antes: getDocs de cashFlows, que ya no autoriza,
+                       asi que la caja no recuperaba el turno abierto y trataba la sesion
+                       como si no hubiera ninguno).
+                       No se filtra por estadoTurno en la consulta: se traen los turnos y
+                       se filtra abajo, como ya hacia esta funcion. Asi no depende de
+                       como este configurado el filtro del recurso. */
+                    const respTurnos = await NexusAPI.get('/cash-shifts', { limit: 100 }, { ttl: 0, retries: 0 });
+                    const filasTurnos = (respTurnos && respTurnos.data && respTurnos.data.items) || [];
+                    const candidatos = filasTurnos
+                        .map((turno) => ({ id: String(turno._id || turno.id || ''), ...turno }))
+                        .filter((turno) => String(turno.estadoTurno || '') === 'abierto')
                         .filter((turno) => String(turno.sucursal || '').trim() === sucursal && String(turno.cajeroId || '').trim() === cajeroId)
                         .sort((a, b) => this.normalizarFecha(b.fechaApertura || b.updatedAt).getTime() - this.normalizarFecha(a.fechaApertura || a.updatedAt).getTime());
                     const turno = candidatos[0];
@@ -608,12 +616,17 @@
 
             cargarVentas: async function() {
                 try {
-                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const q = this.turnoActualId
-                        ? query(collection(db, rutaPrivada), where("turnoId", "==", this.turnoActualId))
-                        : query(collection(db, rutaPrivada), where("sucursal", "==", this.sesion.sucursal));
-                    const snap = await getDocs(q);
-                    const ventasSucursal = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+                    /* GET /orders (antes: getDocs de sales, que ya no autoriza: la caja
+                       se quedaba sin ventas y el arqueo daba todo en cero).
+                       Mismo criterio que antes: por turno si lo hay, y si no por la
+                       sucursal de la sesion. */
+                    const respVentas = await NexusAPI.get(
+                        '/orders',
+                        { ...(this.turnoActualId ? { turnoId: this.turnoActualId } : { sucursal: this.sesion.sucursal }), limit: 200 },
+                        { ttl: 0, retries: 0 }
+                    );
+                    const filasVentas = (respVentas && respVentas.data && respVentas.data.items) || [];
+                    const ventasSucursal = filasVentas.map((orden) => ({ id: String(orden._id || orden.id || ''), ...orden }));
                     this.sincronizarTurnoActivoDesdeVentas(ventasSucursal);
                     this.verificarEstadoTurno(ventasSucursal);
                     this.marcarSincronizacionOk('ventas_caja');
@@ -751,6 +764,33 @@
                 const diferenciaTotal = diferenciaCaja + diferenciaTarjeta + diferenciaTransferencia;
                 
                 try {
+                    /* CIERRE por la API (antes: un writeBatch que marcaba arqueado cada
+                       ticket, creaba el cierre y actualizaba cashFlows; ya no autoriza,
+                       asi que el cierre desde Caja no se guardaba y los tickets quedaban
+                       sin arquear para siempre).
+                       El servidor hace las tres cosas en una transaccion y ademas
+                       RECALCULA los totales del sistema desde las ordenes, asi que por
+                       aca solo viaja lo CONTADO. El `return` corta el bloque viejo: lo
+                       que alcanzo a sumarse al batch no se commitea nunca. */
+                    await NexusAPI.post(
+                        '/cash-shifts/forzar-cierre',
+                        {
+                            sucursal: this.sesion.sucursal,
+                            motivo: 'Cierre desde la pantalla de Caja',
+                            declaracion: {
+                                fondoInicial: Number(this.fondoFijoMemoria || 0),
+                                efectivo: efectivoDeclarado,
+                                tarjeta: tarjetaDeclarada,
+                                transferencia: transferenciaDeclarada,
+                                gastos
+                            }
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
+                    this.mostrarToast('Turno cerrado correctamente.', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                    return;
+
                     const batch = writeBatch(db);
                     
                     this.transaccionesActivas.forEach(t => {
