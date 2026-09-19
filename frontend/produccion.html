@@ -362,11 +362,13 @@
             },
 
             cargarSucursales: async function() {
-                const snap = await getDocs(collection(db, 'branches'));
+                /* GET /branches (antes: getDocs de Firestore, que ya no autoriza, asi que
+                   el selector de sucursal quedaba vacio). */
+                const respSucursales = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
+                const filasSucursales = (respSucursales && respSucursales.data && respSucursales.data.items) || [];
                 this.sucursales = [];
-                snap.forEach((docSnap) => {
-                    const data = docSnap.data() || {};
-                    if (data.nombre) this.sucursales.push({ id: docSnap.id, nombre: data.nombre });
+                filasSucursales.forEach((data) => {
+                    if (data.nombre) this.sucursales.push({ id: String(data._id || data.id || ''), nombre: data.nombre });
                 });
                 if (this.sucursales.length === 0) this.sucursales.push({ id: 'general', nombre: 'General' });
 
@@ -405,10 +407,21 @@
                 this.cambiarSucursal();
             },
 
-            escucharConfiguracion: function() {
+            escucharConfiguracion: async function() {
                 this.unsubscribeConfig?.();
-                const ref = doc(db, 'produccionConfig', this.sucursalActual.key);
-                this.unsubscribeConfig = onSnapshot(ref, (snap) => {
+                /* GET /production-config (antes: onSnapshot contra Firestore, que ya no
+                   autoriza: los contadores se veian en CERO aunque estuvieran bien).
+                   Se pierde el "en vivo": se recarga al cambiar de sucursal y despues de
+                   cargar un lote, que es cuando estos numeros cambian.
+                   Se arma el mismo contrato que daba el snapshot (exists + data), asi el
+                   cuerpo de abajo no se toca. */
+                const respConfig = await NexusAPI.get('/production-config', { limit: 100 }, { ttl: 0, retries: 0 });
+                const filasConfig = (respConfig && respConfig.data && respConfig.data.items) || [];
+                const crudo = filasConfig.find(
+                    (c) => String(c.sucursalKey || c.legacyId || '') === String(this.sucursalActual.key)
+                ) || null;
+                const snap = { exists: () => crudo !== null, data: () => (crudo || {}) };
+                ((snap) => {
                     const data = snap.exists() ? (snap.data() || {}) : {};
                     const medallonesDisponibles = Number(data.medallonesDisponibles || 0);
                     const panesDisponibles = Number(data.panesDisponibles || 0);
@@ -439,10 +452,18 @@
                 });
             },
 
-            escucharLotes: function() {
+            escucharLotes: async function() {
                 this.unsubscribeLotes?.();
-                const q = query(collection(db, 'produccionLotes'), orderBy('createdAt', 'desc'), limit(40));
-                this.unsubscribeLotes = onSnapshot(q, (snap) => {
+                /* GET /production-batches (antes: onSnapshot, que ya no autoriza, asi que la
+                   lista de lotes quedaba vacia).
+                   Mismo contrato que un snapshot: `forEach` con documentos que tienen `id` y
+                   `data()`, para no tocar el cuerpo. */
+                const respLotes = await NexusAPI.get('/production-batches', { limit: 40 }, { ttl: 0, retries: 0 });
+                const filasLotes = (respLotes && respLotes.data && respLotes.data.items) || [];
+                const snap = {
+                    forEach: (fn) => filasLotes.forEach((d) => fn({ id: String(d._id || d.id || ''), data: () => d }))
+                };
+                ((snap) => {
                     const cont = document.getElementById('lista-lotes');
                     const lotes = [];
                     snap.forEach((docSnap) => {
