@@ -522,7 +522,7 @@
                 } catch (error) { console.error("Error sucursales:", error); }
             },
 
-            cargarProductos: function() {
+            cargarProductos: async function() {
                 const spinner = document.getElementById('loading-spinner');
                 spinner.classList.remove('hidden'); spinner.classList.add('flex');
                 try {
