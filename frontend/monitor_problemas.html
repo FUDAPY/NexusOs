@@ -721,10 +721,28 @@
                 }).join('');
             },
 
-            cargarAlertas: function() {
+            async cargarAlertas() {
                 if (typeof this.unsubscribeAlertas === 'function') this.unsubscribeAlertas();
-                const q = query(collection(db, 'systemAlerts'), orderBy('creadoAt', 'desc'), limit(400));
-                this.unsubscribeAlertas = onSnapshot(q, (snapshot) => {
+
+                /* GET /support-alerts (antes: onSnapshot de `systemAlerts`).
+                   DOS cosas estaban mal y las dos solas alcanzaban para que el monitor
+                   estuviera SIEMPRE vacio:
+                     1. `systemAlerts` no tiene ruta en el API. La coleccion viva es
+                        `support_alerts`, que es donde el dashboard registra las alertas.
+                     2. Era un onSnapshot contra Firestore, que ya no autoriza.
+                   Ahora las dos puntas hablan de lo mismo: se escribe y se lee de
+                   `support_alerts`.
+                   Se arma el mismo contrato de snapshot (docs con id + data) para no tocar
+                   el cuerpo. Se pierde el "en vivo": se recarga al abrir la pantalla. */
+                const respAlertas = await NexusAPI.get('/support-alerts', { limit: 400 }, { ttl: 0, retries: 0 });
+                const filasAlertas = (respAlertas && respAlertas.data && respAlertas.data.items) || [];
+                const snapshot = {
+                    docs: filasAlertas
+                        .slice()
+                        .sort((a, b) => new Date(b.creadoAt || b.fecha || 0).getTime() - new Date(a.creadoAt || a.fecha || 0).getTime())
+                        .map((d) => ({ id: String(d._id || d.id || ''), data: () => d }))
+                };
+                ((snapshot) => {
                     this.alertasCache = snapshot.docs.map((docSnap) => {
                         const data = docSnap.data() || {};
                         return { id: docSnap.id, ...data, modulo: this.obtenerModulo(data) };
@@ -871,12 +889,18 @@
                 if (!alertaId) return;
                 if (!confirm('Marcar esta incidencia como resuelta?')) return;
                 try {
-                    await updateDoc(doc(db, 'systemAlerts', alertaId), {
-                        estado: 'resuelta',
-                        resueltoAt: new Date(),
-                        resueltoPor: this.usuarioActual?.uid || null,
-                        resueltoPorNombre: this.usuarioActual?.nombre || 'Admin'
-                    });
+                    /* PATCH /support-alerts/:id. Antes iba a `systemAlerts`, que no tiene
+                       ruta: marcar una incidencia como resuelta no se guardaba. */
+                    await NexusAPI.patch(
+                        '/support-alerts/' + encodeURIComponent(alertaId),
+                        {
+                            estado: 'resuelta',
+                            resueltoAt: new Date().toISOString(),
+                            resueltoPor: this.usuarioActual?.uid || null,
+                            resueltoPorNombre: this.usuarioActual?.nombre || 'Admin'
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.mostrarToast('Incidencia marcada como resuelta.', 'success');
                 } catch (error) {
                     console.error('Error resolviendo incidencia', error);
