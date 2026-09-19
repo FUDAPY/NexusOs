@@ -220,6 +220,24 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    # El api era el UNICO servicio sin healthcheck. Dos consecuencias reales:
+    #   1. Dokploy no puede mostrar su estado, asi que un "deploy verde" no dice
+    #      nada sobre si el API esta sirviendo. Un 502 en todo el sitio y un
+    #      panel en verde al mismo tiempo es exactamente lo que paso.
+    #   2. nginx no tenia a que esperar (ver depends_on de web): arrancaba contra
+    #      un nombre "api" que todavia podia no existir, y quedaba devolviendo 502.
+    # Se usa node y no curl a proposito: node esta garantizado en esta imagen,
+    # curl no. `fetch` es global desde Node 18.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   # -------------------------------------------------------------------
@@ -238,18 +256,22 @@ services:
     # publicado en el host. Es lo que recomienda Dokploy.
     expose:
       - "80"
-    # nginx resuelve el nombre del upstream AL ARRANCAR: si "api" no existe
-    # todavia, falla con "host not found in upstream". depends_on garantiza
-    # que el contenedor del API este creado antes.
+    # nginx resuelve el nombre del upstream al primer pedido (por eso proxy_pass usa
+    # una variable: con la forma directa fijaria la IP al arrancar y un api recreado
+    # lo dejaria en 502 hasta reiniciar nginx a mano).
     #
-    # service_started y NO service_healthy a proposito: si se exigiera healthy,
-    # un api lento en arrancar dejaria TAMBIEN el frontend afuera, y el sitio
-    # entero seria un 502 en vez de un login que carga y avisa. nginx ya
-    # re-resuelve el upstream cada 10s (ver resolver en default.conf.template),
-    # asi que se recupera solo cuando el api termina de levantar.
+    # service_healthy y NO service_started: "arranco" no es "contesta". El api ya tiene
+    # healthcheck, asi que nginx no abre hasta que el API responde /health. Antes la
+    # unica garantia era que el contenedor existiera, y eso alcanzaba para que el sitio
+    # entero quedara en 502 mientras el API terminaba de levantar.
+    #
+    # El motivo viejo para usar service_started era que un api lento dejaria TAMBIEN el
+    # frontend afuera. Ya no aplica: el api contesta en milisegundos (se ve en su log) y
+    # el start_period acota la espera. Ademas, un frontend que carga pero no puede pedir
+    # nada no sirve de mucho: es la pantalla de login contra un 502.
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
     environment:
       # host:puerto del API dentro de la red del proyecto.
       API_UPSTREAM: "${API_UPSTREAM:-api:3000}"
