@@ -664,11 +664,24 @@
                 const tiposPermitidos = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
                 if (!tiposPermitidos.includes(file.type)) throw new Error('Formato de imagen no permitido.');
                 if (file.size > 5 * 1024 * 1024) throw new Error('La imagen no puede superar 5 MB.');
-                const nombreSeguro = file.name.toLowerCase().replace(/[^a-z0-9.-]/g, '-');
-                const ruta = `product-images/${productId}-${Date.now()}-${nombreSeguro}`;
-                const referencia = ref(storage, ruta);
-                await uploadBytes(referencia, file, { contentType: file.type });
-                return await getDownloadURL(referencia);
+
+                /* POST /uploads (antes: uploadBytes + getDownloadURL de Firebase Storage, que
+                   ya no autoriza: subir la foto de un producto NUNCA funcionaba).
+                   El archivo viaja en base64 porque el API no tiene parser de multipart, y
+                   `productId` ya no arma la ruta: la imagen se guarda con su propio id. */
+                const datosBase64 = await new Promise((resolve, reject) => {
+                    const lector = new FileReader();
+                    lector.onload = () => resolve(String(lector.result || ''));
+                    lector.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+                    lector.readAsDataURL(file);
+                });
+
+                const respuesta = await NexusAPI.post(
+                    '/uploads',
+                    { carpeta: 'product-images', nombre: file.name, mime: file.type, datosBase64 },
+                    { ttl: 0, retries: 0 }
+                );
+                return (respuesta && respuesta.data && respuesta.data.url) || '';
             },
 
             abrirModalCrear: function() { 

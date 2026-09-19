@@ -10,6 +10,10 @@ const MIMES_PERMITIDOS = [
   'image/webp',
   'image/gif',
   'image/avif',
+  /* Las tres pantallas ya aceptaban SVG, y un logo en SVG es legitimo: si no estuviera aca,
+     subir el logo que hoy funciona empezaria a fallar. Se sirve con su Content-Type y las
+     pantallas lo muestran con <img src>, donde el navegador NO ejecuta scripts. */
+  'image/svg+xml',
 ];
 
 /**

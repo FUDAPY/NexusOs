@@ -423,10 +423,22 @@
                 const permitidos = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
                 if (!permitidos.includes(file.type)) throw new Error('Formato de imagen no permitido.');
                 if (file.size > 5 * 1024 * 1024) throw new Error('La imagen no puede superar 5 MB.');
-                const nombreSeguro = file.name.toLowerCase().replace(/[^a-z0-9.-]/g, '-');
-                const referencia = ref(storage, `lin-tickets/${id}-${Date.now()}-${nombreSeguro}`);
-                await uploadBytes(referencia, file, { contentType: file.type });
-                return await getDownloadURL(referencia);
+
+                /* POST /uploads (antes: uploadBytes + getDownloadURL de Firebase Storage, que
+                   ya no autoriza: la foto de un ticket NUNCA se subia). */
+                const datosBase64 = await new Promise((resolve, reject) => {
+                    const lector = new FileReader();
+                    lector.onload = () => resolve(String(lector.result || ''));
+                    lector.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+                    lector.readAsDataURL(file);
+                });
+
+                const respuesta = await NexusAPI.post(
+                    '/uploads',
+                    { carpeta: 'lin-tickets', nombre: file.name, mime: file.type, datosBase64 },
+                    { ttl: 0, retries: 0 }
+                );
+                return (respuesta && respuesta.data && respuesta.data.url) || '';
             },
 
             async guardar(event) {
