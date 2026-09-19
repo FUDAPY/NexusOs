@@ -51,6 +51,20 @@ orderRouter.post(
   asyncHandler(cerrarCuenta),
 );
 
+import { pagarDeuda } from '../controllers/pagoDeuda.controller.js';
+
+/**
+ * Pago de la deuda de un cliente. Resta la deuda, crea el ticket del abono y otorga
+ * los puntos por el monto pagado.
+ *
+ * Body: { clienteId, monto, metodoPago?, turnoId? }
+ */
+orderRouter.post(
+  '/pagar-deuda',
+  requiereRol('admin', 'supervisor', 'cajero'),
+  asyncHandler(pagarDeuda),
+);
+
 /**
  * Guarda una cuenta abierta (mesa) SIN cobrarla: el "enviar a cocina" del salon.
  * Body: { items, observacion?, estadoCocina?, discountAmount? }

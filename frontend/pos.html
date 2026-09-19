@@ -1690,9 +1690,37 @@
                 btn.disabled = true;
                 const montoAbonado = this.limpiarMoneda(document.getElementById('input-monto-abono').value);
                 try {
-                    const batch = writeBatch(db);
-                    const userRef = doc(db, "users", this.clienteActual.id);
-                    batch.update(userRef, { deuda: increment(-montoAbonado) });
+                    /* PAGO DE DEUDA por la API (antes: un writeBatch que restaba
+                       users.deuda y creaba el ticket a mano; ya no autoriza, asi que el
+                       POS NO PODIA COBRAR UNA DEUDA).
+                       El servidor hace las dos cosas en una transaccion y ademas OTORGA
+                       LOS PUNTOS por el monto pagado (1 por cada 1.000 Gs), que era la
+                       parte de la regla que faltaba: una compra a credito no otorga al
+                       comprar, otorga cuando el cliente paga.
+                       El `return` corta el bloque viejo: lo que alcance a sumarse al
+                       batch no se commitea nunca. El `finally` de esta funcion restaura
+                       el boton igual. */
+                    const respAbono = await NexusAPI.post(
+                        '/orders/pagar-deuda',
+                        {
+                            clienteId: this.clienteActual.id,
+                            monto: montoAbonado,
+                            metodoPago: 'Efectivo',
+                            cajero: this.sesion.nombre,
+                            sucursal: this.sesion.sucursal,
+                            turnoId: this.obtenerTurnoActualId()
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
+                    const datosAbono = (respAbono && respAbono.data) || {};
+                    /* Se pisan deuda y puntos con lo que devolvio el servidor, no con un
+                       calculo local: es el unico que sabe los puntos que corresponden. */
+                    if (datosAbono.deuda !== undefined) this.clienteActual.deuda = Number(datosAbono.deuda);
+                    if (datosAbono.puntos !== undefined) this.clienteActual.puntos = Number(datosAbono.puntos);
+                    const modalPago = document.getElementById('modal-pago-deuda');
+                    if (modalPago) { modalPago.classList.add('hidden'); modalPago.classList.remove('flex'); }
+                    this.mostrarToast(`Pago registrado. Sumo ${Number(datosAbono.puntosOtorgados || 0)} puntos.`, "success");
+                    return;
                     const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
                     const nuevaVentaRef = doc(collection(db, rutaPrivada));
                     batch.set(nuevaVentaRef, {
