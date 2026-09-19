@@ -180,13 +180,118 @@
                 onAuthStateChanged(auth, (user) => {
                     if (user || (window.NexusAuth && window.NexusAuth.autenticado())) {
                         document.getElementById('app-body').classList.remove('opacity-0');
-                        this.conectarFirebaseEnVivo();
+                        this.conectarKdsEnVivo();
                     } else {
                         window.location.replace('index.html');
                     }
                 });
             },
 
+            /* ================== KDS EN VIVO (API + sockets) ==================
+               POR QUE NO ALCANZA CON PEDIR LA LISTA UNA VEZ
+               Una cocina no puede trabajar mirando una foto: si el tablero no avisa cuando
+               entra un pedido, el pedido se pierde. Con Firestore eso lo daba `onSnapshot`,
+               que ya no autoriza: el tablero se quedaba congelado y -peor- sin avisar.
+
+               EL CANAL EN VIVO YA EXISTE
+               El servidor emite en el namespace /kds (con path /realtime, no el /socket.io por
+               defecto) a UNA ROOM POR SUCURSAL. El tablero solo tiene que escuchar ahi.
+
+               RELEER EN VEZ DE FUSIONAR
+               Ante cada aviso se vuelve a pedir GET /orders y se recalcula la lista. Aplicar
+               parches incrementales es donde aparecen los fantasmas (pedidos que no se van
+               nunca de la pantalla).
+
+               SI NO HAY SOCKETS, NO SE QUEDA MUDO
+               Queda un sondeo cada 20s andando siempre: un KDS congelado sin avisar es peor
+               que uno que refresca tarde.
+               ================================================================= */
+            conectarKdsEnVivo: async function() {
+                await this.refrescarPedidosKds();
+
+                if (this.timerRespaldoKds) clearInterval(this.timerRespaldoKds);
+                this.timerRespaldoKds = setInterval(() => {
+                    void this.refrescarPedidosKds();
+                }, 20000);
+
+                try {
+                    /* El cliente de socket.io del servidor, por el mismo path que el canal. */
+                    const lib = await import('/realtime/socket.io.esm.min.js');
+                    const io = lib.io || lib.default;
+
+                    this.socketKds = io('/kds', {
+                        path: '/realtime',
+                        query: { sucursalId: this.sesion?.sucursal || 'unificado' }
+                    });
+
+                    /* Al conectar (y al RECONECTAR) se relee: durante la caida pueden haber
+                       entrado pedidos que nadie aviso. */
+                    this.socketKds.on('connect', () => {
+                        this.pintarEstadoKds(true);
+                        void this.refrescarPedidosKds();
+                    });
+                    this.socketKds.on('disconnect', () => this.pintarEstadoKds(false, 'Reconectando...'));
+                    this.socketKds.on('connect_error', () => this.pintarEstadoKds(false, 'Reconectando...'));
+
+                    ['order:new', 'order:updated', 'venta:creada', 'venta:anulada', 'turno:abierto', 'turno:cerrado', 'stock:cambiado']
+                        .forEach((evento) => {
+                            this.socketKds.on(evento, () => { void this.refrescarPedidosKds(); });
+                        });
+
+                    this.pintarEstadoKds(true);
+                } catch (error) {
+                    console.error('KDS: no se pudo abrir el canal en vivo; queda el sondeo', error);
+                    this.pintarEstadoKds(false, 'Sondeo (20s)');
+                }
+            },
+
+            pintarEstadoKds: function(enVivo, etiqueta) {
+                const statusEl = document.getElementById('kds-status');
+                if (!statusEl) return;
+                if (enVivo) {
+                    statusEl.innerHTML = `<i class="fa-solid fa-satellite-dish text-green-400 animate-pulse"></i> <span class="text-green-400">En Vivo</span>`;
+                } else {
+                    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> <span class="text-amber-400">${etiqueta || 'Reconectando...'}</span>`;
+                }
+            },
+
+            refrescarPedidosKds: async function() {
+                try {
+                    const resp = await NexusAPI.get('/orders', { limit: 200 }, { ttl: 0, retries: 0 });
+                    const filas = (resp && resp.data && resp.data.items) || [];
+                    const sucursal = String(this.sesion?.sucursal || '');
+
+                    /* El filtro por sucursal se hace aca y no en el API por el mismo motivo que
+                       en el resto del panel: si el endpoint ignora el parametro, la cocina de
+                       un local veria pedidos del otro. */
+                    const nuevos = filas
+                        .filter((d) => sucursal === '' || String(d.sucursal || '') === sucursal)
+                        .filter((d) => this.pedidoDebeMostrarseEnKDS(d))
+                        .map((d) => ({ id: String(d._id || d.id || ''), ...d }));
+
+                    /* Avisa SOLO de los que no estaban: con un sondeo cada 20s, avisar de todos
+                       convertiria el aviso en ruido y el cocinero lo ignoraria. */
+                    if (this.snapshotInicializado) {
+                        const idsPrevios = new Set((this.pedidosEnPantalla || []).map((p) => String(p.id)));
+                        nuevos
+                            .filter((p) => !idsPrevios.has(String(p.id)))
+                            .forEach((p) => this.mostrarAlertaNuevoPedido(p));
+                    }
+
+                    nuevos.sort((a, b) => this.normalizarFecha(a.fecha) - this.normalizarFecha(b.fecha));
+                    this.pedidosEnPantalla = nuevos;
+                    this.renderizarKDS();
+                    this.snapshotInicializado = true;
+                } catch (error) {
+                    console.error('KDS: no se pudo refrescar la lista', error);
+                    this.pintarEstadoKds(false, 'Sin conexion');
+                }
+            },
+
+            /* ⚠️ CODIGO NO USADO — NO VOLVER A LLAMAR.
+               Version vieja del en vivo: `onSnapshot` contra Firestore, que ya no autoriza, asi
+               que el tablero no se actualizaba. Se dejo de llamar en init() (ahora llama a
+               conectarKdsEnVivo). Se puede borrar cuando se haga limpieza. */
             conectarFirebaseEnVivo: function() {
                 const statusEl = document.getElementById('kds-status');
                 statusEl.innerHTML = `<i class="fa-solid fa-satellite-dish text-green-400 animate-pulse"></i> <span class="text-green-400">En Vivo</span>`;
