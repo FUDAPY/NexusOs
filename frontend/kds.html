@@ -215,8 +215,20 @@
                 }, 20000);
 
                 try {
-                    /* El cliente de socket.io del servidor, por el mismo path que el canal. */
-                    const lib = await import('/realtime/socket.io.esm.min.js');
+                    /* El cliente de socket.io en dos intentos: primero el que sirve el propio
+                       servidor (mismo origen, sin depender de nadie de afuera) y, si esa ruta
+                       no esta, el CDN oficial. Verificado desde afuera: el servidor expone el
+                       handshake (/realtime/?EIO=4 responde 200 con un sid) pero NO el archivo
+                       del cliente, que devuelve 404.
+                       La version del CDN coincide con la del servidor (socket.io ^4.8.1).
+                       Si los dos intentos fallan, el catch de mas abajo deja el sondeo de 20s,
+                       que ya esta andando desde antes de llegar aca. */
+                    let lib;
+                    try {
+                        lib = await import('/realtime/socket.io.esm.min.js');
+                    } catch (sinArchivoLocal) {
+                        lib = await import('https://cdn.socket.io/4.8.1/socket.io.esm.min.js');
+                    }
                     const io = lib.io || lib.default;
 
                     this.socketKds = io('/kds', {
