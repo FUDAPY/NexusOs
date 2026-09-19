@@ -752,9 +752,12 @@
                     /* GET /users?rol=cliente (antes: getDocs de Firestore, que ya no
                        autoriza: la tabla de clientes se veia VACIA y el resumen de deuda
                        no se podia armar). Se arma el mismo contrato de snapshot (docs con
-                       id + data) para no tocar el cuerpo. */
-                    const respClientes = await NexusAPI.get('/users', { rol: 'cliente', limit: 500 }, { ttl: 0, retries: 0 });
-                    const filasClientes = (respClientes && respClientes.data && respClientes.data.items) || [];
+                       id + data) para no tocar el cuerpo.
+                       El rol se filtra ACA y no en el API: si el endpoint ignora el
+                       parametro, la tabla mostraria al personal como si fueran clientes. */
+                    const respClientes = await NexusAPI.get('/users', { limit: 500 }, { ttl: 0, retries: 0 });
+                    const filasClientes = ((respClientes && respClientes.data && respClientes.data.items) || [])
+                        .filter((d) => String(d.rol || '').toLowerCase() === 'cliente');
                     const envolverCliente = (d) => ({ id: String(d._id || d.id || ''), data: () => d });
                     const snap = {
                         docs: filasClientes.map(envolverCliente),
@@ -978,7 +981,21 @@
 
                 try {
                     if (id === "") {
-                        const existenteSnap = await getDocs(query(collection(db, "users"), where("email", "==", email), limit(1)));
+                        /* GET /users + filtro en el cliente (antes: getDocs de Firestore, que
+                           ya no autoriza). Esto corre PRIMERO en el alta: sin arreglarlo,
+                           guardar un cliente nuevo fallaba antes de llegar a crearlo.
+                           El filtro por email se hace aca y no en el API a proposito: si el
+                           endpoint ignora el parametro devolveria un usuario CUALQUIERA con
+                           limite 1, y el alta terminaria pisando a un cliente que no es. */
+                        const emailBuscado = String(email || '').trim().toLowerCase();
+                        const respExistente = await NexusAPI.get('/users', { limit: 500 }, { ttl: 0, retries: 0 });
+                        const filasExistente = ((respExistente && respExistente.data && respExistente.data.items) || [])
+                            .filter((d) => String(d.email || '').trim().toLowerCase() === emailBuscado);
+                        const existenteSnap = {
+                            docs: filasExistente.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })),
+                            size: filasExistente.length,
+                            empty: filasExistente.length === 0
+                        };
 
                         if (!existenteSnap.empty) {
                             const existenteDoc = existenteSnap.docs[0];
@@ -993,20 +1010,36 @@
                             if (solicitarPinCredito && !pinHashExistente && !existenteData.creditoPinConfigurado) {
                                 throw new Error('Para activar Solicitar PIN en este cliente, cargá un PIN de credito.');
                             }
-                            await updateDoc(doc(db, "users", existenteDoc.id), payloadExistente);
+                            /* PATCH /users/:id via NexusData, la convencion de usuarios.html
+                               (antes: updateDoc de Firestore, que ya no autoriza). */
+                            await NexusData.actualizar('users', existenteDoc.id, payloadExistente);
                             this.mostrarToast("El correo ya existia. Se actualizo el cliente existente.");
                         } else {
-                            // Crear nuevo cliente con Firebase Auth
-                            const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-                            const nuevoUid = userCredential.user.uid;
-                            await signOut(secondaryAuth);
-                            
-                            // Valores por defecto al nacer
+                            /* Alta real por la API (antes: createUserWithEmailAndPassword
+                               contra Firebase Auth, que ya no autoriza: crear un cliente
+                               NUNCA funcionaba).
+                               Dos pasos, igual que en usuarios.html:
+                                 1. POST /users crea el registro.
+                                 2. POST /auth/usuarios/:id/reset-password le pone la clave.
+                               El PIN se guarda despues de tener el id, porque su endpoint
+                               es /auth/usuarios/:id/pin. */
                             datos.puntos = 0;
                             datos.deuda = 0;
+                            const respAlta = await NexusAPI.post('/users', { ...datos, email }, { ttl: 0, retries: 0 });
+                            const nuevoUid = (respAlta && respAlta.data && (respAlta.data._id || respAlta.data.id)) || '';
+                            if (!nuevoUid) throw new Error('El servidor no devolvio el id del cliente creado.');
+
+                            if (pass) {
+                                await NexusAPI.post(
+                                    '/auth/usuarios/' + encodeURIComponent(nuevoUid) + '/reset-password',
+                                    { nueva: String(pass) },
+                                    { ttl: 0, retries: 0 }
+                                );
+                            }
                             const pinCreado = await prepararPinCredito(nuevoUid, pinCredito || pass);
-                            datos.creditoPinConfigurado = pinCreado;
-                            await setDoc(doc(db, "users", nuevoUid), datos);
+                            if (pinCreado) {
+                                await NexusData.actualizar('users', nuevoUid, { creditoPinConfigurado: true });
+                            }
                             this.mostrarToast("Cliente registrado.");
                         }
                     } else {
@@ -1018,7 +1051,8 @@
                         if (solicitarPinCredito && !pinHash && !clienteActual?.creditoPinConfigurado) {
                             throw new Error('Para activar Solicitar PIN en este cliente, cargá un PIN de credito.');
                         }
-                        await updateDoc(doc(db, "users", id), payloadUpdate);
+                        /* PATCH /users/:id via NexusData (antes: updateDoc de Firestore). */
+                        await NexusData.actualizar('users', id, payloadUpdate);
                         this.mostrarToast("Perfil actualizado.");
                     }
                     this.cerrarModalFormulario();
@@ -1038,7 +1072,9 @@
                 }
                 if(confirm("Estas seguro de eliminar todo el registro de este cliente?")) {
                     try {
-                        await deleteDoc(doc(db, "users", id));
+                        /* DELETE /users/:id via NexusData (antes: deleteDoc de Firestore,
+                           que ya no autoriza: borrar un cliente NUNCA funcionaba). */
+                        await NexusData.eliminar('users', id);
                         this.mostrarToast("Cliente eliminado de la base de datos.");
                         this.cargarClientes();
                     } catch(e) {
@@ -1057,7 +1093,9 @@
                 if (!cliente) return;
                 if (!confirm(`Aprobar la solicitud premium de ${cliente.nombre}?`)) return;
                 try {
-                    await updateDoc(doc(db, "users", id), {
+                    /* PATCH /users/:id via NexusData (antes: updateDoc de Firestore, que ya
+                       no autoriza: aprobar una solicitud premium no se guardaba). */
+                    await NexusData.actualizar('users', id, {
                         tipoCliente: "premium",
                         estadoBeneficios: "activo"
                     });
@@ -1079,7 +1117,8 @@
                 if (!cliente) return;
                 if (!confirm(`Rechazar la solicitud premium de ${cliente.nombre}?`)) return;
                 try {
-                    await updateDoc(doc(db, "users", id), {
+                    /* PATCH /users/:id via NexusData (antes: updateDoc de Firestore). */
+                    await NexusData.actualizar('users', id, {
                         tipoCliente: "fiel",
                         estadoBeneficios: "rechazado"
                     });
