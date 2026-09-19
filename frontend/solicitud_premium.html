@@ -362,45 +362,50 @@
                     throw new Error('Las contrasenas no coinciden.');
                 }
 
-                await setPersistence(auth, browserLocalPersistence);
+                /* Alta o entrada POR LA API. Antes usaba Firebase Auth
+                   (setPersistence, signInWithEmailAndPassword,
+                   createUserWithEmailAndPassword), que ya no existe: no se podia enviar
+                   la solicitud. Los dos endpoints ya estaban: /auth/login y /auth/registro.
+                   Se devuelve un objeto con `uid`, que es lo que usa el resto de la pagina
+                   para pedir el perfil. */
+                const sesionDe = (respuesta, emailUsado) => {
+                    const datos = (respuesta && respuesta.data) || {};
+                    if (datos.token) NexusAPI.token = datos.token;
+                    const usuario = (datos.user || datos.usuario || {});
+                    return { uid: String(usuario._id || usuario.id || usuario.uid || ''), email: emailUsado, ...usuario };
+                };
 
                 try {
-                    const cred = await signInWithEmailAndPassword(auth, email, pass);
-                    this.usuarioActual = cred.user;
-                    return cred.user;
-                } catch (error) {
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                        this.usuarioActual = cred.user;
-                        await setDoc(doc(db, 'users', cred.user.uid), {
+                    const respLogin = await NexusAPI.post('/auth/login', { email, password: pass }, { ttl: 0, retries: 0 });
+                    this.usuarioActual = sesionDe(respLogin, email);
+                    return this.usuarioActual;
+                } catch (errorLogin) {
+                    /* Si no se pudo entrar se intenta crear la cuenta. Cualquier error del
+                       alta se propaga tal cual: tragarselo dejaria a la persona creyendo
+                       que envio la solicitud. */
+                    const respRegistro = await NexusAPI.post(
+                        '/auth/registro',
+                        {
                             nombre: document.getElementById('sol-nombre-completo').value.trim() || 'Cliente Club Lin',
-                            email: email,
-                            telefono: document.getElementById('sol-telefono').value.trim(),
-                            rol: 'cliente',
-                            estadoBeneficios: 'inactivo',
-                            puntos: 0,
-                            deuda: 0,
-                            direccion: document.getElementById('sol-direccion').value.trim(),
-                            fechaRegistro: new Date().toISOString()
-                        });
-                        return cred.user;
-                    }
-                    if (error.code === 'auth/wrong-password') {
-                        throw new Error('La contrasena no coincide con la cuenta existente.');
-                    }
-                    if (error.code === 'auth/email-already-in-use') {
-                        throw new Error('Ese correo ya existe. Usa la misma contrasena de tu cuenta.');
-                    }
-                    throw error;
+                            email,
+                            password: pass,
+                            telefono: document.getElementById('sol-telefono').value.trim()
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
+                    this.usuarioActual = sesionDe(respRegistro, email);
+                    return this.usuarioActual;
                 }
             },
 
             cargarPerfil: async function(user) {
-                const snap = await getDoc(doc(db, 'users', user.uid));
-                if (!snap.exists()) {
+                // GET /users/:id (antes: getDoc de Firestore, muerto).
+                const respPerfil = await NexusAPI.get('/users/' + encodeURIComponent(user.uid), { ttl: 0, retries: 0 });
+                const perfil = (respPerfil && respPerfil.data) || null;
+                if (!perfil) {
                     throw new Error('No encontramos tu perfil en el sistema.');
                 }
-                this.perfilActual = snap.data();
+                this.perfilActual = perfil;
                 this.sincronizarSesionLocal(this.perfilActual, user);
                 this.cargarFormulario(this.perfilActual);
                 this.actualizarEstadoCuentaUI();
@@ -459,17 +464,23 @@
                 try {
                     const user = await this.asegurarCuentaCliente(payload.correoElectronico);
                     await this.cargarPerfil(user);
-                    await updateDoc(doc(db, 'users', this.usuarioActual.uid), {
-                        nombre: payload.nombreCompleto,
-                        email: payload.correoElectronico,
-                        telefono: payload.telefono,
-                        direccion: payload.direccionExacta
-                    });
-                    await updateDoc(doc(db, 'users', this.usuarioActual.uid), {
-                        estadoBeneficios: this.perfilActual?.estadoBeneficios === 'activo' ? 'activo' : 'pendiente',
-                        solicitudPremium: payload,
-                        solicitudPremiumActualizadaAt: serverTimestamp()
-                    });
+                    /* PATCH /users/:id (antes: dos updateDoc a Firestore, muertos: la
+                       solicitud no se guardaba nunca).
+                       Se manda en UN patch: el segundo update leia el perfil para decidir
+                       el estado, y ese dato ya esta en this.perfilActual. */
+                    await NexusAPI.patch(
+                        '/users/' + encodeURIComponent(this.usuarioActual.uid),
+                        {
+                            nombre: payload.nombreCompleto,
+                            email: payload.correoElectronico,
+                            telefono: payload.telefono,
+                            direccion: payload.direccionExacta,
+                            estadoBeneficios: this.perfilActual?.estadoBeneficios === 'activo' ? 'activo' : 'pendiente',
+                            solicitudPremium: payload,
+                            solicitudPremiumActualizadaAt: new Date().toISOString()
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
                     this.perfilActual = {
                         ...(this.perfilActual || {}),
                         nombre: payload.nombreCompleto,
