@@ -51,7 +51,12 @@ orderRouter.post(
   asyncHandler(cerrarCuenta),
 );
 
-import { pagarDeuda, registrarAbono } from '../controllers/pagoDeuda.controller.js';
+import {
+  pagarDeuda,
+  registrarAbono,
+  aprobarAbono,
+  rechazarAbono,
+} from '../controllers/pagoDeuda.controller.js';
 
 /**
  * Pago de la deuda de un cliente. Resta la deuda, crea el ticket del abono y otorga
@@ -77,6 +82,29 @@ orderRouter.post(
   '/abono-pendiente',
   requiereRol('admin', 'supervisor', 'cobrador'),
   asyncHandler(registrarAbono),
+);
+
+/**
+ * Aprueba un cobro de deuda que un cobrador dejo pendiente.
+ *
+ * RECIEN ACA baja la deuda del cliente y se otorgan los puntos del monto. Idempotente: si dos
+ * administradores aprueban el mismo cobro, el segundo recibe 409 y NO se cobra dos veces.
+ *
+ * Solo admin y supervisor: es la plata que el cobrador trajo de la calle.
+ */
+orderRouter.post(
+  '/:id/aprobar-abono',
+  requiereRol('admin', 'supervisor'),
+  asyncHandler(aprobarAbono),
+);
+
+/**
+ * Rechaza un cobro pendiente. No mueve plata: la deuda queda como estaba.
+ */
+orderRouter.post(
+  '/:id/rechazar-abono',
+  requiereRol('admin', 'supervisor'),
+  asyncHandler(rechazarAbono),
 );
 
 /**

@@ -1,5 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
-import { pagarDeudaCliente, registrarAbonoPendiente } from '../services/pagoDeuda.service.js';
+import {
+  pagarDeudaCliente,
+  registrarAbonoPendiente,
+  aprobarAbonoPendiente,
+  rechazarAbonoPendiente,
+} from '../services/pagoDeuda.service.js';
 import { AppError, sendOk } from '../utils/response.js';
 
 /**
@@ -95,6 +100,61 @@ export const registrarAbono = async (req: Request, res: Response, next: NextFunc
         { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
       ),
       201,
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/v1/orders/:id/aprobar-abono  { aprobadoPor? }
+ *
+ * Aprueba un cobro pendiente: RECIEN ACA baja la deuda del cliente y se otorgan los puntos
+ * del monto pagado. Es idempotente: aprobar dos veces no cobra dos veces.
+ */
+export const aprobarAbono = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const id = String(req.params.id ?? '').trim();
+    const body = (req.body ?? {}) as { aprobadoPor?: unknown; cajero?: unknown };
+
+    sendOk(
+      res,
+      await aprobarAbonoPendiente(
+        id,
+        typeof body.aprobadoPor === 'string'
+          ? body.aprobadoPor
+          : typeof body.cajero === 'string'
+            ? body.cajero
+            : '',
+        { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
+      ),
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/v1/orders/:id/rechazar-abono  { motivo?, revisadoPor? }
+ *
+ * Rechaza un cobro pendiente. No mueve plata: la deuda queda como estaba.
+ */
+export const rechazarAbono = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const id = String(req.params.id ?? '').trim();
+    const body = (req.body ?? {}) as { motivo?: unknown; revisadoPor?: unknown; cajero?: unknown };
+
+    sendOk(
+      res,
+      await rechazarAbonoPendiente(
+        id,
+        typeof body.motivo === 'string' ? body.motivo : '',
+        typeof body.revisadoPor === 'string'
+          ? body.revisadoPor
+          : typeof body.cajero === 'string'
+            ? body.cajero
+            : '',
+      ),
     );
   } catch (error) {
     next(error);
