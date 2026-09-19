@@ -447,8 +447,17 @@
             },
 
             construirResumenDeudaPorCliente: async function() {
-                const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                const snap = await getDocs(collection(db, rutaPrivada));
+                /* DEVUELVE VACIO A PROPOSITO.
+                   Antes leia TODA la coleccion `sales` de Firestore (que ya no autoriza) para
+                   reconstruir cuanto de la deuda es del mes y cuanto viene arrastrada.
+                   Eso hoy seria PEOR que no hacerlo: el listado de ordenes viene paginado,
+                   asi que sumar solo la pagina traeria un resumen PARCIAL y la particion por
+                   mes quedaria mal.
+                   La deuda autoritativa ahora la mantiene el SERVIDOR en `users.deuda`
+                   (`POST /orders/pagar-deuda` la resta, la venta a credito la suma), y
+                   `reconciliarResumenDeuda` con un resumen vacio deja el total entero en el
+                   mes actual: se pierde la particion por mes, NUNCA el saldo. */
+                return {};
                 const buckets = {};
                 const ahora = new Date();
                 const mesActual = this.obtenerClaveMes(ahora);
@@ -680,11 +689,14 @@
 
             cargarSucursales: async function() {
                 try {
-                    const snap = await getDocs(collection(db, "branches"));
+                    /* GET /branches (antes: getDocs de Firestore, que ya no autoriza:
+                       el selector de sucursales para el credito libre salia vacio). */
+                    const respSuc = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
+                    const filasSuc = (respSuc && respSuc.data && respSuc.data.items) || [];
                     this.sucursalesDisponibles = [];
-                    snap.forEach(docSnap => {
-                        const nombre = docSnap.data().nombre || docSnap.id;
-                        this.sucursalesDisponibles.push(nombre);
+                    filasSuc.forEach(fila => {
+                        const nombre = (fila && (fila.nombre || fila.name)) || (fila && (fila._id || fila.id)) || '';
+                        if (nombre) this.sucursalesDisponibles.push(nombre);
                     });
                     this.renderizarOpcionesCreditoLibre();
                 } catch (error) {
@@ -737,8 +749,19 @@
                 
                 try {
                     // Filtrar solo usuarios que tengan rol 'cliente'
-                    const q = query(collection(db, "users"), where("rol", "==", "cliente"));
-                    const snap = await getDocs(q);
+                    /* GET /users?rol=cliente (antes: getDocs de Firestore, que ya no
+                       autoriza: la tabla de clientes se veia VACIA y el resumen de deuda
+                       no se podia armar). Se arma el mismo contrato de snapshot (docs con
+                       id + data) para no tocar el cuerpo. */
+                    const respClientes = await NexusAPI.get('/users', { rol: 'cliente', limit: 500 }, { ttl: 0, retries: 0 });
+                    const filasClientes = (respClientes && respClientes.data && respClientes.data.items) || [];
+                    const envolverCliente = (d) => ({ id: String(d._id || d.id || ''), data: () => d });
+                    const snap = {
+                        docs: filasClientes.map(envolverCliente),
+                        size: filasClientes.length,
+                        empty: filasClientes.length === 0,
+                        forEach: (cb) => filasClientes.map(envolverCliente).forEach(cb)
+                    };
                     this.resumenDeudaPorCliente = await this.construirResumenDeudaPorCliente();
                     
                     this.clientesLista = [];
@@ -1149,10 +1172,22 @@
                 loader.classList.remove('hidden'); listaUl.innerHTML = '';
 
                 try {
-                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    // Query: Traer las ventas asociadas a este cliente (Limite 20 para no saturar)
-                    const q = query(collection(db, rutaPrivada), where("cliente", "==", clienteId));
-                    const snap = await getDocs(q);
+                    /* GET /orders (antes: getDocs de la coleccion `sales` en Firestore, que ya
+                       no autoriza: el historial salia vacio). Se filtran aqui las del cliente
+                       porque el API no pagina por ese campo, y se toman las 20 mas recientes
+                       para conservar el criterio original. */
+                    const respHistorial = await NexusAPI.get('/orders', { limit: 200 }, { ttl: 0, retries: 0 });
+                    const filasHistorial = ((respHistorial && respHistorial.data && respHistorial.data.items) || [])
+                        .filter((d) => String(d.cliente || '') === String(clienteId || ''))
+                        .sort((a, b) => new Date(b.creadoAt || b.fecha || 0).getTime() - new Date(a.creadoAt || a.fecha || 0).getTime())
+                        .slice(0, 20);
+                    const envolverMov = (d) => ({ id: String(d._id || d.id || ''), data: () => d });
+                    const snap = {
+                        docs: filasHistorial.map(envolverMov),
+                        size: filasHistorial.length,
+                        empty: filasHistorial.length === 0,
+                        forEach: (cb) => filasHistorial.map(envolverMov).forEach(cb)
+                    };
 
                     if(snap.empty) {
                         listaUl.innerHTML = `<p class="p-8 text-center text-slate-400 italic">No hay registros de compras.</p>`;
