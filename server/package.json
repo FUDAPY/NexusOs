@@ -28,7 +28,8 @@
     "mongo:indices": "tsx scripts/mantener-mongo.ts --indices",
     "mongo:normalizar": "tsx scripts/mantener-mongo.ts --normalizar",
     "auth:pass": "tsx scripts/establecer-password.ts",
-    "caja:cerrar": "tsx scripts/cerrar-caja.ts"
+    "caja:cerrar": "tsx scripts/cerrar-caja.ts",
+    "limpiar:datos": "tsx scripts/limpiar-datos.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
