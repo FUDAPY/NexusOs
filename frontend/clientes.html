@@ -938,14 +938,18 @@
                     const limpio = String(valorPin || '').trim();
                     if (!limpio) return false;
                     if (limpio.length < 4) throw new Error('El PIN de credito debe tener minimo 4 caracteres.');
-                    const pinHash = await this.generarHashPinCredito(userId, limpio);
-                    await setDoc(doc(db, "creditPins", userId), {
-                        clienteId: userId,
-                        pinHash,
-                        updatedAt: new Date(),
-                        updatedBy: this.sesion?.uid || null,
-                        updatedByName: this.sesion?.nombre || 'Admin'
-                    }, { merge: true });
+
+                    /* POST /auth/usuarios/:id/pin (antes: setDoc a `creditPins` con un hash
+                       calculado EN EL NAVEGADOR, sobre Firestore, que ya no autoriza: el
+                       PIN no se guardaba).
+                       Ahora el PIN viaja por HTTPS y lo hashea el SERVIDOR. Calcularlo aca
+                       obligaria a que el algoritmo y la sal vivan en el cliente, que es lo
+                       mismo que no protegerlo. */
+                    await NexusAPI.post(
+                        '/auth/usuarios/' + encodeURIComponent(userId) + '/pin',
+                        { pin: limpio },
+                        { ttl: 0, retries: 0 }
+                    );
                     return true;
                 };
 
@@ -1302,19 +1306,42 @@
                             aprobadoPor: this.esAdmin() ? (this.sesion?.nombre || 'Admin') : null
                         };
                         if (this.esAdmin()) {
-                            const batch = writeBatch(db);
-                            const userRef = doc(db, "users", c.id);
-                            batch.update(userRef, { deuda: Math.max(0, deudaDisponible - montoAbonado) });
-                            batch.set(ticketRef, comprobante);
-                            await batch.commit();
+                            /* POST /orders/pagar-deuda (antes: un writeBatch sobre Firestore
+                               que restaba `users.deuda` y creaba el comprobante a mano; ya
+                               no autoriza, asi que saldar una deuda NO se guardaba).
+                               El servidor resta la deuda, crea el comprobante y ADEMAS
+                               otorga los puntos por el monto pagado (1 por cada 1.000).
+                               El comprobante de impresion se arma con lo que devuelve. */
+                            const respPago = await NexusAPI.post(
+                                '/orders/pagar-deuda',
+                                {
+                                    clienteId: c.id,
+                                    monto: montoAbonado,
+                                    metodoPago: 'Efectivo',
+                                    cajero: this.sesion?.nombre || 'Panel',
+                                    sucursal: c.sucursal || '',
+                                    nombreCliente: c.nombre || ''
+                                },
+                                { ttl: 0, retries: 0 }
+                            );
+                            const datosPago = (respPago && respPago.data) || {};
 
                             this.ultimaVentaImprimir = {
                                 ...comprobante,
+                                ...datosPago,
                                 cliente: c.nombre
                             };
                             this.imprimirComprobanteAbono(this.ultimaVentaImprimir);
-                            this.mostrarToast("Cobro aplicado correctamente.", "success");
+                            this.mostrarToast(
+                                `Cobro aplicado. Sumo ${Number(datosPago.puntosOtorgados || 0)} puntos.`,
+                                "success"
+                            );
                         } else {
+                            /* El cobrador registra y queda pendiente de aprobacion. Este
+                               camino SIGUE escribiendo a Firestore y por eso falla con su
+                               mensaje: necesita un endpoint que cree el abono SIN aplicar
+                               la deuda, y todavia no existe. Falla ruidoso en vez de dar
+                               por cobrado algo que no se guardo. */
                             await setDoc(ticketRef, comprobante);
                             this.mostrarToast("Cobro registrado. Queda pendiente de aprobacion administrativa.", "success");
                         }
