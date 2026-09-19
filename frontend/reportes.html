@@ -381,7 +381,12 @@
                             { id: 'mr_lin_restaurante', nombre: 'San Benito' }
                         ];
                     this.renderSelectoresSucursales();
-                    const snapSucursales = await getDocs(collection(db, "branches"));
+                    // GET /branches (antes: getDocs de Firestore, muerto).
+                    const respSucursales = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
+                    const filasSucursales = (respSucursales && respSucursales.data && respSucursales.data.items) || [];
+                    const snapSucursales = {
+                        forEach: (fn) => filasSucursales.forEach((d) => fn({ id: String(d._id || d.id || ''), data: () => d }))
+                    };
                     snapSucursales.forEach(doc => {
                         const nombre = doc.data().nombre || doc.data().branchName || doc.id;
                         const normalizada = CierreCajaNormalizer.normalizarSucursal(nombre);
@@ -656,20 +661,28 @@
                 inicioConsultaCierres.setDate(inicioConsultaCierres.getDate() - 2);
                 const finConsultaCierres = new Date(rangos.fin);
                 finConsultaCierres.setDate(finConsultaCierres.getDate() + 2);
-                const [cierreSnap, ventasSnap] = await Promise.all([
-                    getDocs(query(
-                        collection(db, 'cierresCaja'),
-                        where('fechaCierre', '>=', inicioConsultaCierres),
-                        where('fechaCierre', '<', finConsultaCierres),
-                        orderBy('fechaCierre', 'desc')
-                    )),
-                    getDocs(query(
-                        collection(db, rutaPrivada),
-                        where('fecha', '>=', inicioConsultaVentas),
-                        where('fecha', '<', finConsultaVentas),
-                        orderBy('fecha', 'desc')
-                    ))
-                ]);
+                /* GET /cash-closes y GET /orders (antes: dos getDocs con filtros de fecha,
+                   muertos). El rango se aplica ACA, en el cliente: asi no depende de que
+                   filtros soporte el recurso, y el resultado es el mismo que antes. */
+                const respCierres = await NexusAPI.get('/cash-closes', { limit: 500 }, { ttl: 0, retries: 0 });
+                const filasCierres = ((respCierres && respCierres.data && respCierres.data.items) || [])
+                    .filter((c) => {
+                        const f = new Date(c.fechaCierre || c.creadoEn || 0).getTime();
+                        return f >= inicioConsultaCierres.getTime() && f < finConsultaCierres.getTime();
+                    });
+                const respVentas = await NexusAPI.get(
+                    '/orders',
+                    { limit: 500, desde: inicioConsultaVentas.toISOString(), hasta: finConsultaVentas.toISOString() },
+                    { ttl: 0, retries: 0 }
+                );
+                const filasVentas = (respVentas && respVentas.data && respVentas.data.items) || [];
+
+                const aSnapshot = (filas) => ({
+                    docs: filas.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })),
+                    forEach: (fn) => filas.forEach((d) => fn({ id: String(d._id || d.id || ''), data: () => d })),
+                });
+                const cierreSnap = aSnapshot(filasCierres);
+                const ventasSnap = aSnapshot(filasVentas);
                 const ventas = ventasSnap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
                 const ventasPorId = new Map(ventas.map(venta => [venta.id, venta]));
                 const cierres = cierreSnap.docs.map(docSnap => {
@@ -968,7 +981,12 @@
                 const fechaObjetivo = new Date(`${fechaStr}T00:00:00`);
                 const sucursalFiltroId = CierreCajaNormalizer.normalizarSucursal(sucursalFiltro).id;
                 const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                const snapshot = await getDocs(query(collection(db, rutaPrivada)));
+                // GET /orders (antes: un getDocs sin filtro, muerto).
+                const respTodasVentas = await NexusAPI.get('/orders', { limit: 500 }, { ttl: 0, retries: 0 });
+                const filasTodasVentas = (respTodasVentas && respTodasVentas.data && respTodasVentas.data.items) || [];
+                const snapshot = {
+                    forEach: (fn) => filasTodasVentas.forEach((d) => fn({ id: String(d._id || d.id || ''), data: () => d }))
+                };
 
                 const ventasArqueadas = [];
                 const ventasDelDia = [];
@@ -1049,7 +1067,13 @@
             },
 
             buscarCierreCajaGuardado: async function(fechaStr, sucursalFiltro) {
-                const snap = await getDocs(query(collection(db, 'cierresCaja'), orderBy('fechaCierre', 'desc')));
+                // GET /cash-closes (antes: getDocs ordenado, muerto).
+                const respCierresGuardados = await NexusAPI.get('/cash-closes', { limit: 500 }, { ttl: 0, retries: 0 });
+                const filasCierresGuardados = ((respCierresGuardados && respCierresGuardados.data && respCierresGuardados.data.items) || [])
+                    .sort((a, b) => new Date(b.fechaCierre || 0).getTime() - new Date(a.fechaCierre || 0).getTime());
+                const snap = {
+                    forEach: (fn) => filasCierresGuardados.forEach((d) => fn({ id: String(d._id || d.id || ''), data: () => d }))
+                };
                 const sucursalFiltroId = CierreCajaNormalizer.normalizarSucursal(sucursalFiltro).id;
                 const cierresOperacion = [];
                 const cierresPorCierre = [];
