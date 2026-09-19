@@ -825,7 +825,7 @@
                 this.subscribe();
             },
 
-            subscribe() {
+            async subscribe() {
                 if (this.unsubscribe) {
                     this.unsubscribe();
                     this.unsubscribe = null;
@@ -836,8 +836,24 @@
                 this.showLoading();
                 SalesChart.destroy();
 
-                const branchRef = doc(db, "publicGoals", this.selectedBranchId);
-                this.unsubscribe = onSnapshot(branchRef, (snapshot) => {
+                /* GET /public-goals (antes: onSnapshot de un documento, que ya no autoriza:
+                   la meta publica no se veia).
+                   Se busca por id y, si no coincide, por los campos de sucursal: el id del
+                   documento en Mongo NO es el de Firestore.
+                   Mismo contrato de snapshot (exists/id/data) para no tocar el cuerpo. Se
+                   pierde el "en vivo", pero el refresco de respaldo ya existia. */
+                const respMetas = await NexusAPI.get('/public-goals', { limit: 200 }, { ttl: 0, retries: 0 });
+                const filasMetas = (respMetas && respMetas.data && respMetas.data.items) || [];
+                const objetivo = String(this.selectedBranchId || '');
+                const crudoMeta = filasMetas.find((m) => String(m._id || m.id || '') === objetivo)
+                    || filasMetas.find((m) => String(m.legacyId || m.branchId || m.sucursalId || m.sucursalKey || '') === objetivo)
+                    || null;
+                const snapshot = {
+                    exists: () => crudoMeta !== null,
+                    id: String((crudoMeta && (crudoMeta._id || crudoMeta.id)) || objetivo),
+                    data: () => (crudoMeta || {})
+                };
+                ((snapshot) => {
                     if (!snapshot.exists()) {
                         this.loadFallback();
                         return;
@@ -870,7 +886,13 @@
                         return;
                     }
 
-                    const snapshot = await getDocs(collection(db, "publicGoals"));
+                    // GET /public-goals (antes: getDocs, muerto). Mismo contrato de snapshot.
+                    const respTodasMetas = await NexusAPI.get('/public-goals', { limit: 200 }, { ttl: 0, retries: 0 });
+                    const filasTodasMetas = (respTodasMetas && respTodasMetas.data && respTodasMetas.data.items) || [];
+                    const snapshot = {
+                        docs: filasTodasMetas.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })),
+                        forEach: (fn) => filasTodasMetas.forEach((d) => fn({ id: String(d._id || d.id || ''), data: () => d })),
+                    };
                     const branch = this.findFallbackBranchFromSnapshot(snapshot);
                     if (!branch?.data) {
                         this.showEmpty();
