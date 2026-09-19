@@ -9,6 +9,7 @@ import { errorHandler, notFound } from './middlewares/errorHandler.js';
 import { auditRouter } from './routes/audit.routes.js';
 import { resourceRouter, publicResourceRouter } from './routes/resource.routes.js';
 import { cashShiftRouter } from './routes/cashShift.routes.js';
+import { productionRouter } from './routes/production.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { configRouter } from './routes/config.routes.js';
 import { requiereAuth } from './middlewares/auth.js';
@@ -55,6 +56,10 @@ export const buildApp = (): Express => {
   // Va ANTES que resourceRouter: necesita resolver POST /cash-shifts/cerrar
   // antes de que el CRUD generico tome el prefijo.
   app.use(`${env.API_PREFIX}/cash-shifts`, requiereAuth, cashShiftRouter);
+
+// Va ANTES que resourceRouter: necesita resolver POST /production-batches/lote, que
+// crea el lote y acredita los contadores de la sucursal en una transaccion.
+app.use(`${env.API_PREFIX}/production-batches`, requiereAuth, productionRouter);
 
   // Configuracion global: /settings sigue siendo solo lectura en el CRUD
   // generico; las escrituras pasan por aca con control de rol.

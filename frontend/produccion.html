@@ -590,6 +590,31 @@
                 const carneSalteadoGenerada = meta.tipo === 'carne_salteado' ? Math.max(1, Math.round(cantidad)) : 0;
                 const carneLomitoGenerada = meta.tipo === 'carne_lomito' ? Math.max(1, Math.round(cantidad)) : 0;
                 const panLomitoGenerado = meta.tipo === 'pan_lomito' ? Math.max(1, Math.round(cantidad)) : 0;
+                /* POST /production-batches/lote (antes: un writeBatch que creaba el lote y
+                   actualizaba la config en Firestore, que ya no autoriza: cargar
+                   produccion NO HACIA NADA).
+                   Es un endpoint y no un PATCH porque hay que crear el lote Y acreditar los
+                   contadores: hacerlo desde aca seria leer-sumar-escribir, y dos personas
+                   cargando produccion al mismo tiempo se pisan, un lote queda guardado y el
+                   contador no lo refleja. El `return` corta el bloque viejo. */
+                const respLote = await NexusAPI.post(
+                    '/production-batches/lote',
+                    {
+                        sucursalKey: this.sucursalActual.key,
+                        sucursal: this.sucursalActual.nombre,
+                        tipoInsumo: meta.tipo,
+                        cantidad,
+                        unidad: meta.unidad,
+                        observacion
+                    },
+                    { ttl: 0, retries: 0 }
+                );
+                const datosLote = (respLote && respLote.data) || {};
+                this.mostrarToast(`Lote cargado: +${cantidad} ${meta.unidad}. Disponibles: ${Number(datosLote.disponibles || 0)}.`);
+                document.getElementById('input-cantidad-lote').value = '';
+                document.getElementById('input-observacion-lote').value = '';
+                return;
+
                 const batch = writeBatch(db);
                 const configRef = doc(db, 'produccionConfig', this.sucursalActual.key);
                 const loteRef = doc(collection(db, 'produccionLotes'));
