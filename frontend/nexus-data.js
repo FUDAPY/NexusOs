@@ -132,6 +132,22 @@
   function fuente(pagina) {
     try {
       var guardado = global.localStorage ? global.localStorage.getItem(claveDe(pagina)) : null;
+
+      /* Un 'firestore' guardado NO se respeta mas.
+         Firestore ya no autoriza: esa rama no es "el comportamiento anterior", es codigo
+         muerto que deja la pantalla vacia. Y quedaba PEGADO en el navegador: una maquina
+         con la clave vieja seguia mostrando un panel sin datos aunque todo lo demas
+         estuviera migrado, que es exactamente el sintoma de "no esta conectado".
+         Se corrige solo: si lo guardado dice 'firestore' y el defecto es 'mongo', se
+         sobrescribe. Asi cualquier navegador con la clave vieja queda arreglado en la
+         primera recarga, sin que nadie tenga que limpiar el storage a mano. */
+      if (guardado === 'firestore' && state.fuentePorDefecto === 'mongo') {
+        try {
+          global.localStorage.setItem(claveDe(pagina), 'mongo');
+        } catch (e) { /* modo privado: se ignora, igual queda forzado abajo */ }
+        return 'mongo';
+      }
+
       if (guardado === 'mongo' || guardado === 'firestore') return guardado;
     } catch (e) { /* modo privado o storage bloqueado: se usa el default */ }
     return state.fuentePorDefecto;
