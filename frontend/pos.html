@@ -3708,7 +3708,11 @@
                             subtotal: subtotalSinDescuentoPremium,
                             metodoPago: metodoElegido,
                             estadoPago: 'pagado',
-                            puntosOtorgados: puntosGanados,
+                            /* Los puntos reales los decide el servidor (1 por cada 1.000, y
+                               no otorga si es a credito o si canjeo puntos). Se imprime lo
+                               que devolvio la API: con el calculo del POS, el ticket podria
+                               mostrar un numero distinto del que le queda al cliente. */
+                            puntosOtorgados: (datosVenta.order && datosVenta.order.puntosOtorgados) ?? puntosGanados,
                             puntosCanjeados,
                             puntosAcumulados: this.clienteActual ? Math.max(0, (this.clienteActual.puntos || 0) + deltaPuntosCliente) : 0,
                             observacion: observacionInput,

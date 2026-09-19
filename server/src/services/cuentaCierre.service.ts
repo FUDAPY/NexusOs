@@ -101,6 +101,11 @@ export const cerrarCuentaPendiente = async (
     await applyStockMovements(prepared, session);
 
     const esCredito = input.metodoPago === 'Credito' || input.metodoPago === 'Crédito';
+    const canjeados = Math.max(0, input.puntosCanjeados ?? 0);
+    /* Misma regla que una venta directa: 1 punto por cada 1.000 Gs, y NO se otorgan si
+       la cuenta se paga a credito (esa plata no entro: se otorgan cuando pague la deuda)
+       ni si canjeo puntos. */
+    const puntosOtorgados = esCredito || canjeados > 0 ? 0 : Math.floor(total / 1000);
 
     orden.estadoPago = 'pagado';
     orden.items = items;
@@ -109,8 +114,8 @@ export const cerrarCuentaPendiente = async (
     // El metodo llega como string del POS; el modelo lo tiene como union de
     // literales, asi que se castea en el unico lugar donde se asigna.
     orden.metodoPago = input.metodoPago as typeof orden.metodoPago;
-    orden.puntosOtorgados = Math.max(0, input.puntosOtorgados ?? 0);
-    orden.puntosCanjeados = Math.max(0, input.puntosCanjeados ?? 0);
+    orden.puntosOtorgados = puntosOtorgados;
+    orden.puntosCanjeados = canjeados;
     if (typeof input.observacion === 'string') orden.observacion = input.observacion;
     orden.confirmadoPorCaja = true;
     orden.fechaConfirmacionCaja = new Date();
@@ -139,8 +144,8 @@ export const cerrarCuentaPendiente = async (
     await aplicarSaldoCliente(
       {
         clienteId: input.clienteId ?? orden.cliente,
-        puntosOtorgados: input.puntosOtorgados,
-        puntosCanjeados: input.puntosCanjeados,
+        puntosOtorgados,
+        puntosCanjeados: canjeados,
         creditoLibre: input.creditoLibre,
       },
       total,

@@ -220,6 +220,17 @@ export const createOrder = async (
     const esCredito = input.metodoPago === 'Credito' || input.metodoPago === 'Crédito';
     const ticketId = input.ticket_id ?? buildTicketId();
 
+    /* Los puntos los calcula el SERVIDOR: 1 por cada 1.000 Gs, redondeando abajo.
+       Antes los mandaba el navegador, asi que el numero era el que el POS quisiera (aunque
+       fuera de buena fe) y la regla vivia en un solo cliente.
+       NO se otorgan:
+         - en una venta a CREDITO: esa plata todavia no entro. Se otorgan cuando el cliente
+           PAGA su deuda, sobre el monto que paga.
+         - si la venta CANJEO puntos: canjear 22 puntos para pagar la mitad de un lomito es
+           parte del pago, y sobre eso no se acumula. */
+    const canjeados = Math.max(0, input.puntosCanjeados ?? 0);
+    const puntosOtorgados = esCredito || canjeados > 0 ? 0 : Math.floor(total / 1000);
+
     const [orderDoc] = await Order.create(
       [
         {
@@ -244,8 +255,8 @@ export const createOrder = async (
           motivoNoAfectaCaja: input.motivoNoAfectaCaja,
           origenCuentaPendiente: input.origenCuentaPendiente,
 
-          puntosOtorgados: input.puntosOtorgados,
-          puntosCanjeados: input.puntosCanjeados,
+          puntosOtorgados,
+          puntosCanjeados: canjeados,
 
           detalleEfectivo: input.detalleEfectivo ?? null, detallesPago: input.detallesPago ?? null,
           turnoId: input.turnoId, fechaAperturaTurno: input.fechaAperturaTurno ?? null,
@@ -277,8 +288,8 @@ export const createOrder = async (
     await aplicarSaldoCliente(
       {
         clienteId: input.clienteId,
-        puntosOtorgados: input.puntosOtorgados,
-        puntosCanjeados: input.puntosCanjeados,
+        puntosOtorgados,
+        puntosCanjeados: canjeados,
         creditoLibre: input.creditoLibre,
       },
       total,
