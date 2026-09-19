@@ -7,6 +7,10 @@ import {
   resetearClaveDeUsuario,
   verPerfil,
 } from '../controllers/auth.controller.js';
+import {
+  crearPin,
+  validarPin,
+} from '../controllers/creditPin.controller.js';
 import { requiereAuth, requiereRol } from '../middlewares/auth.js';
 import { limitarIntentos } from '../middlewares/rateLimit.js';
 
@@ -86,4 +90,27 @@ authRouter.post(
     mensaje: 'Demasiados cambios de contraseña.',
   }),
   resetearClaveDeUsuario,
+);
+
+/**
+ * PIN de credito del cliente. Reemplaza a las Cloud Functions de Firebase
+ * (`validarPinCreditoCliente` y el alta del PIN), que ya no existen: por eso los
+ * PIN no se podian crear desde el panel y la venta a credito quedaba trabada.
+ *
+ * Definirlo es de admin/supervisor (autoriza fiado), y validarlo tambien lo puede
+ * hacer un cajero, que es quien cobra.
+ */
+authRouter.post('/usuarios/:id/pin', requiereAuth, requiereRol('admin', 'supervisor'), crearPin);
+authRouter.post(
+  '/credito/validar-pin',
+  requiereAuth,
+  requiereRol('admin', 'supervisor', 'cajero'),
+  // Un PIN de 4 digitos se adivina por fuerza bruta: sin freno, mil intentos por
+  // minuto lo rompen. Ademas de los intentos por cliente que cuenta el servicio.
+  limitarIntentos({
+    maximo: 30,
+    ventanaMs: 5 * 60 * 1000,
+    mensaje: 'Demasiados intentos de PIN.',
+  }),
+  validarPin,
 );

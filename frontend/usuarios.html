@@ -458,8 +458,11 @@
                     let estadoHtml = `<span class="font-semibold text-slate-700">${usr.sucursal || 'Sin Asignar'}</span>`;
 
                     // La llave es el cambio de contrasena. Va primera porque es la
-                    // accion de soporte mas pedida (el cajero que la olvido).
-                    const btnPassword = `<button onclick="UsuariosModule.abrirModalPassword('${usr.id}')" title="Cambiar contrasena" class="w-8 h-8 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-500 hover:text-white transition shadow-sm border border-orange-100 mr-2"><i class="fa-solid fa-key"></i></button>`;
+                    // accion de soporte mas pedida (el cajero que la olvido). El candado
+                    // es el PIN de credito, y va aca porque se usa en los mismos lugares
+                    // (dos plantillas mas): el nombre de la variable quedo corto, pero
+                    // duplicarlo obligaba a tocar las tres.
+                    const btnPassword = `<button onclick="UsuariosModule.abrirModalPassword('${usr.id}')" title="Cambiar contrasena" class="w-8 h-8 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-500 hover:text-white transition shadow-sm border border-orange-100 mr-2"><i class="fa-solid fa-key"></i></button><button onclick="UsuariosModule.definirPinCredito('${usr.id}')" title="PIN de credito" class="w-8 h-8 bg-violet-50 text-violet-600 rounded-lg hover:bg-violet-600 hover:text-white transition shadow-sm border border-violet-100 mr-2"><i class="fa-solid fa-lock"></i></button>`;
                     let accionHtml = `${btnPassword}<button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><i class="fa-solid fa-trash"></i></button>`;
 
                     if(usr.rol === 'cliente') {
@@ -655,6 +658,37 @@
                 } finally { 
                     btn.innerHTML = `<i class="fa-solid fa-check"></i> Registrar`; 
                     btn.disabled = false; 
+                }
+            },
+
+            /**
+             * Define o quita el PIN de credito del cliente.
+             *
+             * POST /auth/usuarios/:id/pin: reemplaza a la Cloud Function de Firebase que
+             * lo creaba, que ya no existe. Por eso los PIN no se podian crear desde el
+             * panel y la venta a credito quedaba trabada cuando el cliente lo pedia.
+             *
+             * El PIN viaja y se guarda HASHEADO en el servidor: aca nunca se lee, asi
+             * que no hay forma de mostrarlo despues. Si el cliente lo olvida, se cambia.
+             */
+            definirPinCredito: async function(id) {
+                const texto = window.prompt(
+                    'PIN de credito para este cliente (4 a 8 numeros).\n\nDejalo VACIO y acepta para quitarselo:',
+                    ''
+                );
+                if (texto === null) return;
+
+                try {
+                    const respuesta = await NexusAPI.post(
+                        '/auth/usuarios/' + encodeURIComponent(id) + '/pin',
+                        { pin: String(texto).trim() },
+                        { ttl: 0, retries: 0 }
+                    );
+                    const configurado = Boolean(respuesta && respuesta.data && respuesta.data.configurado);
+                    this.mostrarToast(configurado ? 'PIN de credito guardado.' : 'PIN de credito quitado.', 'success');
+                } catch (e) {
+                    console.error(e);
+                    this.mostrarToast(window.NexusAuth ? NexusAuth.mensajeDe(e) : 'No se pudo guardar el PIN.', 'error');
                 }
             },
 

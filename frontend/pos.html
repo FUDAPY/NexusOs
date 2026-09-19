@@ -1344,8 +1344,17 @@
                     return;
                 }
                 try {
-                    const validarPin = httpsCallable(functions, "validarPinCreditoCliente");
-                    await validarPin({ clienteId: this.clienteActual.id, pin });
+                    /* POST /auth/credito/validar-pin (antes: la Cloud Function
+                       validarPinCreditoCliente, que ya no existe, asi que la venta a
+                       credito NO se podia completar cuando el cliente pedia PIN).
+                       Si el PIN no vale, el endpoint responde 403 y NexusAPI lanza: cae
+                       en el mismo catch de abajo, asi que el mensaje al cajero sale
+                       igual que antes, con los intentos que le quedan. */
+                    await NexusAPI.post(
+                        '/auth/credito/validar-pin',
+                        { clienteId: this.clienteActual.id, pin },
+                        { ttl: 0, retries: 0 }
+                    );
                 } catch (validationError) {
                     console.error("PIN credito rechazado", validationError);
                     if (error) {
