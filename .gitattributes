@@ -1,0 +1,4 @@
+# Los scripts .sh se ejecutan en Linux (contenedores) y dash NO tolera CRLF:
+# con CRLF el do se lee como do\r y el script muere con exit 2 (error de sintaxis).
+# Esta regla fuerza LF en el repo, aunque se edite en Windows.
+*.sh text eol=lf
