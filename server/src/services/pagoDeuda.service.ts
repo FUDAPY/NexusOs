@@ -296,6 +296,14 @@ export const registrarAbonoPendiente = async (
   };
 };
 
+/* ⚠️ CODIGO NO USADO — NO RECABLEAR.
+   Estas dos funciones (aprobarAbonoPendiente / rechazarAbonoPendiente) quedaron de cuando se
+   creyo que la aprobacion de cobros no existia. Si existia: POST /orders/:id/cobro
+   (services/cobro.service.ts -> resolverCobro), que es el que usa el Dashboard y el que tiene
+   los guards correctos.
+   Ademas esta version busca al cliente por _id, y `order.cliente` guarda el UID: nunca habria
+   encontrado al cliente. Se dejaron a proposito SIN rutas: no hay forma de llamarlas.
+   Se pueden borrar cuando se haga limpieza. */
 export interface AprobarAbonoResult {
   orderId: string;
   clienteId: string;

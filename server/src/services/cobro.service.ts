@@ -81,9 +81,17 @@ export const resolverCobro = async (
       // se convierte en saldo a favor (asi se comportaba el dashboard).
       deudaResultante = Math.max(0, deudaAnterior - total);
 
+      /* Los puntos por pagar la deuda (1 por cada 1.000 Gs pagados) se otorgan ACA, que es
+         cuando el pago se vuelve real: el cobrador solo lo REGISTRO, y hasta que
+         administracion no lo aprueba esa plata no entro.
+         Es la misma regla que aplica POST /orders/pagar-deuda para un cobro directo. Sin
+         esto, pagar por un cobrador no daba puntos y pagar en el mostrador si: la misma
+         regla aplicada a medias. */
+      const puntosOtorgados = Math.floor(total / 1000);
+
       await User.updateOne(
         { _id: cliente._id },
-        { $set: { deuda: deudaResultante } },
+        { $set: { deuda: deudaResultante }, $inc: { puntos: puntosOtorgados } },
         { session: session ?? undefined },
       );
     }
