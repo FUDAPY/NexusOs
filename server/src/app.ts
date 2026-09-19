@@ -12,6 +12,7 @@ import { cashShiftRouter } from './routes/cashShift.routes.js';
 import { productionRouter } from './routes/production.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { configRouter } from './routes/config.routes.js';
+import { uploadRouter } from './routes/upload.routes.js';
 import { requiereAuth } from './middlewares/auth.js';
 
 export const buildApp = (): Express => {
@@ -27,6 +28,11 @@ export const buildApp = (): Express => {
       credentials: true,
     }),
   );
+  /* Subidas de imagenes: van ANTES del parser global y con su propio limite, mas grande.
+     El global corta en 1mb y una foto de producto no entra; body-parser se salta lo que ya se
+     parseo, asi que montar este antes no rompe nada. El POST exige token y el GET es publico
+     (las pantallas muestran la imagen con <img src>, que no manda token). */
+  app.use(`${env.API_PREFIX}/uploads`, express.json({ limit: '6mb' }), uploadRouter);
   app.use(express.json({ limit: '1mb' }));
   app.use(pinoHttp({ logger }));
 
