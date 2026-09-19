@@ -466,16 +466,25 @@
 
             cambiarEstado: async function(idTicket, nuevoEstadoCocina, esDelivery = false) {
                 try {
-                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const ticketRef = doc(db, rutaPrivada, idTicket);
                     const pedido = this.pedidosEnPantalla.find(x => x.id === idTicket);
-                    
-                    let dataAActualizar = { estadoCocina: nuevoEstadoCocina };
+
+                    /* PATCH /orders/:id/cocina (antes: updateDoc de Firestore, que ya no
+                       autoriza: el cocinero tocaba LISTO y NO PASABA NADA).
+                       El endpoint acepta solo `estadoCocina`, asi que `estadoDelivery` va
+                       aparte por el recurso de ordenes. */
+                    await NexusAPI.patch(
+                        '/orders/' + encodeURIComponent(idTicket) + '/cocina',
+                        { estadoCocina: nuevoEstadoCocina },
+                        { ttl: 0, retries: 0 }
+                    );
+
                     if (esDelivery && nuevoEstadoCocina === 'despachado') {
-                        dataAActualizar.estadoDelivery = 'en_camino';
+                        await NexusAPI.patch(
+                            '/orders/' + encodeURIComponent(idTicket),
+                            { estadoDelivery: 'en_camino' },
+                            { ttl: 0, retries: 0 }
+                        );
                     }
-                    
-                    await updateDoc(ticketRef, dataAActualizar);
 
                     if (esDelivery && pedido) {
                         if (nuevoEstadoCocina === 'preparando') {
