@@ -226,23 +226,36 @@
                 window.location.replace('index.html');
             },
 
-            escucharSucursales() {
-                this.unsubBranches = onSnapshot(collection(db, 'branches'), snap => {
+            async escucharSucursales() {
+                /* GET /branches (antes: onSnapshot, que ya no autoriza: el selector de
+                   sucursal quedaba vacio). Mismo contrato de snapshot para no tocar el cuerpo. */
+                const resp = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
+                const filas = (resp && resp.data && resp.data.items) || [];
+                const snap = { docs: filas.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })) };
+                ((snap) => {
                     this.branches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     this.renderSucursalSelect();
                     this.render();
                 });
             },
 
-            escucharTickets() {
-                this.unsubTickets = onSnapshot(collection(db, 'linTickets'), snap => {
+            async escucharTickets() {
+                /* GET /lin-tickets (antes: onSnapshot, que ya no autoriza: la lista quedaba vacia). */
+                const resp = await NexusAPI.get('/lin-tickets', { limit: 500 }, { ttl: 0, retries: 0 });
+                const filas = (resp && resp.data && resp.data.items) || [];
+                const snap = { docs: filas.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })) };
+                ((snap) => {
                     this.tickets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     this.render();
                 });
             },
 
-            escucharProductos() {
-                this.unsubProducts = onSnapshot(collection(db, 'products'), snap => {
+            async escucharProductos() {
+                /* GET /products (antes: onSnapshot, que ya no autoriza: no se podia elegir producto). */
+                const resp = await NexusAPI.get('/products', { limit: 500 }, { ttl: 0, retries: 0 });
+                const filas = (resp && resp.data && resp.data.items) || [];
+                const snap = { docs: filas.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })) };
+                ((snap) => {
                     this.products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     this.renderProductoSelect();
                 });
@@ -464,12 +477,19 @@
                 try {
                     if (id) {
                         if (file) data.imageUrl = await this.subirImagen(file, id);
-                        await updateDoc(doc(db, 'linTickets', id), data);
+                        // PATCH /lin-tickets/:id (antes: updateDoc de Firestore, muerto).
+                        await NexusAPI.patch('/lin-tickets/' + encodeURIComponent(id), data, { ttl: 0, retries: 0 });
                     } else {
-                        const nuevo = await addDoc(collection(db, 'linTickets'), { ...data, createdAt: serverTimestamp() });
-                        if (file) {
-                            const imageUrl = await this.subirImagen(file, nuevo.id);
-                            await updateDoc(doc(db, 'linTickets', nuevo.id), { imageUrl });
+                        // POST /lin-tickets (antes: addDoc, muerto). Devuelve el documento creado.
+                        const respNuevo = await NexusAPI.post(
+                            '/lin-tickets',
+                            { ...data, createdAt: new Date().toISOString() },
+                            { ttl: 0, retries: 0 }
+                        );
+                        const nuevoId = String((respNuevo && respNuevo.data && (respNuevo.data._id || respNuevo.data.id)) || '');
+                        if (file && nuevoId) {
+                            const imageUrl = await this.subirImagen(file, nuevoId);
+                            await NexusAPI.patch('/lin-tickets/' + encodeURIComponent(nuevoId), { imageUrl }, { ttl: 0, retries: 0 });
                         }
                     }
                     this.toast('LIN Ticket guardado.');
