@@ -528,7 +528,18 @@
                 const config = this.obtenerConfiguracionBase();
                 if (!this.sucursalActual?.key) return this.mostrarToast('Selecciona una sucursal.', 'error');
 
-                await setDoc(doc(db, 'produccionConfig', this.sucursalActual.key), {
+                /* PATCH /production-config (antes: setDoc a Firestore, que ya no autoriza,
+                   asi que guardar el stock base no hacia NADA).
+                   Se busca el documento por su clave de sucursal y se manda su _id: en
+                   Mongo el id no es la clave de sucursal, y adivinar como resuelve el
+                   filtro generico es exactamente como se rompen estas cosas en silencio. */
+                const respConfigs = await NexusAPI.get('/production-config', { limit: 100 }, { ttl: 0, retries: 0 });
+                const filasConfigs = (respConfigs && respConfigs.data && respConfigs.data.items) || [];
+                const docConfig = filasConfigs.find(
+                    (c) => String(c.sucursalKey || c.legacyId || '') === String(this.sucursalActual.key)
+                );
+
+                const cuerpoConfig = {
                     sucursal: this.sucursalActual.nombre,
                     sucursalKey: this.sucursalActual.key,
                     medallonesDisponibles: config.medallonesDisponibles,
@@ -537,10 +548,24 @@
                     carneSalteadoDisponible: config.carneSalteadoDisponible,
                     carneLomitoDisponible: config.carneLomitoDisponible,
                     panLomitoDisponible: config.panLomitoDisponible,
-                    updatedAt: serverTimestamp(),
+                    updatedAt: new Date().toISOString(),
                     updatedBy: this.sesion.uid,
                     updatedByNombre: this.sesion.nombre || 'Usuario'
-                }, { merge: true });
+                };
+
+                if (docConfig && docConfig._id) {
+                    await NexusAPI.patch(
+                        '/production-config/' + encodeURIComponent(docConfig._id),
+                        cuerpoConfig,
+                        { ttl: 0, retries: 0 }
+                    );
+                } else {
+                    await NexusAPI.post(
+                        '/production-config',
+                        { ...cuerpoConfig, legacyId: this.sucursalActual.key },
+                        { ttl: 0, retries: 0 }
+                    );
+                }
 
                 this.mostrarToast('Stock base actualizado.');
             },
