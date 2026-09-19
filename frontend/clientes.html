@@ -1411,12 +1411,25 @@
                                 "success"
                             );
                         } else {
-                            /* El cobrador registra y queda pendiente de aprobacion. Este
-                               camino SIGUE escribiendo a Firestore y por eso falla con su
-                               mensaje: necesita un endpoint que cree el abono SIN aplicar
-                               la deuda, y todavia no existe. Falla ruidoso en vez de dar
-                               por cobrado algo que no se guardo. */
-                            await setDoc(ticketRef, comprobante);
+                            /* POST /orders/abono-pendiente. El cobrador registra el cobro y
+                               queda para aprobacion: la deuda NO baja y los puntos NO se
+                               otorgan hasta que un administrador lo apruebe (por eso el
+                               mensaje no promete nada de eso).
+                               Antes esto era un setDoc a Firestore, que ya no autoriza: el
+                               cobro del cobrador se perdia. Era el ultimo flujo de plata
+                               que no se podia guardar. */
+                            await NexusAPI.post(
+                                '/orders/abono-pendiente',
+                                {
+                                    clienteId: c.id,
+                                    monto: montoAbonado,
+                                    metodoPago: 'Efectivo',
+                                    registradoPor: this.sesion?.nombre || 'Cobrador',
+                                    sucursal: c.sucursal || '',
+                                    nombreCliente: c.nombre || ''
+                                },
+                                { ttl: 0, retries: 0 }
+                            );
                             this.mostrarToast("Cobro registrado. Queda pendiente de aprobacion administrativa.", "success");
                         }
                         this.cerrarModalDetalle();

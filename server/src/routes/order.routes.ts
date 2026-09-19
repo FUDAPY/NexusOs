@@ -51,7 +51,7 @@ orderRouter.post(
   asyncHandler(cerrarCuenta),
 );
 
-import { pagarDeuda } from '../controllers/pagoDeuda.controller.js';
+import { pagarDeuda, registrarAbono } from '../controllers/pagoDeuda.controller.js';
 
 /**
  * Pago de la deuda de un cliente. Resta la deuda, crea el ticket del abono y otorga
@@ -63,6 +63,20 @@ orderRouter.post(
   '/pagar-deuda',
   requiereRol('admin', 'supervisor', 'cajero'),
   asyncHandler(pagarDeuda),
+);
+
+/**
+ * Cobro de deuda registrado por un COBRADOR, pendiente de aprobacion.
+ *
+ * Body: { clienteId, monto, metodoPago?, observacion? }
+ *
+ * NO aplica la deuda ni otorga puntos: eso pasa al aprobarse. Si restara la deuda, bastaria
+ * con que un cobrador registre un cobro para perdonarla sin respaldo.
+ */
+orderRouter.post(
+  '/abono-pendiente',
+  requiereRol('admin', 'supervisor', 'cobrador'),
+  asyncHandler(registrarAbono),
 );
 
 /**
