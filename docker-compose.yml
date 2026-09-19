@@ -105,6 +105,14 @@ services:
   # Sin puertos publicados a proposito: Redis solo se consume desde la red interna.
   redis:
     image: redis:7
+    # REDIS_PASSWORD TIENE QUE ESTAR EN EL ENTORNO DEL CONTENEDOR, no alcanza con pasarsela a
+    # redis-server por `command`: son dos cosas distintas.
+    # El healthcheck de abajo corre DENTRO del contenedor y hace `redis-cli -a "$REDIS_PASSWORD"`.
+    # Sin esta variable esa expansion queda VACIA, el AUTH va con la clave en blanco, el ping no
+    # devuelve PONG y redis queda "unhealthy". Y como el api depende de `service_healthy`, el
+    # deploy moria aca con "dependency failed to start: container ...-redis-1 is unhealthy".
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD:?definir REDIS_PASSWORD en Environment}"
     command:
       - redis-server
       - --requirepass
