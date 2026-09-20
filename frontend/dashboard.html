@@ -1666,6 +1666,34 @@
                 const usarBootstrap = forceBootstrap || !this.ventasBootstrapInicializado || this.consultaTurnosNoDisponible || turnosActivos.length === 0 || resumenesNoIncluyenVentas;
                 const queryKey = usarBootstrap ? 'bootstrap' : turnosActivos.join('|');
                 if (this.unsubscribeVentasTurno && this.ventasTurnosQueryKey === queryKey) return;
+
+                if (NexusData.esMongo('dashboard')) {
+                    /* Esta era la ULTIMA suscripcion viva con onSnapshot de Firestore, y la
+                       unica de las cinco que no tenia su rama Mongo con return (la config, los
+                       cierres y la auditoria ya la tenian; su codigo de Firestore esta muerto).
+                       Por eso la consola mostraba "Sin conexion con Firestore. El flujo se
+                       actualizara al reconectar" y las ventas del turno no llegaban nunca: el
+                       dashboard entero se veia desconectado por esta sola.
+                       El filtro `turnoId in [...]` NO se manda: la API no lo entiende y
+                       devolveria todo. Se piden las ultimas 300 y el filtro por turno y por
+                       sucursal se hace en el cliente, como en el resto del panel. */
+                    if (this.unsubscribeVentasTurno) this.unsubscribeVentasTurno();
+                    this.ventasTurnosQueryKey = queryKey;
+                    this.unsubscribeVentasTurno = NexusData.vigilar(
+                        'sales',
+                        { orderBy: ['fecha', 'desc'], limit: 300 },
+                        (snapshot) => {
+                            this.marcarSincronizacionOk('ventas_dashboard');
+                            if (usarBootstrap) this.ventasBootstrapInicializado = true;
+                            this.aplicarVentasLeidas(
+                                snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })),
+                                'listener'
+                            );
+                        }
+                    );
+                    return;
+                }
+
                 const q = usarBootstrap
                     ? query(collection(db, rutaVentas), orderBy("fecha", "desc"), limit(300))
                     : query(collection(db, rutaVentas), where("turnoId", "in", turnosActivos), orderBy("fecha", "desc"), limit(300));
