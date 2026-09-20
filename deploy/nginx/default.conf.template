@@ -79,7 +79,14 @@ server {
     # Socket.IO usa path '/realtime' (ver server/src/sockets/kds.ts).
     # Requiere el Upgrade de WebSocket y timeouts largos: la conexion del
     # monitor de cocina queda abierta horas.
-    location /realtime/ {
+    #
+    # `^~` NO ES DECORATIVO. Sin el, nginx evalua primero las ubicaciones REGEX y
+    # `location ~* \.m?js$` (los .js con no-cache) le gana a este prefijo: pedir
+    # /realtime/socket.io.js nunca llegaba al API, nginx lo buscaba como archivo estatico y
+    # devolvia SU 404 (text/html, Server: nginx). El handshake /realtime/?EIO=4 si pasaba
+    # porque no termina en .js, asi que el canal parecia sano mientras el cliente del KDS no
+    # se podia bajar: el tablero quedaba en sondeo y sin aviso instantaneo.
+    location ^~ /realtime/ {
         set $api_upstream "${API_UPSTREAM}";
         proxy_pass http://$api_upstream;
         proxy_http_version 1.1;
