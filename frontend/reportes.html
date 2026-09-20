@@ -670,9 +670,17 @@
                         const f = new Date(c.fechaCierre || c.creadoEn || 0).getTime();
                         return f >= inicioConsultaCierres.getTime() && f < finConsultaCierres.getTime();
                     });
+                /* SIN `desde`/`hasta` A PROPOSITO.
+                   Mandarlos hacia que el endpoint devolviera 400 "Valor invalido para el campo
+                   fecha: [object Object]": Mongoose rechaza el operador {$gte,$lte} al castear
+                   el path `fecha`. El filtro por rango se aplica ACA ABAJO, en el cliente, que
+                   es lo que ya hacia de todos modos: la pagina no pierde nada y deja de
+                   depender de un bug del endpoint.
+                   Cuando el filtro del API este arreglado, se puede volver a mandar el rango
+                   para bajar menos filas. */
                 const respVentas = await NexusAPI.get(
                     '/orders',
-                    { limit: 500, desde: inicioConsultaVentas.toISOString(), hasta: finConsultaVentas.toISOString() },
+                    { limit: 500 },
                     { ttl: 0, retries: 0 }
                 );
                 const filasVentas = (respVentas && respVentas.data && respVentas.data.items) || [];
