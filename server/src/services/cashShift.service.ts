@@ -341,7 +341,18 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
     .exec();
 
   const summary = sumarAportes(
-    ordenes.map((orden) => ({ id: String(orden._id), venta: orden as unknown as VentaCruda })),
+    ordenes.map((orden) => ({
+      id: String(orden._id),
+      /* Misma coercion que en cashForzado.service.ts: los documentos importados de Firestore
+         traen estas banderas como objetos y la validacion las rechaza ("Valor invalido para
+         el campo ..."). Normalizar en el borde evita que un turno viejo sin limpiar vuelva a
+         romper la reconciliacion. */
+      venta: {
+        ...(orden as unknown as VentaCruda),
+        arqueado: orden.arqueado === true,
+        noAfectaCaja: orden.noAfectaCaja === true,
+      } as VentaCruda,
+    })),
   );
 
   /* `resumen` no esta declarado en el modelo, asi que se lee sin tipar: si falta, se

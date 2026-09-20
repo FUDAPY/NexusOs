@@ -95,7 +95,18 @@ export const forzarCierreSucursal = async (
 
     const crudas = docs.map((doc) => ({
       id: String(doc._id),
-      venta: doc.toObject() as unknown as VentaCruda,
+      /* Las banderas booleanas se coercionan ACA.
+         Los documentos importados de Firestore guardaron estas banderas como objetos
+         (Timestamps y centinelas), y cualquier validacion aguas abajo los rechaza:
+           Valor invalido para el campo "arqueado": [object Object]
+         Es el 400 que impedia el cierre forzado de esos turnos. Se normaliza en el borde,
+         una sola vez, en vez de confiar en que la limpieza de datos ya corrio: un turno
+         viejo que quede sin limpiar no puede volver a tumbar el cierre. */
+      venta: {
+        ...(doc.toObject() as unknown as VentaCruda),
+        arqueado: doc.arqueado === true,
+        noAfectaCaja: doc.noAfectaCaja === true,
+      } as VentaCruda,
     }));
 
     const grupo = agruparCierreForzado(crudas, sucursal);
