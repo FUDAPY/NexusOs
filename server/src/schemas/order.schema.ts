@@ -107,7 +107,11 @@ export const listOrdersQuerySchema = z.object({
   desde: z.coerce.date().optional(),
   hasta: z.coerce.date().optional(),
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(200).default(50),
+  /* 200 era el tope y las pantallas de reportes piden 500: la API devolvia 200 en silencio
+     y el reporte historico quedaba cortado sin que nadie se enterara. Se sube a 1000, que es
+     headroom real para el historico de un ano. El tope no obliga a nadie a pedir tanto: el
+     POS y el dashboard siguen pidiendo decenas. */
+  limit: z.coerce.number().int().min(1).max(1000).default(50),
 });
 
 export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>;
