@@ -55,12 +55,65 @@ const main = async (): Promise<void> => {
     const schema = mongoose.model(nombreModelo).schema;
 
     for (const [ruta, tipo] of Object.entries(schema.paths)) {
-      if (tipo.instance !== 'Boolean') continue;
-      /* Los booleanos dentro de subdocumentos quedarian como "sub.campo"; Mongo no consulta
-         paths anidados con $type de forma confiable, asi que se saltean y se informan. */
+      /* Los paths anidados quedarian como "sub.campo"; Mongo no consulta paths anidados con
+         $type de forma confiable, asi que se saltean y se informan aparte. */
       if (ruta.includes('.')) continue;
-
       camposRevisados += 1;
+
+      /* ---------- Fechas ----------
+         Es el caso que rompia el sistema en produccion: los documentos migrados guardan
+         `fecha` como string ISO o como objeto de Firestore ({_seconds,_nanoseconds}), y eso
+         hace fallar DOS cosas distintas:
+           - el filtro de rango del endpoint: Mongoose no puede castear y devuelve 400
+             "Valor invalido para el campo fecha: [object Object]"
+           - la agregacion del resumen: $dateToString exige un Date y devuelve 500
+         Se convierten a Date real, que es lo que el modelo declara. */
+      if (tipo.instance === 'Date') {
+        const comoObjeto = { [ruta]: { $type: 'object' } };
+        const comoTexto = { [ruta]: { $type: 'string' } };
+        const objetos = await db.collection(coleccion).countDocuments(comoObjeto);
+        const textos = await db.collection(coleccion).countDocuments(comoTexto);
+        if (objetos + textos === 0) continue;
+
+        documentosAfectados += objetos + textos;
+        console.log(
+          `  ${coleccion}.${ruta}: ${objetos} con objeto y ${textos} con texto (fecha, no Date)`,
+        );
+        if (!aplicar) continue;
+
+        if (textos > 0) {
+          await db.collection(coleccion).updateMany(comoTexto, [
+            { $set: { [ruta]: { $convert: { input: `$${ruta}`, to: 'date', onError: null, onNull: null } } } },
+          ]);
+        }
+        if (objetos > 0) {
+          /* Un Timestamp de Firestore guarda SEGUNDOS; $convert a date los toma como
+             milisegundos, asi que hay que multiplicar por 1000 o las fechas caen en 1970. */
+          await db.collection(coleccion).updateMany(comoObjeto, [
+            {
+              $set: {
+                [ruta]: {
+                  $convert: {
+                    input: {
+                      $multiply: [
+                        { $ifNull: [`$${ruta}._seconds`, { $ifNull: [`$${ruta}.seconds`, null] }] },
+                        1000,
+                      ],
+                    },
+                    to: 'date',
+                    onError: null,
+                    onNull: null,
+                  },
+                },
+              },
+            },
+          ]);
+        }
+        continue;
+      }
+
+      if (tipo.instance !== 'Boolean') continue;
+
       const filtro = { [ruta]: { $type: 'object' } };
       const afectados = await db.collection(coleccion).countDocuments(filtro);
       if (afectados === 0) continue;

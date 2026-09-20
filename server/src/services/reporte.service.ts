@@ -132,7 +132,20 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
           { $group: { _id: null, ticketsAnulados: { $sum: 1 }, totalAnulado: { $sum: monto } } },
         ],
         porDia: [
-          { $group: groupPor({ $dateToString: { format: '%Y-%m-%d', date: '$fecha' } }) },
+          {
+            $group: groupPor({
+              /* $convert con onError: los documentos migrados de Firestore tienen `fecha` como
+                 string u objeto, y $dateToString EXIGE un Date. Sin esto, un solo documento
+                 sucio hacia fallar la agregacion entera con un 500, que es justo lo que pasaba
+                 en produccion. Con $convert, la fecha se interpreta cuando se puede y el resto
+                 cae en '' en vez de tumbar todo el resumen. */
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: { $convert: { input: '$fecha', to: 'date', onError: null, onNull: null } },
+                onNull: '',
+              },
+            }),
+          },
           { $sort: { _id: 1 } },
         ],
         porMetodo: [{ $group: groupPor(metodoNormalizado) }, { $sort: { total: -1 } }],
