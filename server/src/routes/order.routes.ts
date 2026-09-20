@@ -17,6 +17,21 @@ export const orderRouter: Router = Router();
 orderRouter.use(requiereAuth);
 
 orderRouter.post('/', asyncHandler(create));
+/**
+ * Resumen agregado de ventas: totales y desgloses calculados en Mongo.
+ *
+ * Body: query { desde?, hasta?, sucursal? }
+ *
+ * Es la version "que sume el servidor" del reporte: en vez de bajar cientos o miles de
+ * ordenes para que el navegador las recorra, devuelve unas pocas decenas de filas ya sumadas.
+ * Se registra ANTES de las rutas con :id para que "resumen" nunca se lea como un id.
+ */
+orderRouter.get(
+  '/resumen',
+  requiereRol('admin', 'supervisor', 'cajero'),
+  asyncHandler(resumenVentas),
+);
+
 orderRouter.get('/', asyncHandler(list));
 orderRouter.patch('/:id/cocina', asyncHandler(updateKdsState));
 
@@ -52,6 +67,7 @@ orderRouter.post(
 );
 
 import { pagarDeuda, registrarAbono } from '../controllers/pagoDeuda.controller.js';
+import { resumenVentas } from '../controllers/reporte.controller.js';
 
 /**
  * Pago de la deuda de un cliente. Resta la deuda, crea el ticket del abono y otorga
