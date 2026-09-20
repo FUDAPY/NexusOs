@@ -99,7 +99,7 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
       throw new AppError('Parametros de consulta invalidos', 422, 'VALIDATION_ERROR');
     }
 
-    const { sucursal, turnoId, estadoPago, desde, hasta, page, limit } = parsed.data;
+    const { sucursal, turnoId, estadoPago, desde, hasta, page, limit, offset } = parsed.data;
     const filter: Record<string, unknown> = {};
 
     if (sucursal) filter['sucursal'] = sucursal;
@@ -112,17 +112,22 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
       };
     }
 
+    /* Si viene `offset`, manda: es la paginacion del sistema (skip directo) y la que manda el
+       lector paginado. Si no, se traduce la pagina de siempre, para no cambiar nada de lo que
+       ya funcionaba. */
+    const salto = offset !== undefined ? offset : (page - 1) * limit;
+
     const [items, total] = await Promise.all([
       Order.find(filter)
         .sort({ fecha: -1 })
-        .skip((page - 1) * limit)
+        .skip(salto)
         .limit(limit)
         .lean()
         .exec(),
       Order.countDocuments(filter).exec(),
     ]);
 
-    sendOk(res, { items, total, page, limit });
+    sendOk(res, { items, total, page, limit, offset: salto });
   } catch (error) {
     next(error);
   }

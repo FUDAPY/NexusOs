@@ -107,6 +107,12 @@ export const listOrdersQuerySchema = z.object({
   desde: z.coerce.date().optional(),
   hasta: z.coerce.date().optional(),
   page: z.coerce.number().int().min(1).default(1),
+  /* `offset` es la paginacion que usa el RESTO del sistema: la capa de recursos hace
+     .skip(offset) y NexusData.leerTodo manda ese parametro. Aca no existia, asi que el
+     endpoint lo ignoraba y devolvia SIEMPRE la misma pagina: el lector paginado acumulaba
+     filas repetidas hasta su tope. Los dos conviven a proposito: `page` lo usan las pantallas
+     que ya estaban, `offset` el lector nuevo. */
+  offset: z.coerce.number().int().min(0).optional(),
   /* 200 era el tope y las pantallas de reportes piden 500: la API devolvia 200 en silencio
      y el reporte historico quedaba cortado sin que nadie se enterara. Se sube a 1000, que es
      headroom real para el historico de un ano. El tope no obliga a nadie a pedir tanto: el
