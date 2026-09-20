@@ -1682,13 +1682,18 @@
                     this.unsubscribeVentasTurno = NexusData.vigilar(
                         'sales',
                         { orderBy: ['fecha', 'desc'], limit: 300 },
-                        (snapshot) => {
+                        /* OJO: `vigilar` entrega un ARRAY de filas, no un snapshot de Firestore.
+                           Copiar el cuerpo del onSnapshot de abajo tal cual (`snapshot.docs.map`)
+                           da "Cannot read properties of undefined (reading 'map')": las otras
+                           ramas migradas pasan la funcion directa y por eso no lo tenian. */
+                        (filas) => {
                             this.marcarSincronizacionOk('ventas_dashboard');
                             if (usarBootstrap) this.ventasBootstrapInicializado = true;
-                            this.aplicarVentasLeidas(
-                                snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })),
-                                'listener'
-                            );
+                            const lista = (Array.isArray(filas) ? filas : []).map((d) => ({
+                                id: String(d._id || d.id || ''),
+                                ...d
+                            }));
+                            this.aplicarVentasLeidas(lista, 'listener');
                         }
                     );
                     return;
