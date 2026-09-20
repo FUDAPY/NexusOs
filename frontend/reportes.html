@@ -741,15 +741,38 @@
                     const analisis = await this.cargarFuenteFinanciera(rangos, sucursalFiltro);
                     this.ventasFiltradasCache = analisis.ventasFallback;
 
-                    let ticketPromedio = analisis.totalTickets > 0 ? (analisis.totalIngresos / analisis.totalTickets) : 0;
-                    document.getElementById('kpi-total').innerText = `Gs. ${this.formatoMoneda(Math.round(analisis.totalIngresos))}`;
-                    document.getElementById('kpi-tickets').innerText = analisis.totalTickets.toLocaleString('es-PY');
+                    /* GET /orders/resumen: los totales los calcula Mongo sobre TODO el rango, no
+                       sobre las primeras 500 ventas que alcanzan para dibujar los graficos. Es la
+                       diferencia entre un KPI exacto y uno recortado por el tope del listado.
+                       Si el endpoint falla, se cae al calculo local: un reporte aproximado es
+                       mejor que un reporte vacio, pero se dice cual de los dos se esta viendo. */
+                    let totalesExactos = null;
+                    try {
+                        const respResumen = await NexusAPI.get('/orders/resumen', {
+                            ...(rangos.inicio ? { desde: new Date(rangos.inicio).toISOString() } : {}),
+                            ...(rangos.fin ? { hasta: new Date(rangos.fin).toISOString() } : {}),
+                            ...(sucursalFiltro ? { sucursal: sucursalFiltro } : {})
+                        }, { ttl: 0, retries: 0 });
+                        totalesExactos = (respResumen && respResumen.data) || null;
+                    } catch (error) {
+                        console.warn('Resumen del servidor no disponible: se usan los totales locales.', error);
+                    }
+
+                    const totalIngresos = totalesExactos ? Number(totalesExactos.totales.ventaTotal || 0) : analisis.totalIngresos;
+                    const totalTickets = totalesExactos ? Number(totalesExactos.totales.tickets || 0) : analisis.totalTickets;
+
+                    let ticketPromedio = totalTickets > 0 ? (totalIngresos / totalTickets) : 0;
+                    document.getElementById('kpi-total').innerText = `Gs. ${this.formatoMoneda(Math.round(totalIngresos))}`;
+                    document.getElementById('kpi-tickets').innerText = totalTickets.toLocaleString('es-PY');
                     document.getElementById('kpi-promedio').innerText = `Gs. ${this.formatoMoneda(Math.round(ticketPromedio))}`;
                     document.getElementById('kpi-descuentos').innerText = `Gs. ${this.formatoMoneda(Math.round(analisis.totalDescuentos))}`;
                     this.renderAuditoriaCierres(analisis.cierresNormalizados);
                     const fuenteEl = document.getElementById('fuente-financiera');
                     if (fuenteEl) {
-                        fuenteEl.innerText = `Fuente: ${analisis.cierresUsados.length} cierre(s) de caja · ${analisis.diasDesdeSales.size} dia/sucursal reconstruido(s) desde ventas`;
+                        const exactos = totalesExactos
+                            ? ` · totales del servidor: ${totalesExactos.totales.tickets} ticket(s), ${totalesExactos.totales.ticketsAnulados} anulado(s)`
+                            : ' · totales locales (el resumen del servidor no respondio)';
+                        fuenteEl.innerText = `Fuente: ${analisis.cierresUsados.length} cierre(s) de caja · ${analisis.diasDesdeSales.size} dia/sucursal reconstruido(s) desde ventas${exactos}`;
                     }
 
                     this.dibujarGraficoSucursales(analisis.datosPorSucursal); 
