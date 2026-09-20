@@ -1637,19 +1637,19 @@
                     return;
                 }
 
-                const resumenQuery = query(collection(db, 'cashFlows'), where('estadoTurno', '==', 'abierto'));
-                this.unsubscribeResumenTurno = onSnapshot(resumenQuery, (snapshot) => {
-                    aplicarResumen(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
-                }, (error) => {
-                    this.manejarErrorOperativo(error, {
-                        origen: 'dashboard',
-                        tipo: 'firestore_resumen_turno_dashboard',
-                        mensaje: 'No se pudo cargar el resumen del flujo actual.',
-                        detalle: { coleccion: 'cashFlows' }
-                    });
-                    const estado = document.getElementById('flujo-resumen-status');
-                    if (estado) estado.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error al cargar el flujo`;
-                });
+                /* NexusData.vigilarComoFirestore en vez del onSnapshot de Firestore, que ya no
+                   autoriza. Esta era una de las suscripciones VIVAS que quedaban: por eso la
+                   consola mostraba "Sin conexion con Firestore" y el flujo del turno no se
+                   actualizaba nunca, por mas que las lecturas ya fueran por la API.
+                   El helper entrega el mismo contrato de snapshot (docs con id + data), asi
+                   que el cuerpo del callback no cambia. */
+                this.unsubscribeResumenTurno = NexusData.vigilarComoFirestore(
+                    'cashFlows',
+                    { where: [['estadoTurno', '==', 'abierto']] },
+                    (snapshot) => {
+                        aplicarResumen(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+                    }
+                );
             },
 
             iniciarEscuchaVentasTurno: function(forceBootstrap = false) {
