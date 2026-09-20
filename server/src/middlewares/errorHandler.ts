@@ -19,6 +19,28 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction,
 ): void => {
+  /* TODO error que se responde queda registrado, con el stack que trae pino.
+     Antes, los 400 y los 422 salian sin log: el cliente veia "Valor invalido para el campo
+     X" y en el servidor no quedaba rastro, asi que ubicar el origen era adivinar. Un error
+     sin log es un error que se repite.
+     Los datos que se agregan son los que hacen falta para ubicarlo: en un CastError, el campo
+     y el valor; en un ValidationError, los campos que fallaron. */
+  logger.error(
+    {
+      err: error,
+      path: req.originalUrl,
+      method: req.method,
+      ...(error instanceof mongoose.Error.CastError
+        ? { tipo: 'CastError', campo: error.path, valor: String(error.value) }
+        : {}),
+      ...(error instanceof mongoose.Error.ValidationError
+        ? { tipo: 'ValidationError', campos: Object.keys(error.errors) }
+        : {}),
+      ...(error instanceof ZodError ? { tipo: 'ZodError', campos: error.issues.map((i) => i.path.join('.')) } : {}),
+    },
+    'Error respondido al cliente',
+  );
+
   if (error instanceof AppError) {
     sendFail(res, error.statusCode, error.message, error.code);
     return;
