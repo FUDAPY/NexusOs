@@ -166,6 +166,57 @@
     return fuente(pagina) === 'mongo';
   }
 
+  /* ---------- Lectura paginada ---------- */
+  var ultimoLeerTodo = null;
+
+  /**
+   * Lee TODA una coleccion, pidiendola en paginas con offset.
+   *
+   * POR QUE EXISTE
+   * El backend tiene un tope por pedido y, si una pantalla pide mas de lo permitido,
+   * recibe menos filas SIN AVISO. Asi se cortaba el historico de reportes: pedia 500
+   * ventas, la API devolvia 200, y el reporte se veia a medias. Pedir en paginas y juntar
+   * es la unica forma de traer el historico completo sin depender de cual sea el tope hoy.
+   *
+   * Devuelve un array de filas, igual que `leer`. Ademas deja
+   * `NexusData.ultimoLeerTodo = { coleccion, filas, paginas, trunco }` para que la pantalla
+   * pueda AVISAR cuando se corto, en vez de mostrar un numero incompleto como si fuera el
+   * total: el silencio fue justamente lo que hizo este bug tan dificil de ver.
+   *
+   * `maxPaginas` es un tope de seguridad para que una tabla gigante no cuelgue la pantalla.
+   */
+  function leerTodo(coleccion, opciones, opcionesApi) {
+    var opts = opciones || {};
+    var porPagina = Math.min(Number(opts.limit) || 500, 500);
+    var maxPaginas = Number(opts.maxPaginas) || 40; // 40 x 500 = 20.000 filas
+    var acumulado = [];
+    var paginas = 0;
+    var trunco = false;
+
+    var siguiente = function (offset) {
+      return leer(
+        coleccion,
+        Object.assign({}, opts, { limit: porPagina, offset: offset }),
+        opcionesApi,
+      ).then(function (filas) {
+        var lote = Array.isArray(filas) ? filas : [];
+        acumulado = acumulado.concat(lote);
+        paginas += 1;
+        if (lote.length < porPagina) return acumulado; // pagina incompleta = se acabo
+        if (paginas >= maxPaginas) {
+          trunco = true;
+          return acumulado;
+        }
+        return siguiente(offset + porPagina);
+      });
+    };
+
+    return siguiente(0).then(function (filas) {
+      ultimoLeerTodo = { coleccion: coleccion, filas: filas.length, paginas: paginas, trunco: trunco };
+      return filas;
+    });
+  }
+
   /* ---------- Traduccion de consultas ---------- */
   /**
    * Separa las opciones de transporte de las de consulta.
@@ -452,6 +503,8 @@
     esMongo: esMongo,
     usarMongo: usarMongo,
     claveDe: claveDe,
+    leerTodo: leerTodo,
+    get ultimoLeerTodo() { return ultimoLeerTodo; },
     get fuentePorDefecto() { return state.fuentePorDefecto; },
     set fuentePorDefecto(valor) {
       state.fuentePorDefecto = valor === 'mongo' ? 'mongo' : 'firestore';

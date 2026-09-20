@@ -982,7 +982,9 @@
                 const sucursalFiltroId = CierreCajaNormalizer.normalizarSucursal(sucursalFiltro).id;
                 const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
                 // GET /orders (antes: un getDocs sin filtro, muerto).
-                const respTodasVentas = await NexusAPI.get('/orders', { limit: 500 }, { ttl: 0, retries: 0 });
+                const respTodasVentas = {
+                data: { items: await NexusData.leerTodo('sales', { limit: 500 }, { ttl: 0, retries: 0 }) }
+            };
                 const filasTodasVentas = (respTodasVentas && respTodasVentas.data && respTodasVentas.data.items) || [];
                 const snapshot = {
                     forEach: (fn) => filasTodasVentas.forEach((d) => fn({ id: String(d._id || d.id || ''), data: () => d }))
@@ -1068,7 +1070,9 @@
 
             buscarCierreCajaGuardado: async function(fechaStr, sucursalFiltro) {
                 // GET /cash-closes (antes: getDocs ordenado, muerto).
-                const respCierresGuardados = await NexusAPI.get('/cash-closes', { limit: 500 }, { ttl: 0, retries: 0 });
+                const respCierresGuardados = {
+                data: { items: await NexusData.leerTodo('cierresCaja', { limit: 500 }, { ttl: 0, retries: 0 }) }
+            };
                 const filasCierresGuardados = ((respCierresGuardados && respCierresGuardados.data && respCierresGuardados.data.items) || [])
                     .sort((a, b) => new Date(b.fechaCierre || 0).getTime() - new Date(a.fechaCierre || 0).getTime());
                 const snap = {
