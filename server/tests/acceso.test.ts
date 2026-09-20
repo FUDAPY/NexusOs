@@ -63,6 +63,51 @@ describe('rutas publicas', () => {
   });
 });
 
+/**
+ * Resumen de ventas: es un endpoint de PLATA (totales de facturacion), asi que su
+ * control de acceso se fija igual que el del resto de lo sensible. Un rol de cocina o
+ * un cliente no tienen por que ver la facturacion del negocio.
+ */
+describe('resumen de ventas (/orders/resumen)', () => {
+  const ruta = `${env.API_PREFIX}/orders/resumen`;
+
+  /** Token con un rol cualquiera, firmado igual que auth.service.ts. */
+  const tokenConRol = (rol: string): string =>
+    jwt.sign({ sub: 'uid-rol', rol, sucursal: 'Centro', nombre: 'Test' }, env.JWT_SECRET, {
+      expiresIn: '5m',
+    });
+
+  const pedirCon = (token: string) =>
+    request(app).get(ruta).set('Authorization', `Bearer ${token}`);
+
+  it('sin token responde 401', async () => {
+    const res = await request(app).get(ruta);
+    expect(res.status).toBe(401);
+  });
+
+  it('con token vencido responde 401', async () => {
+    const res = await pedirCon(tokenVencido);
+    expect(res.status).toBe(401);
+  });
+
+  it('un cliente NO puede leer los totales de venta', async () => {
+    const res = await pedirCon(tokenConRol('cliente'));
+    expect(res.status).toBe(403);
+  });
+
+  it('cocina tampoco: son totales de plata', async () => {
+    const res = await pedirCon(tokenConRol('cocina'));
+    expect(res.status).toBe(403);
+  });
+
+  it('cajero, supervisor y admin SI pasan el control de rol (nunca 403)', async () => {
+    for (const rol of ['cajero', 'supervisor', 'admin']) {
+      const res = await pedirCon(tokenConRol(rol));
+      expect(res.status).not.toBe(403);
+    }
+  });
+});
+
 describe('rutas protegidas sin token', () => {
   const sinToken = [
     ['get', '/products'],
