@@ -145,7 +145,7 @@
 
     <div id="modal-forzar-cierre" class="fixed inset-0 bg-slate-900/90 hidden justify-center items-center z-[65] backdrop-blur-sm transition-opacity">
         <div class="bg-white w-[1050px] max-w-[95vw] max-h-[88vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border-t-8 border-red-500">
-            <div class="bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-start gap-4">
+            <div class="bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-start gap-4 shrink-0">
                 <div>
                     <h3 class="text-xl font-black text-slate-800 mb-1">Forzar cierre de caja de sucursal</h3>
                     <p class="text-sm text-slate-500">Usalo solo cuando una caja no pudo cerrar desde POS. El sistema tomara los movimientos abiertos de la sucursal.</p>
@@ -158,7 +158,7 @@
                 <button onclick="DashboardModule.cerrarModalForzarCierre()" class="text-slate-400 hover:text-slate-700 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
             </div>
 
-            <div class="p-5 bg-red-50 border-b border-red-100 grid grid-cols-1 xl:grid-cols-[300px_1fr] gap-4">
+            <div class="p-5 bg-red-50 border-b border-red-100 grid grid-cols-1 xl:grid-cols-[300px_1fr] gap-4 shrink-0">
                 <div>
                     <label class="text-[10px] font-black uppercase tracking-[0.18em] text-red-700 mb-2 block">Sucursal a cerrar</label>
                     <select id="select-forzar-sucursal" onchange="DashboardModule.actualizarPreviewForzarCierre()" class="w-full bg-white border border-red-200 rounded-xl px-4 py-3 font-black text-slate-800 outline-none focus:ring-4 focus:ring-red-100">
@@ -200,14 +200,14 @@
                             <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Productos vendidos</span>
                             <span class="text-[10px] font-bold text-slate-400">Incluye ventas a credito</span>
                         </div>
-                        <div id="resumen-productos-forzar" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 text-xs">
+                        <div id="resumen-productos-forzar" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 text-xs max-h-[190px] overflow-y-auto pr-1">
                             <span class="text-slate-400 font-bold">Selecciona una sucursal.</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 min-h-0 overflow-y-auto">
                 <table class="w-full text-left">
                     <thead class="bg-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider sticky top-0 shadow-sm z-10">
                         <tr>
@@ -225,7 +225,7 @@
                 </table>
             </div>
 
-            <div class="p-5 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="p-5 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
                 <p class="text-xs text-slate-500 font-bold">El cierre forzado queda registrado en cierres de caja y auditoria. No elimina tickets.</p>
                 <button id="btn-confirmar-forzar-cierre" onclick="DashboardModule.ejecutarForzarCierreSucursal()" class="bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-5 py-3 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-lock"></i> Forzar cierre de sucursal
