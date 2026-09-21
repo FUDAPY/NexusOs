@@ -36,9 +36,6 @@ import { connectDatabase, disconnectDatabase } from '../src/config/database.js';
    limpia, cuando en realidad no miro ni un campo. Es peor que un error, porque tranquiliza. */
 import '../src/models/index.js';
 
-/** Un objeto guardado (Timestamp de Firestore) equivale a "si". */
-const aBooleano = (valor: unknown): boolean => Boolean(valor);
-
 /**
  * Normaliza valores con forma de Firestore en los documentos migrados.
  *

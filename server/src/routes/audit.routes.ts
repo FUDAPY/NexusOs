@@ -9,6 +9,60 @@ const LIMITE_POR_DEFECTO = 200;
 const LIMITE_MAXIMO = 500;
 
 /**
+ * String o nada.
+ *
+ * Por que no alcanza con `!== undefined`: Express usa el parser `qs` (extended), asi que
+ * `?tipo[$ne]=admin` NO llega como texto: llega como el OBJETO `{ $ne: 'admin' }`. Si ese objeto
+ * se asignara al filtro, Mongo lo interpretaria como OPERADOR y el filtro se anularia (o peor,
+ * devolveria lo que el operador dicte). Filtrando por tipo, el objeto no sobrevive y el campo
+ * simplemente no se filtra.
+ *
+ * Esto era responsabilidad del `sanitizeFilter` global de Mongoose, que se apago por romper los
+ * filtros propios (ver config/database.ts): la defensa correcta vive aca, en el borde.
+ */
+const soloTexto = (valor: unknown): string | undefined =>
+  typeof valor === 'string' && valor !== '' ? valor : undefined;
+
+/**
+ * Arma el filtro del feed a partir de los query params.
+ *
+ * Esta exportado para poder probarlo sin base: es la unica ruta que lee `req.query` a mano, y
+ * su defensa contra inyeccion de operadores tiene que quedar cubierta por un test.
+ */
+export const construirFiltroAuditoria = (q: Record<string, unknown>): FilterQuery<IAuditLog> => {
+  const filtro: FilterQuery<IAuditLog> = {};
+
+  const tipo = soloTexto(q['tipo']);
+  const sucursal = soloTexto(q['sucursal']);
+  const origen = soloTexto(q['origen']);
+  const estado = soloTexto(q['estado']);
+
+  if (tipo !== undefined) filtro.tipo = tipo;
+  if (sucursal !== undefined) filtro.sucursal = sucursal;
+  if (origen !== undefined) filtro.origen = origen;
+  if (estado !== undefined) filtro.estado = estado;
+
+  // `nivel` es el campo real; `severidad` se acepta como alias historico.
+  const nivel = soloTexto(q['nivel']) ?? soloTexto(q['severidad']);
+  if (nivel !== undefined) filtro.nivel = nivel;
+
+  const rango: Record<string, Date> = {};
+  const desde = soloTexto(q['desde']);
+  const hasta = soloTexto(q['hasta']);
+  if (desde !== undefined) {
+    const d = new Date(desde);
+    if (!Number.isNaN(d.getTime())) rango['$gte'] = d;
+  }
+  if (hasta !== undefined) {
+    const h = new Date(hasta);
+    if (!Number.isNaN(h.getTime())) rango['$lte'] = h;
+  }
+  if (Object.keys(rango).length > 0) filtro.fecha = rango;
+
+  return filtro;
+};
+
+/**
  * Feed de incidencias para el monitor interno (ex monitoreo de alertas Firebase).
  *
  * Corrige dos defectos que tenia la version anterior:
@@ -26,32 +80,14 @@ const LIMITE_MAXIMO = 500;
 auditRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const q = req.query as Record<string, string | undefined>;
+    const q = req.query as Record<string, unknown>;
 
     const limite = Math.min(Number(q['limit'] ?? LIMITE_POR_DEFECTO) || LIMITE_POR_DEFECTO, LIMITE_MAXIMO);
     const offset = Math.max(Number(q['offset'] ?? 0) || 0, 0);
 
-    const filtro: FilterQuery<IAuditLog> = {};
-
-    if (q['tipo'] !== undefined && q['tipo'] !== '') filtro.tipo = q['tipo'];
-    if (q['sucursal'] !== undefined && q['sucursal'] !== '') filtro.sucursal = q['sucursal'];
-    if (q['origen'] !== undefined && q['origen'] !== '') filtro.origen = q['origen'];
-    if (q['estado'] !== undefined && q['estado'] !== '') filtro.estado = q['estado'];
-
-    // `nivel` es el campo real; `severidad` se acepta como alias historico.
-    const nivel = q['nivel'] ?? q['severidad'];
-    if (nivel !== undefined && nivel !== '') filtro.nivel = nivel;
-
-    const rango: Record<string, Date> = {};
-    if (q['desde'] !== undefined && q['desde'] !== '') {
-      const d = new Date(q['desde']);
-      if (!Number.isNaN(d.getTime())) rango['$gte'] = d;
-    }
-    if (q['hasta'] !== undefined && q['hasta'] !== '') {
-      const h = new Date(q['hasta']);
-      if (!Number.isNaN(h.getTime())) rango['$lte'] = h;
-    }
-    if (Object.keys(rango).length > 0) filtro.fecha = rango;
+    // Solo texto: un `?tipo[$ne]=x` llega como OBJETO por el parser `qs` y no debe entrar al
+    // filtro como operador de Mongo. El detalle y su test, en `construirFiltroAuditoria`.
+    const filtro = construirFiltroAuditoria(q);
 
     const [items, total] = await Promise.all([
       AuditLog.find(filtro).sort({ fecha: -1 }).skip(offset).limit(limite).lean().exec(),

@@ -34,7 +34,23 @@ const ESPERA_ENTRE_INTENTOS_MS = 5_000;
 
 export const connectDatabase = async (): Promise<void> => {
   mongoose.set('strictQuery', true);
-  mongoose.set('sanitizeFilter', true);
+
+  /* `sanitizeFilter` QUEDA APAGADO A PROPOSITO. No lo vuelvas a prender global.
+     Mongoose lo aplica en cada consulta (`query.js:2360`) y envuelve en `$eq` todo valor
+     que tenga claves que empiecen con `$` (`helpers/query/sanitizeFilter.js:31`). Nuestros
+     filtros usan operadores LEGITIMOS, asi que el envoltorio los rompia:
+       { _id: { $in: [...] } }  ->  { _id: { $eq: { $in: [...] } } }
+     y al castear, Mongoose intentaba convertir el OPERADOR a ObjectId:
+       Cast to ObjectId failed for value "{'$in': [...]}" at path "_id" for model "Order"
+     Ese era el 400 del cierre forzado (cashForzado.service.ts:228). La misma trampa estaba
+     detras de $ne, $gte/$lte y $exists: de ahi los rodeos con $nor y los $and del arqueo.
+     La defensa contra inyeccion de operadores NoSQL vive en el BORDE, que es por donde entra
+     el dato hostil: `aValoresEscalares` de resource.factory.ts y `construirFiltroAuditoria`
+     solo aceptan strings (`?rol[$ne]=admin` llega como OBJETO por el parser `qs` y se cae),
+     y los controllers coercen con String()/Number()/typeof o validan con zod.
+     Los dos lados tienen test: tests/filtros.test.ts.
+     Si algun dia hiciera falta reactivarlo, que sea por consulta (`{sanitizeFilter: true}`) o
+     con `mongoose.trusted(objeto)`: el global le gana a la opcion de la query (`query.js:2361`). */
 
   for (let intento = 1; ; intento += 1) {
     try {

@@ -333,11 +333,14 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
 
   // Mismo criterio que el cierre: fuera las anuladas y las que no afectan caja.
   //
-  // `noAfectaCaja: { $ne: true }` NO se puede usar: Mongoose intenta castear el OPERADOR como
-  // si fuera el valor y lanza CastError ("Cast to Boolean failed for value \"{ '$ne': true }\""
-  // at path "noAfectaCaja"). Se ve en el log de produccion con el stack en Query._castConditions.
-  // Se expresa lo mismo con un $or explicito, que castea sin ambiguedad: el campo es false, o
-  // el documento no lo tiene (el default es undefined, asi que la mayoria no lo tiene).
+  // El $or explicito equivale a `{ noAfectaCaja: { $ne: true } }` y el $nor a
+  // `{ estadoPago: { $ne: 'anulado' } }`. Se dejan escritos asi porque ya estan probados y
+  // porque el $or dice a proposito que "el campo no existe" tambien cuenta: los documentos
+  // importados de Firestore no traen la bandera, y `null` matchea el null Y el ausente.
+  // (Ojo con leer esto como una regla general: cuando este bloque se escribio, un `$ne` a secas
+  // reventaba con CastError porque el `sanitizeFilter` global de Mongoose envolvia el OPERADOR
+  // en un `$eq` y lo casteaba como valor. Eso ya no pasa — ver config/database.ts — asi que un
+  // `$ne` comun y silvestre hoy es valido. No hay motivo para reescribir lo que ya funciona.)
   const ordenes = await Order.find({
     turnoId: id,
     $nor: [{ estadoPago: 'anulado' }],
