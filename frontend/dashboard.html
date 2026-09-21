@@ -1728,19 +1728,21 @@
             },
 
             cargarVentasTurnoUnaVez: async function() {
-                const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
+                /* SIN FALLBACK A FIRESTORE.
+                   Antes: si `aplicarVentasLeidas` no traia nada, esto bajaba las ventas de
+                   Firestore con getDocs. Ya no autoriza, asi que en vez de un respaldo era una
+                   llamada muerta que ensuciaba la consola con "Missing or insufficient
+                   permissions" y hacia creer que el dashboard seguia dependiendo de Firebase.
+                   La API es la unica fuente: si no hay ventas, no hay ventas. */
                 try {
-                    const q = query(collection(db, rutaVentas), orderBy('fecha', 'desc'), limit(300));
-                    const snapshot = await getDocs(q);
-                    const leyoVentas = this.aplicarVentasLeidas(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })), 'getDocs');
-                    if (!leyoVentas) await this.cargarVentasTurnoDesdeServidor();
+                    await this.cargarVentasTurnoDesdeServidor();
                     this.marcarSincronizacionOk('ventas_dashboard_respaldo');
                 } catch (error) {
                     this.manejarErrorOperativo(error, {
                         origen: 'dashboard',
-                        tipo: 'firestore_ventas_dashboard_respaldo',
+                        tipo: 'ventas_dashboard_respaldo',
                         mensaje: 'No se pudo cargar el flujo actual de ventas.',
-                        detalle: { coleccion: 'sales', modo: 'getDocs' }
+                        detalle: { coleccion: 'sales', modo: 'api' }
                     });
                 }
             },
