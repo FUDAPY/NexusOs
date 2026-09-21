@@ -88,7 +88,7 @@ export const forzarCierreSucursal = async (
   const resultado = await withTransaction(async (session) => {
     // Solo los no arqueados: es lo mismo que filtra esCandidatoCierreForzado,
     // pero recorta el volumen antes de traerlo.
-    const docs = await Order.find({ sucursal, arqueado: { $ne: true } })
+    const docs = await Order.find({ sucursal, $or: [{ arqueado: false }, { arqueado: { $exists: false } }] })
       .session(session)
       .limit(MAX_TICKETS)
       .exec();

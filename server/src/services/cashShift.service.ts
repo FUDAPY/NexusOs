@@ -84,7 +84,7 @@ export const cerrarTurno = async (
     const ordenes = await Order.find({
       turnoId: input.turnoId,
       estadoPago: { $ne: 'anulado' },
-      noAfectaCaja: { $ne: true },
+      $or: [{ noAfectaCaja: false }, { noAfectaCaja: { $exists: false } }],
     })
       .session(session)
       .lean()
@@ -219,7 +219,7 @@ export const cerrarTurno = async (
       {
         turnoId: input.turnoId,
         estadoPago: { $ne: 'anulado' },
-        noAfectaCaja: { $ne: true },
+        $or: [{ noAfectaCaja: false }, { noAfectaCaja: { $exists: false } }],
       },
       { $set: { arqueado: true, fechaArqueo: ahora } },
       opciones,
@@ -332,10 +332,16 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
   }
 
   // Mismo criterio que el cierre: fuera las anuladas y las que no afectan caja.
+  //
+  // `noAfectaCaja: { $ne: true }` NO se puede usar: Mongoose intenta castear el OPERADOR como
+  // si fuera el valor y lanza CastError ("Cast to Boolean failed for value \"{ '$ne': true }\""
+  // at path "noAfectaCaja"). Se ve en el log de produccion con el stack en Query._castConditions.
+  // Se expresa lo mismo con un $or explicito, que castea sin ambiguedad: el campo es false, o
+  // el documento no lo tiene (el default es undefined, asi que la mayoria no lo tiene).
   const ordenes = await Order.find({
     turnoId: id,
     estadoPago: { $ne: 'anulado' },
-    noAfectaCaja: { $ne: true },
+    $or: [{ noAfectaCaja: false }, { noAfectaCaja: { $exists: false } }],
   })
     .lean()
     .exec();
