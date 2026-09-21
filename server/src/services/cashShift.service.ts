@@ -83,8 +83,8 @@ export const cerrarTurno = async (
     // Se excluyen las anuladas y las que no afectan caja (canjes gratuitos).
     const ordenes = await Order.find({
       turnoId: input.turnoId,
-      estadoPago: { $ne: 'anulado' },
-      $or: [{ noAfectaCaja: false }, { noAfectaCaja: { $exists: false } }],
+      $nor: [{ estadoPago: 'anulado' }],
+      $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }],
     })
       .session(session)
       .lean()
@@ -218,8 +218,8 @@ export const cerrarTurno = async (
     await Order.updateMany(
       {
         turnoId: input.turnoId,
-        estadoPago: { $ne: 'anulado' },
-        $or: [{ noAfectaCaja: false }, { noAfectaCaja: { $exists: false } }],
+        $nor: [{ estadoPago: 'anulado' }],
+        $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }],
       },
       { $set: { arqueado: true, fechaArqueo: ahora } },
       opciones,
@@ -340,8 +340,8 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
   // el documento no lo tiene (el default es undefined, asi que la mayoria no lo tiene).
   const ordenes = await Order.find({
     turnoId: id,
-    estadoPago: { $ne: 'anulado' },
-    $or: [{ noAfectaCaja: false }, { noAfectaCaja: { $exists: false } }],
+    $nor: [{ estadoPago: 'anulado' }],
+    $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }],
   })
     .lean()
     .exec();
