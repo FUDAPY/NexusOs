@@ -29,7 +29,9 @@ const fixture = JSON.parse(
  * El fixture NO es inventado: son documentos REALES de produccion
  * (`sys-pos-erp-lingroup`) capturados con firebase-admin el 21/09/2026 — los 7 turnos
  * que estaban abiertos entonces (con los duplicados viejos que deja el POS viejo) y
- * las 48 ventas del turno vivo de CAFETERIA CHICOLIN.
+ * las 48 ventas del turno vivo de CAFETERIA CHICOLIN. Los nombres de clientes y del
+ * cajero estan reemplazados: los montos y los productos, que es lo que se prueba, son
+ * los de produccion.
  *
  * Por que importa que sea real: los numeros de abajo son los MISMOS que el sistema
  * viejo calcula y guarda en su propio documento (`ventaTotalBruta` 634.000, efectivo
@@ -63,7 +65,7 @@ describe('elegirTurnosActivos: un solo turno por sucursal, el que se esta usando
        fechaApertura MAS NUEVA (`-805`) quedo vacio: el que tiene las ventas es el otro.
        Si el desempate fuera por apertura, el panel mostraria un turno sin tickets. */
     expect(chicolin?.turnoId).toBe('TURN-CAFETERIACHI-1789980211733-571');
-    expect(chicolin?.cajero).toBe('Noni');
+    expect(chicolin?.cajero).toBeTruthy();
     expect(chicolin?.resumen.totalTickets).toBeGreaterThan(0);
   });
 
