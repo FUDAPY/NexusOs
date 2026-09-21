@@ -17,13 +17,13 @@ export interface IProduct {
   imagen?: string;
   imagenes: string[];
   estado: ProductEstado;
-  /** Nombre legado de sucursal (Firestore: products.sucursal) usado por filtros historicos. */
+  
   sucursal: string;
   sucursalNombre: string;
   sucursalId?: Types.ObjectId | null;
   visibilidad: ProductVisibilidad;
 
-  /** Si es true el stock se descuenta en cada venta y puede entrar en estado Agotado. */
+  
   controlado: boolean;
   stock: number;
   stockMinimo: number;

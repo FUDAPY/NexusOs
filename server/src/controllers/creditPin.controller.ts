@@ -7,15 +7,7 @@ const contextoDe = (req: Request): { ip: string; userAgent: string } => ({
   userAgent: String(req.headers['user-agent'] ?? ''),
 });
 
-/**
- * POST /api/v1/auth/usuarios/:id/pin  { pin }
- *
- * Define o quita el PIN de credito de un cliente. Es la pantalla de Usuarios del
- * panel: reemplaza a la Cloud Function de Firebase que ya no existe, y por eso los
- * PIN no se podian crear.
- *
- * Solo admin y supervisor: el PIN es lo que autoriza fiado.
- */
+
 export const crearPin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = req.params['id'];
@@ -30,16 +22,7 @@ export const crearPin = async (req: Request, res: Response, next: NextFunction):
   }
 };
 
-/**
- * POST /api/v1/auth/credito/validar-pin  { clienteId, pin }
- *
- * Valida el PIN para autorizar un fiado. Lo usa el POS antes de cerrar una venta a
- * credito; reemplaza la Cloud Function `validarPinCreditoCliente` (muerta).
- *
- * Cuando el PIN NO vale responde 403 con el motivo en el mensaje y en `code`, y no un
- * 200 con `valido: false`: el POS ya trata un error como PIN rechazado y muestra el
- * mensaje, asi que asi se comporta igual que antes sin tocar esa logica.
- */
+
 export const validarPin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as { clienteId?: unknown; pin?: unknown };

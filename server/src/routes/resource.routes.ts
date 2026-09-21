@@ -22,29 +22,10 @@ import {
 } from '../models/index.js';
 import { crearRecurso } from '../utils/resource.factory.js';
 
-/**
- * Rutas CRUD de las colecciones.
- *
- * Se montan bajo `${API_PREFIX}` (ver app.ts) y usan los MISMOS query params
- * en todas, para que nexus-data.js traduzca query(where(), orderBy(), limit())
- * sin casos especiales:
- *
- *   ?<campo>=valor  &q=texto  &desde=ISO  &hasta=ISO
- *   &limit=50       &offset=0 &sort=campo &order=asc|desc
- *
- * Los nombres de campo de `filtros` y `ordenables` salen del reporte real de
- * docs/paridad.json (auditoria de la base), no de suposiciones.
- */
+
 export const resourceRouter: Router = Router();
 
-/**
- * Lectura PUBLICA y sin token, montada aparte en app.ts.
- *
- * Existe por metas-publicas.html, que muestra las metas sin pedir login. Al ser
- * `soloLectura: true` no expone POST ni PATCH, asi que una peticion de escritura
- * cae al resourceRouter protegido (Express sigue si el router no matchea) y ahi
- * si exige token.
- */
+
 export const publicResourceRouter: Router = Router();
 
 publicResourceRouter.use(
@@ -59,7 +40,7 @@ publicResourceRouter.use(
   }),
 );
 
-/* ---------------- Catalogo ---------------- */
+
 
 resourceRouter.use(
   '/products',
@@ -82,8 +63,7 @@ resourceRouter.use(
     ordenables: ['nombre'],
     campoBusqueda: 'nombre',
     ordenPorDefecto: 'nombre',
-    // Sucursales es catalogo: se puede borrar. Va explicito porque el DELETE es
-    // opt-in (ver resource.factory.ts).
+
     borrable: true,
   }),
 );
@@ -112,17 +92,7 @@ resourceRouter.use(
   }),
 );
 
-/**
- * Usuarios: el CRUD generico devolveria `passwordHash` y permitiria
- * sobrescribirlo. Por eso se excluye de la respuesta y se bloquea del cuerpo.
- * `puntos`, `deuda` y `saldo` tampoco son escribibles desde el cliente: los
- * mueve la logica de venta, no un PATCH suelto.
- *
- * Los filtros salen del uso real del dashboard: pide el conteo de
- * clientes con `rol: 'cliente'` + `estadoBeneficios: 'pendiente'`. Antes
- * declaraba `estado`, que NO existe en el modelo, y le faltaba
- * `estadoBeneficios`, asi que ese conteo era imposible de reproducir por API.
- */
+
 resourceRouter.use(
   '/users',
   crearRecurso({
@@ -134,15 +104,12 @@ resourceRouter.use(
     ordenPorDefecto: 'nombre',
     excluir: ['passwordHash', 'password', 'pin', 'tokenFcm', 'resetToken'],
     noEscribible: ['passwordHash', 'password', 'pin', 'puntos', 'deuda', 'saldo', 'legacyId'],
-    /* Borrado habilitado a proposito: el panel lo necesita para dar de baja un
-       usuario cargado por error. Es opt-in (no generico) porque borrar un usuario
-       deja huerfano su `cajeroId` en las ventas: por eso queda en admin/supervisor
-       y sin la creacion de documentos, igual que en branches. */
+    
     borrable: true,
   }),
 );
 
-/* ---------------- Caja ---------------- */
+
 
 resourceRouter.use(
   '/cash-shifts',
@@ -168,7 +135,7 @@ resourceRouter.use(
   }),
 );
 
-/* ---------------- Inventario y produccion ---------------- */
+
 
 resourceRouter.use(
   '/inventory-movements',
@@ -205,7 +172,7 @@ resourceRouter.use(
   }),
 );
 
-/* ---------------- CRM y programas ---------------- */
+
 
 resourceRouter.use(
   '/lin-tickets',
@@ -231,7 +198,7 @@ resourceRouter.use(
   }),
 );
 
-/** El PIN nunca sale en una respuesta, por eso se excluye. */
+/* El PIN nunca sale en una respuesta, por eso se excluye. */
 resourceRouter.use(
   '/credit-pins',
   crearRecurso({
@@ -268,7 +235,7 @@ resourceRouter.use(
   }),
 );
 
-/* ---------------- Operacion y soporte ---------------- */
+
 
 resourceRouter.use(
   '/support-alerts',
@@ -305,13 +272,13 @@ resourceRouter.use(
     ordenables: ['fecha'],
     campoFecha: 'fecha',
     ordenPorDefecto: 'fecha',
-    // El panel tiene boton de borrar en cada aviso: es feed de operacion, no
+
     // historial contable.
     borrable: true,
   }),
 );
 
-/** Configuracion global: solo lectura desde el cliente. */
+
 resourceRouter.use(
   '/settings',
   crearRecurso({

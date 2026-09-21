@@ -3,15 +3,12 @@ import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 export const AUDIT_SEVERIDADES = ['info', 'warning', 'error', 'critical'] as const;
 export type AuditSeveridad = (typeof AUDIT_SEVERIDADES)[number];
 
-/** Datos libres de la incidencia (se tipan en la capa de servicio). */
+
 export type AuditPayload = Record<string, unknown>;
 
-/**
- * Registro inalterable (append-only). Firestore: `auditoria` + `systemAlerts`.
- * Unifica transacciones criticas y tickets internos de soporte en una sola coleccion.
- */
+
 export interface IAuditLog {
-  /** Discriminador: anulacion_ticket, correccion_cierre_caja, ticket_soporte, ... */
+  
   tipo: string;
   subtipo: string;
   origen: string;
@@ -45,7 +42,7 @@ export interface IAuditLog {
   /** Origen de la peticion. Se usa sobre todo en los registros de login. */
   ip: string;
   userAgent: string;
-  // Tickets internos de soporte (ex coleccion systemAlerts).
+
   mensaje: string;
   nivel: string;
   estado: string;
@@ -88,7 +85,7 @@ const auditLogSchema = new Schema<IAuditLog, Model<IAuditLog>>(
     totalDespues: { type: Number, default: 0 },
 
     item: { type: Schema.Types.Mixed, default: null },
-    // Mixed en lugar de [Mixed]: evita la incompatibilidad de tipos de Mongoose con arrays de Mixed.
+
     itemsOriginales: { type: Schema.Types.Mixed, default: () => [] },
     itemsRestantes: { type: Schema.Types.Mixed, default: () => [] },
     autorizacionRfid: { type: Schema.Types.Mixed, default: null },
@@ -114,7 +111,7 @@ const auditLogSchema = new Schema<IAuditLog, Model<IAuditLog>>(
     timestamps: { createdAt: 'creadoEn', updatedAt: false },
     versionKey: false,
     collection: 'audit_logs',
-    // strict (no 'throw'): el legado puede traer campos nuevos sin romper la escritura.
+
     strict: true,
   },
 );
@@ -126,24 +123,10 @@ auditLogSchema.index({ adminId: 1, fecha: -1 });
 auditLogSchema.index({ ticketId: 1, fecha: -1 });
 auditLogSchema.index({ nivel: 1, estado: 1, fecha: -1 });
 
-/**
- * Indice de consulta por rango de fecha + tipo.
- *
- * OJO con lo que decia antes: este indice llevaba
- * `{ expireAfterSeconds: 157_680_000 }` con la intencion de retener 5 anios,
- * pero MongoDB IGNORA el TTL en indices compuestos (solo lo soporta en indices
- * de UN campo), asi que esa limpieza nunca se ejecuto: la coleccion crecio sin
- * limite creyendo que estaba acotada.
- *
- * No se activa la retencion automatica a proposito. Borrar auditoria es una
- * decision fiscal/legal, no tecnica, y un TTL borra del lado del servidor sin
- * pasar por los hooks de append-only de abajo. Si se quiere retencion
- * automatica, va como indice de un solo campo sobre `fecha` y decidido de
- * forma explicita.
- */
+
 auditLogSchema.index({ fecha: 1, tipo: 1 });
 
-// Append-only: bloquea updates y borrados.
+
 const blockMutation = (next: (error?: Error) => void): void => {
   next(new Error('audit_logs es append-only: updates y deletes no permitidos'));
 };

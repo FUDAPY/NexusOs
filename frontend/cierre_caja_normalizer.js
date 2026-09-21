@@ -159,7 +159,7 @@
         const transferenciaDeclarada = primerMonto(cierre, ['declaracion.transferencia', 'transferenciaDeclarada', 'totalTransferenciaDeclarada'], transferencia);
         const totalVentas = primerMonto(cierre, ['sistema.totalVentas'], efectivoPos + posTarjeta + transferencia);
 
-        // La única convención financiera válida es declarado menos esperado.
+
         const diferenciaCaja = efectivoDeclarado - efectivoEsperado;
         const diferenciaPosTarjeta = posTarjetaDeclarado - posTarjeta;
         const diferenciaTransferencia = transferenciaDeclarada - transferencia;

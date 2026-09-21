@@ -550,13 +550,7 @@
                         sistema: cierre.sistema || {}
                     };
                     const htmlTicket = this.generarHtmlTicketCierre(cierre, calc);
-                    /* PATCH /cash-closes/:id via NexusData (antes: updateDoc + addDoc a
-                       Firestore, que ya no autoriza: corregir un cierre de caja NUNCA se
-                       guardaba, y es plata).
-                       La traza de auditoria va EN EL MISMO documento y no en una coleccion
-                       aparte: `auditoria` no tiene ruta de escritura en el API (/audit-logs
-                       es de solo lectura), y dejar el "antes" y el "despues" junto al cierre
-                       pone el rastro donde alguien lo va a buscar. */
+                    
                     await NexusData.actualizar('cash-closes', cierre.id, {
                         fondoInicial: calc.fondoInicial,
                         declaracion: calc.declaracion,
@@ -600,6 +594,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => RelatorioCierresModule.init());
-    </script>
+</script>
 </body>
 </html>

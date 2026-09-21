@@ -1,6 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/** Log de sincronizacion. MongoDB: sync_logs (12 710 docs). Volumen alto. */
+
 export interface ISyncLog {
   coleccion?: string;
   tipo?: string;

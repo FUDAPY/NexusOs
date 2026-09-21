@@ -1,32 +1,4 @@
-/**
- * Cierre de caja de una sucursal desde la linea de comandos.
- *
- * POR QUE EXISTE
- * El panel (dashboard.html) todavia llama a la Cloud Function de Firebase
- * `forzarCierreCajaSucursal`, y esa via ya no funciona: no hay sesion de
- * Firebase, asi que Firestore responde permission-denied. El endpoint
- * equivalente SI existe en la API (POST /cash-shifts/forzar-cierre), pero
- * ninguna pantalla lo llama todavia.
- *
- * Mientras se conecta la UI, este script permite cerrar un turno que quedo
- * abierto SIN depender del POS: recalcula los totales desde las ordenes del
- * turno, crea el cierre, marca los tickets como arqueados y deja auditoria.
- * Usa la MISMA funcion que la API (forzarCierreSucursal), no una copia: si un
- * dia se corrige la formula, se corrige para los dos lados.
- *
- * USO
- *   npm run caja:cerrar -- --listar
- *
- *   npm run caja:cerrar -- --sucursal "Mi Sucursal" --motivo "el cajero no pudo cerrar" \
- *       --efectivo 1200000 --tarjeta 300000 --transferencia 50000 --fondo-inicial 200000
- *
- *   (agregar --confirmar para que escriba de verdad)
- *
- * Por defecto SIMULA: sin `--confirmar` no escribe absolutamente nada.
- *
- * REQUISITO: la conexion tiene que ser a un replica set. El cierre toca tres
- * colecciones en UNA transaccion (orders, cash_closes, cash_shifts).
- */
+
 import mongoose from 'mongoose';
 import { env } from '../src/config/env.js';
 import { CashShift, Order } from '../src/models/index.js';
@@ -54,11 +26,7 @@ const numero = (nombre: string): number => {
 
 const plata = (n: number): string => n.toLocaleString('es-PY');
 
-/**
- * Tickets que un cierre forzado tomaria de esa sucursal.
- * Se aplica el MISMO filtro que el servicio (esCandidatoCierreForzado) para que
- * el preview coincida exactamente con lo que se va a cerrar.
- */
+
 const pendientesDe = async (sucursal: string) => {
   const docs = await Order.find({ sucursal, arqueado: { $ne: true } }).limit(5000).lean().exec();
   const ventas = docs.map((d) => ({ id: String(d._id), venta: d as unknown as VentaCruda }));

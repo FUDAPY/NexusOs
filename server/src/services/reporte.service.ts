@@ -50,7 +50,7 @@ export interface ResumenReporte {
   porVendedor: ResumenGrupo[];
 }
 
-/** Normaliza el metodo de pago para poder agrupar: "POS/Tarjeta", "Tarjeta", etc. */
+
 const metodoNormalizado = {
   $switch: {
     branches: [
@@ -64,9 +64,7 @@ const metodoNormalizado = {
 } as const;
 
 const groupPor = (expresionClave: unknown) => ({
-  /* `_id` y NO `clave`. Un $group sin `_id` es un error de Mongo ("'$group' requires '_id'")
-     y devolvia 500 en /orders/resumen: el endpoint nunca podia funcionar. El nombre `clave`
-     se aplica despues, al leer el resultado, en aGrupos(). */
+  
   _id: expresionClave as Record<string, unknown>,
   tickets: { $sum: 1 },
   total: { $sum: { $toDouble: { $ifNull: ['$total', 0] } } },
@@ -156,9 +154,7 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
         porVendedor: [{ $group: groupPor({ $ifNull: ['$cajero', 'Sin vendedor'] }) }, { $sort: { total: -1 } }],
       },
     },
-  /* El cast es a proposito: la forma de un $facet no se puede validar con tipos (los grupos
-     internos son datos, no interfaces), y TypeScript se queda con la primera sobrecarga que
-     encuentra. El pipeline esta probado contra Mongo; el tipo solo evita el ruido. */
+  
   ] as unknown as PipelineStage[]).exec();
 
   const aGrupos = (filas: { _id: unknown; tickets: number; total: number }[] | undefined): ResumenGrupo[] =>

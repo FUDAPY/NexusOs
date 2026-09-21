@@ -11,13 +11,13 @@ import type { AuthenticatedRequest } from '../middlewares/auth.js';
 import { env } from '../config/env.js';
 import { AppError, sendOk } from '../utils/response.js';
 
-/** Datos de contexto que se guardan en la auditoria de cada operacion. */
+/* Datos de contexto que se guardan en la auditoria de cada operacion. */
 const contextoDe = (req: Request): { ip: string; userAgent: string } => ({
   ip: req.ip ?? '',
   userAgent: String(req.headers['user-agent'] ?? ''),
 });
 
-/** POST /api/v1/auth/login  { email, password } */
+/* POST /api/v1/auth/login  { email, password } */
 export const entrar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as { email?: string; password?: string };
@@ -36,12 +36,7 @@ export const entrar = async (req: Request, res: Response, next: NextFunction): P
   }
 };
 
-/**
- * Identificador del usuario que hace la peticion.
- *
- * Sale de `req.params.id` si viene (cambio desde el panel de admin) o del token
- * si no. El middleware `requiereAuth` deja el usuario en `req.auth`.
- */
+
 const identificadorDe = (req: Request): string => {
   const deParams = req.params['id'];
   if (typeof deParams === 'string' && deParams !== '') return deParams;
@@ -50,13 +45,7 @@ const identificadorDe = (req: Request): string => {
   throw new AppError('No se pudo determinar el usuario', 401, 'SIN_USUARIO');
 };
 
-/**
- * POST /api/v1/auth/registro  { nombre, email, password, telefono?, solicitudPremium? }
- *
- * Alta publica de cliente. Devuelve el MISMO sobre que /auth/login
- * ({ token, expiraEn, usuario }) para que el frontend reutilice el guardado de
- * sesion sin un camino aparte.
- */
+
 export const registrarCliente = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as {
@@ -89,7 +78,7 @@ export const registrarCliente = async (req: Request, res: Response, next: NextFu
   }
 };
 
-/** GET /api/v1/auth/perfil */
+
 export const verPerfil = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     sendOk(res, await perfil(identificadorDe(req)));
@@ -98,7 +87,7 @@ export const verPerfil = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-/** PATCH /api/v1/auth/perfil  { nombre } */
+
 export const editarPerfil = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as { nombre?: string };
@@ -111,12 +100,7 @@ export const editarPerfil = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-/**
- * POST /api/v1/auth/password  { actual?, nueva }
- *
- * `actual` es opcional SOLO cuando el usuario todavia no tiene contraseña
- * (los migrados de Firebase). Si ya tiene, es obligatoria.
- */
+
 export const cambiarClave = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as { actual?: string; nueva?: string };
@@ -130,15 +114,7 @@ export const cambiarClave = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-/**
- * POST /api/v1/auth/usuarios/:id/reset-password  { nueva }
- *
- * Reseteo desde el panel de admin (Personal). La ruta exige rol admin o
- * supervisor; aca solo se arma la entrada.
- *
- * A diferencia de /auth/password, NO pide la contraseña actual del afectado: el
- * admin no la conoce, y ese es el caso de uso (un cajero que la olvidó).
- */
+
 export const resetearClaveDeUsuario = async (
   req: Request,
   res: Response,

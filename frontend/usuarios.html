@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -248,7 +248,7 @@
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Configuracion de tu Proyecto Firebase
+
         const firebaseConfig = {
             apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
             authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
@@ -265,16 +265,16 @@
         // CORRECCION PERMISOS: La BD se inicia con la App Secundaria (la del Admin) para poder escribir
         const db = getFirestore(app);
 
-        // App Secundaria para registrar Auth sin perder sesion del Admin
+
         const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
         const secondaryAuth = getAuth(secondaryApp);
-        // NO iniciamos base de datos secundaria, usamos la db principal que tiene la sesion de Admin valida.
+
 
         window.UsuariosModule = {
-            /** Usuarios traidos de la API (antes: usuariosFirebase, de Firestore). */
+            
             usuarios: [],
             pestanaActual: 'empleados',
-            /** Usuario cuyo modal de contrasena esta abierto. */
+            
             passwordUsuarioId: null,
 
             /**
@@ -287,10 +287,7 @@
              */
             motivoDeBloqueo: function() {
                 if (!window.NexusAuth) {
-                    // Ojo con esta rama: es la que aparece cuando el navegador
-                    // ejecuta un nexus-auth.js VIEJO de la cache. nginx sirve los
-                    // .js con `immutable`, asi que un despliegue que solo cambie
-                    // JavaScript no llega hasta que expire la cache.
+
                     return 'no cargo nexus-auth.js (falta el script, no se sirve, o la copia en cache es vieja)';
                 }
                 if (typeof window.NexusAuth.autenticado !== 'function') {
@@ -303,7 +300,7 @@
                     return 'no hay sesion en localStorage["__pos_session"]: hay que volver a entrar';
                 }
                 if (window.NexusAuth.token() === null) {
-                    // Caso tipico: la sesion quedo del login viejo (Firebase), que
+
                     // no escribia __pos_token. El JWT solo lo escribe NexusAuth.
                     return 'hay sesion (rol "' + sesion.rol + '") pero falta el token en __pos_token:'
                         + ' la sesion es del login viejo, hay que volver a entrar';
@@ -314,28 +311,16 @@
                 return null;
             },
 
-            /**
-             * Arranque de la pagina.
-             *
-             * La sesion la lleva NexusAuth: escribe `__pos_session` y el JWT en
-             * `__pos_token`. Antes la sesion viva se confirmaba con
-             * `onAuthStateChanged` de Firebase, y eso dejo de funcionar cuando
-             * index.html paso a autenticar contra la API: ya no se inicia sesion
-             * en Firebase, asi que ese callback recibia siempre `user === null`
-             * y la pagina rebotaba al login en cada carga.
-             */
+            
             init: function() {
                 const motivo = this.motivoDeBloqueo();
 
                 if (motivo !== null) {
-                    // La consola se borra al navegar, asi que el motivo se deja
-                    // tambien en sessionStorage: sobrevive al redirect y se puede
-                    // leer desde index.html con
-                    //   sessionStorage.getItem('nexus.motivo-bloqueo')
+
                     console.warn('[Personal] No se abre:', motivo);
                     try {
                         sessionStorage.setItem('nexus.motivo-bloqueo', 'usuarios.html -> ' + motivo);
-                    } catch (e) { /* modo privado o storage bloqueado */ }
+                    } catch (e) {  }
 
                     const sesion = window.NexusAuth ? window.NexusAuth.sesion() : null;
                     if (sesion && sesion.rol === 'cobrador') return window.location.replace('clientes.html?view=cobranzas');
@@ -343,8 +328,8 @@
                     return window.location.replace('index.html');
                 }
 
-                // Entro bien: se limpia el motivo de un intento anterior.
-                try { sessionStorage.removeItem('nexus.motivo-bloqueo'); } catch (e) { /* modo privado */ }
+
+                try { sessionStorage.removeItem('nexus.motivo-bloqueo'); } catch (e) {  }
 
                 this.cargarUsuarios();
                 this.cargarSucursalesParaSelect();
@@ -352,8 +337,7 @@
 
             cargarSucursalesParaSelect: async function() {
                 try {
-                    // Las sucursales tambien vienen de la API: `getDocs` contra
-                    // Firestore ya no esta autorizado.
+
                     const selectEl = document.getElementById('usr-sucursal');
                     const sucursales = await NexusData.leer('branches', { limit: 200, orderBy: ['nombre', 'asc'] });
 
@@ -407,10 +391,7 @@
                 spinner.classList.remove('hidden'); spinner.classList.add('flex');
                 
                 try {
-                    // Se lee del API (Mongo), no de Firestore: la sesion ya no es
-                    // de Firebase, asi que `getDocs` respondia permission-denied y
-                    // la tabla quedaba vacia. El id publico es `uid` (el que se uso
-                    // en Firestore) y se cae a `_id` para los creados despues.
+
                     const filas = await NexusData.leer('users', { limit: 500, orderBy: ['nombre', 'asc'] });
                     this.usuarios = filas.map(f => ({ ...f, id: f.uid || f._id }));
 
@@ -457,10 +438,9 @@
 
                     let estadoHtml = `<span class="font-semibold text-slate-700">${usr.sucursal || 'Sin Asignar'}</span>`;
 
-                    // La llave es el cambio de contrasena. Va primera porque es la
-                    // accion de soporte mas pedida (el cajero que la olvido). El candado
+
                     // es el PIN de credito, y va aca porque se usa en los mismos lugares
-                    // (dos plantillas mas): el nombre de la variable quedo corto, pero
+
                     // duplicarlo obligaba a tocar las tres.
                     const btnPassword = `<button onclick="UsuariosModule.abrirModalPassword('${usr.id}')" title="Cambiar contrasena" class="w-8 h-8 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-500 hover:text-white transition shadow-sm border border-orange-100 mr-2"><i class="fa-solid fa-key"></i></button><button onclick="UsuariosModule.definirPinCredito('${usr.id}')" title="PIN de credito" class="w-8 h-8 bg-violet-50 text-violet-600 rounded-lg hover:bg-violet-600 hover:text-white transition shadow-sm border border-violet-100 mr-2"><i class="fa-solid fa-lock"></i></button>`;
                     let accionHtml = `${btnPassword}<button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><i class="fa-solid fa-trash"></i></button>`;
@@ -502,15 +482,9 @@
                 document.getElementById('modal-formulario').classList.add('hidden');
             },
 
-            /* ------------------------------------------------------------------
-               Contrasena
-               ------------------------------------------------------------------ */
+            
 
-            /**
-             * Abre el modal precargado con el usuario elegido.
-             * Se guarda el id en `passwordUsuarioId` para no tener que volver a
-             * resolverlo al enviar el formulario.
-             */
+            
             abrirModalPassword: function(id) {
                 const usr = this.usuarios.find(u => u.id === id);
                 if (!usr) return this.mostrarToast("No se encontro el usuario.", "error");
@@ -533,18 +507,7 @@
                 modal.classList.remove('flex');
             },
 
-            /**
-             * Cambia la contrasena del usuario elegido.
-             *
-             * Pega contra POST /auth/usuarios/:id/reset-password, que NO pide la
-             * contrasena anterior: el admin no la conoce, y ESO es el caso de uso
-             * (el cajero que la olvido). La ruta exige rol admin o supervisor y la
-             * accion queda auditada a nombre del admin que la hizo.
-             *
-             * `retries: 0` a proposito: un fallo de permisos o de validacion no
-             * mejora reintentando, y cada reintento consume cupo del limitador de
-             * intentos del servidor.
-             */
+            
             guardarPassword: async function(event) {
                 event.preventDefault();
 
@@ -554,9 +517,7 @@
                 const nueva = document.getElementById('pwd-nueva').value;
                 const repetir = document.getElementById('pwd-repetir').value;
 
-                // El backend tambien valida el minimo, pero avisar aca evita el
-                // ida y vuelta y da un mensaje mas claro (el html solo aplica
-                // `minlength` si el formulario se envia de forma nativa).
+
                 if (nueva.length < 6) {
                     return this.mostrarToast("La contrasena tiene que tener al menos 6 caracteres.", "error");
                 }
@@ -575,9 +536,7 @@
                         { ttl: 0, retries: 0 }
                     );
 
-                    // `primeraVez` distingue "se la asigno" de "se la cambio": los
-                    // usuarios migrados de Firebase no tenian contrasena, y es
-                    // util saber que esta cuenta acaba de habilitarse.
+
                     const primeraVez = respuesta.data && respuesta.data.primeraVez === true;
                     this.mostrarToast(
                         primeraVez
@@ -610,15 +569,7 @@
                 const rolSelect = document.getElementById('usr-rol').value;
 
                 try {
-                    /* Alta por la API, en DOS pasos. Antes usaba Firebase Auth
-                       (createUserWithEmailAndPassword), que ya no existe: crear un
-                       usuario fallaba en el primer renglon y el `setDoc` de abajo
-                       nunca llegaba a correr.
-                         1. POST /users crea el perfil. Va SIN contrasena a proposito:
-                            `passwordHash` esta en `noEscribible` del recurso.
-                         2. POST /auth/usuarios/:id/reset-password le pone la clave. Es
-                            el mismo camino que usa el panel para resetear, y el campo
-                            se llama `nueva` (no `password`). */
+                    
                     const creado = await NexusData.crear('users', {
                         nombre: document.getElementById('usr-nombre').value,
                         email: email,
@@ -643,7 +594,7 @@
                 } catch (error) { 
                     console.error(error);
                     
-                    // MANEJO PROFESIONAL DE ERRORES
+
                     let mensajeError = "Ocurrio un error al registrar. (Posible permiso)";
                     if (error.code === 'auth/email-already-in-use') {
                         mensajeError = "Este correo ya esta en uso. Por favor, utiliza uno diferente.";
@@ -661,16 +612,7 @@
                 }
             },
 
-            /**
-             * Define o quita el PIN de credito del cliente.
-             *
-             * POST /auth/usuarios/:id/pin: reemplaza a la Cloud Function de Firebase que
-             * lo creaba, que ya no existe. Por eso los PIN no se podian crear desde el
-             * panel y la venta a credito quedaba trabada cuando el cliente lo pedia.
-             *
-             * El PIN viaja y se guarda HASHEADO en el servidor: aca nunca se lee, asi
-             * que no hay forma de mostrarlo despues. Si el cliente lo olvida, se cambia.
-             */
+            
             definirPinCredito: async function(id) {
                 const texto = window.prompt(
                     'PIN de credito para este cliente (4 a 8 numeros).\n\nDejalo VACIO y acepta para quitarselo:',
@@ -694,8 +636,7 @@
 
             aprobarCliente: async function(id) {
                 try {
-                    // PATCH /users/:id. `estadoBeneficios` no esta en `noEscribible`
-                    // del recurso, asi que la via generica sirve.
+
                     await NexusData.actualizar('users', id, { estadoBeneficios: 'activo' });
                     this.mostrarToast("Cliente aprobado. Ya puede acumular puntos.");
                     this.cargarUsuarios();
@@ -708,8 +649,7 @@
             eliminarUsuario: async function(id) {
                 if(confirm("Estas seguro de eliminar este registro permanentemente? (Se eliminaran sus puntos y deudas)")) {
                     try {
-                        // DELETE /users/:id (antes: deleteDoc de Firestore, que ya no
-                        // autoriza, asi que borrar un usuario NUNCA funcionaba).
+
                         await NexusData.eliminar('users', id);
                         this.mostrarToast("Registro eliminado con exito.");
                         this.cargarUsuarios();
@@ -719,7 +659,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => UsuariosModule.init());
-    </script>
+</script>
 </body>
 
 </html>

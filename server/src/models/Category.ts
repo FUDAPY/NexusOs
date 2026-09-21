@@ -1,6 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model, type Types } from 'mongoose';
 
-/** Categorias del menu (POS/KDS). Firestore: categories. */
+
 export interface ICategory {
   nombre: string;
   slug: string;
@@ -13,7 +13,7 @@ export interface ICategory {
   padreId?: Types.ObjectId | null;
   visibleEnPos: boolean;
   estado: 'activa' | 'inactiva';
-  /** Trazabilidad cuando el registro proviene de la migracion. */
+  
   origen?: string;
   creadoEn: Date;
   actualizadoEn: Date;
@@ -53,7 +53,7 @@ const categorySchema = new Schema<ICategory, Model<ICategory>>(
   },
 );
 
-// Deriva el slug cuando no se provee explicitamente.
+
 categorySchema.pre('validate', function ensureSlug(next) {
   if (!this.slug && this.nombre) this.slug = toSlug(this.nombre);
   next();

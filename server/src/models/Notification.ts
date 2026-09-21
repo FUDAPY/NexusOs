@@ -1,9 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Notificacion enviada a los dispositivos.
- * MongoDB: notifications. `fecha` viene como string ISO en el documento migrado.
- */
+
 export interface INotification {
   titulo?: string;
   mensaje?: string;

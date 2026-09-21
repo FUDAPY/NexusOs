@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -482,10 +482,7 @@
 
             cargarSucursales: async function() {
                 try {
-                    /* GET /branches (antes: getDocs de Firestore, que ya no autoriza, asi que
-                       el selector de sucursal quedaba vacio).
-                       Mismo contrato que un snapshot: forEach con id + data(), para no tocar
-                       el cuerpo. */
+                    
                     const respSucursales = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
                     const filasSucursales = (respSucursales && respSucursales.data && respSucursales.data.items) || [];
                     const snap = {
@@ -527,11 +524,7 @@
                 spinner.classList.remove('hidden'); spinner.classList.add('flex');
                 try {
                     if (this.unsubscribeProductos) this.unsubscribeProductos();
-                    /* GET /products (antes: onSnapshot, que ya no autoriza: el inventario se
-                       veia vacio).
-                       Mismo contrato: forEach con id + data(). Se pierde el "en vivo" — se
-                       recarga al abrir la pantalla y despues de guardar un producto, que es
-                       cuando esta lista cambia. */
+                    
                     const respProductos = await NexusAPI.get('/products', { limit: 500 }, { ttl: 0, retries: 0 });
                     const filasProductos = (respProductos && respProductos.data && respProductos.data.items) || [];
                     const snap = {
@@ -628,7 +621,7 @@
                 }).join('');
             },
 
-            // --- LÓGICA DE PROTECCIÓN PARA PIZZAS ---
+
             verificarCategoriaPizza: function() {
                 const cat = document.getElementById('prod-categoria').value;
                 const ctrlSelect = document.getElementById('prod-controlado');
@@ -637,10 +630,10 @@
 
                 if (cat === 'Pizza') {
                     ctrlSelect.value = 'no';
-                    ctrlSelect.disabled = true; // Bloquea la opción
+                    ctrlSelect.disabled = true;
                     ctrlSelect.classList.add('opacity-50', 'bg-slate-100');
                     aviso.classList.remove('hidden');
-                    iconSelect.value = 'fa-pizza-slice'; // Auto-selecciona el icono correcto
+                    iconSelect.value = 'fa-pizza-slice';
                     this.toggleStockInput();
                 } else {
                     ctrlSelect.disabled = false;
@@ -665,10 +658,7 @@
                 if (!tiposPermitidos.includes(file.type)) throw new Error('Formato de imagen no permitido.');
                 if (file.size > 5 * 1024 * 1024) throw new Error('La imagen no puede superar 5 MB.');
 
-                /* POST /uploads (antes: uploadBytes + getDownloadURL de Firebase Storage, que
-                   ya no autoriza: subir la foto de un producto NUNCA funcionaba).
-                   El archivo viaja en base64 porque el API no tiene parser de multipart, y
-                   `productId` ya no arma la ruta: la imagen se guarda con su propio id. */
+                
                 const datosBase64 = await new Promise((resolve, reject) => {
                     const lector = new FileReader();
                     lector.onload = () => resolve(String(lector.result || ''));
@@ -705,7 +695,7 @@
                 document.getElementById('prod-permite-gratis').checked = false;
                 document.getElementById('prod-imagen').value = "";
                 document.getElementById('prod-imagen-file').value = "";
-                this.verificarCategoriaPizza(); // Llama a la validación
+                this.verificarCategoriaPizza();
                 this.toggleStockInput();
                 document.getElementById('modal-titulo').innerText = "Nuevo Producto"; 
                 document.getElementById('modal-formulario').classList.remove('hidden'); 
@@ -752,7 +742,7 @@
                     document.getElementById('prod-stock').value = 0;
                 }
                 
-                this.verificarCategoriaPizza(); // Aplica bloqueo si es pizza
+                this.verificarCategoriaPizza();
                 this.toggleStockInput();
                 
                 document.getElementById('modal-titulo').innerText = "Editar Producto"; 
@@ -905,11 +895,7 @@
                 if(!this.idEliminar) return;
                 const btn = document.getElementById('btn-confirmar-eliminar'); btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
                 try {
-                    /* BAJA LOGICA, y no borrado: los PRODUCTOS no se borran (son el
-                       catalogo). Borrar uno deja huerfanas las ventas y los movimientos de
-                       stock que lo referencian, y el historial no se puede reconstruir.
-                       Se marca `agotado`, que es lo que el POS ya interpreta para dejar de
-                       ofrecerlo, y es reversible: volver a ponerlo en venta es desmarcarlo. */
+                    
                     await NexusAPI.patch(
                         '/products/' + encodeURIComponent(this.idEliminar),
                         { agotado: true },
@@ -998,6 +984,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => InventarioModule.init());
-    </script>
+</script>
 </body>
 </html>

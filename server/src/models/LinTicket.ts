@@ -1,9 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * LIN Ticket: beneficio canjeable por puntos (producto gratis, descuento...).
- * MongoDB: lin_tickets.
- */
+
 export interface ILinTicket {
   name: string;
   title?: string;

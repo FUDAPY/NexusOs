@@ -7,7 +7,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -836,12 +836,7 @@
                 this.showLoading();
                 SalesChart.destroy();
 
-                /* GET /public-goals (antes: onSnapshot de un documento, que ya no autoriza:
-                   la meta publica no se veia).
-                   Se busca por id y, si no coincide, por los campos de sucursal: el id del
-                   documento en Mongo NO es el de Firestore.
-                   Mismo contrato de snapshot (exists/id/data) para no tocar el cuerpo. Se
-                   pierde el "en vivo", pero el refresco de respaldo ya existia. */
+                
                 const respMetas = await NexusAPI.get('/public-goals', { limit: 200 }, { ttl: 0, retries: 0 });
                 const filasMetas = (respMetas && respMetas.data && respMetas.data.items) || [];
                 const objetivo = String(this.selectedBranchId || '');
@@ -886,7 +881,7 @@
                         return;
                     }
 
-                    // GET /public-goals (antes: getDocs, muerto). Mismo contrato de snapshot.
+
                     const respTodasMetas = await NexusAPI.get('/public-goals', { limit: 200 }, { ttl: 0, retries: 0 });
                     const filasTodasMetas = (respTodasMetas && respTodasMetas.data && respTodasMetas.data.items) || [];
                     const snapshot = {
@@ -1169,6 +1164,6 @@
         };
 
         document.addEventListener("DOMContentLoaded", () => PublicGoalsPage.init());
-    </script>
+</script>
 </body>
 </html>

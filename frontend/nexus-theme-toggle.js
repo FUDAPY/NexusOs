@@ -36,7 +36,7 @@
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
         return 'light';
       }
-    } catch (e) { /* ignorar */ }
+    } catch (e) {  }
     return 'dark';
   }
 
@@ -46,19 +46,18 @@
     } else {
       root.removeAttribute('data-theme');
     }
-    // color-scheme hace que el navegador pinte bien los controles nativos
-    // (scrollbar, input date, select) sin necesidad de hacks con filter.
+
     root.style.colorScheme = tema;
   }
 
   function guardar(tema) {
     try {
       window.localStorage.setItem(KEY, tema);
-    } catch (e) { /* modo privado: sigue funcionando, solo no persiste */ }
+    } catch (e) {  }
   }
 
   var actual = leerGuardado() || preferenciaDelSistema();
-  aplicar(actual);   // <- se ejecuta antes del primer pintado
+  aplicar(actual);
 
   function esClaro() {
     return root.getAttribute('data-theme') === 'light';
@@ -97,7 +96,7 @@
     crearBoton();
   }
 
-  // API publica por si alguna pagina quiere leer o forzar el tema.
+
   window.NexusTema = {
     actual: function () { return actual; },
     alternar: alternar,

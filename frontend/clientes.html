@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -302,7 +302,7 @@
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Arquitectura Privada
+
         const __app_id = "erp_lingroup";
         const __initial_auth_token = "admin_master_001";
 
@@ -317,7 +317,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // App secundaria para registrar sin cerrar sesion
+
         const secondaryApp = initializeApp(firebaseConfig, "Secondary");
         const secondaryAuth = getAuth(secondaryApp);
 
@@ -336,7 +336,7 @@
                 const vistaSolicitada = params.get('view');
                 this.vistaActual = vistaSolicitada === 'aprobaciones' ? 'aprobaciones' : (vistaSolicitada === 'cobranzas' ? 'cobranzas' : 'clientes');
 
-                // CANDADO DE PRIVACIDAD ABSOLUTA
+
                 const sesionStr = localStorage.getItem('__pos_session');
                 if (sesionStr) {
                     const sesion = JSON.parse(sesionStr);
@@ -447,16 +447,7 @@
             },
 
             construirResumenDeudaPorCliente: async function() {
-                /* DEVUELVE VACIO A PROPOSITO.
-                   Antes leia TODA la coleccion `sales` de Firestore (que ya no autoriza) para
-                   reconstruir cuanto de la deuda es del mes y cuanto viene arrastrada.
-                   Eso hoy seria PEOR que no hacerlo: el listado de ordenes viene paginado,
-                   asi que sumar solo la pagina traeria un resumen PARCIAL y la particion por
-                   mes quedaria mal.
-                   La deuda autoritativa ahora la mantiene el SERVIDOR en `users.deuda`
-                   (`POST /orders/pagar-deuda` la resta, la venta a credito la suma), y
-                   `reconciliarResumenDeuda` con un resumen vacio deja el total entero en el
-                   mes actual: se pierde la particion por mes, NUNCA el saldo. */
+                
                 return {};
                 const buckets = {};
                 const ahora = new Date();
@@ -531,8 +522,7 @@
 
                 if (deudaCalculada < totalObjetivo) {
                     const faltante = totalObjetivo - deudaCalculada;
-                    // Si falta deuda por reconstruir, priorizamos el mes actual cuando no hay arrastre previo
-                    // o cuando ya existen consumos del mes vigentes.
+
                     if (deudaMesActual > 0 || deudaMesAnterior === 0) {
                         deudaMesActual += faltante;
                     } else {
@@ -543,7 +533,7 @@
 
                 let excedente = deudaCalculada - totalObjetivo;
 
-                // Si hay ajustes manuales o movimientos heredados, reducimos primero la deuda mas antigua.
+
                 if (deudaMesAnterior > 0 && excedente > 0) {
                     const aplicadoAnterior = Math.min(deudaMesAnterior, excedente);
                     deudaMesAnterior -= aplicadoAnterior;
@@ -689,8 +679,7 @@
 
             cargarSucursales: async function() {
                 try {
-                    /* GET /branches (antes: getDocs de Firestore, que ya no autoriza:
-                       el selector de sucursales para el credito libre salia vacio). */
+                    
                     const respSuc = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
                     const filasSuc = (respSuc && respSuc.data && respSuc.data.items) || [];
                     this.sucursalesDisponibles = [];
@@ -742,19 +731,14 @@
                 this.renderizarOpcionesCreditoLibre(Array.isArray(valores) ? valores : []);
             },
 
-            // 1. CARGAR Y MOSTRAR CLIENTES
+
             cargarClientes: async function() {
                 const spinner = document.getElementById('loading-spinner');
                 spinner.classList.remove('hidden'); spinner.classList.add('flex');
                 
                 try {
                     // Filtrar solo usuarios que tengan rol 'cliente'
-                    /* GET /users?rol=cliente (antes: getDocs de Firestore, que ya no
-                       autoriza: la tabla de clientes se veia VACIA y el resumen de deuda
-                       no se podia armar). Se arma el mismo contrato de snapshot (docs con
-                       id + data) para no tocar el cuerpo.
-                       El rol se filtra ACA y no en el API: si el endpoint ignora el
-                       parametro, la tabla mostraria al personal como si fueran clientes. */
+                    
                     const respClientes = await NexusAPI.get('/users', { limit: 500 }, { ttl: 0, retries: 0 });
                     const filasClientes = ((respClientes && respClientes.data && respClientes.data.items) || [])
                         .filter((d) => String(d.rol || '').toLowerCase() === 'cliente');
@@ -780,7 +764,7 @@
                             nombre: data.nombre || 'Sin Nombre',
                             email: data.email || '',
                             telefono: data.telefono || '',
-                            tipoCliente: data.tipoCliente || 'fiel', // fiel o premium
+                            tipoCliente: data.tipoCliente || 'fiel',
                             estadoBeneficios: data.estadoBeneficios || 'pendiente',
                             puntos: data.puntos || 0,
                             deuda: data.deuda || 0,
@@ -881,7 +865,7 @@
                 this.renderizarTabla(filtrados);
             },
 
-            // 2. CREAR / EDITAR CLIENTES (CRM)
+
             abrirModalCrear: function() {
                 if (!this.esAdmin()) {
                     this.mostrarToast('Solo administracion puede crear clientes.', 'error');
@@ -892,7 +876,7 @@
                 this.marcarSucursalesCreditoLibre([]);
                 document.getElementById('cli-solicitar-pin-credito').checked = false;
                 document.getElementById('cli-pin-credito').value = "";
-                document.getElementById('cli-pass').required = true; // Exigir pass al crear
+                document.getElementById('cli-pass').required = true;
                 document.getElementById('modal-titulo').innerText = "Registrar Cliente Nuevo";
                 document.getElementById('modal-formulario').classList.remove('hidden');
                 document.getElementById('modal-formulario').classList.add('flex');
@@ -918,7 +902,7 @@
                 document.getElementById('cli-solicitar-pin-credito').checked = c.solicitarPinCredito === true;
                 document.getElementById('cli-pin-credito').value = "";
                  
-                document.getElementById('cli-pass').required = false; // No exigir si solo edita perfil
+                document.getElementById('cli-pass').required = false;
                 document.getElementById('cli-pass').value = ""; 
 
                 document.getElementById('modal-titulo').innerText = "Editar Perfil Cliente";
@@ -965,12 +949,7 @@
                     if (!limpio) return false;
                     if (limpio.length < 4) throw new Error('El PIN de credito debe tener minimo 4 caracteres.');
 
-                    /* POST /auth/usuarios/:id/pin (antes: setDoc a `creditPins` con un hash
-                       calculado EN EL NAVEGADOR, sobre Firestore, que ya no autoriza: el
-                       PIN no se guardaba).
-                       Ahora el PIN viaja por HTTPS y lo hashea el SERVIDOR. Calcularlo aca
-                       obligaria a que el algoritmo y la sal vivan en el cliente, que es lo
-                       mismo que no protegerlo. */
+                    
                     await NexusAPI.post(
                         '/auth/usuarios/' + encodeURIComponent(userId) + '/pin',
                         { pin: limpio },
@@ -981,12 +960,7 @@
 
                 try {
                     if (id === "") {
-                        /* GET /users + filtro en el cliente (antes: getDocs de Firestore, que
-                           ya no autoriza). Esto corre PRIMERO en el alta: sin arreglarlo,
-                           guardar un cliente nuevo fallaba antes de llegar a crearlo.
-                           El filtro por email se hace aca y no en el API a proposito: si el
-                           endpoint ignora el parametro devolveria un usuario CUALQUIERA con
-                           limite 1, y el alta terminaria pisando a un cliente que no es. */
+                        
                         const emailBuscado = String(email || '').trim().toLowerCase();
                         const respExistente = await NexusAPI.get('/users', { limit: 500 }, { ttl: 0, retries: 0 });
                         const filasExistente = ((respExistente && respExistente.data && respExistente.data.items) || [])
@@ -1010,19 +984,11 @@
                             if (solicitarPinCredito && !pinHashExistente && !existenteData.creditoPinConfigurado) {
                                 throw new Error('Para activar Solicitar PIN en este cliente, cargá un PIN de credito.');
                             }
-                            /* PATCH /users/:id via NexusData, la convencion de usuarios.html
-                               (antes: updateDoc de Firestore, que ya no autoriza). */
+                            
                             await NexusData.actualizar('users', existenteDoc.id, payloadExistente);
                             this.mostrarToast("El correo ya existia. Se actualizo el cliente existente.");
                         } else {
-                            /* Alta real por la API (antes: createUserWithEmailAndPassword
-                               contra Firebase Auth, que ya no autoriza: crear un cliente
-                               NUNCA funcionaba).
-                               Dos pasos, igual que en usuarios.html:
-                                 1. POST /users crea el registro.
-                                 2. POST /auth/usuarios/:id/reset-password le pone la clave.
-                               El PIN se guarda despues de tener el id, porque su endpoint
-                               es /auth/usuarios/:id/pin. */
+                            
                             datos.puntos = 0;
                             datos.deuda = 0;
                             const respAlta = await NexusAPI.post('/users', { ...datos, email }, { ttl: 0, retries: 0 });
@@ -1043,7 +1009,7 @@
                             this.mostrarToast("Cliente registrado.");
                         }
                     } else {
-                        // Solo actualizar el documento
+
                         const payloadUpdate = { ...datos };
                         const pinHash = await prepararPinCredito(id, pinCredito);
                         const clienteActual = this.clientesLista.find(c => c.id === id);
@@ -1051,7 +1017,7 @@
                         if (solicitarPinCredito && !pinHash && !clienteActual?.creditoPinConfigurado) {
                             throw new Error('Para activar Solicitar PIN en este cliente, cargá un PIN de credito.');
                         }
-                        /* PATCH /users/:id via NexusData (antes: updateDoc de Firestore). */
+                        
                         await NexusData.actualizar('users', id, payloadUpdate);
                         this.mostrarToast("Perfil actualizado.");
                     }
@@ -1072,8 +1038,7 @@
                 }
                 if(confirm("Estas seguro de eliminar todo el registro de este cliente?")) {
                     try {
-                        /* DELETE /users/:id via NexusData (antes: deleteDoc de Firestore,
-                           que ya no autoriza: borrar un cliente NUNCA funcionaba). */
+                        
                         await NexusData.eliminar('users', id);
                         this.mostrarToast("Cliente eliminado de la base de datos.");
                         this.cargarClientes();
@@ -1093,8 +1058,7 @@
                 if (!cliente) return;
                 if (!confirm(`Aprobar la solicitud premium de ${cliente.nombre}?`)) return;
                 try {
-                    /* PATCH /users/:id via NexusData (antes: updateDoc de Firestore, que ya
-                       no autoriza: aprobar una solicitud premium no se guardaba). */
+                    
                     await NexusData.actualizar('users', id, {
                         tipoCliente: "premium",
                         estadoBeneficios: "activo"
@@ -1117,7 +1081,7 @@
                 if (!cliente) return;
                 if (!confirm(`Rechazar la solicitud premium de ${cliente.nombre}?`)) return;
                 try {
-                    /* PATCH /users/:id via NexusData (antes: updateDoc de Firestore). */
+                    
                     await NexusData.actualizar('users', id, {
                         tipoCliente: "fiel",
                         estadoBeneficios: "rechazado"
@@ -1131,13 +1095,13 @@
                 }
             },
 
-            // 3. VISOR DE DETALLES E HISTORIAL
+
             abrirModalDetalle: function(id) {
                 this.clienteSeleccionado = this.clientesLista.find(c => c.id === id);
                 const c = this.clienteSeleccionado;
                 if(!c) return;
 
-                // Cargar Perfil
+
                 document.getElementById('det-nombre').innerText = c.nombre;
                 document.getElementById('det-email').innerHTML = `<i class="fa-solid fa-envelope mr-1 text-slate-400"></i> ${c.email}`;
                 document.getElementById('det-telefono').innerHTML = `<i class="fa-solid fa-phone mr-1 text-slate-400"></i> ${c.telefono || 'No registrado'}`;
@@ -1149,7 +1113,7 @@
                 if (c.solicitarPinCredito) badges += ` <span class="bg-slate-900 text-white px-3 py-1 rounded-full text-xs font-bold uppercase ml-2"><i class="fa-solid fa-key mr-1"></i> PIN requerido en credito</span>`;
                 document.getElementById('det-badges').innerHTML = badges;
 
-                // Cargar Finanzas
+
                 document.getElementById('det-puntos').innerText = c.puntos.toLocaleString('es-PY');
                 const colorDeudaDetalle = c.deuda <= 0 ? 'text-red-500' : (Number(c.deudaMesAnterior || 0) > 0 ? 'text-red-500' : 'text-emerald-600');
                 const deudaEl = document.getElementById('det-deuda');
@@ -1211,10 +1175,7 @@
                 loader.classList.remove('hidden'); listaUl.innerHTML = '';
 
                 try {
-                    /* GET /orders (antes: getDocs de la coleccion `sales` en Firestore, que ya
-                       no autoriza: el historial salia vacio). Se filtran aqui las del cliente
-                       porque el API no pagina por ese campo, y se toman las 20 mas recientes
-                       para conservar el criterio original. */
+                    
                     const respHistorial = await NexusAPI.get('/orders', { limit: 200 }, { ttl: 0, retries: 0 });
                     const filasHistorial = ((respHistorial && respHistorial.data && respHistorial.data.items) || [])
                         .filter((d) => String(d.cliente || '') === String(clienteId || ''))
@@ -1233,7 +1194,7 @@
                         return;
                     }
 
-                    // Convertir a Array y ordenar por fecha (Firestore a veces requiere indice para orderBy compuesto, lo hacemos en JS)
+
                     let historial = [];
                     snap.forEach(doc => historial.push({ id: doc.id, ...doc.data() }));
                     historial.sort((a, b) => {
@@ -1380,12 +1341,7 @@
                             aprobadoPor: this.esAdmin() ? (this.sesion?.nombre || 'Admin') : null
                         };
                         if (this.esAdmin()) {
-                            /* POST /orders/pagar-deuda (antes: un writeBatch sobre Firestore
-                               que restaba `users.deuda` y creaba el comprobante a mano; ya
-                               no autoriza, asi que saldar una deuda NO se guardaba).
-                               El servidor resta la deuda, crea el comprobante y ADEMAS
-                               otorga los puntos por el monto pagado (1 por cada 1.000).
-                               El comprobante de impresion se arma con lo que devuelve. */
+                            
                             const respPago = await NexusAPI.post(
                                 '/orders/pagar-deuda',
                                 {
@@ -1411,13 +1367,7 @@
                                 "success"
                             );
                         } else {
-                            /* POST /orders/abono-pendiente. El cobrador registra el cobro y
-                               queda para aprobacion: la deuda NO baja y los puntos NO se
-                               otorgan hasta que un administrador lo apruebe (por eso el
-                               mensaje no promete nada de eso).
-                               Antes esto era un setDoc a Firestore, que ya no autoriza: el
-                               cobro del cobrador se perdia. Era el ultimo flujo de plata
-                               que no se podia guardar. */
+                            
                             await NexusAPI.post(
                                 '/orders/abono-pendiente',
                                 {
@@ -1433,7 +1383,7 @@
                             this.mostrarToast("Cobro registrado. Queda pendiente de aprobacion administrativa.", "success");
                         }
                         this.cerrarModalDetalle();
-                        this.cargarClientes(); // Refrescar vista
+                        this.cargarClientes();
                     } catch(e) {
                         this.mostrarToast("Error al registrar el cobro.", "error");
                         btnSaldar.innerText = this.esCobrador() ? "Registrar Cobro" : "Saldar Deuda";
@@ -1444,7 +1394,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => ClientesModule.init());
-    </script>
+</script>
 </body>
 
 </html>

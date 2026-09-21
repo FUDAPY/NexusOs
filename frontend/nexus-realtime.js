@@ -28,9 +28,7 @@
 
   var VERSION_CLIENTE = '4.8.1';
 
-  /* Candidatos de carga del cliente de Socket.IO, en orden. El primero es el
-     que sirve el propio backend, asi que en produccion no depende de internet:
-     un POS tiene que arrancar aunque se caiga la red. */
+  
   var FUENTES_CLIENTE = [
     '/realtime/socket.io.min.js',
     '/socket.io/socket.io.js',
@@ -50,16 +48,16 @@
     sucursalId: 'unificado',
     conectado: false,
     listeners: {},
-    /** Momento en que se perdio la conexion, para saber si hay hueco. */
+    
     desconectadoDesde: null,
   };
 
-  /* ---------- Bus de eventos (mismo patron que nexus-api.js) ---------- */
+  
   function emit(event, payload) {
     var subs = state.listeners[event];
     if (!subs) return;
     for (var i = 0; i < subs.length; i += 1) {
-      try { subs[i](payload); } catch (e) { /* un suscriptor roto no corta el resto */ }
+      try { subs[i](payload); } catch (e) {  }
     }
   }
 
@@ -71,7 +69,7 @@
     };
   }
 
-  /* ---------- Carga del cliente de Socket.IO ---------- */
+  
   function cargarScript(src) {
     return new Promise(function (resolve, reject) {
       var s = document.createElement('script');
@@ -86,7 +84,7 @@
   function cargarCliente() {
     if (global.io) return Promise.resolve('ya estaba');
 
-    // Se prueban las fuentes en serie; la primera que cargue gana.
+
     return FUENTES_CLIENTE.reduce(function (cadena, src) {
       return cadena.catch(function () { return cargarScript(src); });
     }, Promise.reject(new Error('inicio')))
@@ -96,11 +94,8 @@
       });
   }
 
-  /* ---------- Conexion ---------- */
-  /**
-   * Abre el socket. Es idempotente: llamarlo dos veces no abre dos conexiones.
-   * `sucursalId` define la room; usar 'unificado' para ver todas las sucursales.
-   */
+  
+  
   function conectar(opciones) {
     var opts = opciones || {};
     state.sucursalId = opts.sucursalId ? String(opts.sucursalId) : 'unificado';
@@ -112,8 +107,7 @@
         path: '/realtime',
         query: { sucursalId: state.sucursalId },
         auth: opts.token ? { token: opts.token } : undefined,
-        // El POS se queda abierto horas: conviene reintentar siempre y con
-        // backoff, en vez de rendirse tras N intentos.
+
         reconnection: true,
         reconnectionAttempts: Infinity,
         reconnectionDelay: 500,
@@ -128,9 +122,7 @@
         state.conectado = true;
         emit('conectado', { id: socket.id, sucursalId: state.sucursalId });
 
-        // Al reconectar hay un hueco de eventos. No se intenta reconstruir el
-        // estado con eventos sueltos: se le pide a la pagina que vuelva a leer
-        // por HTTP, que es la unica fuente de verdad completa.
+
         if (eraReconexion) {
           emit('resync', {
             motivo: 'reconexion',
@@ -154,8 +146,7 @@
         });
       });
 
-      // Se reenvian los 5 eventos del backend al bus local con el nombre tal
-      // cual, para que el resto de la pagina no sepa que hay un socket debajo.
+
       Object.keys(EVENTOS).forEach(function (nombre) {
         socket.on(nombre, function (payload) {
           emit(nombre, payload);
@@ -175,7 +166,7 @@
     state.desconectadoDesde = null;
   }
 
-  /* ---------- Superficie publica ---------- */
+  
   var NexusRealtime = {
     conectar: conectar,
     cerrar: cerrar,
@@ -185,17 +176,14 @@
     get sucursalId() { return state.sucursalId; },
     get socket() { return state.socket; },
 
-    /** Atajos por evento. Todos devuelven el desuscriptor. */
+    
     onVentaCreada: function (cb) { return on('venta:creada', cb); },
     onVentaAnulada: function (cb) { return on('venta:anulada', cb); },
     onTurnoAbierto: function (cb) { return on('turno:abierto', cb); },
     onTurnoCerrado: function (cb) { return on('turno:cerrado', cb); },
     onStockCambiado: function (cb) { return on('stock:cambiado', cb); },
 
-    /**
-     * Pide reconexion inmediata. Util cuando la pagina detecta que volvio la
-     * red (window 'online') antes de que el socket se de cuenta.
-     */
+    
     reconectar: function () {
       if (state.socket && !state.conectado) state.socket.connect();
     },
@@ -205,9 +193,7 @@
 
   global.NexusRealtime = NexusRealtime;
 
-  /* En cuanto vuelve la red del sistema operativo se reintenta sin esperar
-     al backoff del socket: si el cajero reconecto el cable, el dashboard
-     tiene que refrescar en el acto. */
+  
   if (global.addEventListener) {
     global.addEventListener('online', function () {
       NexusRealtime.reconectar();

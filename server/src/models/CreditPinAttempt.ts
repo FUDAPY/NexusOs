@@ -1,9 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Intento de validacion de un PIN de credito. MongoDB: credit_pin_attempts.
- * Sirve para bloquear por fuerza bruta.
- */
+
 export interface ICreditPinAttempt {
   clienteId?: string;
   userId?: string;

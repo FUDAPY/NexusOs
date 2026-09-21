@@ -8,13 +8,7 @@ import {
   sumarAportes,
 } from '../src/utils/cashFlow.js';
 
-/**
- * Pruebas del port de `buildCashFlowContribution` y amigos (functions/index.js).
- *
- * Estas formulas deciden cuanto efectivo deberia haber en la caja. Un error aca
- * no rompe nada visible: produce un arqueo que no cuadra y un cajero acusado de
- * faltante. Por eso se fijan los casos borde, no solo el camino feliz.
- */
+
 const ventaBase = (extra: Record<string, unknown> = {}): Record<string, unknown> => ({
   turnoId: 'TURN-1',
   sucursal: 'Centro',

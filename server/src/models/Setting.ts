@@ -1,9 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Configuracion global del sistema. MongoDB: settings (2 docs: 'sistema', 'fcm').
- * El campo legacyId es la clave logica ('sistema', 'fcm').
- */
+
 export interface ISetting {
   legacyId: string;
 

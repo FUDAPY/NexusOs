@@ -12,7 +12,7 @@ export interface CancelOrderInput {
   motivo: string;
   /** 'total' anula todo; 'parcial' devuelve solo las unidades indicadas. */
   tipo: 'total' | 'parcial';
-  /** Para anulacion parcial: { productoId: cantidad } */
+  
   cantidades?: Record<string, number>;
   autorizadoPor?: string;
   autorizadoPorNombre?: string;
@@ -20,7 +20,7 @@ export interface CancelOrderInput {
 
 export interface CancelOrderResult {
   order: IOrder;
-  /** Id del documento; se expone aparte porque IOrder no declara _id. */
+  
   orderId: string;
   unidadesDevueltas: number;
   productosAfectados: string[];
@@ -56,12 +56,7 @@ export const cancelOrder = async (
       const productoId = String(item.productoId ?? '');
       if (productoId === '') continue;
       if (item.controlado !== true) continue;
-      /* Mismo guard que applyStockMovements (order.service.ts): `productoId` es
-         el id que manda el POS, y NO siempre es un ObjectId (los de Firestore
-         tienen 20 caracteres, ej. `003Jljv7OSqMjmpcAvgm`). Sin este chequeo,
-         `Product.findById` tira CastError, la transaccion aborta y la anulacion
-         falla entera por un item que ademas nunca descontó stock: si la venta
-         no lo descontó, no hay nada que devolver. */
+      
       if (!Types.ObjectId.isValid(productoId)) continue;
 
       const cantidadOrden = Number(item.cantidad ?? 0);
@@ -74,7 +69,7 @@ export const cancelOrder = async (
       unidadesDevueltas += cantidad;
     }
 
-    // Devolucion de stock + movimiento de kardex inverso.
+
     for (const [productoId, cantidad] of aDevolver) {
       const producto = await Product.findById(productoId).session(session).exec();
       if (!producto) continue;
@@ -106,7 +101,7 @@ export const cancelOrder = async (
             usuarioId: input.autorizadoPor ?? null,
             fecha: new Date(),
             estado: 'aplicado',
-            // Idempotencia: si se reintenta la misma anulacion no se duplica.
+
             idempotencyKey: `ANUL-${String(order._id)}-${productoId}`,
           },
         ],
@@ -130,14 +125,7 @@ export const cancelOrder = async (
       { new: true, session: session ?? undefined },
     ).exec();
 
-    /* Reversion del saldo del cliente: FALTABA.
-       Sin esto, anular una venta a credito dejaba al cliente debiendo plata de una
-       venta que ya no existe: no se nota al momento y aparece semanas despues como
-       un saldo mal. Se copia la regla del dashboard, que ya corria en produccion:
-         - a credito: se le devuelve lo anulado;
-         - con puntos: se RECALCULAN con el total que queda (en la parcial no alcanza
-           con restar los originales: floor(total/1000) no es lineal).
-       Solo si la venta estaba PAGADA: en una mesa abierta nunca se movio el saldo. */
+    /* - a credito: se le devuelve lo anulado; */
     const clienteSaldo = String(order.cliente ?? '').trim();
     if (order.estadoPago === 'pagado' && clienteSaldo !== '' && clienteSaldo !== 'ocasional') {
       const metodo = String(order.metodoPago ?? '');
@@ -173,13 +161,7 @@ export const cancelOrder = async (
       }
     }
 
-    /* Anulacion PARCIAL: ademas de devolver stock hay que SACAR del ticket lo
-       anulado. Faltaba, y no es cosmetico: el stock volvia pero la orden seguia
-       mostrando el producto, asi que el ticket y el inventario quedaban diciendo
-       cosas distintas. Se tocan los items embebidos Y los order_items (la copia
-       normalizada), para que las dos vistas del mismo dato coincidan.
-       Si al sacar no queda nada, o el total queda en 0, la orden pasa a anulada:
-       es el caso que el panel llamaba `parcial_a_total`. */
+    
     if (!esTotal && aDevolver.size > 0) {
       const porSacar = new Map(aDevolver);
       const reducidos: IOrderItem[] = [];
@@ -266,16 +248,14 @@ export const cancelOrder = async (
     };
   });
 
-  // Se emite DESPUES del commit: si se emitiera adentro, el frontend pediria
-  // datos que todavia no estan confirmados y veria el estado viejo otra vez.
+
   emitTurnoEvent(resultado.order.sucursal ?? '', 'venta:anulada', {
     turnoId: resultado.order.turnoId ?? null,
     id: resultado.orderId,
     ticketId: resultado.order.ticket_id ?? null,
     total: Number(resultado.order.total ?? 0),
     estadoPago: 'anulado',
-    // Las cantidades devueltas por producto: el POS puede refrescar solo las
-    // tarjetas que cambiaron en vez de pedir el catalogo entero.
+
     productos: resultado.order.items
       .filter((item) => item.controlado === true)
       .map((item) => ({ productoId: String(item.id ?? ''), cantidad: Number(item.cantidad ?? 0) })),

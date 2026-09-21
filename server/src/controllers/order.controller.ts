@@ -6,12 +6,7 @@ import { cancelOrder } from '../services/orderCierre.service.js';
 import { AppError, sendOk } from '../utils/response.js';
 import { marcarComoAbonado, resolverCobro } from '../services/cobro.service.js';
 
-/**
- * POST /orders/:id/cobro  { accion: 'aprobar' | 'rechazar', autorizadoPor?, autorizadoPorNombre? }
- *
- * Reemplaza el `writeBatch` del dashboard que tocaba `users.deuda` y `sales` a
- * la vez: en Mongo eso es una transaccion y por eso vive en el servidor.
- */
+
 export const resolverCobroHandler = async (
   req: Request,
   res: Response,
@@ -41,10 +36,7 @@ export const resolverCobroHandler = async (
   }
 };
 
-/**
- * POST /orders/:id/abonar  { motivo, autorizadoPor?, autorizadoPorNombre? }
- * Excluye el ticket del flujo de caja sin anularlo (no devuelve stock).
- */
+
 export const marcarAbonado = async (
   req: Request,
   res: Response,
@@ -112,9 +104,7 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
       };
     }
 
-    /* Si viene `offset`, manda: es la paginacion del sistema (skip directo) y la que manda el
-       lector paginado. Si no, se traduce la pagina de siempre, para no cambiar nada de lo que
-       ya funcionaba. */
+    
     const salto = offset !== undefined ? offset : (page - 1) * limit;
 
     const [items, total] = await Promise.all([

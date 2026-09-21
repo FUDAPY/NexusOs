@@ -1,9 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Alerta operativa. MongoDB: support_alerts (353 docs).
- * La consume monitor_problemas.html. Al resolverla se guarda resueltoAt/Por.
- */
+
 export interface ISupportAlert {
   tipo: string;
   nivel?: string;

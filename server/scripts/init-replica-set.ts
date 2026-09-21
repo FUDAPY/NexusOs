@@ -1,18 +1,4 @@
-/**
- * Convierte el MongoDB standalone en replica set de 1 nodo (habilita transacciones ACID).
- *
- * Requisito previo: el contenedor debe haberse reiniciado con el flag --replSet.
- * En Dokploy: Databases -> <mongo> -> Advanced -> Run Command
- *   mongod --replSet rs0 --auth --bind_ip_all
- * y luego Redeploy. Este script NO puede agregar el flag: solo inicializa el conjunto.
- *
- * Uso:
- *   npm run mongo:replica:status     # solo diagnostico
- *   npm run mongo:replica:init       # envia replSetInitiate si hace falta
- *
- * Variables opcionales:
- *   REPLICA_SET_NAME (rs0)   REPLICA_HOST (host interno que usara la app)
- */
+
 import mongoose from 'mongoose';
 import { env } from '../src/config/env.js';
 import { logger } from '../src/utils/logger.js';
@@ -20,34 +6,15 @@ import { logger } from '../src/utils/logger.js';
 const REPLICA_SET_NAME = process.env['REPLICA_SET_NAME'] ?? 'rs0';
 const STATUS_ONLY = process.argv.includes('--status-only');
 
-/** Permite apuntar a otro nodo (ej. el servicio nuevo) sin editar el .env. */
+
 const targetUri = process.env['MONGO_TARGET'] ?? env.MONGO_URI;
 
-/**
- * Host que la app (dentro de la red del compose) usara para llegar al nodo.
- *
- * TIENE QUE SER UN NOMBRE ESTABLE. Esto ya rompio produccion una vez: el config
- * del replica set se guarda en los volumenes mongo-data/mongo-config y SOBREVIVE
- * a los redeploys, pero el hostname que Dokploy le da al contenedor
- * (`pos-erppos-3yohnd`) es ALEATORIO y cambia en cada deploy. Si se guarda ese
- * nombre, en el proximo redeploy mongod busca un host que ya no existe, el
- * conjunto se queda SIN PRIMARY, y como el driver exige primary escribible el
- * API no puede conectarse: `connectDatabase` lanza, `index.ts` hace
- * process.exit(1) ANTES de abrir el puerto, y nginx devuelve 502 en TODAS las
- * rutas, incluido /health — que es justo lo que impide diagnosticarlo rapido.
- *
- * Por eso el default es el nombre del SERVICIO en docker-compose.yml, que se
- * mantiene estable mientras no cambie el nombre del proyecto de Dokploy.
- */
+
 const HOST_ESTABLE_POR_DEFECTO = 'mongo:27017';
 
 const replicaHost = process.env['REPLICA_HOST'] ?? HOST_ESTABLE_POR_DEFECTO;
 
-/**
- * Aviso temprano: un host que no sea el nombre del servicio es sospechoso.
- * No se bloquea (puede haber despliegues legitimos con otro nombre), pero se
- * dice en voz alta para que no vuelva a pasar en silencio.
- */
+
 if (process.env['REPLICA_HOST'] !== undefined && replicaHost !== HOST_ESTABLE_POR_DEFECTO) {
   logger.warn(
     { replicaHost, estable: HOST_ESTABLE_POR_DEFECTO },
@@ -76,7 +43,7 @@ const readHello = async (): Promise<HelloInfo> => {
   return (await db.admin().command({ hello: 1 })) as HelloInfo;
 };
 
-/** Argumentos reales con los que arranco mongod: delata si falta --replSet. */
+
 const readCmdLine = async (): Promise<CmdLineOpts> => {
   const db = mongoose.connection.db;
   if (!db) throw new Error('Sin handle de base de datos');
@@ -98,17 +65,14 @@ const readReplStatus = async (): Promise<string> => {
   }
 };
 
-/** Config actual del conjunto, tal como quedo guardada en el volumen. */
+
 interface ReplConf {
   _id: string;
   version?: number;
   members: { _id: number; host: string; priority?: number }[];
 }
 
-/**
- * Lee el config del conjunto. Funciona aunque el nodo NO sea primary: es una
- * lectura de la config local, no una operacion de escritura del conjunto.
- */
+
 const readReplConf = async (): Promise<ReplConf | null> => {
   const db = mongoose.connection.db;
   if (!db) throw new Error('Sin handle de base de datos');
@@ -120,18 +84,7 @@ const readReplConf = async (): Promise<ReplConf | null> => {
   }
 };
 
-/**
- * Si el host guardado NO es el estable, lo reescribe.
- *
- * Este es el caso que rompia produccion: el nodo figura como miembro de `rs0`
- * (asi que parecia sano) pero apuntando a un hostname que Dokploy ya reciclo.
- * Sin esto el script decia "nada que hacer" y el conjunto se quedaba sin primary
- * para siempre.
- *
- * Se usa `force: true` a proposito: un conjunto de un solo nodo cuyo unico
- * miembro es inalcanzable NO puede elegir primary, y `replSetReconfig` normal
- * exige ser primary. El force es la unica forma de salir de ese estado.
- */
+
 const repararHostSiHaceFalta = async (): Promise<boolean> => {
   const db = mongoose.connection.db;
   if (!db) throw new Error('Sin handle de base de datos');
@@ -186,9 +139,7 @@ const main = async (): Promise<void> => {
     'Estado actual del nodo',
   );
 
-  // Inventario del contenido: es INFORMATIVO y no debe abortar la inicializacion.
-  // En un nodo con --replSet pero sin rs.initiate(), listCollections falla con
-  // "node is not in primary or recovering state".
+
   try {
     const handle = mongoose.connection.getClient().db(env.MONGO_DB_NAME);
     const collections = await handle.listCollections().toArray();
@@ -215,8 +166,7 @@ const main = async (): Promise<void> => {
   if (before.setName === REPLICA_SET_NAME) {
     logger.info({ replicaSetName: REPLICA_SET_NAME }, 'Ya es miembro del replica set');
 
-    /* Caso critico: ser miembro NO alcanza. Si el host guardado es un nombre que
-       Dokploy reciclo, el conjunto se ve "inicializado" pero no tiene primary. */
+    
     const conf = await readReplConf();
     const hostGuardado = conf?.members[0]?.host ?? null;
 
@@ -248,7 +198,7 @@ const main = async (): Promise<void> => {
         : `Falta --replSet en el arranque de mongod. Revisa el command del contenedor en Dokploy y volve a correr el diagnostico.`,
     );
   } else {
-    // Unico camino posible: mongod debe haber arrancado con --replSet.
+
     const config = {
       _id: REPLICA_SET_NAME,
       members: [{ _id: 0, host: replicaHost, priority: 1 }],
@@ -262,7 +212,7 @@ const main = async (): Promise<void> => {
     }
   }
 
-  // Espera a que el nodo se promueva a PRIMARY (single-node: inmediato).
+
   if (!STATUS_ONLY) {
     for (let attempt = 1; attempt <= 15; attempt += 1) {
       const hello = await readHello();

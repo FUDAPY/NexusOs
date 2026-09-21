@@ -11,7 +11,7 @@ import {
   User,
 } from '../src/models/index.js';
 
-// Garantia de migracion limpia: la coleccion Mongo debe conservar el nombre de Firestore.
+
 describe('nombres de coleccion (paridad Firestore -> MongoDB)', () => {
   const models = {
     users: User,
@@ -223,31 +223,19 @@ describe('AuditLog', () => {
   });
 
   it('mantiene el esquema permisivo y la coleccion del legado', () => {
-    // strict true (no throw): el legado puede traer campos no declarados.
+
     expect(AuditLog.schema.options.strict).toBe(true);
     expect(AuditLog.schema.options.collection).toBe('audit_logs');
   });
 
-  /**
-   * Regresion del TTL fantasma.
-   *
-   * El indice { fecha, tipo } llevaba `expireAfterSeconds: 157_680_000` con la
-   * intencion de retener 5 anios. MongoDB IGNORA el TTL en indices compuestos
-   * (solo lo soporta en indices de UN campo), asi que esa retencion nunca
-   * ocurrio: la coleccion crecio sin limite.
-   *
-   * El test anterior comprobaba que la opcion estuviera DECLARADA en el schema,
-   * y pasaba en verde mientras los documentos no se borraban jamas. Verificaba
-   * la intencion, no el comportamiento. Estos dos fijan la invariante real.
-   */
+  
   it('no declara TTL en ningun indice compuesto', () => {
     const conTtl = AuditLog.schema
       .indexes()
       .filter(([, options]) => options.expireAfterSeconds !== undefined);
 
     for (const [campos] of conTtl) {
-      // Si algun dia se quiere retencion automatica, tiene que ser un indice de
-      // UN solo campo sobre `fecha`, y decidido de forma explicita.
+
       expect(Object.keys(campos).length).toBe(1);
     }
   });

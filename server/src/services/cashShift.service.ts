@@ -6,7 +6,7 @@ import { emitTurnoEvent } from '../sockets/kds.js';
 
 export interface CerrarTurnoInput {
   turnoId: string;
-  /** Lo que el cajero conto fisicamente en cada medio. */
+  
   declaracion: {
     efectivo: number;
     tarjeta: number;
@@ -18,13 +18,7 @@ export interface CerrarTurnoInput {
   observacion?: string;
   forzado?: boolean;
   motivoForzado?: string;
-  /**
-   * Ticket Z ya renderizado por el POS.
-   *
-   * Se guarda tal cual para que el relatorio pueda reimprimir el MISMO ticket
-   * que se le dio al cliente, igual que cuando el POS escribia el cierre a
-   * Firestore. Es informativo: NO entra en ningun calculo.
-   */
+  
   htmlTicket?: string;
 }
 
@@ -33,17 +27,16 @@ export interface CerrarTurnoResult {
   turnoId: string;
   esperado: { efectivo: number; tarjeta: number; transferencia: number; total: number };
   declarado: { efectivo: number; tarjeta: number; transferencia: number; total: number };
-  /** declarado - esperado. Positivo = sobrante, negativo = faltante. */
+  
   diferencia: { efectivo: number; tarjeta: number; transferencia: number; total: number };
   ticketsContados: number;
 }
 
 const redondear = (n: number): number => Math.round(Number.isFinite(n) ? n : 0);
 
-/** Normaliza el metodo de pago para compararlo sin acentos ni mayusculas. */
+
 const normalizar = (valor: unknown): string => {
-  // Se exige string explicito: si llegara un objeto, String(obj) daria
-  // '[object Object]' y el metodo de pago nunca coincidiria.
+
   const texto = typeof valor === 'string' ? valor : '';
   return texto
     .trim()
@@ -63,7 +56,7 @@ export const cerrarTurno = async (
   input: CerrarTurnoInput,
   context: { ip: string; userAgent: string },
 ): Promise<CerrarTurnoResult> => {
-  // Se captura aca para poder emitir el evento DESPUES del commit, cuando la
+
   // variable `turno` que vive dentro de la transaccion ya no esta en alcance.
   let sucursalTurno = '';
 
@@ -79,7 +72,7 @@ export const cerrarTurno = async (
     }
     sucursalTurno = turno.sucursal ?? '';
 
-    // --- Totales reales, recalculados desde las ordenes del turno ---
+
     // Se excluyen las anuladas y las que no afectan caja (canjes gratuitos).
     const ordenes = await Order.find({
       turnoId: input.turnoId,
@@ -117,12 +110,7 @@ export const cerrarTurno = async (
 
     const fondoInicial = Number(turno.fondoInicial ?? 0);
     const gastos = redondear(input.declaracion.gastos ?? 0);
-    /* Los gastos SALEN del cajon: el cajero los pago en efectivo.
-       Se restan del esperado, que es lo que hacia el POS legacy
-       (totalEsperadoEfectivo = fondo + ventas efectivo - gastos) y por lo tanto
-       lo que ya quedo guardado en los cierres migrados. Sin restarlos, la
-       diferencia de un cierre nuevo no seria comparable con la de los viejos:
-       con Gs. 100.000 de gastos, el MISMO arqueo daria 100.000 de mas. */
+    
     const esperadoEfectivo = redondear(fondoInicial + efectivo - gastos);
     const esperadoTarjeta = redondear(tarjeta);
     const esperadoTransferencia = redondear(transferencia);
@@ -203,18 +191,8 @@ export const cerrarTurno = async (
       throw new AppError('No se pudo crear el cierre de caja', 500, 'CLOSE_CREATE_FAILED');
     }
 
-    /* Cerrar el turno tiene que CERRAR las ventas, no solo sumarlas.
-       Sin esto las ordenes quedan con arqueado:false para siempre y siguen
-       contando en el flujo de caja, que es justo lo que el cajero espera que
-       deje de pasar al cerrar su caja:
-         - utils/cashFlow.ts (calcularAporte) solo excluye las arqueado === true
-         - cashForzado.service.ts filtra { arqueado: { $ne: true } }, asi que un
-           cierre forzado posterior volveria a contar estas mismas ventas
-       Se usa la MISMA consulta con la que se calcularon los totales: lo que se
-       cierra es exactamente lo que se conto, ni una venta mas ni una menos.
-       Va dentro de la transaccion por el mismo motivo que en el cierre forzado
-       (ver escribirCierre): tickets marcados sin cierre guardado es plata que
-       desaparece del flujo sin quedar auditada en ningun lado. */
+    /* - utils/cashFlow.ts (calcularAporte) solo excluye las arqueado === true
+   - cashForzado.service.ts filtra { arqueado: { $ne: true } }, asi que un */
     await Order.updateMany(
       {
         turnoId: input.turnoId,
@@ -275,8 +253,7 @@ export const cerrarTurno = async (
     };
   });
 
-  // Se emite DESPUES del commit: si se emitiera adentro, el frontend pediria
-  // datos que todavia no estan confirmados y veria el estado viejo otra vez.
+
   emitTurnoEvent(sucursalTurno, 'turno:cerrado', {
     turnoId: input.turnoId,
     id: resultado.cierreId,
@@ -290,13 +267,13 @@ export const cerrarTurno = async (
 export interface ReconciliarTurnoResult {
   turnoId: string;
   sucursal: string;
-  /** Totales recalculados desde los tickets reales del turno. */
+  
   summary: TotalesCierre;
-  /** Campo -> (recalculado - guardado). Solo los que cambiaron. */
+  
   differences: Record<string, number>;
 }
 
-/** Campos que la pantalla compara. Salen del resumen, no de una lista nueva. */
+
 const CAMPOS_RESUMEN = [
   'ventaTotalBruta',
   'efectivo',
@@ -307,19 +284,7 @@ const CAMPOS_RESUMEN = [
   'totalTicketsPagados',
 ] as const;
 
-/**
- * Recalcula el resumen de flujo de un turno DESDE SUS TICKETS REALES.
- *
- * Reemplaza la Cloud Function `reconciliarFlujoTurno`, que ya no existe. Los
- * nombres y la forma del resultado son los mismos a proposito: la pantalla compara
- * lo recalculado contra lo guardado y muestra la diferencia, y asi no hay que tocar
- * esa logica.
- *
- * NO escribe nada, y es deliberado: el resumen es DERIVADO de los tickets. Guardar
- * un derivado a mano es como aparecen los numeros que no cuadran con los tickets que
- * los originaron: quedan los dos y no se sabe cual vale. Si hay que comparar algo,
- * se compara contra lo guardado y se informa; la fuente de verdad son las ordenes.
- */
+
 export const reconciliarFlujoTurno = async (turnoId: string): Promise<ReconciliarTurnoResult> => {
   const id = String(turnoId ?? '').trim();
   if (id === '') {
@@ -332,15 +297,11 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
   }
 
   // Mismo criterio que el cierre: fuera las anuladas y las que no afectan caja.
-  //
-  // El $or explicito equivale a `{ noAfectaCaja: { $ne: true } }` y el $nor a
+
   // `{ estadoPago: { $ne: 'anulado' } }`. Se dejan escritos asi porque ya estan probados y
-  // porque el $or dice a proposito que "el campo no existe" tambien cuenta: los documentos
-  // importados de Firestore no traen la bandera, y `null` matchea el null Y el ausente.
+
   // (Ojo con leer esto como una regla general: cuando este bloque se escribio, un `$ne` a secas
-  // reventaba con CastError porque el `sanitizeFilter` global de Mongoose envolvia el OPERADOR
-  // en un `$eq` y lo casteaba como valor. Eso ya no pasa — ver config/database.ts — asi que un
-  // `$ne` comun y silvestre hoy es valido. No hay motivo para reescribir lo que ya funciona.)
+
   const ordenes = await Order.find({
     turnoId: id,
     $nor: [{ estadoPago: 'anulado' }],
@@ -352,10 +313,7 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
   const summary = sumarAportes(
     ordenes.map((orden) => ({
       id: String(orden._id),
-      /* Misma coercion que en cashForzado.service.ts: los documentos importados de Firestore
-         traen estas banderas como objetos y la validacion las rechaza ("Valor invalido para
-         el campo ..."). Normalizar en el borde evita que un turno viejo sin limpiar vuelva a
-         romper la reconciliacion. */
+      
       venta: {
         ...(orden as unknown as VentaCruda),
         arqueado: orden.arqueado === true,
@@ -364,9 +322,7 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
     })),
   );
 
-  /* `resumen` no esta declarado en el modelo, asi que se lee sin tipar: si falta, se
-     compara contra cero, que es justo lo que la pantalla espera cuando el resumen
-     todavia no se inicializo. */
+  
   const guardado = ((turno as unknown as { resumen?: Record<string, unknown> }).resumen ?? {}) as Record<
     string,
     unknown

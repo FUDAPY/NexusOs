@@ -19,7 +19,7 @@ import { redis } from '../src/config/redis.js';
  */
 const app = buildApp();
 
-/** Token valido, firmado igual que auth.service.ts. */
+/* Token valido, firmado igual que auth.service.ts. */
 const tokenValido = jwt.sign(
   { sub: 'uid-1', rol: 'admin', sucursal: 'Centro', nombre: 'Test' },
   env.JWT_SECRET,
@@ -33,13 +33,12 @@ const tokenVencido = jwt.sign(
 );
 
 beforeAll(() => {
-  // Sin Mongo en los tests, una consulta que llegue a la base esperaria 10s por
-  // el buffer de Mongoose. Con esto falla en 300ms y el test no se cuelga.
+
   mongoose.set('bufferTimeoutMS', 300);
 });
 
 afterAll(async () => {
-  // Sin esto el proceso de test no termina: ioredis deja el handle abierto.
+
   redis.disconnect();
 });
 
@@ -63,15 +62,11 @@ describe('rutas publicas', () => {
   });
 });
 
-/**
- * Resumen de ventas: es un endpoint de PLATA (totales de facturacion), asi que su
- * control de acceso se fija igual que el del resto de lo sensible. Un rol de cocina o
- * un cliente no tienen por que ver la facturacion del negocio.
- */
+
 describe('resumen de ventas (/orders/resumen)', () => {
   const ruta = `${env.API_PREFIX}/orders/resumen`;
 
-  /** Token con un rol cualquiera, firmado igual que auth.service.ts. */
+  /* Token con un rol cualquiera, firmado igual que auth.service.ts. */
   const tokenConRol = (rol: string): string =>
     jwt.sign({ sub: 'uid-rol', rol, sucursal: 'Centro', nombre: 'Test' }, env.JWT_SECRET, {
       expiresIn: '5m',
@@ -186,14 +181,7 @@ describe('token valido', () => {
 });
 
 describe('rutas inexistentes', () => {
-  /**
-   * requiereAuth esta montado a nivel de prefijo (/api/v1), asi que corta ANTES
-   * del notFound: una ruta que no existe responde 401 y no 404.
-   *
-   * Es deliberado: a un cliente sin credenciales no se le revela que rutas
-   * existen. Un cliente autenticado si recibe el 404 correcto, que es el caso
-   * que importa para depurar desde la app.
-   */
+  
   it('sin token responde 401 (no revela que la ruta no existe)', async () => {
     const res = await request(app).get(`${env.API_PREFIX}/no-existe-esta-coleccion`);
     expect(res.status).toBe(401);
@@ -209,7 +197,7 @@ describe('rutas inexistentes', () => {
   });
 });
 
-/** Firma un token con el rol pedido. */
+/* Firma un token con el rol pedido. */
 const tokenDe = (rol: string): string =>
   jwt.sign({ sub: 'uid-1', rol, sucursal: 'Centro', nombre: 'Test' }, env.JWT_SECRET, {
     expiresIn: '5m',
@@ -261,12 +249,7 @@ describe('configuracion global (/config/sistema)', () => {
     expect(res.status).toBe(401);
   });
 
-  /**
-   * La config guarda valores que mueven plata (tasa de cambio, limite de credito,
-   * descuentos) y el codigo RFID con el que el POS autoriza una anulacion. El
-   * dashboard la escribe con este PATCH: si estos tests empiezan a dar 403, el
-   * panel dejo de poder configurar el sistema.
-   */
+  
   it('un cajero NO puede escribir la config (403)', async () => {
     const res = await request(app)
       .patch(url)
@@ -289,10 +272,7 @@ describe('configuracion global (/config/sistema)', () => {
       .patch(url)
       .set('Authorization', 'Bearer ' + tokenValido)
       .send({});
-    /* Ojo con el orden real del endpoint: primero BUSCA el documento y recien
-       despues valida que haya cambios, asi que sin Mongo no se llega al
-       SIN_CAMBIOS. Lo que este test fija es lo importante: que un body vacio no
-       responda 200 como si hubiera guardado algo. */
+    
     expect(res.status).not.toBe(200);
     expect(res.status).not.toBe(403);
   });
@@ -338,9 +318,7 @@ describe('configuracion global (/config/sistema)', () => {
       .patch(url)
       .set('Authorization', 'Bearer ' + tokenValido)
       .send({});
-    // Con Mongo responde 422 SIN_CAMBIOS; sin Mongo, 500 en la consulta previa
-    // que busca el documento. Lo que se fija aca es lo importante: NUNCA
-    // responde 200 sin haber aplicado nada.
+
     expect(res.status).not.toBe(200);
   });
 });
@@ -374,11 +352,7 @@ describe('marcar ticket como abonado (/orders/:id/abonar)', () => {
 });
 
 describe('cierre Z del cajero (/cash-shifts/cerrar)', () => {
-  /**
-   * Este endpoint NO lleva guard dentro del router: el requiereAuth se aplica al
-   * montar cashShiftRouter en app.ts. El test existe justamente por eso, para
-   * detectar si alguien reordena los routers y deja el Cierre Z abierto.
-   */
+  
   const url = `${env.API_PREFIX}/cash-shifts/cerrar`;
 
   it('sin token responde 401', async () => {
@@ -407,11 +381,7 @@ describe('cierre Z del cajero (/cash-shifts/cerrar)', () => {
     expect(res.body.code).toBe('INVALID_DECLARATION');
   });
 
-  /**
-   * El cajero tiene que poder cerrar SU caja: es la operacion con la que termina
-   * su sesion. Si este test empieza a dar 403, el cierre de caja dejo de ser
-   * posible para quien realmente lo hace.
-   */
+  
   it('un cajero SI puede cerrar su caja (no 403)', async () => {
     const res = await request(app)
       .post(url)
@@ -455,10 +425,7 @@ describe('cierre forzado de sucursal (/cash-shifts/forzar-cierre)', () => {
     expect(res.status).toBe(401);
   });
 
-  /**
-   * Cierra el turno de OTRA persona y mueve el arqueo completo: no es algo que
-   * deba poder hacer un cajero.
-   */
+  
   it('un cajero NO puede forzar el cierre (403)', async () => {
     const res = await request(app)
       .post(url)
@@ -468,11 +435,7 @@ describe('cierre forzado de sucursal (/cash-shifts/forzar-cierre)', () => {
     expect(res.body.code).toBe('SIN_PERMISO');
   });
 
-  /**
-   * Deliberado: supervisor puede escribir la config global (tasas, limites) pero
-   * NO cerrar turnos ajenos. Son permisos distintos aunque los dos sean "de
-   * encargado"; si esto cambia tiene que ser una decision consciente.
-   */
+  
   it('un supervisor tampoco (403), aunque si pueda tocar /config/sistema', async () => {
     const res = await request(app)
       .post(url)
@@ -506,7 +469,7 @@ describe('cierre forzado de sucursal (/cash-shifts/forzar-cierre)', () => {
     }
   });
 
-  /** dryRun no es una puerta trasera: sigue siendo solo para admin. */
+  
   it('dryRun no salta el control de rol', async () => {
     const res = await request(app)
       .post(url)
@@ -515,7 +478,7 @@ describe('cierre forzado de sucursal (/cash-shifts/forzar-cierre)', () => {
     expect(res.status).toBe(403);
   });
 
-  /** dryRun tampoco salta la validacion del body. */
+  
   it('dryRun no salta la validacion del body', async () => {
     const res = await request(app)
       .post(url)
@@ -548,11 +511,7 @@ describe('cambio de contraseña de un usuario (/auth/usuarios/:id/reset-password
     expect(res.status).toBe(401);
   });
 
-  /**
-   * Es la operacion mas sensible del panel: reemplaza la credencial de acceso de
-   * otra persona SIN pedir la anterior. Si un cajero pudiera hacerla, se quedaria
-   * con la cuenta de cualquier compañero —incluido el admin— en dos clics.
-   */
+  
   it('un cajero NO puede resetear la contraseña de nadie (403)', async () => {
     const res = await request(app)
       .post(url('abc'))
@@ -576,15 +535,12 @@ describe('cambio de contraseña de un usuario (/auth/usuarios/:id/reset-password
       .post(url('abc'))
       .set('Authorization', 'Bearer ' + tokenValido)
       .send({ nueva: 'ClaveSegura123' });
-    // Sin Mongo da 500 al buscar al usuario, pero no 401 ni 403.
+
     expect(res.status).not.toBe(401);
     expect(res.status).not.toBe(403);
   });
 
-  /**
-   * Supervisor tambien: es el rol de encargado, el que atiende el mostrador
-   * cuando alguien olvida la contraseña.
-   */
+  
   it('un supervisor tambien (400 por body vacio, no 403)', async () => {
     const res = await request(app)
       .post(url('abc'))
@@ -605,11 +561,7 @@ describe('cambio de contraseña de un usuario (/auth/usuarios/:id/reset-password
     }
   });
 
-  /**
-   * El minimo de 6 caracteres se valida ANTES de buscar al usuario, asi que el
-   * 422 llega sin que exista el id en la base. Si ese orden se invirtiera, este
-   * test empezaria a devolver 500 y delataria el cambio.
-   */
+  
   it('rechaza una contraseña corta (422) sin llegar a la base', async () => {
     const res = await request(app)
       .post(url('abc'))
@@ -628,7 +580,7 @@ describe('apertura de turno de caja (/cash-shifts/abrir)', () => {
     expect(res.status).toBe(401);
   });
 
-  /** Abrir una caja es manejar plata: un rol que no la maneja no puede. */
+  /* Abrir una caja es manejar plata: un rol que no la maneja no puede. */
   it('un cliente NO puede abrir la caja (403)', async () => {
     const res = await request(app)
       .post(url)
@@ -658,16 +610,13 @@ describe('apertura de turno de caja (/cash-shifts/abrir)', () => {
     }
   });
 
-  /**
-   * El cajero es quien abre la caja: si esto devolviera 403, el POS no podria
-   * vender. Es el rol que debe pasar.
-   */
+  
   it('un cajero SI pasa el control de rol', async () => {
     const res = await request(app)
       .post(url)
       .set('Authorization', 'Bearer ' + tokenDe('cajero'))
       .send({ sucursal: 'San Benito Cafe Resto Bar', fondoInicial: 100_000 });
-    // Sin Mongo da 500 al buscar el turno abierto, pero no 401 ni 403.
+
     expect(res.status).not.toBe(401);
     expect(res.status).not.toBe(403);
   });
@@ -675,7 +624,7 @@ describe('apertura de turno de caja (/cash-shifts/abrir)', () => {
 
 describe('cobro de una mesa pendiente (/orders/:id/cerrar-cuenta)', () => {
   const url = (id: string): string => `${env.API_PREFIX}/orders/${id}/cerrar-cuenta`;
-  /** Un id con forma valida, para no depender de como filtra el id invalido. */
+  
   const idOrden = '507f1f77bcf86cd799439011';
   const bodyOk = {
     metodoPago: 'Efectivo',
@@ -687,10 +636,7 @@ describe('cobro de una mesa pendiente (/orders/:id/cerrar-cuenta)', () => {
     expect(res.status).toBe(401);
   });
 
-  /**
-   * Cerrar una cuenta mueve plata y el saldo del cliente en la misma
-   * transaccion. Un rol que no maneja caja no puede hacerlo.
-   */
+  
   it('un cliente NO puede cerrar una cuenta (403)', async () => {
     const res = await request(app)
       .post(url(idOrden))
@@ -731,11 +677,7 @@ describe('cobro de una mesa pendiente (/orders/:id/cerrar-cuenta)', () => {
     }
   });
 
-  /**
-   * Los items se validan con el MISMO contrato que POST /orders, y no es capricho:
-   * el servicio recalcula el total con ellos. Si llegaran solo con id y cantidad no
-   * habria con que calcular la plata que se cobra.
-   */
+  
   it('rechaza items a los que les falta el precio (422)', async () => {
     const invalidos = [[{}], [{ nombre: 'sin precio', cantidad: 1 }], [{ nombre: 'x', cantidad: 1, precio: -5 }]];
     for (const items of invalidos) {
@@ -772,13 +714,7 @@ describe('metodos de pago al crear una orden (POST /orders)', () => {
   const url = `${env.API_PREFIX}/orders`;
   const item = { nombre: 'Milanesa', cantidad: 1, precio: 1000 };
 
-  /**
-   * 'Por Cobrar' es el metodo con el que el POS abre una MESA (cuenta abierta).
-   * Tiene que estar en el enum: sin el, crear una mesa devuelve 422 y el salon no
-   * puede tomar pedidos. Y no es un dato decorativo: al no coincidir con
-   * efectivo/tarjeta/transferencia, el cierre de caja no lo cuenta en ningun
-   * total, que es justo lo que se quiere de una cuenta sin cobrar.
-   */
+  
   it('acepta una cuenta abierta con metodo Por Cobrar (nunca 422)', async () => {
     const res = await request(app)
       .post(url)
@@ -796,7 +732,7 @@ describe('metodos de pago al crear una orden (POST /orders)', () => {
     expect(res.status).not.toBe(422);
   });
 
-  /** Guarda contra ampliar el enum de mas: un metodo inventado sigue fallando. */
+  
   it('sigue rechazando un metodo que no existe (422)', async () => {
     const res = await request(app)
       .post(url)
@@ -817,10 +753,7 @@ describe('guardar una cuenta abierta sin cobrarla (PATCH /orders/:id/cuenta-pend
     expect(res.status).toBe(401);
   });
 
-  /**
-   * Mandar items a cocina es parte de operar una cuenta, y una cuenta mueve plata al
-   * cerrarse. Mismo conjunto de roles que cobrar.
-   */
+  
   it('un cliente NO puede tocar una cuenta (403)', async () => {
     const res = await request(app)
       .patch(url(idOrden))

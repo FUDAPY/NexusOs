@@ -7,7 +7,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -227,8 +227,7 @@
             },
 
             async escucharSucursales() {
-                /* GET /branches (antes: onSnapshot, que ya no autoriza: el selector de
-                   sucursal quedaba vacio). Mismo contrato de snapshot para no tocar el cuerpo. */
+                
                 const resp = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
                 const filas = (resp && resp.data && resp.data.items) || [];
                 const snap = { docs: filas.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })) };
@@ -240,7 +239,7 @@
             },
 
             async escucharTickets() {
-                /* GET /lin-tickets (antes: onSnapshot, que ya no autoriza: la lista quedaba vacia). */
+                
                 const resp = await NexusAPI.get('/lin-tickets', { limit: 500 }, { ttl: 0, retries: 0 });
                 const filas = (resp && resp.data && resp.data.items) || [];
                 const snap = { docs: filas.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })) };
@@ -251,7 +250,7 @@
             },
 
             async escucharProductos() {
-                /* GET /products (antes: onSnapshot, que ya no autoriza: no se podia elegir producto). */
+                
                 const resp = await NexusAPI.get('/products', { limit: 500 }, { ttl: 0, retries: 0 });
                 const filas = (resp && resp.data && resp.data.items) || [];
                 const snap = { docs: filas.map((d) => ({ id: String(d._id || d.id || ''), data: () => d })) };
@@ -424,8 +423,7 @@
                 if (!permitidos.includes(file.type)) throw new Error('Formato de imagen no permitido.');
                 if (file.size > 5 * 1024 * 1024) throw new Error('La imagen no puede superar 5 MB.');
 
-                /* POST /uploads (antes: uploadBytes + getDownloadURL de Firebase Storage, que
-                   ya no autoriza: la foto de un ticket NUNCA se subia). */
+                
                 const datosBase64 = await new Promise((resolve, reject) => {
                     const lector = new FileReader();
                     lector.onload = () => resolve(String(lector.result || ''));
@@ -489,10 +487,10 @@
                 try {
                     if (id) {
                         if (file) data.imageUrl = await this.subirImagen(file, id);
-                        // PATCH /lin-tickets/:id (antes: updateDoc de Firestore, muerto).
+
                         await NexusAPI.patch('/lin-tickets/' + encodeURIComponent(id), data, { ttl: 0, retries: 0 });
                     } else {
-                        // POST /lin-tickets (antes: addDoc, muerto). Devuelve el documento creado.
+
                         const respNuevo = await NexusAPI.post(
                             '/lin-tickets',
                             { ...data, createdAt: new Date().toISOString() },
@@ -538,6 +536,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => LinTicketsModule.init());
-    </script>
+</script>
 </body>
 </html>

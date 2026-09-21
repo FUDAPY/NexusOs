@@ -3,7 +3,7 @@ import { Schema, model, type HydratedDocument, type Model, type Types } from 'mo
 export const CURRENCY_CODES = ['PYG', 'USD', 'ARS', 'BRL'] as const;
 export type CurrencyCode = (typeof CURRENCY_CODES)[number];
 
-/** Tasas de cambio multibase. Firestore: currencies. PYG es la moneda base. */
+
 export interface ICurrency {
   codigo: CurrencyCode;
   nombre: string;
@@ -13,7 +13,7 @@ export interface ICurrency {
   tasaVenta: number;
   decimales: number;
   activa: boolean;
-  /** Trazabilidad cuando el registro proviene de la migracion. */
+  
   origen?: string;
   actualizadoPor?: Types.ObjectId | null;
   actualizadoEn: Date;
@@ -48,7 +48,7 @@ const currencySchema = new Schema<ICurrency, Model<ICurrency>>(
 
 currencySchema.index({ activa: 1, codigo: 1 });
 
-// Spread cambiario en porcentaje; util para el panel financiero.
+
 currencySchema.virtual('spread').get(function spread(this: ICurrency): number {
   if (this.tasaCompra <= 0) return 0;
   return Number((((this.tasaVenta - this.tasaCompra) / this.tasaCompra) * 100).toFixed(2));

@@ -1,45 +1,8 @@
-/* ===================================================================
-   NexusOS · Adaptador de datos (front)  —  Fase 4
-   -------------------------------------------------------------------
-   Da a las paginas una cara PARECIDA a Firestore sobre NexusAPI, para
-   poder migrarlas de a una sin reescribirlas dos veces.
 
-   -------------------------------------------------------------------
-   INTERRUPTOR POR PAGINA
-   -------------------------------------------------------------------
-   Cada pagina elige su fuente sin tocar codigo:
-
-     localStorage['nexus.fuente.dashboard'] = 'mongo' | 'firestore'
-
-   Si no hay valor, se usa `NexusData.fuentePorDefecto` (por defecto
-   'firestore', para no cambiar el comportamiento de golpe).
-
-   Regla:  NexusData.esMongo() ? NexusData.leer(...) : <codigo Firestore viejo>
-   Asi una pagina puede estar a medio migrar sin romperse.
-
-   -------------------------------------------------------------------
-   LO QUE ESTE MODULO *NO* HACE (y es a proposito)
-   -------------------------------------------------------------------
-   No imita onSnapshot. onSnapshot entrega el ESTADO de una coleccion;
-   Socket.IO entrega EVENTOS. Se puede fingir con refetch, pero eso
-   gasta una query por cada evento de cada cliente. Por eso `vigilar()`
-   refetchea con un debounce y ademas escucha 'resync' de NexusRealtime:
-   el resultado es el mismo dato, sin el coste de un onSnapshot por
-   documento.
-
-   Uso:
-     await NexusData.leer('branches', { orderBy: ['nombre', 'asc'], limit: 100 });
-     await NexusData.contar('users', { where: [['rol', '==', 'cliente']] });
-     await NexusData.vigilar('cashFlows', { where: [['estadoTurno','==','abierto']] }, (filas) => pintar(filas));
-   =================================================================== */
 (function (global) {
   'use strict';
 
-  /* ---------- Mapa Firestore -> API ----------
-     Los nombres de la izquierda son los de Firestore, que son los que ya estan
-     escritos en las paginas. Los de la derecha son las rutas reales montadas en
-     server/src/routes. Se incluyen las dos convenciones porque el codigo viejo
-     mezcla camelCase (cierresCaja) y snake_case (cash_shifts). */
+  
   var COLECCIONES = {
     products: '/products',
     branches: '/branches',
@@ -47,16 +10,16 @@
     currencies: '/currencies',
     users: '/users',
 
-    // El POS guarda las ventas en 'sales'; el backend las expone en /orders.
+
     sales: '/orders',
     orders: '/orders',
 
-    // La caja: Firestore 'cashFlows' -> coleccion cash_shifts.
+
     cashFlows: '/cash-shifts',
     cash_shifts: '/cash-shifts',
     cashShifts: '/cash-shifts',
 
-    // Los cierres Z: Firestore 'cierresCaja' -> coleccion cash_closes.
+
     cierresCaja: '/cash-closes',
     cash_closes: '/cash-closes',
     cashCloses: '/cash-closes',
@@ -91,21 +54,9 @@
   };
 
   var state = {
-    /**
-     * Fuente global si la pagina no define la suya.
-     *
-     * Es 'mongo' y no 'firestore' porque el dashboard YA esta migrado: las 9
-     * lecturas que dependian de esto tienen su rama NexusData escrita, y con el
-     * default en 'firestore' tomaban el camino viejo. Ese camino hoy no puede
-     * funcionar (index.html dejo de autenticar contra Firebase, asi que
-     * firestore.rules responde permission-denied) y el panel aparecia vacio con
-     * errores de permisos en lugar de mostrar nada.
-     *
-     * El interruptor se conserva: una pagina a medio migrar puede forzar
-     * 'firestore' con NexusData.usarMongo('pagina', false).
-     */
+    
     fuentePorDefecto: 'mongo',
-    /** Colecciones con vigilancia activa, para saber que refetchear. */
+    
     vigiladas: {},
   };
 
@@ -120,15 +71,12 @@
     return ruta;
   }
 
-  /* ---------- Interruptor ---------- */
+  
   function claveDe(pagina) {
     return 'nexus.fuente.' + (pagina || 'global');
   }
 
-  /**
-   * Fuente efectiva de una pagina. `pagina` sale normalmente de
-   * document.body.dataset.nexusPagina.
-   */
+  
   function fuente(pagina) {
     try {
       var guardado = global.localStorage ? global.localStorage.getItem(claveDe(pagina)) : null;
@@ -144,12 +92,12 @@
       if (guardado === 'firestore' && state.fuentePorDefecto === 'mongo') {
         try {
           global.localStorage.setItem(claveDe(pagina), 'mongo');
-        } catch (e) { /* modo privado: se ignora, igual queda forzado abajo */ }
+        } catch (e) {  }
         return 'mongo';
       }
 
       if (guardado === 'mongo' || guardado === 'firestore') return guardado;
-    } catch (e) { /* modo privado o storage bloqueado: se usa el default */ }
+    } catch (e) {  }
     return state.fuentePorDefecto;
   }
 
@@ -166,29 +114,14 @@
     return fuente(pagina) === 'mongo';
   }
 
-  /* ---------- Lectura paginada ---------- */
+  
   var ultimoLeerTodo = null;
 
-  /**
-   * Lee TODA una coleccion, pidiendola en paginas con offset.
-   *
-   * POR QUE EXISTE
-   * El backend tiene un tope por pedido y, si una pantalla pide mas de lo permitido,
-   * recibe menos filas SIN AVISO. Asi se cortaba el historico de reportes: pedia 500
-   * ventas, la API devolvia 200, y el reporte se veia a medias. Pedir en paginas y juntar
-   * es la unica forma de traer el historico completo sin depender de cual sea el tope hoy.
-   *
-   * Devuelve un array de filas, igual que `leer`. Ademas deja
-   * `NexusData.ultimoLeerTodo = { coleccion, filas, paginas, trunco }` para que la pantalla
-   * pueda AVISAR cuando se corto, en vez de mostrar un numero incompleto como si fuera el
-   * total: el silencio fue justamente lo que hizo este bug tan dificil de ver.
-   *
-   * `maxPaginas` es un tope de seguridad para que una tabla gigante no cuelgue la pantalla.
-   */
+  
   function leerTodo(coleccion, opciones, opcionesApi) {
     var opts = opciones || {};
     var porPagina = Math.min(Number(opts.limit) || 500, 500);
-    var maxPaginas = Number(opts.maxPaginas) || 40; // 40 x 500 = 20.000 filas
+    var maxPaginas = Number(opts.maxPaginas) || 40;
     var acumulado = [];
     var paginas = 0;
     var trunco = false;
@@ -202,7 +135,7 @@
         var lote = Array.isArray(filas) ? filas : [];
         acumulado = acumulado.concat(lote);
         paginas += 1;
-        if (lote.length < porPagina) return acumulado; // pagina incompleta = se acabo
+        if (lote.length < porPagina) return acumulado;
         if (paginas >= maxPaginas) {
           trunco = true;
           return acumulado;
@@ -217,12 +150,8 @@
     });
   }
 
-  /* ---------- Traduccion de consultas ---------- */
-  /**
-   * Separa las opciones de transporte de las de consulta.
-   * `fresh`, `ttl`, `timeout` y `retries` son de NexusAPI y no deben viajar como
-   * query params.
-   */
+  
+  
   function apiOptions(opts) {
     var api = {};
     if (opts.fresh !== undefined) api.fresh = opts.fresh;
@@ -232,17 +161,7 @@
     return api;
   }
 
-  /**
-   * Convierte el estilo Firestore a los query params del backend.
-   *
-   *   where:   [['campo','==','valor'], ['turnoId','in',[a, b]]]
-   *   orderBy: ['fecha','desc']
-   *
-   * OJO al depurar: el backend solo reconoce los campos declarados en su lista
-   * `filtros` (ver resource.routes.ts). Un `where` sobre un campo no declarado
-   * NO da error: se ignora en silencio y la consulta devuelve de mas. Si una
-   * pantalla muestra filas que no corresponden, el primer sospechoso es eso.
-   */
+  
   function aQuery(opciones) {
     var opts = opciones || {};
     var q = {};
@@ -265,9 +184,7 @@
       } else if (op === '<=') {
         q.hasta = valor;
       }
-      // Los demas operadores (!=, >, <, array-contains, not-in) no tienen
-      // equivalente en el backend. Se ignoran a proposito: devolver de mas y
-      // que la pantalla lo note es preferible a devolver de menos en silencio.
+
     }
 
     if (opts.limit !== undefined) q.limit = opts.limit;
@@ -281,20 +198,14 @@
     return q;
   }
 
-  /* ---------- Lectura ---------- */
-  /**
-   * TTL por defecto 0 (sin cache) salvo que se pida `cache: true`.
-   *
-   * NexusAPI cachea los GET 8 segundos, que esta bien para el catalogo pero no
-   * para el turno en curso: despues de cobrar, el arqueo tiene que reflejar la
-   * venta ya mismo. Para catalogos, pasar `{ cache: true }`.
-   */
+  
+  
   function conTtl(opts, api) {
     if (api.ttl === undefined && opts.cache !== true) api.ttl = 0;
     return api;
   }
 
-  /** Devuelve el sobre completo: { items, total, limit, offset }. */
+  
   function leerPagina(coleccion, opciones) {
     var opts = opciones || {};
     var api = conTtl(opts, apiOptions(opts));
@@ -306,17 +217,14 @@
     });
   }
 
-  /** Devuelve solo el array de filas, que es lo que usan las tablas. */
+  
   function leer(coleccion, opciones) {
     return leerPagina(coleccion, opciones).then(function (pagina) {
       return pagina.items;
     });
   }
 
-  /**
-   * Conteo real. Pide limit=1 porque solo interesa `total`, que el backend
-   * calcula con countDocuments y no con el tamaño de la pagina.
-   */
+  
   function contar(coleccion, opciones) {
     var opts = {};
     var origen = opciones || {};
@@ -327,19 +235,15 @@
     });
   }
 
-  /** Una fila por id. */
+  
   function obtener(coleccion, id, opciones) {
     var api = apiOptions(opciones || {});
     return global.NexusAPI.get(rutaDe(coleccion) + '/' + encodeURIComponent(id), undefined, api)
       .then(function (r) { return r.data; });
   }
 
-  /* ---------- Escritura ---------- */
-  /**
-   * Colecciones donde el POST/PATCH generico NO sirve, con el motivo.
-   * Se comprueba ANTES de llamar: sin esto el error que llegaria es un 404 de
-   * "ruta no encontrada" que no explica nada.
-   */
+  
+  
   var SIN_ESCRITURA_GENERICA = {
     auditoria: 'La auditoria la escribe el servidor (recordAudit), no el cliente.',
     audit_logs: 'La auditoria la escribe el servidor (recordAudit), no el cliente.',
@@ -370,32 +274,15 @@
       .then(function (r) { return r.data; });
   }
 
-  /**
-   * Borra un documento.
-   *
-   * El CRUD generico NO expone DELETE: lo habilita cada coleccion en el backend
-   * con `borrable: true` (ver resource.factory.ts). Si la coleccion no lo tiene,
-   * la API responde 404/405 y el error llega tal cual, que es mejor que un
-   * borrado silencioso en una coleccion de operacion.
-   */
+  
   function eliminar(coleccion, id) {
     verificarEscritura(coleccion);
     return global.NexusAPI.del(rutaDe(coleccion) + '/' + encodeURIComponent(id), { ttl: 0 })
       .then(function (r) { return r.data; });
   }
 
-  /* ---------- Vigilancia (sustituto practico de onSnapshot) ---------- */
-  /**
-   * Lectura inicial + refetch con debounce ante cualquier evento de negocio.
-   *
-   * Por que NO hay un onSnapshot real: onSnapshot recibe el estado de la
-   * coleccion desde el servidor; Socket.IO solo avisa que algo paso. Se podria
-   * emitir el documento entero en cada evento, pero el listado tambien cambia
-   * por orden, limites y conteos, asi que habria que rehacerlo igual. El
-   * refetch con debounce da el mismo resultado y agrupa rafagas de eventos.
-   *
-   * Devuelve `detener()`.
-   */
+  
+  
   function vigilar(coleccion, opciones, alCambiar) {
     var opts = opciones || {};
     var temporizador = null;
@@ -424,8 +311,7 @@
     var desuscribir = [];
     if (global.NexusRealtime) {
       desuscribir.push(global.NexusRealtime.on('resync', agendar));
-      // Cualquiera de los 5 eventos puede mover la coleccion vigilada. No se
-      // intenta adivinar cual: el refetch es barato y el debounce los agrupa.
+
       global.NexusRealtime.eventos.forEach(function (ev) {
         desuscribir.push(global.NexusRealtime.on(ev, agendar));
       });
@@ -437,56 +323,36 @@
       vivo = false;
       if (temporizador !== null) clearTimeout(temporizador);
       for (var i = 0; i < desuscribir.length; i += 1) {
-        try { desuscribir[i](); } catch (e) { /* ya desuscripto */ }
+        try { desuscribir[i](); } catch (e) {  }
       }
       desuscribir = [];
     };
   }
 
-  /**
-   * Envuelve filas en un objeto con la MISMA FORMA que el snapshot de Firestore.
-   *
-   * Es la pieza que permite migrar una pagina cambiando UNA linea: el consumidor
-   * sigue escribiendo `snapshot.forEach(doc => ...)`, `doc.data()` y
-   * `snapshot.docChanges()`, sin que haya que reescribir su logica.
-   */
+  
   function aSnapshot(filas) {
     var docs = [];
     for (var i = 0; i < filas.length; i += 1) {
       var fila = filas[i];
       docs.push({
         id: String(fila.uid || fila._id || ''),
-        // `data()` devuelve la fila: misma forma que Firestore, sin copiar.
+
         data: (function (f) { return function () { return f; }; })(fila),
       });
     }
     return {
-      // `docs` hace falta porque algunos consumidores hacen `snap.docs.map(...)`
-      // en vez de `snap.forEach(...)`.
+
       docs: docs,
       forEach: function (cb) {
         for (var j = 0; j < docs.length; j += 1) cb(docs[j]);
       },
-      // La API no entrega cambios incrementales: se refetchea entero.
-      // Devolver [] hace que las ramas de diff (avisos de "actualizado") no
-      // disparen, que es correcto: no hay diff que informar.
+
       docChanges: function () { return []; },
       size: docs.length,
     };
   }
 
-  /**
-   * Como `vigilar()`, pero entrega el resultado con la forma del snapshot de
-   * Firestore en vez de un array de filas.
-   *
-   * Existe porque varias paginas se suscriben con
-   *   onSnapshot(collection(db, 'x'), (snap) => { snap.forEach(...) })
-   * y migrarlas una por una obligaria a reescribir ese cuerpo entero. Con esto
-   * alcanza con cambiar la llamada:
-   *   NexusData.vigilarComoFirestore('x', {}, (snap) => { snap.forEach(...) })
-   *
-   * Devuelve `detener()`, igual que `onSnapshot`.
-   */
+  
   function vigilarComoFirestore(coleccion, opciones, alCambiar) {
     return vigilar(coleccion, opciones || {}, function (filas) {
       alCambiar(aSnapshot(filas));
@@ -494,11 +360,11 @@
   }
 
   global.NexusData = {
-    /* mapa y rutas */
+    
     COLECCIONES: COLECCIONES,
     rutaDe: rutaDe,
 
-    /* interruptor por pagina */
+    
     fuente: fuente,
     esMongo: esMongo,
     usarMongo: usarMongo,
@@ -510,31 +376,26 @@
       state.fuentePorDefecto = valor === 'mongo' ? 'mongo' : 'firestore';
     },
 
-    /* traduccion de consultas (util para depurar en consola) */
+    
     aQuery: aQuery,
 
-    /* lectura */
+    
     leer: leer,
     leerPagina: leerPagina,
     contar: contar,
     obtener: obtener,
 
-    /* escritura */
+    
     crear: crear,
     actualizar: actualizar,
     eliminar: eliminar,
     SIN_ESCRITURA_GENERICA: SIN_ESCRITURA_GENERICA,
 
-    /* tiempo real */
+    
     vigilar: vigilar,
-    /** `vigilar()` que entrega la forma del snapshot de Firestore. */
+    
     vigilarComoFirestore: vigilarComoFirestore,
-    /**
-     * Envuelve filas en un objeto con la forma del snapshot de Firestore.
-     * Sirve para lecturas de una sola vez:
-     *   const snap = NexusData.aSnapshot(await NexusData.leer('x'));
-     *   snap.forEach(d => ... d.data() ...)      // el cuerpo no se toca
-     */
+    
     aSnapshot: aSnapshot,
   };
 })(window);

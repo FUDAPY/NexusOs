@@ -1,7 +1,7 @@
 import { Schema, model, type HydratedDocument, type Model, type Types } from 'mongoose';
 import { orderItemSchema, type IOrderItem } from './OrderItem.js';
 
-// Valores observados en produccion (Firestore: sales). Extender solo con evidencia.
+
 export const METODOS_PAGO = [
   'Efectivo',
   'Transferencia',
@@ -11,21 +11,7 @@ export const METODOS_PAGO = [
   'Mixto',
   'Gratis',
   'Retiro',
-  /**
-   * Cuenta abierta (mesa): todavia NO se cobro.
-   *
-   * Evidencia: el POS escribe exactamente este metodo al abrir una mesa
-   * (pos.html, confirmarGuardadoPendiente) y los documentos migrados de
-   * Firestore lo tienen. Sin declararlo, POST /orders rechazaba la creacion de
-   * la mesa por validacion del enum, y la unica salida era mandar otro metodo.
-   *
-   * NO es un medio de pago, y por eso el cierre de caja lo ignora: el
-   * normalizador de cashShift.service.ts busca 'efectivo'/'tarjeta'/
-   * 'transferencia' y este valor no coincide con ninguno, asi que una mesa sin
-   * cobrar no entra en los totales del arqueo. Si en su lugar se mandara
-   * 'Efectivo', cada mesa abierta inflaria la caja como si fuera una venta ya
-   * cobrada.
-   */
+  
   'Por Cobrar',
 ] as const;
 export type MetodoPago = (typeof METODOS_PAGO)[number];
@@ -51,7 +37,7 @@ export const ESTADOS_COCINA = [
 ] as const;
 export type EstadoCocina = (typeof ESTADOS_COCINA)[number];
 
-/** Cobro en moneda extranjera (Firestore: sales.detalleEfectivo). */
+
 export interface IDetalleEfectivo {
   monedaCobro: string;
   tasaCambioAplicada: number;
@@ -60,7 +46,7 @@ export interface IDetalleEfectivo {
   vueltoGs: number;
 }
 
-/** Ticket de venta. Firestore: artifacts/erp_lingroup/users/admin_master_001/sales. */
+
 export interface IOrder {
   ticket_id: string;
   tipoTransaccion: TipoTransaccion;
@@ -83,20 +69,13 @@ export interface IOrder {
   confirmadoPorCaja: boolean;
   fechaConfirmacionCaja?: Date | null;
 
-  /**
-   * Aprobacion del cobro de un abono de deuda.
-   *
-   * Estos campos los escribe el dashboard y NO estaban declarados. Como el
-   * schema es `strict: true`, Mongoose los descartaba en silencio: el panel
-   * creia haber aprobado el cobro y la bandera no quedaba guardada, con lo que
-   * la deuda del cliente se podia descontar dos veces.
-   */
+  
   estadoAprobacionCobro?: string;
   deudaAplicada?: boolean;
   aprobadoPor?: string;
   fechaAprobacionCobro?: Date | null;
 
-  /** Ticket excluido del flujo de caja sin anularse (abonado). */
+  
   marcadoComoAbonado?: boolean;
   motivoMarcadoAbonado?: string;
   marcadoComoAbonadoPor?: string;
@@ -109,7 +88,7 @@ export interface IOrder {
   sucursalCreditoLibre: string | null;
   creditoLibreSucursal: boolean;
 
-  // Descuentos / promociones
+
   subtotal?: number;
   subtotalOriginal?: number;
   discountAmount?: number;
@@ -119,7 +98,7 @@ export interface IOrder {
   noAfectaCaja?: boolean;
   motivoNoAfectaCaja?: string;
 
-  // Puntos
+
   puntosOtorgados: number;
   puntosCanjeados: number;
 
@@ -129,7 +108,7 @@ export interface IOrder {
   turnoId?: string;
   fechaAperturaTurno?: Date | null;
 
-  // Multimoneda
+
   detalleEfectivo?: IDetalleEfectivo | null;
   detallesPago?: Record<string, unknown> | null;
   paymentMethod?: string;
@@ -140,7 +119,7 @@ export interface IOrder {
   totalPYG?: number;
   changePYG?: number;
 
-  // Produccion / metas
+
   produccionSync?: Record<string, unknown> | null;
   metaPublicaRegistrada?: boolean;
   fechaMetaPublica?: Date | null;
@@ -190,7 +169,7 @@ const orderSchema = new Schema<IOrder, Model<IOrder>>(
     confirmadoPorCaja: flag,
     fechaConfirmacionCaja: { type: Date, default: null },
 
-    // Ver el comentario en IOrder: sin declararlos, strict los descartaba.
+
     estadoAprobacionCobro: { type: String, default: undefined, index: true },
     deudaAplicada: { type: Boolean, default: undefined },
     aprobadoPor: { type: String, default: undefined },
@@ -240,7 +219,7 @@ const orderSchema = new Schema<IOrder, Model<IOrder>>(
 
     sucursal: { type: String, required: true, trim: true, index: true },
     sucursalId: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
-    // ID original de Firestore cuando no es un ObjectId valido (20 chars).
+
     legacyId: { type: String, default: undefined, sparse: true, index: true },
   },
   {
@@ -251,7 +230,7 @@ const orderSchema = new Schema<IOrder, Model<IOrder>>(
   },
 );
 
-// Indices derivados de las consultas reales del panel y la caja.
+
 orderSchema.index({ ticket_id: 1 }, { unique: true });
 orderSchema.index({ sucursal: 1, fecha: -1 });
 orderSchema.index({ turnoId: 1, fecha: -1 });

@@ -26,7 +26,7 @@ export interface ForzarCierreInput {
   motivo: string;
   declaracion: DeclaracionCaja;
   htmlTicket?: string;
-  /** Si es true, calcula y devuelve sin escribir nada. */
+  
   dryRun?: boolean;
   forzadoPor?: string;
   forzadoPorNombre?: string;
@@ -47,7 +47,7 @@ export interface ForzarCierreResult {
   cierreId?: string;
 }
 
-/** Tope de tickets a leer. Igual al del original (functions/index.js:1784). */
+/* Tope de tickets a leer. Igual al del original (functions/index.js:1784). */
 const MAX_TICKETS = 5000;
 
 /**
@@ -87,7 +87,7 @@ export const forzarCierreSucursal = async (
 
   const resultado = await withTransaction(async (session) => {
     // Solo los no arqueados: es lo mismo que filtra esCandidatoCierreForzado,
-    // pero recorta el volumen antes de traerlo.
+
     const docs = await Order.find({ sucursal, $and: [{ $or: [{ arqueado: false }, { arqueado: null }] }] })
       .session(session)
       .limit(MAX_TICKETS)
@@ -95,13 +95,7 @@ export const forzarCierreSucursal = async (
 
     const crudas = docs.map((doc) => ({
       id: String(doc._id),
-      /* Las banderas booleanas se coercionan ACA.
-         Los documentos importados de Firestore guardaron estas banderas como objetos
-         (Timestamps y centinelas), y cualquier validacion aguas abajo los rechaza:
-           Valor invalido para el campo "arqueado": [object Object]
-         Es el 400 que impedia el cierre forzado de esos turnos. Se normaliza en el borde,
-         una sola vez, en vez de confiar en que la limpieza de datos ya corrio: un turno
-         viejo que quede sin limpiar no puede volver a tumbar el cierre. */
+      
       venta: {
         ...(doc.toObject() as unknown as VentaCruda),
         arqueado: doc.arqueado === true,
@@ -214,12 +208,7 @@ interface EscrituraCierre {
   };
 }
 
-/**
- * Marca los tickets como arqueados, crea el cierre, cierra el turno y audita.
- * Las cuatro escrituras van juntas en la misma transaccion: si se marcaran los
- * tickets y fallara la creacion del cierre, el turno desapareceria del flujo sin
- * arqueo y esa plata no quedaria registrada en ningun lado.
- */
+
 const escribirCierre = async (e: EscrituraCierre): Promise<ForzarCierreResult> => {
   const { numeros: n, derivados: d, totales: t } = e;
   const sesion = e.session ?? undefined;

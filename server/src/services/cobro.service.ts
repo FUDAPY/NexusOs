@@ -22,18 +22,7 @@ export interface ResolverCobroResult {
   deudaResultante: number;
 }
 
-/**
- * Aprueba o rechaza el cobro de un abono de deuda.
- *
- * Reemplaza el `writeBatch` del dashboard, que tocaba DOS colecciones
- * (users.deuda y sales) en una sola operacion. En Mongo eso es una transaccion,
- * y tiene que serlo: si la orden quedara como 'aprobado' pero la deuda del
- * cliente no bajara, el cliente seguiria debiendo plata ya pagada.
- *
- * La guarda de `estadoAprobacionCobro === 'pendiente'` es lo que impide aplicar
- * la misma aprobacion dos veces. Sin ella, un doble clic o un reintento REST
- * descontaba la deuda por duplicado.
- */
+
 export const resolverCobro = async (
   input: ResolverCobroInput,
   context: { ip: string; userAgent: string },
@@ -62,8 +51,7 @@ export const resolverCobro = async (
     let deudaResultante = 0;
 
     if (aprobar) {
-      // El cliente de la venta es el uid de Firestore, por eso se busca por
-      // `uid` y no solo por _id.
+
       const cliente = await User.findOne(filtroPorId(String(order.cliente ?? ''), 'uid'))
         .session(session)
         .exec();
@@ -77,16 +65,10 @@ export const resolverCobro = async (
       }
 
       deudaAnterior = Number(cliente.deuda ?? 0);
-      // Nunca por debajo de cero: si el abono supera la deuda, el excedente no
-      // se convierte en saldo a favor (asi se comportaba el dashboard).
+
       deudaResultante = Math.max(0, deudaAnterior - total);
 
-      /* Los puntos por pagar la deuda (1 por cada 1.000 Gs pagados) se otorgan ACA, que es
-         cuando el pago se vuelve real: el cobrador solo lo REGISTRO, y hasta que
-         administracion no lo aprueba esa plata no entro.
-         Es la misma regla que aplica POST /orders/pagar-deuda para un cobro directo. Sin
-         esto, pagar por un cobrador no daba puntos y pagar en el mostrador si: la misma
-         regla aplicada a medias. */
+      
       const puntosOtorgados = Math.floor(total / 1000);
 
       await User.updateOne(
@@ -146,9 +128,7 @@ export const resolverCobro = async (
     };
   });
 
-  /* Se emite despues del commit. Se reusa 'venta:creada' porque no hay un evento
-     de "venta modificada" y el consumidor hace lo mismo con todos: refetch. Si
-     algun dia se quiere distinguir, agregar 'venta:actualizada' a EventoTurno. */
+  
   emitTurnoEvent(resultado.order.sucursal ?? '', 'venta:creada', {
     turnoId: resultado.order.turnoId ?? null,
     id: resultado.orderId,
@@ -167,13 +147,7 @@ export interface MarcarAbonadoInput {
   autorizadoPorNombre?: string;
 }
 
-/**
- * Excluye un ticket del flujo de caja SIN anularlo.
- *
- * Es distinto de anular: no devuelve stock ni cambia el estado de pago, solo
- * marca el ticket para que no cuente en el arqueo (ej. lo paga un encargado por
- * fuera). Por eso no comparte el endpoint de anulacion.
- */
+
 export const marcarComoAbonado = async (
   input: MarcarAbonadoInput,
   context: { ip: string; userAgent: string },

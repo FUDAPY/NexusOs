@@ -5,21 +5,7 @@ import { forzarCierreSucursal } from '../services/cashForzado.service.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.js';
 import { AppError, sendOk } from '../utils/response.js';
 
-/**
- * Cierre forzado de una sucursal entera desde el panel administrativo.
- *
- * Body:
- *   {
- *     sucursal: string,
- *     motivo: string,
- *     declaracion: { fondoInicial, efectivo, tarjeta, transferencia, gastos },
- *     htmlTicket?: string,   // ticket ya renderizado por el panel
- *     dryRun?: boolean       // calcular y devolver sin escribir nada
- *   }
- *
- * Los totales del SISTEMA no se reciben: los recalcula el servicio desde las
- * ordenes del turno activo. Solo llega lo que el admin conto a mano.
- */
+
 export const forzarCierre = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as {
@@ -70,26 +56,7 @@ export const forzarCierre = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-/**
- * POST /api/v1/cash-shifts/abrir
- *
- * Apertura del turno de caja. Body:
- *   {
- *     sucursal: string,
- *     fondoInicial: number,
- *     cajero?: string,          // nombre; si falta se usa el del token
- *     cajeroId?: string,
- *     turnoId?: string,         // el POS lo genera; si falta se arma uno
- *     sucursalesActivas?: string[]
- *   }
- *
- * IDEMPOTENTE: si la sucursal ya tiene un turno abierto, devuelve ESE con
- * `creado: false` en vez de abrir otro. Es lo que impide que se repita el bug
- * de los 13 turnos abiertos.
- *
- * Devuelve `fechaAperturaMs` porque el POS lo consumia asi de la Cloud Function
- * vieja.
- */
+
 export const abrir = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as {
@@ -106,7 +73,7 @@ export const abrir = async (req: Request, res: Response, next: NextFunction): Pr
     }
 
     // El nombre y el id salen del token siempre que se pueda: es la sesion que
-    // el servidor verifico. El body queda solo como respaldo.
+
     const auth = (req as AuthenticatedRequest).auth;
 
     sendOk(
@@ -135,25 +102,7 @@ export const abrir = async (req: Request, res: Response, next: NextFunction): Pr
   }
 };
 
-/**
- * Cierre de caja (Cierre Z).
- *
- * Body:
- *   {
- *     turnoId: string,
- *     declaracion: { efectivo, tarjeta, transferencia, gastos? },
- *     cajero: string,
- *     cajeroId?: string,
- *     observacion?: string,
- *     forzado?: boolean,
- *     motivoForzado?: string,
- *     htmlTicket?: string   // ticket Z ya renderizado; solo se guarda
- *   }
- *
- * Los totales esperados NO se reciben: los recalcula el servicio desde las
- * ordenes del turno. `gastos` si se recibe porque es plata que el cajero pago
- * del cajon: el servicio la resta del efectivo esperado.
- */
+
 export const cerrar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as {
@@ -205,16 +154,7 @@ export const cerrar = async (req: Request, res: Response, next: NextFunction): P
   }
 };
 
-/**
- * POST /api/v1/cash-shifts/reconciliar  { turnoId }
- *
- * Recalcula el resumen de flujo de un turno DESDE SUS TICKETS REALES y devuelve la
- * diferencia contra lo guardado.
- *
- * NO escribe nada, a proposito: el resumen es derivado de los tickets, y guardar un
- * derivado a mano es como aparecen los numeros que no cuadran con los tickets que
- * los originaron. Reemplaza la Cloud Function `reconciliarFlujoTurno` (muerta).
- */
+
 export const reconciliar = async (
   req: Request,
   res: Response,

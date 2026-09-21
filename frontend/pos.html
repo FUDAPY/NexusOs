@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -693,20 +693,12 @@
                     ? ['Mr Lin Restaurante', 'San Benito']
                     : [];
                 try {
-                    /* Sucursales por la API (antes: getDocs de Firestore, que ya no
-                       autoriza). No es cosmetico: de aca salen `sucursalIds` y
-                       `sucursalNombres`, que son con lo que productoPerteneceASucursal
-                       decide si un producto se muestra. Si falta el ObjectId de la
-                       sucursal, los productos que lo guardan en `sucursalId`
-                       desaparecen del catalogo sin ningun error visible.
-                       El catch de abajo se mantiene: el POS tiene que arrancar con los
-                       datos de la sesion aunque esta consulta falle. */
+                    
                     const respSucursales = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
                     const datosSucursales = (respSucursales && respSucursales.data) || {};
                     const filasSucursales = Array.isArray(datosSucursales) ? datosSucursales : (datosSucursales.items || []);
                     filasSucursales.forEach((data) => {
-                        // Se arma el mismo contrato que daba un snapshot de Firestore
-                        // (`id` + `data()`), asi el cuerpo de abajo no se toca.
+
                         const branchDoc = { id: String(data._id || data.id || ''), data: () => data };
                         const nombre = String(data.nombre || data.name || data.branchName || branchDoc.id || '').trim();
                         const infoNombre = this.obtenerSucursalNormalizada(nombre);
@@ -817,28 +809,11 @@
                 });
 
                 onAuthStateChanged(auth, async (user) => {
-                    /* `user` es de Firebase, y desde que index.html autentica
-                       contra la API ese callback recibe SIEMPRE null.
-
-                       Por eso la condicion mira tambien la sesion de NexusAuth
-                       (el JWT). Sin esto se tomaba la rama else, que llama a
-                       cerrarSesion(): esa borra __pos_session y devuelve al
-                       login. O sea que el POS tiraba una sesion VALIDA y
-                       ademas la destruia, con lo que el cajero no podia entrar
-                       a nada.
-
-                       OJO: el cuerpo de este bloque sigue leyendo de Firestore
-                       (onSnapshot de products y users), asi que el catalogo y
-                       los clientes van a quedar vacios hasta que se migren. Eso
-                       es la etapa 1 del POS, pendiente. Lo que se arregla aca es
-                       que la pagina deje de expulsar y de borrar la sesion. */
+                    
                     if (user || (window.NexusAuth && window.NexusAuth.autenticado())) {
                         try {
                             if (this.unsubscribeProductos) this.unsubscribeProductos();
-                            /* El catalogo se lee de la API (Mongo), no de Firestore.
-                               Ver escucharProductosDesdeApi(): entrega el mismo
-                               objeto que entregaba onSnapshot, asi que la logica
-                               de abajo no cambia. */
+                            
                             this.unsubscribeProductos = this.escucharProductosDesdeApi((snapshot) => {
                                 const productosAnteriores = [...this.catalogoFirebase];
                                 this.catalogoFirebase = [];
@@ -1344,12 +1319,7 @@
                     return;
                 }
                 try {
-                    /* POST /auth/credito/validar-pin (antes: la Cloud Function
-                       validarPinCreditoCliente, que ya no existe, asi que la venta a
-                       credito NO se podia completar cuando el cliente pedia PIN).
-                       Si el PIN no vale, el endpoint responde 403 y NexusAPI lanza: cae
-                       en el mismo catch de abajo, asi que el mensaje al cajero sale
-                       igual que antes, con los intentos que le quedan. */
+                    
                     await NexusAPI.post(
                         '/auth/credito/validar-pin',
                         { clienteId: this.clienteActual.id, pin },
@@ -1690,16 +1660,7 @@
                 btn.disabled = true;
                 const montoAbonado = this.limpiarMoneda(document.getElementById('input-monto-abono').value);
                 try {
-                    /* PAGO DE DEUDA por la API (antes: un writeBatch que restaba
-                       users.deuda y creaba el ticket a mano; ya no autoriza, asi que el
-                       POS NO PODIA COBRAR UNA DEUDA).
-                       El servidor hace las dos cosas en una transaccion y ademas OTORGA
-                       LOS PUNTOS por el monto pagado (1 por cada 1.000 Gs), que era la
-                       parte de la regla que faltaba: una compra a credito no otorga al
-                       comprar, otorga cuando el cliente paga.
-                       El `return` corta el bloque viejo: lo que alcance a sumarse al
-                       batch no se commitea nunca. El `finally` de esta funcion restaura
-                       el boton igual. */
+                    
                     const respAbono = await NexusAPI.post(
                         '/orders/pagar-deuda',
                         {
@@ -1713,8 +1674,7 @@
                         { ttl: 0, retries: 0 }
                     );
                     const datosAbono = (respAbono && respAbono.data) || {};
-                    /* Se pisan deuda y puntos con lo que devolvio el servidor, no con un
-                       calculo local: es el unico que sabe los puntos que corresponden. */
+                    
                     if (datosAbono.deuda !== undefined) this.clienteActual.deuda = Number(datosAbono.deuda);
                     if (datosAbono.puntos !== undefined) this.clienteActual.puntos = Number(datosAbono.puntos);
                     const modalPago = document.getElementById('modal-pago-deuda');
@@ -1951,11 +1911,7 @@
                     .filter(ajuste => ajuste.cantidad > 0);
             },
             esControlado: function(valor) {
-                // El POS decide descontar stock segun este campo, pero en la base
-                // puede venir como booleano, numero o texto segun como se cargo el
-                // producto. Comparar con === true hace que 1 o "true" NO descuenten:
-                // el cajero ve la venta normal pero el stock nunca baja y queda
-                // descuadrado contra inventario.
+
                 if (valor === true || valor === 1) return true;
                 if (typeof valor === 'string') {
                     const v = valor.trim().toLowerCase();
@@ -2285,16 +2241,7 @@
                 if (!autorizacion) return false;
 
                 try {
-                    /* ANULACION por la API (antes: writeBatch a Firestore, que ya no
-                       autoriza, asi que anular una mesa fallaba: no habia forma de
-                       deshacer una cuenta abierta por error, salvo terminarla).
-
-                       POST /orders/:id/anular hace del lado del servidor lo mismo que
-                       hacia este bloque: pasa la orden a 'anulado', DEVUELVE el stock
-                       de los items controlados y deja la auditoria. Encaja con que
-                       ahora el stock se descuente al ABRIR la mesa: anular lo devuelve.
-                       Solo viaja el motivo; la autorizacion por RFID sigue siendo
-                       local, porque el lector no lo conoce el servidor. */
+                    
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(this.idTicketRecuperado) + '/anular',
                         { motivo: autorizacion.motivo || 'anulacion total desde POS', tipo: 'total' },
@@ -2337,10 +2284,7 @@
                     });
                     await batch.commit();
                 } catch (e) {
-                    /* Aca habia un `return`, y con eso el carrito quedaba SIN VACIAR:
-                       el cajero no podia empezar de nuevo por un aviso de auditoria que
-                       ni siquiera se guarda (va a Firestore). La auditoria de un carrito
-                       que nunca se guardo no puede ser mas importante que eso. */
+                    
                     console.error('No se pudo auditar el vaciado del carrito.', e);
                 }
 
@@ -2675,14 +2619,7 @@
 
                 const fechaCierreDate = new Date();
                 const fechaAperturaDate = this.fechaAperturaSesionTs ? new Date(this.fechaAperturaSesionTs) : null;
-                /* VENTAS DEL TURNO por la API (antes: getDocs de Firestore, que ya no
-                   autoriza -> el Cierre Z moria aca, antes de escribir nada).
-
-                   Son las mismas ordenes que el servidor va a usar al cerrar, asi
-                   que el ticket Z que se imprime describe lo mismo que el cierre
-                   que se guarda. El limite de la lista es 200: si un turno tuviera
-                   mas ventas el TICKET saldria incompleto, pero el cierre guardado
-                   no, porque los totales los recalcula el servidor desde la base. */
+                
                 const respVentas = await NexusAPI.orders.list(
                     { turnoId: this.obtenerTurnoActualId(), limit: 200 },
                     { ttl: 0, retries: 0 }
@@ -2811,16 +2748,7 @@
                 `;
 
                 try {
-                    /* CIERRE por la API (antes: writeBatch a Firestore, que ya no
-                       autoriza). El servidor recalcula los totales desde las ordenes
-                       del turno y, EN UNA TRANSACCION: guarda el cierre, marca las
-                       ventas como arqueadas y cierra el turno.
-
-                       Solo se manda lo CONTADO. El esperado NO se manda a proposito:
-                       lo calcula el servidor para que nadie pueda declarar un
-                       esperado falso. Las formulas son las mismas que usa este
-                       ticket (fondo + ventas efectivo - gastos), asi que lo impreso
-                       y lo guardado dicen lo mismo. */
+                    
                     const respCierre = await NexusAPI.post(
                         '/cash-shifts/cerrar',
                         {
@@ -2838,86 +2766,10 @@
                         { ttl: 0, retries: 0 }
                     );
                     const datosCierre = (respCierre && respCierre.data) || {};
-                    /* Si estos dos numeros no coinciden, el ticket impreso y el cierre
-                       guardado describen conjuntos de ventas distintos. Queda en la
-                       consola para poder investigarlo despues, en vez de fallar en
-                       silencio. (Pueden diferir por diseno: la lista de la API trae
-                       las anuladas y las que no afectan caja, que este filtro saca.) */
+                    
                     console.info('Cierre Z ' + (datosCierre.turnoId || '') + ': el POS listo ' + ticketsTurno.length + ' tickets, el servidor conto ' + (datosCierre.ticketsContados === undefined ? '?' : datosCierre.ticketsContados) + '.');
 
-                    /* ==================================================================
-                       CODIGO VIEJO (writeBatch a Firestore) COMENTADO - TEMPORAL.
-                       No se ejecuta: es un bloque de comentario. Se borra en el
-                       commit siguiente a verificar el cierre de caja en produccion.
-                    const batch = writeBatch(db);
-                    ticketsTurno.forEach(ticket => {
-                        batch.update(ticket.ref, { arqueado: true, fechaArqueo: fechaCierreDate, turnoId: this.obtenerTurnoActualId() });
-                    });
-                    const cierreRef = doc(collection(db, "cierresCaja"));
-                    batch.set(cierreRef, {
-                        turnoId: this.obtenerTurnoActualId(),
-                        sucursal: this.sesion.sucursal,
-                        cajeroId: this.sesion.uid || null,
-                        cajero: this.sesion.nombre || 'Cajero',
-                        fechaApertura: fechaAperturaDate || fechaCierreDate,
-                        fechaAperturaTexto: fechaApertura,
-                        fechaCierre: fechaCierreDate,
-                        fechaCierreTexto: fechaCierre,
-                        fechaOperacionKey: this.obtenerFechaKey(fechaAperturaDate || fechaCierreDate),
-                        fechaCierreKey: this.obtenerFechaKey(fechaCierreDate),
-                        fondoInicial: fondoInicial,
-                        declaracion: {
-                            efectivo: decEfe,
-                            gastos: decGastos,
-                            tarjeta: decTar,
-                            transferencia: decTrans,
-                            totalCaja: totalCajaDeclarado
-                        },
-                        sistema: {
-                            ventasEfectivo: espEfeVentas,
-                            ventasTarjeta: espTar,
-                            ventasTransferencia: espTrans,
-                            ventasCredito: espCredito,
-                            totalVentas: totalVentas,
-                            totalEsperadoEfectivo: totalEsperadoEfectivo,
-                            totalEsperado: totalSistemaEsperado,
-                            totalCobradoInmediato: totalCobradoInmediato,
-                            totalVendido: totalVendido,
-                            diferenciaEfectivo: difEfe,
-                            diferenciaTarjeta: difTar,
-                            diferenciaTransferencia: difTrans,
-                            diferenciaTotal: difTotal
-                        },
-                        resumenFinanciero: {
-                            efectivoPos: espEfeVentas,
-                            efectivoDeclarado: decEfe,
-                            efectivoEsperado: totalEsperadoEfectivo,
-                            posTarjeta: espTar,
-                            transferencia: espTrans,
-                            credito: espCredito,
-                            gastos: decGastos,
-                            diferenciaCaja: difEfe,
-                            diferenciaPosTarjeta: difTar,
-                            diferenciaTransferencia: difTrans,
-                            diferenciaTotal: difTotal,
-                            sobrante: Math.max(difTotal, 0),
-                            faltante: Math.max(-difTotal, 0)
-                        },
-                        versionEsquemaFinanciero: 2,
-                        productosVendidos: productosTurno,
-                        ticketsContados: ticketsTurno.filter(v => v.tipoTransaccion !== 'abono_deuda').length,
-                        ticketsTurnoIds: ticketsTurno.map(v => v.id),
-                        htmlTicket: htmlZ,
-                        creadoEn: fechaCierreDate
-                    });
-                    batch.set(doc(db, 'cashFlows', this.obtenerTurnoActualId()), {
-                        estadoTurno: 'cerrado',
-                        cierreCajaId: cierreRef.id,
-                        closedAt: fechaCierreDate,
-                        updatedAt: fechaCierreDate
-                    }, { merge: true });
-                    await batch.commit();
-                       ==================== FIN DEL CODIGO VIEJO COMENTADO ==================== */
+                    
 
                     localStorage.removeItem('__pos_fondo_fijo'); localStorage.removeItem('__pos_hora_apertura'); localStorage.removeItem('__pos_apertura_ts'); localStorage.removeItem('__pos_turno_id');
                     this.fondoInicialSesion = 0;
@@ -2954,14 +2806,9 @@
                 let aperturaPersistida;
                 let turnoIdPersistido = turnoId;
                 try {
-                    // La API (Mongo), no la Cloud Function de Firebase: esa via ya
-                    // no funciona sin sesion de Firebase.
-                    //
+
                     // El endpoint es IDEMPOTENTE: si la sucursal ya tiene un turno
-                    // abierto devuelve ESE. Por eso se adopta el turnoId que
-                    // responde y no el generado localmente: si no, el POS seguiria
-                    // apuntando a un turno inexistente y volveria el bug de los
-                    // turnos duplicados que dejo 13 cajas abiertas.
+
                     const respuesta = await NexusAPI.post(
                         '/cash-shifts/abrir',
                         {
@@ -3118,26 +2965,8 @@
                 const observacionInput = obsInput ? obsInput.value.trim() : '';
                 const tieneItemsCocina = this.carritoTieneItemsDeCocina();
 
-                /* MESA por la API (antes: writeBatch a Firestore, que ya no autoriza,
-                   asi que abrir una mesa fallaba SIEMPRE).
-
-                   Mapeo al contrato de POST /orders:
-                     - metodoPago 'Por Cobrar' es el valor legacy de una cuenta
-                       abierta y NO es un medio de pago: el cierre de caja no lo
-                       cuenta en ningun total, que es justo lo que se quiere de una
-                       mesa sin cobrar. Mandando 'Efectivo' cada mesa abierta
-                       inflaria la caja como si ya estuviera cobrada.
-                     - estadoPago 'pendiente' es lo que la marca como cuenta abierta,
-                       que es lo que lista la pantalla de mesas.
-                     - origenCuentaPendiente distingue una mesa de una venta a
-                       credito, que tambien queda 'pendiente'.
-                     - El total NO se manda: lo recalcula el servidor desde los items.
-
-                   DIFERENCIA CONSCIENTE con el POS viejo: aca el stock SI se
-                   descuenta al abrir la mesa (lo hace el servidor al crear la
-                   orden), porque la mercaderia ya salio de la cocina. El POS legacy
-                   lo descontaba recien al cobrar, asi que una mesa que nunca se
-                   cobraba dejaba el stock sin mover. */
+                /* - metodoPago 'Por Cobrar' es el valor legacy de una cuenta
+   abierta y NO es un medio de pago: el cierre de caja no lo */
                 const itemsApi = this.carrito.map(it => ({
                     id: String(it.id || ''),
                     nombre: String(it.nombre || 'Producto'),
@@ -3169,7 +2998,7 @@
                     estadoCocina: tieneItemsCocina ? 'pendiente' : 'listo',
                     observacion: observacionInput,
                     origenCuentaPendiente: true,
-                    // Sin puntos y sin deuda: una cuenta abierta todavia no es una venta.
+
                     puntosOtorgados: 0,
                     puntosCanjeados: 0,
                     turnoId: this.obtenerTurnoActualId(),
@@ -3216,14 +3045,7 @@
                 const tieneItemsCocina = this.carritoTieneItemsDeCocina();
 
                 try {
-                    /* GUARDAR SIN COBRAR por la API (antes: writeBatch a Firestore, que ya
-                       no autoriza, asi que enviar a cocina fallaba).
-
-                       Los items REEMPLAZAN a los de la cuenta (no se suman) y NO se toca
-                       el stock: el stock se mueve al COBRAR. El POS legacy calculaba
-                       ajustes de stock por diferencia aca mismo; con el stock moviendose
-                       al cobrar ese ajuste ya no hace falta, y con el desaparece la
-                       chance de descuadrar por un delta mal calculado. */
+                    
                     const itemsMesa = this.carrito.map(it => ({
                         id: String(it.id || ''),
                         nombre: String(it.nombre || 'Producto'),
@@ -3670,17 +3492,7 @@
                     let pedidoClienteNotificacion = null;
                     let ventaMetaPublica = null;
                     if (!this.idTicketRecuperado) {
-                        /* VENTA NUEVA por la API (Paso C de la migracion).
-                           Antes esto era un runTransaction contra Firestore, que
-                           ya no autoriza. POST /orders hace lo mismo del lado del
-                           servidor y en UNA transaccion: resuelve los productos,
-                           descuenta stock SOLO de los controlados (igual que hacia
-                           el POS), crea la orden y mueve puntos y deuda del
-                           cliente.
-
-                           Los campos estadoPago, creditoLibre, fechaAperturaTurno
-                           y detallesPago se agregaron a la API justamente para
-                           que este paso NO cambie el comportamiento del POS. */
+                        
                         const ticketID = 'T-' + Math.floor(Math.random() * 1000000);
                         const itemsApi = itemsCobro.map(it => ({
                             id: String(it.id || ''),
@@ -3710,8 +3522,7 @@
                             nombreCliente: this.clienteActual ? this.clienteActual.nombre : 'Ocasional',
                             items: itemsApi,
                             metodoPago: metodoElegido,
-                            // Igual que el POS legacy: la venta queda PAGADA y la
-                            // deuda del cliente se registra aparte. Si quedara
+
                             // 'pendiente' apareceria como mesa abierta.
                             estadoPago: 'pagado',
                             creditoLibre: creditoLibreSucursal,
@@ -3736,10 +3547,7 @@
                             subtotal: subtotalSinDescuentoPremium,
                             metodoPago: metodoElegido,
                             estadoPago: 'pagado',
-                            /* Los puntos reales los decide el servidor (1 por cada 1.000, y
-                               no otorga si es a credito o si canjeo puntos). Se imprime lo
-                               que devolvio la API: con el calculo del POS, el ticket podria
-                               mostrar un numero distinto del que le queda al cliente. */
+                            
                             puntosOtorgados: (datosVenta.order && datosVenta.order.puntosOtorgados) ?? puntosGanados,
                             puntosCanjeados,
                             puntosAcumulados: this.clienteActual ? Math.max(0, (this.clienteActual.puntos || 0) + deltaPuntosCliente) : 0,
@@ -3750,16 +3558,7 @@
                         };
                         ventaMetaPublica = this.ultimaVentaImprimir;
                     } else {
-                        /* COBRO DE MESA PENDIENTE por la API (Paso B de la migracion).
-                           Antes esto era un runTransaction contra Firestore, que ya no
-                           autoriza.
-
-                           POR QUE UN ENDPOINT Y NO POST /orders: POST /orders siempre
-                           CREA. Cobrar una mesa tiene que PASAR ESA ORDEN a pagada; si
-                           creara otra, la venta quedaria DUPLICADA (la mesa abierta MAS
-                           una venta nueva). /orders/:id/cerrar-cuenta hace justamente
-                           eso y mueve puntos y deuda del cliente en la misma
-                           transaccion del servidor: el POS ya no toca `users` a mano. */
+                        
                         const mesaId = this.idTicketRecuperado;
                         /* Items con el MISMO contrato que una venta directa: el servidor
                            recalcula el total con ellos y descuenta el stock con ellos.
@@ -3794,11 +3593,7 @@
                                 puntosOtorgados: puntosGanados,
                                 puntosCanjeados,
                                 discountAmount: descuentoPremiumMonto,
-                                /* La venta se muda al turno donde se COBRA la mesa.
-                                   Una mesa abierta de noche y pagada a la manana tiene
-                                   que contar en el turno donde entra la plata: si
-                                   quedara en el turno donde se abrio, ese cierre ya paso
-                                   y la venta no se contaria en ningun arqueo. */
+                                
                                 turnoId: this.obtenerTurnoActualId(),
                                 ...(this.fechaAperturaSesionTs ? { fechaAperturaTurno: new Date(this.fechaAperturaSesionTs).toISOString() } : {}),
                                 ...(detalleEfectivo ? { detalleEfectivo } : {}),
@@ -4441,26 +4236,7 @@
                 if(m2) m2.classList.add('hidden');
             },
 
-            /**
-             * Catalogo desde la API (Mongo), con la MISMA forma que entregaba
-             * el onSnapshot de Firestore.
-             *
-             * Por que no se usa onSnapshot: Firestore ya no autoriza (no hay
-             * sesion de Firebase), y ademas la API no expone tiempo real
-             * incremental. En vez de reescribir las decenas de lineas que
-             * consumen el snapshot, se les entrega un objeto con la misma forma:
-             *
-             *   forEach(cb)   recorre las filas        (data() devuelve la fila)
-             *   docChanges()  devuelve []              (la API no difea)
-             *   size          cantidad de filas
-             *
-             * Efecto: el catalogo VUELVE A CARGAR, que es lo que estaba roto. Lo
-             * que se pierde son los avisos incrementales de "stock/precio
-             * actualizado" del panel de sincronizacion; se recuperan cuando la
-             * vigencia pase a NexusRealtime (refetch por evento).
-             *
-             * Devuelve `detener()`, igual que onSnapshot.
-             */
+            
             escucharProductosDesdeApi: function(alCambiar) {
                 if (!window.NexusData) {
                     Logger.warn('NexusData no esta cargado: el catalogo no se puede leer.');
@@ -4470,7 +4246,7 @@
                 let vivo = true;
 
                 const leer = () => {
-                    // El backend topea la pagina en 500 (limiteMaximo del recurso).
+
                     NexusData.leer('products', { where: [['estado', '==', 'Activo']], limit: 500 })
                         .then((filas) => {
                             if (!vivo) return;
@@ -4494,6 +4270,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => PosModule.init());
-    </script>
+</script>
 </body>
 </html>

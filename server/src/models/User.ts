@@ -1,23 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Roles validos.
- *
- * `delivery`, `cobrador` y `produccion` los usa el formulario de Personal
- * (usuarios.html) y los rutea index.html en `redirigirPorRol`, pero NO estaban
- * declarados aca: al dar de alta un usuario con uno de ellos, Mongoose fallaba
- * la validacion del enum y el alta se caia entera.
- *
- * `delivery` y `repartidor` son el mismo puesto con dos nombres: `repartidor`
- * es el que quedo en los usuarios migrados y `delivery` el que usa el frontend.
- * Se conservan LOS DOS a proposito: unificarlos ahora obligaria a reescribir los
- * documentos ya migrados, y el ruteo por rol de index.html espera `delivery`.
- * Queda anotado como deuda de datos.
- *
- * Nota de permisos: agregar roles NO amplia accesos. `requiereRol(...)` es una
- * lista blanca, asi que un rol nuevo no puede nada hasta que se lo incluya en
- * una ruta concreta.
- */
+
 export const USER_ROLES = [
   'admin',
   'supervisor',
@@ -34,11 +17,11 @@ export type UserRol = (typeof USER_ROLES)[number];
 export const USER_BENEFICIOS = ['pendiente', 'activo', 'rechazado', 'no_aplica'] as const;
 export type UserEstadoBeneficios = (typeof USER_BENEFICIOS)[number];
 
-// Valores observados en Firestore (users.tipoCliente).
+
 export const USER_TIPOS = ['estandar', 'premium', 'vip'] as const;
 export type UserTipoCliente = (typeof USER_TIPOS)[number];
 
-/** Usuarios, personal y clientes CRM. Firestore: users. */
+
 export interface IUser {
   nombre: string;
   email: string;
@@ -48,7 +31,7 @@ export interface IUser {
   estadoBeneficios: UserEstadoBeneficios;
   sucursal: string;
 
-  /** Deuda acumulada del cliente CRM (Firestore: users.deuda). */
+  
   deuda: number;
   puntos: number;
 
@@ -57,7 +40,7 @@ export interface IUser {
   descuentoVipConfigurado: boolean;
   solicitarPinCredito: boolean;
   creditoPinConfigurado: boolean;
-  /** Sucursales donde el cliente puede comprar a credito libremente. */
+  /* Sucursales donde el cliente puede comprar a credito libremente. */
   sucursalesCreditoLibre: string[];
   datosCompletos: boolean;
 
@@ -69,13 +52,7 @@ export interface IUser {
   playStoreUrl: string;
 
   uid?: string;
-  /**
-   * Hash bcrypt de la contraseña.
-   *
-   * Vacio en los usuarios migrados: en Firebase las contraseñas NO vivian en
-   * Firestore sino en Firebase Auth, asi que no se pudieron migrar. El primer
-   * cambio de contraseña las establece (ver auth.service.ts).
-   */
+  
   passwordHash?: string;
   passwordActualizadoEn?: Date | null;
   legacyId?: string;

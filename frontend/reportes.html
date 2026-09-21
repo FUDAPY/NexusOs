@@ -7,7 +7,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -381,7 +381,7 @@
                             { id: 'mr_lin_restaurante', nombre: 'San Benito' }
                         ];
                     this.renderSelectoresSucursales();
-                    // GET /branches (antes: getDocs de Firestore, muerto).
+
                     const respSucursales = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
                     const filasSucursales = (respSucursales && respSucursales.data && respSucursales.data.items) || [];
                     const snapSucursales = {
@@ -420,7 +420,7 @@
                 const inputInicio = document.getElementById('fecha-inicio');
                 const inputFin = document.getElementById('fecha-fin');
 
-                // Mostrar/ocultar inputs de fecha personalizada
+
                 if(periodo === 'personalizado') {
                     divInicio.classList.remove('hidden');
                     divFin.classList.remove('hidden');
@@ -661,23 +661,14 @@
                 inicioConsultaCierres.setDate(inicioConsultaCierres.getDate() - 2);
                 const finConsultaCierres = new Date(rangos.fin);
                 finConsultaCierres.setDate(finConsultaCierres.getDate() + 2);
-                /* GET /cash-closes y GET /orders (antes: dos getDocs con filtros de fecha,
-                   muertos). El rango se aplica ACA, en el cliente: asi no depende de que
-                   filtros soporte el recurso, y el resultado es el mismo que antes. */
+                
                 const respCierres = await NexusAPI.get('/cash-closes', { limit: 500 }, { ttl: 0, retries: 0 });
                 const filasCierres = ((respCierres && respCierres.data && respCierres.data.items) || [])
                     .filter((c) => {
                         const f = new Date(c.fechaCierre || c.creadoEn || 0).getTime();
                         return f >= inicioConsultaCierres.getTime() && f < finConsultaCierres.getTime();
                     });
-                /* SIN `desde`/`hasta` A PROPOSITO.
-                   Mandarlos hacia que el endpoint devolviera 400 "Valor invalido para el campo
-                   fecha: [object Object]": Mongoose rechaza el operador {$gte,$lte} al castear
-                   el path `fecha`. El filtro por rango se aplica ACA ABAJO, en el cliente, que
-                   es lo que ya hacia de todos modos: la pagina no pierde nada y deja de
-                   depender de un bug del endpoint.
-                   Cuando el filtro del API este arreglado, se puede volver a mandar el rango
-                   para bajar menos filas. */
+                
                 const respVentas = await NexusAPI.get(
                     '/orders',
                     { limit: 500 },
@@ -1012,7 +1003,7 @@
                 const fechaObjetivo = new Date(`${fechaStr}T00:00:00`);
                 const sucursalFiltroId = CierreCajaNormalizer.normalizarSucursal(sucursalFiltro).id;
                 const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                // GET /orders (antes: un getDocs sin filtro, muerto).
+
                 const respTodasVentas = {
                 data: { items: await NexusData.leerTodo('sales', { limit: 500 }, { ttl: 0, retries: 0 }) }
             };
@@ -1100,7 +1091,7 @@
             },
 
             buscarCierreCajaGuardado: async function(fechaStr, sucursalFiltro) {
-                // GET /cash-closes (antes: getDocs ordenado, muerto).
+
                 const respCierresGuardados = {
                 data: { items: await NexusData.leerTodo('cierresCaja', { limit: 500 }, { ttl: 0, retries: 0 }) }
             };
@@ -1504,7 +1495,7 @@
             imprimirReporte: function() { PrintUtils.printElement(document.querySelector('main'), { title: 'Reporte financiero' }); }
         };
         document.addEventListener('DOMContentLoaded', () => ReportesModule.init());
-    </script>
+</script>
     
 
 

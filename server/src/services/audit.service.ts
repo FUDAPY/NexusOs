@@ -33,7 +33,7 @@ export interface AuditInput {
   detalle?: AuditPayload | null;
 }
 
-/** Escribe un registro append-only; acepta sesion para participar de la transaccion en curso. */
+/* Escribe un registro append-only; acepta sesion para participar de la transaccion en curso. */
 export const recordAudit = async (
   input: AuditInput,
   session?: ClientSession | null,

@@ -1,18 +1,4 @@
-/**
- * Fase 1 - Auditoria de MongoDB.
- *
- * Lee la base real y reporta, coleccion por coleccion:
- *   - cantidad de documentos
- *   - que campos tiene y de que tipo
- *   - campos con TIPOS MEZCLADOS (ej: controlado como boolean y como string)
- *   - indices existentes
- *   - campos de filtro que NO tienen indice
- *
- * Solo lectura. No modifica nada.
- *
- * Uso:  npm run auditar:mongo
- *       npm run auditar:mongo -- --muestras 200 --salida docs/paridad.json
- */
+
 import mongoose from 'mongoose';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -37,7 +23,7 @@ const leerArgs = (): Args => {
   };
 };
 
-/** Tipo legible de un valor. Distingue int de double y detecta ObjectId/fecha. */
+
 const tipoDe = (valor: unknown): string => {
   if (valor === null) return 'null';
   if (valor === undefined) return 'undefined';

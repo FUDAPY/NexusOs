@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -298,10 +298,7 @@
                 spinner.classList.add('flex');
                 
                 try {
-                    // Se lee del API (Mongo), no de Firestore: la sesion ya no es
-                    // de Firebase, asi que getDocs respondia permission-denied.
-                    // El id publico es `uid` (el legado de Firestore) y se cae a
-                    // `_id` para las sucursales creadas tras la migracion.
+
                     const filas = await NexusData.leer('branches', { limit: 500, orderBy: ['nombre', 'asc'] });
                     this.sucursalesFirebase = filas.map(f => ({ ...f, id: String(f.uid || f._id) }));
                     this.renderizarGrilla();
@@ -383,9 +380,7 @@
                 if (!tiposPermitidos.includes(file.type)) throw new Error('Formato de imagen no permitido.');
                 if (file.size > 5 * 1024 * 1024) throw new Error('La imagen no puede superar 5 MB.');
 
-                /* POST /uploads (antes: uploadBytes + getDownloadURL de Firebase Storage, que
-                   ya no autoriza: el logo de la sucursal NUNCA se subia).
-                   `branchId` ya no arma la ruta: la imagen se guarda con su propio id. */
+                
                 const datosBase64 = await new Promise((resolve, reject) => {
                     const lector = new FileReader();
                     lector.onload = () => resolve(String(lector.result || ''));
@@ -550,7 +545,7 @@
             SucursalesModule.init();
             document.getElementById('suc-tema')?.addEventListener('change', () => SucursalesModule.aplicarTemaSeleccionado());
         });
-    </script>
+</script>
 </body>
 
 </html>

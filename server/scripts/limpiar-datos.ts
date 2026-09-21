@@ -1,37 +1,13 @@
-/**
- * Limpieza de datos autorizada.
- *
- * QUE HACE
- *  1. Produccion: pone los contadores en 0 y borra los lotes. El MODULO queda.
- *  2. Clientes: deuda y puntos en 0, y borra sus PIN de credito.
- *  3. Clientes: borra los registros (solo con --borrar-clientes).
- *
- * QUE NO HACE, NUNCA
- *  No toca `orders`, `order_items` ni `products`. No es una promesa del comentario:
- *  estan en la lista PROHIBIDAS y el script aborta si alguna aparece entre los
- *  objetivos. Las ventas son el cauce recaudal y los productos el catalogo: perderlos
- *  no se arregla con un backup, porque el negocio sigue operando con ellos.
- *
- * COMO SE USA (contenedor del api: cd /app)
- *   npm run limpiar:datos                          -> SOLO muestra que haria. No escribe.
- *   npm run limpiar:datos -- --aplicar             -> aplica produccion + clientes a 0
- *   npm run limpiar:datos -- --aplicar --borrar-clientes
- *
- * ANTES DE ESCRIBIR CUALQUIER COSA
- *  Guarda una copia de los documentos afectados en la coleccion `backups_limpieza`
- *  (con etiqueta y fecha) y deja un registro en la auditoria. El backup va a MONGO y
- *  no a un archivo: el contenedor es efimero y un archivo se pierde en el proximo
- *  deploy, justo cuando mas se necesita.
- */
+
 import mongoose from 'mongoose';
 import { AuditLog, CreditPin, ProductionBatch, ProductionConfig, User } from '../src/models/index.js';
 import { env } from '../src/config/env.js';
 import { logger } from '../src/utils/logger.js';
 
-/** Colecciones que este script NUNCA puede tocar. */
+
 const PROHIBIDAS = ['orders', 'order_items', 'products'];
 
-/** Contadores de produccion, tal como estan declarados en el modelo. */
+
 const CAMPOS_PRODUCCION = [
   'medallonesDisponibles',
   'medallonesIngresados',
@@ -66,7 +42,7 @@ const objetivoDeLaColeccion = (nombre: string): void => {
   }
 };
 
-/** Copia los documentos afectados a Mongo antes de tocarlos. */
+
 const respaldar = async (coleccion: string, docs: Record<string, unknown>[]): Promise<void> => {
   objetivoDeLaColeccion(coleccion);
   if (docs.length === 0) return;
@@ -123,7 +99,7 @@ const main = async (): Promise<void> => {
   await respaldar('credit_pins', pines as unknown as Record<string, unknown>[]);
   await respaldar('users', clientes as unknown as Record<string, unknown>[]);
 
-  // 1. Produccion: el modulo queda, los numeros van a 0.
+
   const enCero: Record<string, number> = {};
   for (const campo of CAMPOS_PRODUCCION) enCero[campo] = 0;
   const rConfigs = await ProductionConfig.updateMany({}, { $set: enCero });
@@ -136,8 +112,7 @@ const main = async (): Promise<void> => {
   );
   const rPines = await CreditPin.deleteMany({});
 
-  // 3. Clientes: borrar los registros. Solo con la bandera explicita, porque esto no
-  //    se deshace con un UPDATE: se recupera del backup, y solo mientras siga ahi.
+
   let clientesBorrados = 0;
   if (BORRAR_CLIENTES) {
     const r = await User.deleteMany({ rol: 'cliente' });

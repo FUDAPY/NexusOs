@@ -42,17 +42,7 @@ if (!parsed.success) {
 
 const base = parsed.data;
 
-/**
- * Arma la URI de conexion a MongoDB.
- *
- * Si MONGO_URI viene definida se usa tal cual. Si no, se construye con las
- * partes sueltas (MONGO_USER / MONGO_PASSWORD / MONGO_HOST / MONGO_DB_NAME).
- *
- * Se codifica la contrasena a proposito: un caracter reservado (@ : / ? # [ ] %)
- * sin codificar hace que el driver rechace la URI de plano con
- *   MongoParseError: Protocol and host list are required in "mongodb://..."
- * y el servicio muere en el arranque.
- */
+
 const buildMongoUri = (data: z.infer<typeof envSchema>): string => {
   const explicit = (data.MONGO_URI ?? '').trim();
   if (explicit.length > 0) return explicit;

@@ -1,11 +1,8 @@
 import { Schema, model, type HydratedDocument, type Model, type Types } from 'mongoose';
 
-/**
- * Item de ticket. Firestore: sales[].items -> embebido en orders + coleccion order_items.
- * Los campos originales se conservan con el mismo nombre; los derivados los agrega el ETL.
- */
+
 export interface IOrderItem {
-  // --- originales de Firestore (sales[].items) ---
+
   id: string;
   uniqueId: number;
   nombre: string;
@@ -21,7 +18,7 @@ export interface IOrderItem {
   icono: string;
   obsProd: string;
 
-  // --- derivados por el ETL (solo en la coleccion order_items) ---
+
   orderId?: Types.ObjectId | null;
   productoId?: string;
   subtotal?: number;
@@ -32,7 +29,7 @@ export interface IOrderItem {
 
 export type OrderItemDocument = HydratedDocument<IOrderItem>;
 
-// Definicion sin anotacion de generico: reutilizable en el subdocumento y en la coleccion raiz.
+
 const orderItemFields = {
   id: { type: String, default: '' },
   uniqueId: { type: Number, default: 0 },
@@ -58,7 +55,7 @@ export const orderItemSchema = new Schema<IOrderItem>(orderItemFields, {
 const orderItemDocSchema = new Schema<IOrderItem, Model<IOrderItem>>(
   {
     ...orderItemFields,
-    // Campos derivados: presentes solo en la coleccion order_items.
+
     orderId: { type: Schema.Types.ObjectId, ref: 'Order', default: null },
     productoId: { type: String, default: '' },
     subtotal: { type: Number, default: 0, min: 0 },

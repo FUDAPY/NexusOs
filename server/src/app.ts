@@ -28,10 +28,7 @@ export const buildApp = (): Express => {
       credentials: true,
     }),
   );
-  /* Subidas de imagenes: van ANTES del parser global y con su propio limite, mas grande.
-     El global corta en 1mb y una foto de producto no entra; body-parser se salta lo que ya se
-     parseo, asi que montar este antes no rompe nada. El POST exige token y el GET es publico
-     (las pantallas muestran la imagen con <img src>, que no manda token). */
+  
   app.use(`${env.API_PREFIX}/uploads`, express.json({ limit: '6mb' }), uploadRouter);
   app.use(express.json({ limit: '1mb' }));
   app.use(pinoHttp({ logger }));
@@ -40,9 +37,9 @@ export const buildApp = (): Express => {
     res.json({ success: true, data: { status: 'ok', uptime: process.uptime() } });
   });
 
-  /* ------------------------------------------------------------------ */
-  /* Control de acceso                                                    */
-  /* ------------------------------------------------------------------ */
+  
+  
+  
   /* Las firestore.rules hacian de barrera: sin ellas nadie podia leer ni
      escribir. Al mover los datos a Mongo esa barrera DESAPARECE, y este
      servidor quedaba sin ninguna: cualquiera que alcanzara el dominio podia
@@ -50,24 +47,22 @@ export const buildApp = (): Express => {
      Por eso todo lo de abajo pasa por requiereAuth. */
 
   // Publico y sin token: solo lectura, para metas-publicas.html.
-  // Va primero; si la peticion no matchea (POST/PATCH) Express sigue al
-  // router protegido de mas abajo.
+
   app.use(env.API_PREFIX, publicResourceRouter);
 
-  // Login y alta de sesion tienen que quedar fuera, obviamente.
+
   app.use(`${env.API_PREFIX}/auth`, authRouter);
 
   app.use(`${env.API_PREFIX}/orders`, requiereAuth, orderRouter);
   app.use(`${env.API_PREFIX}/audit-logs`, requiereAuth, auditRouter);
-  // Va ANTES que resourceRouter: necesita resolver POST /cash-shifts/cerrar
-  // antes de que el CRUD generico tome el prefijo.
+
   app.use(`${env.API_PREFIX}/cash-shifts`, requiereAuth, cashShiftRouter);
 
-// Va ANTES que resourceRouter: necesita resolver POST /production-batches/lote, que
+
 // crea el lote y acredita los contadores de la sucursal en una transaccion.
 app.use(`${env.API_PREFIX}/production-batches`, requiereAuth, productionRouter);
 
-  // Configuracion global: /settings sigue siendo solo lectura en el CRUD
+
   // generico; las escrituras pasan por aca con control de rol.
   app.use(`${env.API_PREFIX}/config`, configRouter);
 

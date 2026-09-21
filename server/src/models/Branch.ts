@@ -1,6 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/** Sucursal. Firestore: branches. Los campos replican el documento legado. */
+
 export interface IBranch {
   nombre: string;
   ruc: string;
@@ -14,7 +14,7 @@ export interface IBranch {
   iconoTema: string;
   colorPrincipal: string;
   colorAcento: string;
-  /** Categorias habilitadas para la app de cliente (vacio = todas). */
+  
   categoriasActivas: string[];
 
   controlHorarioPedidos: boolean;

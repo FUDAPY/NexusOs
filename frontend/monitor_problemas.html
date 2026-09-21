@@ -7,7 +7,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -724,16 +724,7 @@
             async cargarAlertas() {
                 if (typeof this.unsubscribeAlertas === 'function') this.unsubscribeAlertas();
 
-                /* GET /support-alerts (antes: onSnapshot de `systemAlerts`).
-                   DOS cosas estaban mal y las dos solas alcanzaban para que el monitor
-                   estuviera SIEMPRE vacio:
-                     1. `systemAlerts` no tiene ruta en el API. La coleccion viva es
-                        `support_alerts`, que es donde el dashboard registra las alertas.
-                     2. Era un onSnapshot contra Firestore, que ya no autoriza.
-                   Ahora las dos puntas hablan de lo mismo: se escribe y se lee de
-                   `support_alerts`.
-                   Se arma el mismo contrato de snapshot (docs con id + data) para no tocar
-                   el cuerpo. Se pierde el "en vivo": se recarga al abrir la pantalla. */
+                
                 const respAlertas = await NexusAPI.get('/support-alerts', { limit: 400 }, { ttl: 0, retries: 0 });
                 const filasAlertas = (respAlertas && respAlertas.data && respAlertas.data.items) || [];
                 const snapshot = {
@@ -889,8 +880,7 @@
                 if (!alertaId) return;
                 if (!confirm('Marcar esta incidencia como resuelta?')) return;
                 try {
-                    /* PATCH /support-alerts/:id. Antes iba a `systemAlerts`, que no tiene
-                       ruta: marcar una incidencia como resuelta no se guardaba. */
+                    
                     await NexusAPI.patch(
                         '/support-alerts/' + encodeURIComponent(alertaId),
                         {
@@ -910,6 +900,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => MonitorProblemasModule.init());
-    </script>
+</script>
 </body>
 </html>

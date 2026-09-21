@@ -13,18 +13,14 @@ import mongoose from 'mongoose';
 import { env } from '../src/config/env.js';
 import { logger } from '../src/utils/logger.js';
 
-/**
- * ETL Firestore -> MongoDB.
- * Preserva nombres de campo y de coleccion del sistema legado; solo normaliza los
- * nombres de coleccion requeridos por la nueva arquitectura.
- */
+
 
 interface CollectionPlan {
-  /** Coleccion (o ruta anidada) en Firestore. */
+  
   readonly source: string;
-  /** Coleccion destino en MongoDB. */
+  
   readonly target: string;
-  /** Tamano de pagina; reducir en colecciones con documentos muy grandes. */
+  
   readonly batchSize?: number;
 }
 
@@ -35,7 +31,7 @@ const PLANS: readonly CollectionPlan[] = [
   { source: 'branches', target: 'branches' },
   { source: 'products', target: 'products' },
   { source: 'cashFlows', target: 'cash_shifts' },
-  // cierresCaja embebe el HTML del reporte Z: paginas pequenas para evitar DEADLINE_EXCEEDED.
+
   { source: 'cierresCaja', target: 'cash_closes', batchSize: 20 },
   { source: 'cashFlowAudits', target: 'cash_flow_audits' },
   { source: 'cashFlowContributions', target: 'cash_flow_contributions' },
@@ -56,7 +52,7 @@ const PLANS: readonly CollectionPlan[] = [
   { source: 'publicGoals', target: 'public_goals' },
   { source: 'playTesterRequests', target: 'play_tester_requests' },
   { source: 'notifications', target: 'notifications' },
-  // Los tickets NO viven en una coleccion raiz: estan bajo artifacts/** (15 000+ docs).
+
   { source: env.FIREBASE_SALES_PATH, target: 'orders', batchSize: 200 },
 ];
 
@@ -99,7 +95,7 @@ const initFirebase = (): App => {
   return initializeApp({ credential: applicationDefault(), projectId: env.FIREBASE_PROJECT_ID });
 };
 
-/** Convierte tipos propios de Firestore a tipos BSON conservando la forma. */
+
 const toMongoValue = (value: unknown): MongoValue => {
   if (value === null || value === undefined) return null;
   if (value instanceof Timestamp) return value.toDate();
@@ -112,7 +108,7 @@ const toMongoValue = (value: unknown): MongoValue => {
 
   if (typeof value === 'object') {
     const source = value as Record<string, unknown>;
-    // Timestamps serializados por el SDK: { _seconds, _nanoseconds }.
+
     if (typeof source['_seconds'] === 'number' && typeof source['_nanoseconds'] === 'number') {
       return new Date(source['_seconds'] * 1000 + Math.floor(source['_nanoseconds'] / 1_000_000));
     }
@@ -128,7 +124,7 @@ const toMongoValue = (value: unknown): MongoValue => {
   return JSON.stringify(value);
 };
 
-/** Conserva el ID de Firestore como _id cuando es un ObjectId valido; si no, lo guarda en legacyId. */
+
 const resolveId = (docId: string): { _id: mongoose.Types.ObjectId; legacyId?: string } =>
   /^[a-f\d]{24}$/i.test(docId)
     ? { _id: new mongoose.Types.ObjectId(docId) }
@@ -146,7 +142,7 @@ interface MigrationResult {
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Firestore devuelve DEADLINE_EXCEEDED/UNAVAILABLE en streams largos o picos de latencia.
+
 const RETRYABLE = /DEADLINE_EXCEEDED|UNAVAILABLE|RESOURCE_EXHAUSTED|ETIMEDOUT|ECONNRESET|socket hang up/i;
 
 const withRetry = async <T>(label: string, work: () => Promise<T>, attempts = 4): Promise<T> => {
@@ -166,7 +162,7 @@ const withRetry = async <T>(label: string, work: () => Promise<T>, attempts = 4)
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
 };
 
-/** Lee Firestore por paginas y hace upsert por _id en MongoDB. */
+
 const migrateCollection = async (
   db: mongoose.mongo.Db,
   firestore: Firestore,
@@ -212,7 +208,7 @@ const migrateCollection = async (
   return { target: plan.target, source: plan.source, read, upserted, modified };
 };
 
-/** Deriva order_items desde orders.items con _id determinista (idempotente). */
+/* Deriva order_items desde orders.items con _id determinista (idempotente). */
 interface OrderSource {
   _id: mongoose.Types.ObjectId;
   items?: unknown;
@@ -298,7 +294,7 @@ const deriveOrderItems = async (db: mongoose.mongo.Db): Promise<number> => {
 
 const digest12 = (value: string): Buffer => createHash('sha1').update(value).digest().subarray(0, 12);
 
-/** Normaliza a string solo valores escalares del legado (nunca objetos). */
+
 const text = (value: unknown, fallback = ''): string => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
@@ -322,7 +318,7 @@ const CURRENCY_META: Record<string, { nombre: string; simbolo: string; decimales
   BRL: { nombre: 'Real Brasileno', simbolo: 'BRL', decimales: 2 },
 };
 
-/** Deriva currencies desde settings/sistema.divisas (tasas expresadas en PYG por unidad). */
+/* Deriva currencies desde settings/sistema.divisas (tasas expresadas en PYG por unidad). */
 const deriveCurrencies = async (db: mongoose.mongo.Db): Promise<number> => {
   const settings = await db.collection('settings').findOne({ divisas: { $exists: true } });
   if (!settings) {
@@ -362,7 +358,7 @@ const deriveCurrencies = async (db: mongoose.mongo.Db): Promise<number> => {
   return count;
 };
 
-/** Deriva categories desde los valores distintos de products.categoria. */
+
 const deriveCategories = async (db: mongoose.mongo.Db): Promise<number> => {
   const nombres = await db.collection('products').distinct('categoria');
   const target = db.collection('categories');
@@ -423,7 +419,7 @@ const main = async (): Promise<void> => {
     logger.info(result, 'coleccion migrada');
   }
 
-  // Derivados: migracion completa, --derive-only, o run de orders.
+
   const shouldDerive = DERIVE_ONLY || ONLY.length === 0 || ONLY.includes('orders');
   const wanted = (target: DeriveTarget): boolean =>
     shouldDerive && (DERIVES.length === 0 || DERIVES.includes(target));

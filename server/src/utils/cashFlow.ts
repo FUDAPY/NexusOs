@@ -1,33 +1,20 @@
-/**
- * Calculo de aportes de caja y cierre forzado.
- *
- * PORT DIRECTO de `functions/index.js` (Cloud Functions de la era Firestore).
- * Los nombres y las reglas se mantienen igual a proposito: si un dia hay que
- * comparar el arqueo nuevo contra el viejo, las dos formulas tienen que ser la
- * misma. Cada funcion cita su linea de origen.
- *
- * Reglas de negocio que NO se deben "mejorar" sin hablar con el negocio:
- *  - Una venta `pendiente` solo aporta al flujo si es cuenta pendiente o
- *    metodo 'por cobrar' (buildCashFlowContribution:745).
- *  - `isCreditMethod` es IGUAL a 'credito', no "contiene credito": asi lo
- *    define el original (:362) y asi lo usan los arqueos historicos.
- *  - Un ticket `arqueado` o `marcadoComoAbonado` nunca vuelve a aportar.
- */
+/* - Una venta `pendiente` solo aporta al flujo si es cuenta pendiente o
+   metodo 'por cobrar' (buildCashFlowContribution:745). */
 
-/** Zona horaria del negocio. Define que "dia" es para el arqueo. */
+/* Zona horaria del negocio. Define que "dia" es para el arqueo. */
 export const TZ_NEGOCIO = 'America/Asuncion';
 
-/** functions/index.js:89 */
+
 export const texto = (valor: unknown, max = 400): string =>
   String(valor ?? '').trim().slice(0, max);
 
-/** functions/index.js:94 */
+
 export const aNumero = (valor: unknown, porDefecto = 0): number => {
   const n = Number(valor);
   return Number.isFinite(n) ? n : porDefecto;
 };
 
-/** functions/index.js:344 — saca acentos, colapsa espacios, minusculas. */
+
 export const normalizar = (valor: unknown): string =>
   String(valor ?? '')
     .normalize('NFD')
@@ -36,7 +23,7 @@ export const normalizar = (valor: unknown): string =>
     .trim()
     .toLowerCase();
 
-/** functions/index.js:353 — clave estable para agrupar por sucursal. */
+
 export const claveDoc = (valor: unknown): string =>
   String(valor ?? '')
     .normalize('NFD')
@@ -45,10 +32,10 @@ export const claveDoc = (valor: unknown): string =>
     .replace(/^_+|_+$/g, '')
     .toLowerCase() || 'general';
 
-/** functions/index.js:362 — ojo: es IGUALDAD, no "contiene". */
+
 export const esMetodoCredito = (valor: unknown): boolean => normalizar(valor) === 'credito';
 
-/** functions/index.js:622 — Date | Timestamp de Firestore | string ISO. */
+
 export const resolverFecha = (valor: unknown): Date | null => {
   if (!valor) return null;
   if (valor instanceof Date) return Number.isNaN(valor.getTime()) ? null : valor;
@@ -61,7 +48,7 @@ export const resolverFecha = (valor: unknown): Date | null => {
   return Number.isNaN(parseada.getTime()) ? null : parseada;
 };
 
-/** functions/index.js:601 — YYYY-MM-DD en la zona del negocio. */
+
 export const fechaKey = (valor: unknown, zona: string = TZ_NEGOCIO): string => {
   if (!(valor instanceof Date) || Number.isNaN(valor.getTime())) return '';
   const partes = new Intl.DateTimeFormat('en-CA', {
@@ -74,7 +61,7 @@ export const fechaKey = (valor: unknown, zona: string = TZ_NEGOCIO): string => {
   return `${busca('year')}-${busca('month')}-${busca('day')}`;
 };
 
-/** Venta cruda, tal como esta en `orders` (viene de Firestore, campos libres). */
+
 export type VentaCruda = Record<string, unknown>;
 
 export interface AporteFlujo {
@@ -103,10 +90,7 @@ export interface TotalesCierre {
   credito: number;
 }
 
-/**
- * Cuanto aporta UNA venta a la caja. `null` = no aporta nada.
- * PORT de buildCashFlowContribution (functions/index.js:732).
- */
+
 export const calcularAporte = (saleId: string, venta: VentaCruda): AporteFlujo | null => {
   const turnoId = texto(venta['turnoId'], 180);
   const sucursal = texto(venta['sucursal'], 120);
@@ -187,7 +171,7 @@ export const calcularAporte = (saleId: string, venta: VentaCruda): AporteFlujo |
   };
 };
 
-/** PORT de isForcedCloseCandidate (functions/index.js:928). */
+
 export const esCandidatoCierreForzado = (venta: VentaCruda, sucursal: string): boolean => {
   if (normalizar(venta['sucursal']) !== normalizar(sucursal)) return false;
   if (venta['arqueado'] === true || venta['marcadoComoAbonado'] === true) return false;
@@ -217,10 +201,7 @@ export interface GrupoCierreForzado {
   ventas: { id: string; venta: VentaCruda; fecha: Date }[];
 }
 
-/**
- * Agrupa los tickets no arqueados por turno y devuelve el turno ACTIVO (el de
- * actividad mas reciente). PORT de getForcedCloseSalesGroup (:939).
- */
+
 export const agruparCierreForzado = (
   ventas: { id: string; venta: VentaCruda }[],
   sucursal: string,
@@ -243,7 +224,7 @@ export const agruparCierreForzado = (
   return ordenados[0] ?? null;
 };
 
-/** PORT de getForcedCloseTotals (:971). */
+
 export const sumarAportes = (ventas: { id: string; venta: VentaCruda }[]): TotalesCierre => {
   const totales: TotalesCierre = { efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0 };
   for (const { id, venta } of ventas) {
@@ -257,7 +238,7 @@ export const sumarAportes = (ventas: { id: string; venta: VentaCruda }[]): Total
   return totales;
 };
 
-/** PORT de getForcedCloseProducts (:983). */
+
 export const agruparProductos = (
   ventas: { venta: VentaCruda }[],
 ): Record<string, { cant: number; total: number }> => {

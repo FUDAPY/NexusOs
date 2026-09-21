@@ -59,11 +59,7 @@ export const errorHandler = (
     return;
   }
 
-  /**
-   * Un id con formato invalido (ej. GET /products/abc cuando el _id es un
-   * ObjectId) hacia caer esta rama al 500 generico: el cliente recibia "Error
-   * interno del servidor" por lo que en realidad es un dato mal formado.
-   */
+  
   if (error instanceof mongoose.Error.CastError) {
     sendFail(
       res,

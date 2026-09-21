@@ -9,34 +9,19 @@ import type { CreateOrderInput } from '../schemas/order.schema.js';
 
 export interface CerrarCuentaInput {
   metodoPago: string;
-  /**
-   * Los items que se venden, con el MISMO contrato que POST /orders.
-   *
-   * Son los del carrito en el momento de cobrar, no los de la orden guardada: el
-   * cajero puede haber agregado algo a la mesa antes de pasar por caja. El total
-   * se recalcula con ellos del lado del servidor, asi que el valor que mande el
-   * navegador no decide nada.
-   */
+  
   items: CreateOrderInput['items'];
   cajero?: string;
   puntosOtorgados?: number;
   puntosCanjeados?: number;
-  /** Descuento global (premium). Los descuentos por item vienen dentro de cada item. */
+  
   discountAmount?: number;
   observacion?: string;
   creditoLibre?: boolean;
   clienteId?: string;
   detalleEfectivo?: Record<string, unknown>;
   detallesPago?: Record<string, unknown>;
-  /**
-   * Turno en el que se esta COBRANDO la mesa.
-   *
-   * Una mesa se abre en un turno y se puede cobrar en otro (queda abierta de
-   * noche y se paga a la manana). La venta tiene que quedar en el turno donde
-   * ENTRA LA PLATA, no donde se abrio: si quedara en el turno viejo, su cierre ya
-   * paso y esa venta no se contaria en ningun arqueo. El POS legacy hacia
-   * exactamente esto al cobrar.
-   */
+  
   turnoId?: string;
   fechaAperturaTurno?: Date;
 }
@@ -48,21 +33,7 @@ export interface CerrarCuentaResult {
   estadoPago: string;
 }
 
-/**
- * Cierra (cobra) una cuenta pendiente: la mesa que quedo abierta.
- *
- * POR QUE EXISTE
- * El POS abre las mesas como ordenes con `estadoPago: 'pendiente'`. Cobrarlas
- * exige PASAR esa orden a pagada, no crear otra: POST /orders siempre crea, asi
- * que sin este endpoint cobrar una mesa DUPLICABA la venta.
- *
- * ALCANCE DELIBERADO: solo el caso en que los items NO cambiaron.
- * Si el carrito cambio (agregaron un postre, sacaron una bebida) hay que ajustar
- * el stock por diferencia, y ademas el stock vive en DOS lugares (los items
- * embebidos en la orden y la coleccion order_items). Eso es otro paso. Hasta
- * entonces un cambio de items responde 409 CUENTA_CON_CAMBIOS en vez de cerrar
- * la cuenta con el stock mal: fallar ruidoso es mejor que descuadrar.
- */
+
 export const cerrarCuentaPendiente = async (
   ordenId: string,
   input: CerrarCuentaInput,
@@ -86,33 +57,24 @@ export const cerrarCuentaPendiente = async (
       );
     }
 
-    /* Los items del cuerpo son los que se venden, y el total se recalcula con ellos
-       igual que en una venta directa: el navegador no decide la plata. Ademas se
-       guardan en la orden, asi lo que queda registrado es lo que se cobro.
-       Esto es lo que permite AGREGAR algo a una mesa ya abierta: el cajero suma el
-       postre en el POS y cobra, sin pasar por un ajuste de stock por diferencia. */
+    
     const { prepared, bruto } = await prepareItems({ items: input.items }, session);
     const items = prepared.map((p) => p.item);
     const total = Math.max(bruto - (input.discountAmount ?? Number(orden.discountAmount ?? 0)), 0);
 
-    /* El stock de la mesa se mueve ACA, al cobrarla: al abrirla no se toco (ver el
-       comentario en createOrder). Es el mismo movimiento que hace una venta directa,
-       con el mismo guard de concurrencia contra sobreventa. */
+    
     await applyStockMovements(prepared, session);
 
     const esCredito = input.metodoPago === 'Credito' || input.metodoPago === 'Crédito';
     const canjeados = Math.max(0, input.puntosCanjeados ?? 0);
-    /* Misma regla que una venta directa: 1 punto por cada 1.000 Gs, y NO se otorgan si
-       la cuenta se paga a credito (esa plata no entro: se otorgan cuando pague la deuda)
-       ni si canjeo puntos. */
+    
     const puntosOtorgados = esCredito || canjeados > 0 ? 0 : Math.floor(total / 1000);
 
     orden.estadoPago = 'pagado';
     orden.items = items;
     orden.subtotal = bruto;
     orden.total = total;
-    // El metodo llega como string del POS; el modelo lo tiene como union de
-    // literales, asi que se castea en el unico lugar donde se asigna.
+
     orden.metodoPago = input.metodoPago as typeof orden.metodoPago;
     orden.puntosOtorgados = puntosOtorgados;
     orden.puntosCanjeados = canjeados;
@@ -120,7 +82,7 @@ export const cerrarCuentaPendiente = async (
     orden.confirmadoPorCaja = true;
     orden.fechaConfirmacionCaja = new Date();
 
-    // La venta se muda al turno donde se cobra (ver el comentario del input).
+
     if (typeof input.turnoId === 'string' && input.turnoId.trim() !== '') {
       orden.turnoId = input.turnoId.trim();
     }
@@ -140,7 +102,7 @@ export const cerrarCuentaPendiente = async (
 
     await orden.save({ session: session ?? undefined });
 
-    // Misma funcion que usa la venta directa: una sola forma de mover el saldo.
+
     await aplicarSaldoCliente(
       {
         clienteId: input.clienteId ?? orden.cliente,
@@ -180,7 +142,7 @@ export const cerrarCuentaPendiente = async (
     };
   });
 
-  // Despues del commit: el dashboard tiene que ver el cambio ya confirmado.
+
   emitTurnoEvent(resultado.sucursal, 'venta:creada', { turnoId: null });
 
   return {
@@ -199,18 +161,7 @@ export interface ActualizarCuentaInput {
   cajero?: string;
 }
 
-/**
- * Guarda una cuenta abierta (mesa) SIN cobrarla: es el "enviar a cocina" del salon,
- * donde el cliente sigue comiendo y paga despues.
- *
- * NO mueve stock ni plata, y es a proposito:
- *  - el stock se mueve al COBRAR (ver createOrder y cerrarCuentaPendiente);
- *  - el saldo del cliente, tambien.
- * Por eso la operacion es un REEMPLAZO de los items, no una suma: repetirla no
- * acumula nada y no puede descuadrar. El POS legacy hacia esto sobre Firestore
- * calculando ajustes de stock por diferencia; con el stock moviendose al cobrar ese
- * ajuste ya no hace falta, y con el desaparece la chance de equivocarse en un delta.
- */
+/* - el stock se mueve al COBRAR (ver createOrder y cerrarCuentaPendiente); */
 export const actualizarCuentaPendiente = async (
   ordenId: string,
   input: ActualizarCuentaInput,
@@ -227,7 +178,7 @@ export const actualizarCuentaPendiente = async (
       );
     }
 
-    // prepareItems valida el stock disponible pero NO lo mueve: eso pasa al cobrar.
+
     const { prepared, bruto } = await prepareItems({ items: input.items }, session);
     const items = prepared.map((p) => p.item);
     const total = Math.max(bruto - (input.discountAmount ?? Number(orden.discountAmount ?? 0)), 0);
@@ -239,9 +190,7 @@ export const actualizarCuentaPendiente = async (
     if (input.estadoCocina) orden.estadoCocina = input.estadoCocina;
     await orden.save({ session: session ?? undefined });
 
-    /* order_items es la copia normalizada que escribio createOrder. Se reemplaza
-       entera en vez de calcular diferencias: es mas simple y no puede quedar una
-       fila huerfana de un item que se saco de la mesa. */
+    
     await OrderItem.deleteMany({ orderId: orden._id }, session ? { session } : {});
     await OrderItem.insertMany(
       items.map((item) => ({
@@ -281,7 +230,7 @@ export const actualizarCuentaPendiente = async (
     };
   });
 
-  // La cocina tiene que enterarse de los items nuevos: mismo evento que una venta.
+
   emitTurnoEvent(resultado.sucursal, 'venta:creada', { turnoId: null });
 
   return {

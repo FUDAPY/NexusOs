@@ -1,6 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/** Canje de un LIN Ticket por un cliente. MongoDB: lin_ticket_claims. */
+
 export interface ILinTicketClaim {
   userId: string;
   userName?: string;

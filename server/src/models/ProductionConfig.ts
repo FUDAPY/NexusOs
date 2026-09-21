@@ -1,10 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Contadores de produccion por sucursal (medallones, panes, papas...).
- * MongoDB: production_config (3 docs, uno por sucursal).
- * El campo legacyId es la clave de sucursal ('mr_lin_restaurante', etc).
- */
+
 export interface IProductionConfig {
   legacyId: string;
   sucursal?: string;

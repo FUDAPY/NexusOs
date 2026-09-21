@@ -1,11 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Meta publica por sucursal y mes. MongoDB: public_goals (3 docs, 166 campos).
- *
- * Se declaran solo los campos que usa metas-publicas.html y los indices.
- * El resto del documento (los 166 campos) se conserva gracias a strict: false.
- */
+
 export interface IPublicGoal {
   sucursal?: string;
   sucursalKey?: string;

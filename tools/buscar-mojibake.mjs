@@ -1,5 +1,4 @@
-/* Busca secuencias tipicas de mojibake (UTF-8 leido como Latin-1) en un archivo.
-   Imprime numero de linea y el texto, para no tener que adivinar donde esta. */
+
 import fs from 'node:fs';
 
 const archivo = process.argv[2];

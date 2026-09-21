@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -632,7 +632,7 @@
             unsubscribeVentasTurno: null,
             unsubscribeCierresTurno: null,
             unsubscribeAuditoria: null,
-            /* Fase 4: desuscriptor del refresco de config cuando la fuente es Mongo. */
+            
             detenerConfigSistema: null,
             ventasFallbackIntervalId: null,
             ventasServidorCargando: false,
@@ -655,12 +655,7 @@
                 this.alertasOperativasCache[clave] = ahora;
 
                 try {
-                    /* POST /support-alerts (antes: la Cloud Function
-                       `registrarAlertaOperativa`, que ya no existe).
-                       Y el guard de arriba era `if (!auth.currentUser) return;`: con
-                       Firebase Auth fuera de juego eso da SIEMPRE false, asi que la
-                       alerta no se registraba ni una vez. Ahora mira la sesion de
-                       NexusAuth, que es la que de verdad existe. */
+                    
                     if (!window.NexusAuth || !NexusAuth.sesion()) return;
                     await NexusAPI.post(
                         '/support-alerts',
@@ -976,12 +971,10 @@
             },
             cargarSucursalesDisponibles: async function() {
                 try {
-                    /* Fase 4: con la pagina en 'mongo' se lee del API; en 'firestore'
-                       se mantiene el camino viejo. Las dos ramas devuelven la MISMA
-                       forma ({ id, ...datos }) para que lo de abajo sea identico. */
+                    
                     let filas;
                     if (NexusData.esMongo('dashboard')) {
-                        // branches casi no cambia: la cache de 8s ahorra una query por recarga.
+
                         filas = await NexusData.leer('branches', { limit: 200, cache: true });
                     } else {
                         const snapshot = await getDocs(collection(db, 'branches'));
@@ -1118,8 +1111,7 @@
                     });
                 turnosPendientes.slice(0, 4).forEach((turnoId) => {
                     this.reconciliacionesSolicitadas.add(turnoId);
-                    // POST /cash-shifts/reconciliar (antes: la Cloud Function
-                    // reconciliarFlujoTurno, que ya no existe).
+
                     NexusAPI.post('/cash-shifts/reconciliar', { turnoId }, { ttl: 0, retries: 0 }).catch((error) => {
                         this.reconciliacionesSolicitadas.delete(turnoId);
                         console.error(`No se pudo inicializar el resumen ${turnoId}`, error);
@@ -1340,10 +1332,7 @@
             },
 
             obtenerPrecioItem: function(item) {
-                // El precio del item puede venir bajo distintos nombres segun la
-                // version del POS que guardo el ticket. Si se lee solo 'precio' y
-                // el ticket usa otro campo, Number(undefined) da NaN y el impacto
-                // de la anulacion termina mostrandose como 0.
+
                 if (!item) return 0;
                 const candidatos = [
                     item.precio, item.precioUnitario, item.precioAplicado,
@@ -1353,7 +1342,7 @@
                     const n = Number(valor);
                     if (Number.isFinite(n) && n > 0) return n;
                 }
-                // Ultimo recurso: derivarlo del subtotal del propio item.
+
                 const subtotal = Number(item.subtotal ?? item.total ?? item.totalLinea ?? 0);
                 const cantidad = Math.max(1, Number(item.cantidad || 1));
                 if (Number.isFinite(subtotal) && subtotal > 0) return subtotal / cantidad;
@@ -1453,31 +1442,13 @@
                 this.iniciarEscuchaEnVivo();
                 this.iniciarRespaldoLecturaVentas();
                 
-                /* La sesion viva la lleva NexusAuth (JWT en __pos_token +
-                   __pos_session), y __pos_session ya se valido al principio de
-                   init().
-
-                   Antes esto era onAuthStateChanged de Firebase, y ademas de
-                   arrancar las escuchas servia para cerrar sesion si Firebase
-                   dejaba de tener usuario. Pero index.html ya NO autentica
-                   contra Firebase, asi que ese callback recibe SIEMPRE
-                   user === null: en cada carga el dashboard llamaba a
-                   cerrarSesion(), que borra __pos_session y vuelve al login.
-
-                   O sea: tiraba una sesion perfectamente VALIDA y dejaba el
-                   panel inaccesible (login -> dashboard -> login, en bucle).
-                   No era una sesion vencida: era el guard mirando donde ya no
-                   hay nada.
-
-                   No se comprueba aca si el token vencio: si paso, la primera
-                   llamada al API responde 401 y el frontend ya sabe reaccionar. */
+                
                 if (!window.NexusAuth || !window.NexusAuth.autenticado()) {
                     this.cerrarSesion();
                     return;
                 }
 
-                // Estas dos si dependian de que hubiera sesion: se mantienen.
-                // (iniciarEscuchaEnVivo() ya se llamo mas arriba.)
+
                 this.iniciarEscuchaAuditoria();
                 this.cargarVentasTurnoDesdeServidor();
             },
@@ -1495,8 +1466,7 @@
             },
 
             cargarConfiguracionSistema: function() {
-                /* Fase 4: el cuerpo vive en `pintar` y lo alimentan las dos ramas.
-                   Evita duplicar los ~40 campos del formulario. */
+                
                 const pintar = (config) => {
                     const divisas = config.divisas || {};
                     const tasaUsd = document.getElementById('tasa-usd');
@@ -1541,11 +1511,7 @@
                 };
 
                 if (NexusData.esMongo('dashboard')) {
-                    /* La config global es un documento unico (Firestore config/sistema
-                       -> Mongo settings). Se usa /config/sistema y no el CRUD de
-                       settings porque ese endpoint resuelve el fallback por legacyId
-                       o por presencia de `divisas`. No hay evento de socket para la
-                       config, asi que se re-lee en cada resync. */
+                    
                     if (this.detenerConfigSistema) this.detenerConfigSistema();
                     const recargar = () => {
                         NexusAPI.get('/config/sistema', undefined, { ttl: 0 })
@@ -1582,7 +1548,7 @@
             iniciarEscuchaEnVivo: function() {
                 this.iniciarEscuchaResumenTurno();
                 if (this.unsubscribeCierresTurno) this.unsubscribeCierresTurno();
-                /* Fase 4: el mismo cuerpo alimenta las dos fuentes. */
+                
                 const aplicarCierres = (cierres) => {
                     this.cierresTurnoCache = cierres;
                     this.actualizarIniciosTurnoDesdeCierres(cierres);
@@ -1619,7 +1585,7 @@
 
             iniciarEscuchaResumenTurno: function() {
                 if (this.unsubscribeResumenTurno) this.unsubscribeResumenTurno();
-                /* Fase 4: el mismo cuerpo alimenta las dos fuentes. */
+                
                 const aplicarResumen = (resumenes) => {
                     this.marcarSincronizacionOk('resumen_flujo_turno');
                     this.resumenesTurnoBrutosCache = resumenes;
@@ -1637,12 +1603,7 @@
                     return;
                 }
 
-                /* NexusData.vigilarComoFirestore en vez del onSnapshot de Firestore, que ya no
-                   autoriza. Esta era una de las suscripciones VIVAS que quedaban: por eso la
-                   consola mostraba "Sin conexion con Firestore" y el flujo del turno no se
-                   actualizaba nunca, por mas que las lecturas ya fueran por la API.
-                   El helper entrega el mismo contrato de snapshot (docs con id + data), asi
-                   que el cuerpo del callback no cambia. */
+                
                 this.unsubscribeResumenTurno = NexusData.vigilarComoFirestore(
                     'cashFlows',
                     { where: [['estadoTurno', '==', 'abierto']] },
@@ -1682,10 +1643,7 @@
                     this.unsubscribeVentasTurno = NexusData.vigilar(
                         'sales',
                         { orderBy: ['fecha', 'desc'], limit: 300 },
-                        /* OJO: `vigilar` entrega un ARRAY de filas, no un snapshot de Firestore.
-                           Copiar el cuerpo del onSnapshot de abajo tal cual (`snapshot.docs.map`)
-                           da "Cannot read properties of undefined (reading 'map')": las otras
-                           ramas migradas pasan la funcion directa y por eso no lo tenian. */
+                        
                         (filas) => {
                             this.marcarSincronizacionOk('ventas_dashboard');
                             if (usarBootstrap) this.ventasBootstrapInicializado = true;
@@ -1728,12 +1686,7 @@
             },
 
             cargarVentasTurnoUnaVez: async function() {
-                /* SIN FALLBACK A FIRESTORE.
-                   Antes: si `aplicarVentasLeidas` no traia nada, esto bajaba las ventas de
-                   Firestore con getDocs. Ya no autoriza, asi que en vez de un respaldo era una
-                   llamada muerta que ensuciaba la consola con "Missing or insufficient
-                   permissions" y hacia creer que el dashboard seguia dependiendo de Firebase.
-                   La API es la unica fuente: si no hay ventas, no hay ventas. */
+                
                 try {
                     await this.cargarVentasTurnoDesdeServidor();
                     this.marcarSincronizacionOk('ventas_dashboard_respaldo');
@@ -1748,19 +1701,11 @@
             },
 
             cargarVentasTurnoDesdeServidor: async function() {
-                /* El guard era `!auth.currentUser`: con Firebase Auth fuera de juego
-                   da siempre true, asi que la funcion salia sin cargar NADA. Ahora mira
-                   la sesion de NexusAuth, que es la que existe. */
+                
                 if (this.ventasServidorCargando || !window.NexusAuth || !NexusAuth.sesion()) return false;
                 this.ventasServidorCargando = true;
                 try {
-                    /* GET /orders (antes: la Cloud Function obtenerVentasFlujoActual,
-                       que ya no existe). Se piden las ultimas ventas, que es lo que esta
-                       pantalla necesita para armar el flujo del turno.
-                       Los `summaries` que devolvia la Cloud Function NO se reemplazan a
-                       proposito: eran redundantes, porque los turnos ya se derivan de
-                       las propias ventas (turnosDetectadosDesdeVentas). Al quedar
-                       vacios, el codigo toma esa rama, que es la que siempre funciono. */
+                    
                     const respuesta = await NexusAPI.get('/orders', { limit: 200 }, { ttl: 0, retries: 0 });
                     const filas = (respuesta && respuesta.data && respuesta.data.items) || [];
                     const ventas = filas.map((orden) => ({ id: String(orden._id || orden.id || ''), ...orden }));
@@ -1824,9 +1769,7 @@
 
                 if (this.unsubscribeAuditoria) this.unsubscribeAuditoria();
                 if (NexusData.esMongo('dashboard')) {
-                    /* El limit(250) de Firestore va con orderBy fecha desc: en Mongo se
-                       pide lo mismo para que la cache traiga las anulaciones RECIENTES
-                       y no 250 filas cualesquiera. */
+                    
                     this.unsubscribeAuditoria = NexusData.vigilar(
                         'auditoria',
                         { orderBy: ['fecha', 'desc'], limit: 250 },
@@ -1857,8 +1800,7 @@
                 if (Date.now() - this.metricasEstaticasCargadasAt < 300000) return;
                 this.metricasEstaticasCargadasAt = Date.now();
                 try {
-                    /* Fase 4: contar() pide limit=1 y devuelve el `total` que el
-                       backend calcula con countDocuments, no el tamaño de pagina. */
+                    
                     let totalProductos;
                     let totalPendientes;
                     if (NexusData.esMongo('dashboard')) {
@@ -1932,9 +1874,7 @@
                     const sucursal = CierreCajaNormalizer.normalizarSucursal(document.getElementById('relatorio-cierre-sucursal')?.value).id;
                     let filas;
                     if (NexusData.esMongo('dashboard')) {
-                        /* cash_closes crece con cada cierre: sin limite la pantalla
-                           se traeria la coleccion entera. El orden lo rearma el
-                           .sort() de mas abajo, asi que no se pide orderBy. */
+                        
                         filas = await NexusData.leer('cierresCaja', { limit: 2000 });
                     } else {
                         const snapshot = await getDocs(collection(db, "cierresCaja"));
@@ -2377,12 +2317,11 @@
 
             obtenerContextoCierreForzado: async function(sucursal) {
                 const sucursalNormalizada = this.normalizarTextoComparacion(sucursal);
-                /* Fase 4: las dos ramas dejan cierresFilas/flujosFilas con la misma
-                   forma ({ id, ...datos }); de ahi para abajo el codigo no cambia. */
+                
                 let cierresFilas;
                 let flujosFilas;
                 if (NexusData.esMongo('dashboard')) {
-                    // El mismo filtro del where() de abajo, traducido a query params.
+
                     const opciones = { where: [['sucursal', '==', sucursal]], limit: 200 };
                     const [cierresMongo, flujosMongo] = await Promise.all([
                         NexusData.leer('cierresCaja', opciones),
@@ -2447,13 +2386,7 @@
             cargarTicketsParaCierreForzado: async function(sucursal) {
                 const [contexto, respuesta] = await Promise.all([
                     this.obtenerContextoCierreForzado(sucursal),
-                    /* GET /orders por sucursal (antes: la Cloud Function
-                       obtenerTicketsCierreForzado, que ya no existe).
-                       Se piden las ultimas ventas de la sucursal y se mantiene la MISMA
-                       forma que devolvia la funcion ({ turnoId, tickets }), asi el resto
-                       de esta funcion no cambia. Cuales cuentan para el cierre lo decide
-                       ventaEsContableParaCierreForzado, abajo, que es donde siempre
-                       estuvo esa regla. El turno sale del contexto local, no de aca. */
+                    
                     NexusAPI.get('/orders', { sucursal, limit: 200 }, { ttl: 0, retries: 0 })
                         .then((r) => ({ data: { turnoId: '', tickets: (r && r.data && r.data.items) || [] } }))
                 ]);
@@ -2769,14 +2702,7 @@
                             <br><div class="center">____________________</div><div class="center">Firma responsable</div>
                         </body></html>`;
 
-                    /* POST /cash-shifts/forzar-cierre (antes: la Cloud Function de
-                       Firebase `forzarCierreCajaSucursal`, que ya no existe: el cierre
-                       forzado estaba muerto aunque el resto ya estuviera cableado).
-                       El contrato es el mismo a proposito: el endpoint se escribio
-                       copiando lo que mandaba esta pantalla. La diferencia es que los
-                       totales del SISTEMA NO se mandan: los recalcula el servidor desde
-                       las ordenes del turno, asi que nadie puede declarar un esperado
-                       falso. Por aca solo viaja lo contado. */
+                    
                     await NexusAPI.post(
                         '/cash-shifts/forzar-cierre',
                         {
@@ -2931,11 +2857,7 @@
                 if (!confirm(`Se excluira del flujo el ticket ${venta.ticket_id || venta.id} por Gs. ${this.formatoMoneda(venta._aporteFlujo || venta.total || 0)}.\n\nDeseas continuar?`)) return;
 
                 try {
-                    /* POST /orders/:id/abonar (antes: updateDoc del ticket + setDoc de la
-                       auditoria a Firestore, que ya no autoriza, asi que marcar un
-                       ticket como abonado NUNCA funcionaba).
-                       El servidor hace las dos cosas en una transaccion, incluida la
-                       auditoria: por eso el setDoc de abajo desaparece. */
+                    
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(venta.id) + '/abonar',
                         {
@@ -2959,12 +2881,7 @@
                 if (!confirm(`Aprobar el cobro de Gs. ${this.formatoMoneda(venta.total)} para ${venta.nombreCliente || 'el cliente'}?`)) return;
 
                 try {
-                    /* POST /orders/:id/cobro (antes: un writeBatch que tocaba users.deuda y
-                       el ticket a la vez, que ya no autoriza, asi que aprobar un cobro
-                       NUNCA funcionaba).
-                       Este endpoint existe exactamente para esto: mueve la deuda del
-                       cliente y marca el ticket en UNA transaccion. Es lo que impide que
-                       la deuda se descuente dos veces si el admin reintenta. */
+                    
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(venta.id) + '/cobro',
                         {
@@ -3004,7 +2921,7 @@
                 }
             },
 
-            // --- LOGICA DE ANULACION QUIRURGICA (1 a 1) ---
+
             restarProductoTicket: async function(indexItem) {
                 if(!confirm("Seguro que deseas anular 1 unidad de este producto?\n\nEl sistema recalculara el ticket, devolvera el stock y ajustara los montos de la caja o la cuenta del cliente.")) return;
                 const motivo = this.pedirMotivoAnulacion('anulacion parcial');
@@ -3012,11 +2929,10 @@
 
                 const v = this.datosVentaGestion;
                 const item = v.items[indexItem];
-                // El precio puede venir bajo otro nombre de campo segun la version
-                // del POS que creo el ticket. Se resuelve una sola vez.
+
                 const precioUnitario = this.obtenerPrecioItem(item);
                 if (precioUnitario <= 0) {
-                    // Antes esto seguia: NaN - NaN dejaba el ticket en 0 y el registro
+
                     // de auditoria con impacto 0. Mejor no tocar nada y avisar.
                     this.mostrarToast('No se pudo leer el precio de este producto. Anulacion cancelada.', 'error');
                     return;
@@ -3025,8 +2941,7 @@
                 const nuevoTotalTicket = Math.max(0, totalActualTicket - precioUnitario);
 
                 // Normaliza el item en memoria: asi los DOS registros de auditoria
-                // (parcial y parcial_a_total) y el propio modal muestran el nombre
-                // y el precio reales, sin caer en "Producto" ni en 0.
+
                 item.nombre = this.obtenerNombreItem(item);
                 item.precio = precioUnitario;
                 
@@ -3035,7 +2950,7 @@
                     const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
                     const ticketRef = doc(db, rutaVentas, v.id);
 
-                    // 1. DEVOLVER AL INVENTARIO
+
                     const cantidadStockDevolver = this.cantidadStockADevolver(item, v, 1);
                     if(cantidadStockDevolver > 0) {
                         const prodRef = doc(db, "products", item.id);
@@ -3046,12 +2961,7 @@
                         [consumoProduccion.branchKey]: consumoProduccion
                     });
 
-                    /* ANULACION PARCIAL por la API: se va 1 unidad de este producto.
-                       El servidor devuelve el stock con su kardex, SACA la unidad del
-                       ticket (items embebidos y order_items), ajusta el total y revierte
-                       la deuda o los puntos del cliente.
-                       El `return` corta el bloque viejo: lo que alcanzo a sumarse al
-                       batch no se commitea nunca, asi que se descarta solo. */
+                    
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(v.id) + '/anular',
                         {
@@ -3066,7 +2976,7 @@
                     this.cerrarModalGestor();
                     return;
 
-                    // 2. ACTUALIZAR LISTA DE ITEMS DEL TICKET
+
                     let itemsNuevos = [...v.items];
                     if (itemsNuevos[indexItem].cantidad > 1) {
                         itemsNuevos[indexItem].cantidad -= 1;
@@ -3076,19 +2986,19 @@
                             itemsNuevos[indexItem].stockDescontado = itemsNuevos[indexItem].stockDescontadoCantidad > 0;
                         }
                     } else {
-                        itemsNuevos.splice(indexItem, 1); // Si queda 0, se quita de la lista
+                        itemsNuevos.splice(indexItem, 1);
                     }
 
-                    // 3. REVERTIR FINANZAS DEL CLIENTE (Solo si ya estaba pagado)
+
                     let nuevosPuntosOtorgados = v.puntosOtorgados || 0;
                     if (v.estadoPago === 'pagado' && v.cliente && v.cliente !== 'ocasional') {
                         const userRef = doc(db, "users", v.cliente);
                         
                         if (esMetodoCredito(v.metodoPago)) {
-                            // Si fue fiado, le restamos a su deuda lo que cuesta este producto
+
                             batch.update(userRef, { deuda: increment(-precioUnitario) });
                         } else if (v.puntosOtorgados > 0) {
-                            // Si gano puntos, recalculamos cuantos puntos debio haber ganado con el nuevo monto
+
                             nuevosPuntosOtorgados = Math.floor(nuevoTotalTicket / 1000);
                             let puntosARestar = v.puntosOtorgados - nuevosPuntosOtorgados;
                             
@@ -3098,9 +3008,9 @@
                         }
                     }
 
-                    // 4. GUARDAR O DESTRUIR EL TICKET
+
                     if (nuevoTotalTicket <= 0 || itemsNuevos.length === 0) {
-                        // Si el ticket quedo en 0 Gs o sin items, lo borramos de la existencia
+
                         this.registrarAuditoriaAnulacionEnBatch(batch, {
                             subtipo: 'parcial_a_total',
                             motivo,
@@ -3128,7 +3038,7 @@
                         this.mostrarToast("Ticket anulado y borrado completamente.", "success");
                         this.cerrarModalGestor();
                     } else {
-                        // Si aun quedan cosas, actualizamos el ticket en Firebase
+
                         this.registrarAuditoriaAnulacionEnBatch(batch, {
                             subtipo: 'parcial',
                             motivo,
@@ -3160,7 +3070,7 @@
                         
                         this.mostrarToast("Producto restado. Totales ajustados.", "success");
                         
-                        // Actualizar UI del Modal en caliente
+
                         v.items = itemsNuevos;
                         v.total = nuevoTotalTicket;
                         v.puntosOtorgados = nuevosPuntosOtorgados;
@@ -3187,7 +3097,7 @@
                     const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
                     const v = this.datosVentaGestion;
                     
-                    // 1. REVERTIR FINANZAS CLIENTE
+
                     if(v.estadoPago === 'pagado' && v.cliente && v.cliente !== 'ocasional') {
                         const userRef = doc(db, "users", v.cliente);
                         if(esMetodoCredito(v.metodoPago)) {
@@ -3215,7 +3125,7 @@
                     this.cerrarModalGestor();
                     return;
 
-                    // 2. REVERTIR INVENTARIO COMPLETO
+
                     if(v.items && Array.isArray(v.items)) {
                         const stockARestaurar = {};
                         const produccionARestaurar = {};
@@ -3244,7 +3154,7 @@
                         this.restaurarProduccionEnBatch(batch, produccionARestaurar);
                     }
                     
-                    // 3. DESTRUIR TICKET
+
                     const ticketRef = doc(db, rutaVentas, v.id);
                     this.registrarAuditoriaAnulacionEnBatch(batch, {
                         subtipo: 'total',
@@ -3334,11 +3244,7 @@
                 }
 
                 try {
-                    /* PATCH /config/sistema (antes: setDoc a Firestore, que ya no
-                       autoriza, asi que la tasa NUNCA se guardaba).
-                       El endpoint aplana el cuerpo a rutas con punto, asi que mandar
-                       { divisas: { USD: 7500 } } toca SOLO esa divisa y no pisa las
-                       otras ni el resto de la configuracion. */
+                    
                     await NexusAPI.patch(
                         '/config/sistema',
                         {
@@ -3369,9 +3275,7 @@
                 }
 
                 try {
-                    /* Misma clave que ya usa esta pantalla (`creditoMaximoCliente`), no
-                       `limiteCredito`: el POS lee la del documento, y renombrarla aca
-                       dejaria al POS leyendo un campo que ya nadie escribe. */
+                    
                     await NexusAPI.patch(
                         '/config/sistema',
                         { creditoMaximoCliente: nuevoLimite },
@@ -3420,8 +3324,7 @@
 
                 const nuevoCodigo = String(input.value || '').trim();
                 try {
-                    /* El POS usa este codigo para autorizar una anulacion, asi que este
-                       guardado es el que habilita la anulacion por RFID en el salon. */
+                    
                     await NexusAPI.patch(
                         '/config/sistema',
                         { codigoRfidAnulacion: nuevoCodigo },
@@ -3438,7 +3341,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => window.DashboardModule.init());
-    </script>
+</script>
 </body>
 </html>
 

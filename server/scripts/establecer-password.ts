@@ -1,20 +1,4 @@
-/**
- * Establece la contraseña de un usuario existente.
- *
- * Por que existe este script:
- * las contraseñas originales vivian en Firebase Auth, NO en Firestore, asi que
- * la migracion a Mongo no las pudo traer. Los usuarios migrados quedaron con
- * `passwordHash: ''` y no pueden hacer login, por lo que tampoco pueden llegar
- * al endpoint que se las cambiaria (huevo y gallina). Este script rompe el ciclo
- * escribiendo el hash directo en Mongo.
- *
- * Uso:
- *   npm run auth:pass -- <email> <password>
- *   npm run auth:pass -- admin@cate.com "ClaveSegura123"
- *
- * Despues de la primera vez, el usuario ya puede entrar y cambiar su propia
- * contraseña y su nombre desde el panel.
- */
+
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { env } from '../src/config/env.js';

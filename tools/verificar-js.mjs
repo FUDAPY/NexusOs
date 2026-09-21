@@ -1,7 +1,4 @@
-/* Verificador de sintaxis JS para los HTML del frontend.
-   Extrae cada bloque <script> embebido (sin src) y lo pasa por `node --check`.
-   Sirve para validar ediciones a mano en archivos grandes: si un paren o una
-   llave queda desbalanceada, esto lo dice con el numero de linea del HTML. */
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';

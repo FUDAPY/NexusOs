@@ -28,14 +28,7 @@ import { filtroPorId } from '../src/utils/mongoId.js';
  *    aceptan solo strings. Estos casos fijan ese contrato.
  */
 
-/**
- * Castea el filtro igual que una consulta de verdad, sin tocar Mongo: `_castConditions()` es
- * sincronico y no necesita conexion. No esta en los typings publicos de Mongoose, de ahi el cast.
- *
- * OJO: cuando el casteo falla, Mongoose NO tira la excepcion: guarda el error en la query y deja
- * el filtro SIN castear. Por eso lo que se afirma son los valores ya casteados: un filtro
- * envuelto en `$eq` (el sintoma del `sanitizeFilter`) no pasa estas aserciones.
- */
+
 const castearFiltro = (consulta: unknown): Record<string, unknown> => {
   const query = consulta as {
     _castConditions: () => void;
@@ -45,14 +38,12 @@ const castearFiltro = (consulta: unknown): Record<string, unknown> => {
   return query.getFilter();
 };
 
-/** El valor de un operador (`$in`, `$gte`, ...) sin pelear con el tipado de FilterQuery. */
+
 const operador = (filtro: Record<string, unknown>, campo: string, op: string): unknown =>
   (filtro[campo] as Record<string, unknown> | undefined)?.[op];
 
 beforeAll(() => {
-  /* Igual que `connectDatabase()`: con `strictQuery` activo Mongoose descarta los filtros sobre
-     campos que no estan en el schema, y eso cambia el resultado del casteo. Sin esta linea el
-     test estaria probando una configuracion que no es la de produccion. */
+  
   mongoose.set('strictQuery', true);
 });
 
@@ -103,8 +94,7 @@ describe('los filtros propios con operadores castean', () => {
     );
     const alternativas = filtro['$or'] as Record<string, unknown>[];
 
-    // Sin el $and, la segunda clave `$or` pisaba a la de filtroPorId y el filtro quedaba SIN el
-    // id: devolvia documentos de mas, sin error.
+
     expect(String(alternativas[0]?.['_id'])).toBe(id);
     expect(filtro['$and']).toEqual([{ $or: [{ arqueado: false }, { arqueado: null }] }]);
   });
@@ -160,7 +150,7 @@ describe('los filtros propios con operadores castean', () => {
 });
 
 describe('el borde sigue defendido: un query param no puede inyectar operadores', () => {
-  /** El CRUD generico: se filtra por los campos declarados y solo con valores string. */
+  
   const filtroDelCrud = (query: Record<string, unknown>) =>
     construirFiltro<unknown>(query as unknown as Request['query'], {
       filtros: ['rol', 'sucursal'],

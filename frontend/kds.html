@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -107,7 +107,7 @@
         import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
 
-        // Configuracion Firebase
+
         const __app_id = "erp_lingroup"; 
         const __initial_auth_token = "admin_master_001";
         
@@ -187,25 +187,7 @@
                 });
             },
 
-            /* ================== KDS EN VIVO (API + sockets) ==================
-               POR QUE NO ALCANZA CON PEDIR LA LISTA UNA VEZ
-               Una cocina no puede trabajar mirando una foto: si el tablero no avisa cuando
-               entra un pedido, el pedido se pierde. Con Firestore eso lo daba `onSnapshot`,
-               que ya no autoriza: el tablero se quedaba congelado y -peor- sin avisar.
-
-               EL CANAL EN VIVO YA EXISTE
-               El servidor emite en el namespace /kds (con path /realtime, no el /socket.io por
-               defecto) a UNA ROOM POR SUCURSAL. El tablero solo tiene que escuchar ahi.
-
-               RELEER EN VEZ DE FUSIONAR
-               Ante cada aviso se vuelve a pedir GET /orders y se recalcula la lista. Aplicar
-               parches incrementales es donde aparecen los fantasmas (pedidos que no se van
-               nunca de la pantalla).
-
-               SI NO HAY SOCKETS, NO SE QUEDA MUDO
-               Queda un sondeo cada 20s andando siempre: un KDS congelado sin avisar es peor
-               que uno que refresca tarde.
-               ================================================================= */
+            
             conectarKdsEnVivo: async function() {
                 await this.refrescarPedidosKds();
 
@@ -215,14 +197,7 @@
                 }, 20000);
 
                 try {
-                    /* El cliente de socket.io en dos intentos: primero el que sirve el propio
-                       servidor (mismo origen, sin depender de nadie de afuera) y, si esa ruta
-                       no esta, el CDN oficial. Verificado desde afuera: el servidor expone el
-                       handshake (/realtime/?EIO=4 responde 200 con un sid) pero NO el archivo
-                       del cliente, que devuelve 404.
-                       La version del CDN coincide con la del servidor (socket.io ^4.8.1).
-                       Si los dos intentos fallan, el catch de mas abajo deja el sondeo de 20s,
-                       que ya esta andando desde antes de llegar aca. */
+                    
                     let lib;
                     try {
                         lib = await import('/realtime/socket.io.esm.min.js');
@@ -236,8 +211,7 @@
                         query: { sucursalId: this.sesion?.sucursal || 'unificado' }
                     });
 
-                    /* Al conectar (y al RECONECTAR) se relee: durante la caida pueden haber
-                       entrado pedidos que nadie aviso. */
+                    
                     this.socketKds.on('connect', () => {
                         this.pintarEstadoKds(true);
                         void this.refrescarPedidosKds();
@@ -273,16 +247,13 @@
                     const filas = (resp && resp.data && resp.data.items) || [];
                     const sucursal = String(this.sesion?.sucursal || '');
 
-                    /* El filtro por sucursal se hace aca y no en el API por el mismo motivo que
-                       en el resto del panel: si el endpoint ignora el parametro, la cocina de
-                       un local veria pedidos del otro. */
+                    
                     const nuevos = filas
                         .filter((d) => sucursal === '' || String(d.sucursal || '') === sucursal)
                         .filter((d) => this.pedidoDebeMostrarseEnKDS(d))
                         .map((d) => ({ id: String(d._id || d.id || ''), ...d }));
 
-                    /* Avisa SOLO de los que no estaban: con un sondeo cada 20s, avisar de todos
-                       convertiria el aviso en ruido y el cocinero lo ignoraria. */
+                    
                     if (this.snapshotInicializado) {
                         const idsPrevios = new Set((this.pedidosEnPantalla || []).map((p) => String(p.id)));
                         nuevos
@@ -300,10 +271,7 @@
                 }
             },
 
-            /* ⚠️ CODIGO NO USADO — NO VOLVER A LLAMAR.
-               Version vieja del en vivo: `onSnapshot` contra Firestore, que ya no autoriza, asi
-               que el tablero no se actualizaba. Se dejo de llamar en init() (ahora llama a
-               conectarKdsEnVivo). Se puede borrar cuando se haga limpieza. */
+            
             conectarFirebaseEnVivo: function() {
                 const statusEl = document.getElementById('kds-status');
                 statusEl.innerHTML = `<i class="fa-solid fa-satellite-dish text-green-400 animate-pulse"></i> <span class="text-green-400">En Vivo</span>`;
@@ -312,7 +280,7 @@
                 
                 const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
 
-                // Filtramos por la sucursal del cocinero
+
                 const q = query(collection(db, rutaPrivada), 
                     where("sucursal", "==", this.sesion.sucursal)
                 );
@@ -329,8 +297,7 @@
                         }
                     });
 
-                    // Ordenar: los mas viejos primero (FIFO)
-                    // Ordenar: los mas viejos primero (FIFO)
+
 
                     if (this.snapshotInicializado) {
                         snapshot.docChanges().forEach((change) => {
@@ -365,11 +332,11 @@
                 }
                 toast.classList.remove('translate-x-full');
                 
-                // Sonido KDS de cocina (Doble tono corto tipo 'Check')
+
                 try {
                     const ctx = new (window.AudioContext || window.webkitAudioContext)();
                     
-                    // Primer Tono
+
                     const osc1 = ctx.createOscillator();
                     osc1.connect(ctx.destination);
                     osc1.frequency.value = 800; 
@@ -377,7 +344,7 @@
                     osc1.start();
                     setTimeout(() => osc1.stop(), 100);
 
-                    // Segundo tono mas alto
+
                     setTimeout(() => {
                         const osc2 = ctx.createOscillator();
                         osc2.connect(ctx.destination);
@@ -434,7 +401,7 @@
                     const esDelivery = pedido.tipoTransaccion === 'app_delivery';
                     const esperandoSalida = esDelivery && estadoCocinaNormalizado === 'listo';
                     
-                    // Colores Base de Tarjeta
+
                     let bgClase = 'bg-slate-800';
                     let borderClase = 'border-slate-700';
                     let headerClase = 'bg-slate-700';
@@ -443,7 +410,7 @@
                     let iconoTipo = '<i class="fa-solid fa-utensils text-slate-400"></i>';
                     let textoTipo = 'Mesa / Salon';
 
-                    // Si es Delivery, aplicamos azul base
+
                     if (esDelivery) {
                         bgClase = 'bg-blue-900/10';
                         borderClase = 'border-blue-500';
@@ -459,23 +426,23 @@
                     const textoMinutos = minEspera === 1 ? '1 min' : `${minEspera} min`;
                     
                     if (minEspera >= 10) {
-                        // Nivel 3: critico (>10 min) -> tarjeta roja, cabecera parpadeante
+
                         bgClase = 'bg-red-900/30';
                         borderClase = 'border-red-600';
                         headerClase = 'bg-red-600';
                         parpadeoClase = 'animate-pulse';
                     } 
                     else if (minEspera >= 7) {
-                        // Nivel 2: RETRASO (>7 min) -> Cabecera roja oscuro
+
                         headerClase = 'bg-red-800';
                         borderClase = 'border-red-800';
                     } 
                     else if (minEspera >= 3) {
-                        // Nivel 1: precaucion (>3 min) -> cabecera naranja
+
                         headerClase = 'bg-orange-600';
                         borderClase = 'border-orange-500';
                     } 
-                    // (De 0 a 2 minutos se mantiene el color base negro o azul)
+
                     
                     const colorMinutos = minEspera >= 10 ? 'text-white' : (minEspera >= 3 ? 'text-yellow-200' : 'text-slate-300');
 
@@ -511,13 +478,13 @@
                         ? `<div class="mt-2 rounded-xl border border-orange-400/30 bg-orange-500/10 px-3 py-2 text-orange-100 text-xs font-black text-center">+${itemsOcultos} item${itemsOcultos > 1 ? 's' : ''} adicional${itemsOcultos > 1 ? 'es' : ''}</div>`
                         : '';
 
-                    // Nombre del cliente o Mesa
+
                     let nombreVisual = pedido.aliasReferencia || pedido.nombreCliente || 'Ocasional';
                     const badgePago = pedido.estadoPago === 'pagado'
                         ? `<span class="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-200 text-[10px] font-black px-2 py-1 rounded-lg border border-emerald-400/40"><i class="fa-solid fa-circle-dollar-to-slot"></i> Pagado</span>`
                         : `<span class="inline-flex items-center gap-1 bg-amber-500/20 text-amber-200 text-[10px] font-black px-2 py-1 rounded-lg border border-amber-400/40"><i class="fa-solid fa-hourglass-half"></i> Por cobrar</span>`;
 
-                    // Observacion del POS (el cajero escribe, cocina lee)
+
                     let observacionHtml = pedido.observacion ? `
                         <div class="mt-4 bg-yellow-500 text-slate-900 p-3 rounded-xl border-[3px] border-yellow-400 shadow-lg flex gap-3 items-start animate-pulse">
                             <i class="fa-solid fa-circle-exclamation text-xl mt-0.5"></i>
@@ -527,14 +494,14 @@
                             </div>
                         </div>` : '';
 
-                    // Notas extra de la App de Delivery (Si las hubiera)
+
                     let notasAppHtml = pedido.notasCliente ? `
                         <div class="mt-3 bg-slate-700/50 p-3 rounded-lg flex gap-2 items-start border border-slate-600">
                             <i class="fa-solid fa-comment-dots text-slate-400 mt-0.5"></i>
                             <p class="text-sm text-slate-300 font-bold italic">"${pedido.notasCliente}"</p>
                         </div>` : '';
 
-                    // Botones logicos
+
                     const btnPreparar = !esPreparando && !esperandoSalida
                         ? `<button onclick="KdsModule.cambiarEstado('${pedido.id}', 'preparando')" class="w-full bg-slate-700 hover:bg-orange-500 hover:text-white text-slate-300 font-black py-3 rounded-xl transition shadow-lg uppercase tracking-widest flex justify-center items-center gap-2 border border-slate-600 hover:border-orange-400 text-xs"><i class="fa-solid fa-fire-burner"></i> Empezar</button>`
                         : '';
@@ -585,10 +552,7 @@
                 try {
                     const pedido = this.pedidosEnPantalla.find(x => x.id === idTicket);
 
-                    /* PATCH /orders/:id/cocina (antes: updateDoc de Firestore, que ya no
-                       autoriza: el cocinero tocaba LISTO y NO PASABA NADA).
-                       El endpoint acepta solo `estadoCocina`, asi que `estadoDelivery` va
-                       aparte por el recurso de ordenes. */
+                    
                     await NexusAPI.patch(
                         '/orders/' + encodeURIComponent(idTicket) + '/cocina',
                         { estadoCocina: nuevoEstadoCocina },
@@ -624,7 +588,7 @@
             }
         };
 
-        // Reloj interno para actualizar los minutos de espera sin recargar la base de datos
+
         setInterval(() => {
             if (KdsModule.pedidosEnPantalla.length > 0) {
                 KdsModule.renderizarKDS();
@@ -632,7 +596,7 @@
         }, 30000);
 
         document.addEventListener('DOMContentLoaded', () => KdsModule.init());
-    </script>
+</script>
     
     <style>
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }

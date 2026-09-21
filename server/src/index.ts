@@ -34,12 +34,7 @@ const bootstrap = async (): Promise<void> => {
 };
 
 bootstrap().catch((error: unknown) => {
-  /* Se agrega a donde intento conectarse, sin la contrasena.
-     Sin esto, un log de arranque fallido dice "Authentication failed" y no
-     permite distinguir "la credencial esta mal" de "no llego al servidor" -
-     que es la mayoria de las caidas y costaba horas ubicar. Usuario, host, base
-     y replica set alcanzan para saber contra QUE se autentico.
-     NUNCA loguear env.MONGO_URI: lleva la contrasena embebida. */
+  
   logger.fatal(
     {
       err: error,

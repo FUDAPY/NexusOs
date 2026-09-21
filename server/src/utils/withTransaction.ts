@@ -4,10 +4,7 @@ import { AppError } from './response.js';
 
 export type TransactionWork<TResult> = (session: ClientSession | null) => Promise<TResult>;
 
-/**
- * Ejecuta trabajo en transaccion ACID cuando el cluster lo soporta (replica set),
- * degradando a ejecucion directa en instalaciones standalone.
- */
+
 export const withTransaction = async <TResult>(work: TransactionWork<TResult>): Promise<TResult> => {
   if (!supportsTransactions()) {
     return work(null);
@@ -28,7 +25,7 @@ export const withTransaction = async <TResult>(work: TransactionWork<TResult>): 
   }
 };
 
-/** Lock distribuido best-effort sobre Redis para serializar ajustes de stock por producto. */
+
 export const withRedisLock = async <TResult>(
   key: string,
   ttlMs: number,

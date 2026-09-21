@@ -1,12 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Movimiento de inventario (kardex). MongoDB: inventory_movements (2 202 docs).
- * Es la traza de auditoria de cada venta que toco stock.
- *
- * strict: false a proposito: los documentos ya existen y con strict: true
- * Mongoose descartaria en silencio cualquier campo no declarado.
- */
+
 export interface IInventoryMovement {
   productoId: string;
   nombreProducto?: string;
@@ -72,7 +66,7 @@ const inventoryMovementSchema = new Schema<IInventoryMovement, Model<IInventoryM
   },
 );
 
-// Evita contar dos veces el mismo movimiento si el POS reintenta la venta.
+
 inventoryMovementSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
 inventoryMovementSchema.index({ productoId: 1, fecha: -1 });
 

@@ -26,7 +26,7 @@
   var RETRIES = 2;
   var GET_CACHE_TTL_MS = 8000;
 
-  /* ---------- Resolucion de la URL base ---------- */
+  
   function resolveBase() {
     if (global.NEXUS_API_BASE) return String(global.NEXUS_API_BASE).replace(/\/+$/, '');
     var meta = document.querySelector('meta[name="nexus-api-base"]');
@@ -34,7 +34,7 @@
     return global.location.origin + DEFAULT_PREFIX;
   }
 
-  /* ---------- Error tipado ---------- */
+  
   function NexusError(message, options) {
     var opts = options || {};
     var err = new Error(message);
@@ -46,22 +46,22 @@
     return err;
   }
 
-  /* ---------- Estado interno ---------- */
+  
   var state = {
     base: resolveBase(),
     token: null,
     online: global.navigator ? global.navigator.onLine !== false : true,
-    inflight: {},   // clave -> promesa (deduplicacion)
-    cache: {},      // clave -> { expires, value }
+    inflight: {},
+    cache: {},
     listeners: {},
   };
 
-  /* ---------- Bus de eventos ---------- */
+  
   function emit(event, payload) {
     var subs = state.listeners[event];
     if (!subs) return;
     for (var i = 0; i < subs.length; i += 1) {
-      try { subs[i](payload); } catch (e) { /* un suscriptor roto no corta el resto */ }
+      try { subs[i](payload); } catch (e) {  }
     }
   }
 
@@ -73,7 +73,7 @@
     };
   }
 
-  /* ---------- Utilidades ---------- */
+  
   function nowMs() { return Date.now(); }
 
   function sleep(ms) {
@@ -107,7 +107,7 @@
     global.addEventListener('offline', function () { markOnline(false); });
   }
 
-  /* ---------- Una peticion, con timeout ---------- */
+  
   function doFetch(url, method, body, timeoutMs) {
     var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var timer = null;
@@ -166,7 +166,7 @@
     });
   }
 
-  /* ---------- Nucleo publico: reintentos, cache y deduplicacion ---------- */
+  
   function request(path, options) {
     var opts = options || {};
     var method = (opts.method || 'GET').toUpperCase();
@@ -208,7 +208,7 @@
     return promise;
   }
 
-  /* ---------- /health (fuera del prefijo /api/v1) ---------- */
+  
   var healthCache = { expires: 0, value: null };
 
   function healthRoot() {
@@ -242,7 +242,7 @@
       });
   }
 
-  /* ---------- Helpers HTTP ---------- */
+  
   function get(path, query, options) {
     var opts = options || {};
     opts.method = 'GET';
@@ -264,20 +264,14 @@
     return request(path, opts);
   }
 
-  /**
-   * DELETE.
-   *
-   * Solo funciona en las colecciones que lo habilitan en el backend
-   * (`borrable: true` en crearRecurso): el CRUD generico no expone borrado, y en
-   * las colecciones de operacion lo rechaza a proposito.
-   */
+  
   function del(path, options) {
     var opts = options || {};
     opts.method = 'DELETE';
     return request(path, opts);
   }
 
-  /* ---------- Recursos del API ---------- */
+  
   var orders = {
     list: function (query, options) { return get('/orders', query, options); },
     create: function (payload, options) { return post('/orders', payload, options); },
@@ -290,9 +284,9 @@
     list: function (query, options) { return get('/audit-logs', query, options); },
   };
 
-  /* ---------- Superficie publica ---------- */
+  
   var NexusAPI = {
-    /* estado y configuracion */
+    
     get base() { return state.base; },
     set base(value) { state.base = String(value).replace(/\/+$/, ''); },
     get token() { return state.token; },
@@ -301,23 +295,23 @@
     health: health,
     config: { timeoutMs: TIMEOUT_MS, retries: RETRIES, getCacheTtlMs: GET_CACHE_TTL_MS },
 
-    /* nucleo */
+    
     request: request,
     get: get, post: post, patch: patch, del: del,
     on: on,
 
-    /* utilidades */
+    
     checkConnection: function () { return health({ fresh: true }); },
     clearCache: function () { state.cache = {}; healthCache = { expires: 0, value: null }; },
     isRetryable: function (err) { return !!(err && err.retryable); },
 
-    /* recursos */
+    
     orders: orders,
     auditLogs: auditLogs,
   };
 
   global.NexusAPI = NexusAPI;
 
-  /* Marca de disponibilidad: las paginas pueden esperar sin polling. */
+  
   global.nexusApiReady = Promise.resolve(NexusAPI);
 })(window);

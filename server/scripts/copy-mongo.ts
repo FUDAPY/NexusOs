@@ -1,13 +1,4 @@
-/**
- * Copia todas las colecciones de un MongoDB origen a otro destino.
- *
- * Uso:
- *   MONGO_SOURCE_URI="mongodb://..." npm run mongo:copy
- *   npm run mongo:copy -- --dry-run      (solo cuenta, no escribe)
- *
- * El destino es siempre el MONGO_URI del .env.
- * Es idempotente: hace upsert por _id, asi que se puede reanudar sin duplicar.
- */
+
 import mongoose from 'mongoose';
 import { env } from '../src/config/env.js';
 import { logger } from '../src/utils/logger.js';
@@ -66,7 +57,7 @@ const main = async (): Promise<void> => {
     let copiado = 0;
     let operations: BulkOperation[] = [];
 
-    // En dry-run igual se limpia el buffer: si no, el progreso se loguea por documento.
+
     const flush = async (): Promise<void> => {
       if (operations.length === 0) return;
       if (!DRY_RUN) {

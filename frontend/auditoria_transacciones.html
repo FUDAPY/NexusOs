@@ -402,9 +402,7 @@
             orderBy("fecha", "desc"),
             limit(1000)
           );
-          // La API (Mongo), no Firestore. El rango de fechas viaja como
-          // desde/hasta, que es lo que entiende /orders. `fin - 1ms` reproduce
-          // el `< fin` original: el backend solo tiene `<=` (inclusive).
+
           this.unsub = NexusData.vigilarComoFirestore(
             'orders',
             {
@@ -524,6 +522,6 @@
       document.addEventListener("DOMContentLoaded", () =>
         AuditoriaTransaccionesModule.init()
       );
-    </script>
+</script>
   </body>
 </html>

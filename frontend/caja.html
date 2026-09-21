@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -249,7 +249,7 @@
         import { initializeFirestore, collection, getDocs, query, where, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
 
-        // CONFIGURACION FIREBASE
+
         const __app_id = "erp_lingroup"; 
         const __initial_auth_token = "admin_master_001";
         const firebaseConfig = { apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg", authDomain: "sys-pos-erp-lingroup.firebaseapp.com", projectId: "sys-pos-erp-lingroup", storageBucket: "sys-pos-erp-lingroup.firebasestorage.app" };
@@ -310,7 +310,7 @@
                             document.getElementById('lbl-sucursal').innerText = this.sesion.sucursal; 
                             document.getElementById('app-body').classList.remove('opacity-0'); 
                             
-                            // Recuperar Fondo Fijo y Apertura
+
                             const fondoGuardado = localStorage.getItem('__pos_fondo_fijo');
                             if(fondoGuardado) {
                                 this.fondoFijoMemoria = parseInt(fondoGuardado);
@@ -554,12 +554,7 @@
                 const cajeroId = String(this.sesion?.uid || this.sesion?.id || this.sesion?.usuarioId || '').trim();
                 if (!sucursal || !cajeroId) return false;
                 try {
-                    /* GET /cash-shifts (antes: getDocs de cashFlows, que ya no autoriza,
-                       asi que la caja no recuperaba el turno abierto y trataba la sesion
-                       como si no hubiera ninguno).
-                       No se filtra por estadoTurno en la consulta: se traen los turnos y
-                       se filtra abajo, como ya hacia esta funcion. Asi no depende de
-                       como este configurado el filtro del recurso. */
+                    
                     const respTurnos = await NexusAPI.get('/cash-shifts', { limit: 100 }, { ttl: 0, retries: 0 });
                     const filasTurnos = (respTurnos && respTurnos.data && respTurnos.data.items) || [];
                     const candidatos = filasTurnos
@@ -697,7 +692,7 @@
             },
 
             calcularEfectivoEsperadoTotal: function() {
-                // Calculo UI Admin: suma del fondo mas lo que ingreso fisicamente
+
                 this.efectivoEsperado = this.fondoFijoMemoria + this.datosMemoria.vEfe;
                 document.getElementById('sys-total-esperado').innerText = `Gs. ${this.formatoMoneda(this.efectivoEsperado)}`;
                 this.calcularDiferencia();
@@ -764,14 +759,7 @@
                 const diferenciaTotal = diferenciaCaja + diferenciaTarjeta + diferenciaTransferencia;
                 
                 try {
-                    /* CIERRE por la API (antes: un writeBatch que marcaba arqueado cada
-                       ticket, creaba el cierre y actualizaba cashFlows; ya no autoriza,
-                       asi que el cierre desde Caja no se guardaba y los tickets quedaban
-                       sin arquear para siempre).
-                       El servidor hace las tres cosas en una transaccion y ademas
-                       RECALCULA los totales del sistema desde las ordenes, asi que por
-                       aca solo viaja lo CONTADO. El `return` corta el bloque viejo: lo
-                       que alcanzo a sumarse al batch no se commitea nunca. */
+                    
                     await NexusAPI.post(
                         '/cash-shifts/forzar-cierre',
                         {
@@ -886,32 +874,31 @@
                 const decTar = this.limpiarMoneda(document.getElementById('dec-tarjeta').value);
                 const decTrans = this.limpiarMoneda(document.getElementById('dec-transferencia').value);
 
-                // --- MATEMATICA DEL SISTEMA ---
-                    // 1. Efectivo de ventas del turno (sin abonos administrativos ni fondo inicial)
+
                     const espEfeVentas = this.datosMemoria.vEfe;
                 
-                // 2. El Efectivo Total Esperado incluye el fondo inicial.
+
                 const espEfeTotal = espEfeVentas + this.fondoFijoMemoria; 
                 
                 const espTar = this.datosMemoria.vTar;
                 const espTrans = this.datosMemoria.vTrans;
                 
-                // Los gastos ya salieron físicamente de la caja, por eso reducen el efectivo esperado.
+
                 const efectivoEsperado = espEfeTotal - decGastos;
                 const totalSistema = efectivoEsperado + espTar + espTrans;
 
-                // Total operativo del turno: solo dinero que impacta el flujo de caja
+
                 const totalSistemaVendido = espEfeVentas + espTar + espTrans + Number(this.datosMemoria.vCre || 0);
 
-                // --- MATEMATICA DE CAJA (DECLARADO) ---
+
                 const totalCajaDeclarado = decEfe + decTar + decTrans;
 
-                // Convención única: declarado menos esperado. Positivo sobra, negativo falta.
+
                 const difEfe = decEfe - efectivoEsperado;
                 const difTar = decTar - espTar;
                 const difTrans = decTrans - espTrans;
                 
-                // Diferencia global sumada
+
                 const difTotal = difEfe + difTar + difTrans;
 
                 const formatDif = (valor) => valor === 0
@@ -927,14 +914,14 @@
                 const fechaCierre = this.formatDateTime24(new Date());
                 const fechaApertura = this.horaAperturaSesion;
 
-                // Generar lista HTML de productos
+
                 let listaProdHTML = '';
                 for (const [nombre, data] of Object.entries(this.productosVendidos)) {
                     listaProdHTML += `<tr><td style="width: 15%; text-align: left;">${data.cant}x</td><td style="width: 50%; text-align: left;">${nombre}</td><td style="width: 35%; text-align: right;">${this.formatoMoneda(data.total)}</td></tr>`;
                 }
                 if (listaProdHTML === '') listaProdHTML = '<tr><td colspan="3" class="center">Sin ventas</td></tr>';
 
-                // TICKET Z - IMPRESION TERMICA DEFINITIVO
+
                 const htmlZ = `
                     <html><head><style>
                         @page { margin: 0; } 
@@ -1055,7 +1042,7 @@
         };
         
         document.addEventListener('DOMContentLoaded', () => CajaModule.init());
-    </script>
+</script>
 </body>
 </html>
 

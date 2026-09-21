@@ -3,11 +3,7 @@ import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { recordAudit } from './audit.service.js';
 
-/**
- * Que contadores mueve cada tipo de insumo, con los nombres EXACTOS del modelo.
- * Si un tipo llegara sin estar aca se rechaza, en vez de guardar un lote que no
- * incrementa nada: seria mercaderia ingresada que el sistema no ve.
- */
+
 const INSUMOS: Record<string, { disponibles: string; ingresados: string; generados: string }> = {
   medallones: { disponibles: 'medallonesDisponibles', ingresados: 'medallonesIngresados', generados: 'medallonesGenerados' },
   panes: { disponibles: 'panesDisponibles', ingresados: 'panesIngresados', generados: 'panesGenerados' },
@@ -33,21 +29,12 @@ export interface RegistrarLoteResult {
   sucursalKey: string;
   tipoInsumo: string;
   cantidad: number;
-  /** Contadores de la sucursal despues de acreditar el lote. */
+  
   disponibles: number;
   ingresados: number;
 }
 
-/**
- * Registra un lote de produccion: crea el lote Y acredita la cantidad en los
- * contadores de la sucursal, en una transaccion.
- *
- * POR QUE ES UN ENDPOINT Y NO UN PATCH DEL PANEL
- * Hacerlo desde el navegador seria leer el contador, sumarle la cantidad y escribir:
- * dos personas cargando produccion al mismo tiempo se pisan y un lote se pierde sin
- * que nadie lo note, porque el lote SI queda guardado y el contador no lo refleja. La
- * transaccion hace las dos cosas o ninguna.
- */
+
 export const registrarLote = async (
   input: RegistrarLoteInput,
   context: { ip: string; userAgent: string },
@@ -72,9 +59,7 @@ export const registrarLote = async (
   const resultado = await withTransaction(async (session) => {
     const opciones = session ? { session } : {};
 
-    /* `upsert` con $inc sobre los dos contadores: si la sucursal todavia no tiene
-       configuracion de produccion, se crea con el lote ya acreditado en vez de fallar.
-       Sin el upsert, cargar el primer lote de una sucursal nueva no se podria. */
+    
     const config = await ProductionConfig.findOneAndUpdate(
       { legacyId: sucursalKey },
       {

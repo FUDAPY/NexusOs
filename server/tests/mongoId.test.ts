@@ -25,8 +25,7 @@ describe('filtroPorId', () => {
 
   it('recorta espacios y no matchea nada con id vacio', () => {
     expect(filtroPorId('  003Jljv7OSqMjmpcAvgm  ')).toEqual({ legacyId: '003Jljv7OSqMjmpcAvgm' });
-    // _id: null nunca matchea, asi que un id vacio da 404 en vez de devolver
-    // el primer documento de la coleccion.
+
     expect(filtroPorId('')).toEqual({ _id: null });
   });
 

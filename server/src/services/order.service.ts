@@ -18,7 +18,7 @@ const round = (value: number): number => Math.round(value);
 const descuentoItem = (item: OrderItemInput): number =>
   item.descuento + item.descuentoVip + item.descuentoBogo;
 
-/** Calcula subtotales por item y valida existencia/stock contra el catalogo. */
+
 export const prepareItems = async (
   input: Pick<CreateOrderInput, 'items'>,
   session: ClientSession | null,
@@ -85,7 +85,7 @@ export const applyStockMovements = async (
   for (const { item, productId } of prepared) {
     if (item.controlado !== true || !Types.ObjectId.isValid(productId)) continue;
 
-    // Filtro stock >= cantidad: descuento atomico que evita sobreventa concurrente.
+
     const updated = await Product.findOneAndUpdate(
       { _id: new Types.ObjectId(productId), controlado: true, stock: { $gte: item.cantidad } },
       { $inc: { stock: -item.cantidad } },
@@ -108,45 +108,24 @@ export const applyStockMovements = async (
   }
 };
 
-/** Formato de ticket observado en produccion: T-###### */
+
 const buildTicketId = (): string => `T-${Math.floor(Math.random() * 900_000) + 100_000}`;
 
 export interface CreateOrderResult {
   order: IOrder;
-  /** Id del documento; se expone aparte porque IOrder no declara _id. */
+  
   orderId: string;
   itemIds: string[];
 }
 
-/**
- * Mueve puntos y deuda del cliente, DENTRO de la transaccion de la venta.
- *
- * POR QUE EXISTE
- * El POS hacia esto desde el navegador, en su propio runTransaction. Al migrar
- * el cobro a este endpoint, el saldo del cliente quedaba afuera: el ticket se
- * guardaba con `puntosOtorgados` pero el cliente no sumaba nada. Es el peor tipo
- * de error, porque no se nota al momento: aparece semanas despues como un saldo
- * mal, sin forma de saber que venta lo causo.
- *
- * Meter los dos documentos en la MISMA transaccion es lo que garantiza que o
- * quedan los dos bien, o no queda ninguno.
- *
- * La DEUDA la calcula el servidor desde el total de la orden: un total que llega
- * del navegador no es confiable para tocar una deuda. Los PUNTOS si vienen del
- * input (dependen del carrito, que trae los descuentos por item); lo que hace el
- * servidor es exigir saldo suficiente para el canje.
- */
+
 export const aplicarSaldoCliente = async (
   params: {
     clienteId?: string;
     puntosOtorgados?: number;
     puntosCanjeados?: number;
     creditoLibre?: boolean;
-    /**
-     * Ajuste de puntos que PUEDE ser negativo. Lo usa la anulacion para devolver
-     * los puntos de una venta que ya no existe. `puntosOtorgados` no sirve para
-     * eso: se clampea a 0.
-     */
+    
     ajustePuntos?: number;
   },
   total: number,
@@ -164,15 +143,12 @@ export const aplicarSaldoCliente = async (
 
   if (deltaPuntos === 0 && deltaDeuda === 0) return;
 
-  // Mismo criterio que filtroPorId: el id puede ser un uid de Firestore o un
-  // ObjectId de Mongo, y el frontend manda los dos segun el origen del cliente.
+
   const filtro: Record<string, unknown> = Types.ObjectId.isValid(clienteId)
     ? { $or: [{ uid: clienteId }, { _id: new Types.ObjectId(clienteId) }] }
     : { uid: clienteId };
 
-  // El saldo se exige en el MISMO filtro que la escritura. Con un `if` previo
-  // habria una ventana entre leer y escribir donde otro cobro podria gastar los
-  // mismos puntos.
+
   if (deltaPuntos < 0) filtro['puntos'] = { $gte: canjeados };
 
   const actualizado = await User.findOneAndUpdate(
@@ -182,8 +158,7 @@ export const aplicarSaldoCliente = async (
   ).exec();
 
   if (actualizado === null) {
-    // No se pudo mover el saldo y la venta le iba a mover algo: se corta en vez
-    // de guardar el ticket y perder el movimiento en silencio.
+
     throw new AppError(
       deltaPuntos < 0
         ? 'No se pudo canjear: el cliente no existe o no tiene puntos suficientes'
@@ -203,16 +178,7 @@ export const createOrder = async (
     const items = prepared.map((entry) => entry.item);
     const total = Math.max(bruto - input.discountAmount, 0);
 
-    /* El stock se mueve cuando la venta se COBRA, no cuando se abre la cuenta.
-       Una cuenta pendiente (mesa) es mercaderia servida pero todavia no vendida.
-       El POS legacy lo hacia asi y los documentos migrados cuentan con eso: nunca
-       se les desconto stock al abrir. Descontarlo aca Y otra vez al cobrar en
-       /orders/:id/cerrar-cuenta bajaria el stock DOS veces por la misma mesa.
-
-       Ojo: esto NO aplica a una venta a credito. Una venta a credito es una venta
-       TERMINADA (la mercaderia se fue, la deuda queda registrada), asi que su stock
-       SI se mueve. Por eso el corte es por `origenCuentaPendiente` y no por
-       `estadoPago`, que en las dos cosas vale 'pendiente'. */
+    
     if (input.origenCuentaPendiente !== true) {
       await applyStockMovements(prepared, session);
     }
@@ -220,14 +186,8 @@ export const createOrder = async (
     const esCredito = input.metodoPago === 'Credito' || input.metodoPago === 'Crédito';
     const ticketId = input.ticket_id ?? buildTicketId();
 
-    /* Los puntos los calcula el SERVIDOR: 1 por cada 1.000 Gs, redondeando abajo.
-       Antes los mandaba el navegador, asi que el numero era el que el POS quisiera (aunque
-       fuera de buena fe) y la regla vivia en un solo cliente.
-       NO se otorgan:
-         - en una venta a CREDITO: esa plata todavia no entro. Se otorgan cuando el cliente
-           PAGA su deuda, sobre el monto que paga.
-         - si la venta CANJEO puntos: canjear 22 puntos para pagar la mitad de un lomito es
-           parte del pago, y sobre eso no se acumula. */
+    /* - en una venta a CREDITO: esa plata todavia no entro. Se otorgan cuando el cliente
+   PAGA su deuda, sobre el monto que paga. */
     const canjeados = Math.max(0, input.puntosCanjeados ?? 0);
     const puntosOtorgados = esCredito || canjeados > 0 ? 0 : Math.floor(total / 1000);
 
@@ -283,7 +243,7 @@ export const createOrder = async (
       session ? { session, ordered: true } : { ordered: true },
     );
 
-    // El saldo del cliente (puntos y deuda) va con la venta, en la MISMA
+
     // transaccion: ver aplicarSaldoCliente.
     await aplicarSaldoCliente(
       {
@@ -322,9 +282,7 @@ export const createOrder = async (
     };
   });
 
-  // Se emite DESPUES del commit: si se emitiera adentro, el frontend pediria
-  // datos que todavia no estan confirmados y veria el estado viejo.
-  // De esto depende que el "turno actual" del dashboard se actualice solo.
+
   emitTurnoEvent(resultado.order.sucursal ?? input.sucursal, 'venta:creada', {
     turnoId: resultado.order.turnoId ?? input.turnoId ?? null,
     id: resultado.orderId,

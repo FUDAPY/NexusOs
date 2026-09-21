@@ -1,9 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * Lote de produccion (medallones, panes, papas...).
- * MongoDB: production_batches (12 docs).
- */
+
 export interface IProductionBatch {
   tipoInsumo: string;
   unidad?: string;

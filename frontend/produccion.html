@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -362,8 +362,7 @@
             },
 
             cargarSucursales: async function() {
-                /* GET /branches (antes: getDocs de Firestore, que ya no autoriza, asi que
-                   el selector de sucursal quedaba vacio). */
+                
                 const respSucursales = await NexusAPI.get('/branches', { limit: 200 }, { ttl: 0, retries: 0 });
                 const filasSucursales = (respSucursales && respSucursales.data && respSucursales.data.items) || [];
                 this.sucursales = [];
@@ -409,12 +408,7 @@
 
             escucharConfiguracion: async function() {
                 this.unsubscribeConfig?.();
-                /* GET /production-config (antes: onSnapshot contra Firestore, que ya no
-                   autoriza: los contadores se veian en CERO aunque estuvieran bien).
-                   Se pierde el "en vivo": se recarga al cambiar de sucursal y despues de
-                   cargar un lote, que es cuando estos numeros cambian.
-                   Se arma el mismo contrato que daba el snapshot (exists + data), asi el
-                   cuerpo de abajo no se toca. */
+                
                 const respConfig = await NexusAPI.get('/production-config', { limit: 100 }, { ttl: 0, retries: 0 });
                 const filasConfig = (respConfig && respConfig.data && respConfig.data.items) || [];
                 const crudo = filasConfig.find(
@@ -454,10 +448,7 @@
 
             escucharLotes: async function() {
                 this.unsubscribeLotes?.();
-                /* GET /production-batches (antes: onSnapshot, que ya no autoriza, asi que la
-                   lista de lotes quedaba vacia).
-                   Mismo contrato que un snapshot: `forEach` con documentos que tienen `id` y
-                   `data()`, para no tocar el cuerpo. */
+                
                 const respLotes = await NexusAPI.get('/production-batches', { limit: 40 }, { ttl: 0, retries: 0 });
                 const filasLotes = (respLotes && respLotes.data && respLotes.data.items) || [];
                 const snap = {
@@ -549,11 +540,7 @@
                 const config = this.obtenerConfiguracionBase();
                 if (!this.sucursalActual?.key) return this.mostrarToast('Selecciona una sucursal.', 'error');
 
-                /* PATCH /production-config (antes: setDoc a Firestore, que ya no autoriza,
-                   asi que guardar el stock base no hacia NADA).
-                   Se busca el documento por su clave de sucursal y se manda su _id: en
-                   Mongo el id no es la clave de sucursal, y adivinar como resuelve el
-                   filtro generico es exactamente como se rompen estas cosas en silencio. */
+                
                 const respConfigs = await NexusAPI.get('/production-config', { limit: 100 }, { ttl: 0, retries: 0 });
                 const filasConfigs = (respConfigs && respConfigs.data && respConfigs.data.items) || [];
                 const docConfig = filasConfigs.find(
@@ -611,13 +598,7 @@
                 const carneSalteadoGenerada = meta.tipo === 'carne_salteado' ? Math.max(1, Math.round(cantidad)) : 0;
                 const carneLomitoGenerada = meta.tipo === 'carne_lomito' ? Math.max(1, Math.round(cantidad)) : 0;
                 const panLomitoGenerado = meta.tipo === 'pan_lomito' ? Math.max(1, Math.round(cantidad)) : 0;
-                /* POST /production-batches/lote (antes: un writeBatch que creaba el lote y
-                   actualizaba la config en Firestore, que ya no autoriza: cargar
-                   produccion NO HACIA NADA).
-                   Es un endpoint y no un PATCH porque hay que crear el lote Y acreditar los
-                   contadores: hacerlo desde aca seria leer-sumar-escribir, y dos personas
-                   cargando produccion al mismo tiempo se pisan, un lote queda guardado y el
-                   contador no lo refleja. El `return` corta el bloque viejo. */
+                
                 const respLote = await NexusAPI.post(
                     '/production-batches/lote',
                     {
@@ -705,7 +686,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => ProduccionModule.init());
-    </script>
+</script>
 </body>
 
 </html>

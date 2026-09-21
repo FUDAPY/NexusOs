@@ -1,9 +1,6 @@
 import { Schema, model, type HydratedDocument, type Model } from 'mongoose';
 
-/**
- * PIN de credito de un cliente (autorizacion para fiado).
- * MongoDB: credit_pins. Un documento por cliente.
- */
+
 export interface ICreditPin {
   clienteId: string;
   pin?: string;

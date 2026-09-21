@@ -7,28 +7,13 @@ let transactionsSupported = false;
 
 export const supportsTransactions = (): boolean => transactionsSupported;
 
-/**
- * `code 18` = AuthenticationFailed. Es determinista: la credencial no coincide,
- * y por mas que se reintente va a seguir sin coincidir. Se corta al instante en
- * vez de insistir (lo que ademas llenaria el log de ruido y taparia la causa).
- */
+
 const esFalloDeCredenciales = (error: unknown): boolean => {
   const e = error as { code?: number; codeName?: string } | null;
   return e?.code === 18 || e?.codeName === 'AuthenticationFailed';
 };
 
-/**
- * Intentos de conexion al arrancar.
- *
- * `depends_on` de Compose garantiza que el contenedor de mongo EXISTA, no que
- * este LISTO para aceptar conexiones. Mongod con --keyFile y --replSet tarda
- * decenas de segundos en levantarse y elegirse primary, asi que el primer
- * intento del api puede fallar aunque no haya nada roto. Sin reintentos, eso
- * significaba morir y depender del restart del contenedor para volver a probar.
- *
- * El presupuesto es corto a proposito: si Mongo no aparece en ~1 minuto, algo
- * esta mal de verdad y conviene que el contenedor falle para que se vea.
- */
+
 const INTENTOS_CONEXION = 6;
 const ESPERA_ENTRE_INTENTOS_MS = 5_000;
 

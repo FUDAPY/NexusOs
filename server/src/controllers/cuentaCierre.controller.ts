@@ -6,25 +6,7 @@ import { orderItemInputSchema } from '../schemas/order.schema.js';
 import type { CreateOrderInput } from '../schemas/order.schema.js';
 import { AppError, sendOk } from '../utils/response.js';
 
-/**
- * POST /api/v1/orders/:id/cerrar-cuenta
- *
- * Cobra una cuenta pendiente (la mesa abierta). Body:
- *   {
- *     metodoPago: string,
- *     items: [{ id, cantidad, controlado }],
- *     cajero?, clienteId?, creditoLibre?, observacion?,
- *     puntosOtorgados?, puntosCanjeados?,
- *     detalleEfectivo?, detallesPago?
- *   }
- *
- * Pasa la orden a pagada en vez de crear otra: sin esto, cobrar una mesa
- * duplicaba la venta.
- *
- * Los items se mandan para VALIDAR que no cambiaron. Si cambiaron, responde 409
- * CUENTA_CON_CAMBIOS: cerrar con el carrito distinto moveria la plata sin mover
- * el stock.
- */
+
 export const cerrarCuenta = async (
   req: Request,
   res: Response,
@@ -43,9 +25,7 @@ export const cerrarCuenta = async (
       throw new AppError('Falta el metodo de pago', 400, 'MISSING_METODO_PAGO');
     }
 
-    /* Mismo contrato de items que POST /orders: el servicio recalcula el total con
-       ellos, asi que tienen que traer precio y descuentos, no solo id y cantidad.
-       Se valida aca para poder responder con el motivo concreto. */
+    
     const crudos = Array.isArray(body['items']) ? (body['items'] as unknown[]) : [];
     if (crudos.length === 0) {
       throw new AppError('La cuenta necesita al menos un item', 400, 'MISSING_ITEMS');
@@ -66,7 +46,7 @@ export const cerrarCuenta = async (
     };
     const objeto = (valor: unknown): Record<string, unknown> | undefined =>
       typeof valor === 'object' && valor !== null ? (valor as Record<string, unknown>) : undefined;
-    /** Fecha valida o undefined: una fecha rota no debe romper el cobro. */
+    
     const fechaValida = (valor: unknown): Date | undefined => {
       if (typeof valor !== 'string' && !(valor instanceof Date)) return undefined;
       const fecha = new Date(valor as string | Date);
@@ -100,16 +80,7 @@ export const cerrarCuenta = async (
   }
 };
 
-/**
- * PATCH /api/v1/orders/:id/cuenta-pendiente
- *
- * Guarda una cuenta abierta (mesa) SIN cobrarla: el "enviar a cocina" del salon,
- * donde el cliente sigue comiendo y paga despues. Body:
- *   { items: [...], observacion?, estadoCocina?, discountAmount?, cajero? }
- *
- * Los items REEMPLAZAN a los de la cuenta, no se suman. No mueve stock ni el saldo
- * del cliente: eso pasa al cobrar.
- */
+
 export const actualizarCuenta = async (
   req: Request,
   res: Response,

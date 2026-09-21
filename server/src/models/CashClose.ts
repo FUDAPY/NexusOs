@@ -25,7 +25,7 @@ export interface ICashClose {
 
   fondoInicial?: number;
 
-  /** Subdocumentos tal como se migraron desde Firestore. */
+  
   declaracion?: Record<string, unknown>;
   sistema?: Record<string, unknown>;
   productosVendidos?: Record<string, unknown>;

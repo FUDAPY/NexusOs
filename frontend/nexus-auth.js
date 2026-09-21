@@ -27,9 +27,8 @@
   var CLAVE_SESION = '__pos_session';
   var CLAVE_TOKEN = '__pos_token';
 
-  /* ---------- Almacenamiento tolerante a fallos ---------- */
-  /* En modo privado o con storage bloqueado, localStorage tira excepcion. El
-     login tiene que seguir funcionando aunque no se pueda persistir. */
+  
+  
   function leerClave(clave) {
     try {
       return global.localStorage ? global.localStorage.getItem(clave) : null;
@@ -50,10 +49,10 @@
   function borrarClave(clave) {
     try {
       if (global.localStorage) global.localStorage.removeItem(clave);
-    } catch (e) { /* nada que hacer */ }
+    } catch (e) {  }
   }
 
-  /* ---------- Sesion ---------- */
+  
   function sesion() {
     var crudo = leerClave(CLAVE_SESION);
     if (!crudo) return null;
@@ -62,7 +61,7 @@
       if (!s || !s.uid || !s.rol) return null;
       return s;
     } catch (e) {
-      // Sesion corrupta: mejor descartarla que romper el arranque de la pagina.
+
       borrarClave(CLAVE_SESION);
       return null;
     }
@@ -81,10 +80,7 @@
     return token() !== null && sesion() !== null;
   }
 
-  /**
-   * Traduce la respuesta del backend a la sesion que espera el resto de la app.
-   * `id` del backend pasa a `uid`, que es el nombre que ya usaba Firebase.
-   */
+  
   function aSesionLocal(usuario) {
     return {
       uid: String(usuario.id || ''),
@@ -103,13 +99,7 @@
     return s;
   }
 
-  /**
-   * Reconecta la sesion guardada con NexusAPI.
-   *
-   * Hace falta en CADA pagina: el token esta en localStorage, pero NexusAPI es
-   * un objeto nuevo en cada carga, asi que sin esto las peticiones saldrian sin
-   * Authorization y la API responderia 401.
-   */
+  
   function rehidratar() {
     var t = token();
     if (t !== null && global.NexusAPI) global.NexusAPI.token = t;
@@ -125,9 +115,7 @@
     }
   }
 
-  /* ---------- Superficie publica ----------
-     Se define aca y los metodos de login/perfil se cuelgan mas abajo, para que
-     el orden de lectura siga el de la logica (primero sesion, despues login). */
+  
   global.NexusAuth = {
     CLAVE_SESION: CLAVE_SESION,
     CLAVE_TOKEN: CLAVE_TOKEN,
@@ -142,11 +130,8 @@
   };
 
 
-  /* ---------- Login ---------- */
-  /**
-   * Mensajes por codigo. El backend distingue los casos a proposito, asi que
-   * aqui no se aplastan todos en un "error al iniciar sesion".
-   */
+  
+  
   var MENSAJES = {
     CREDENCIALES_INVALIDAS: 'Correo o contrasena incorrectos.',
     EMAIL_EN_USO: 'Este correo ya esta registrado. Inicia sesion en lugar de crear la cuenta.',
@@ -172,13 +157,7 @@
     return 'No se pudo iniciar sesion.';
   }
 
-  /**
-   * Login contra POST /auth/login.
-   *
-   * Resuelve con la sesion local y deja el token puesto en NexusAPI. Rechaza con
-   * el error original (conserva .code y .status) para que la pagina pueda
-   * reaccionar, por ejemplo ofreciendo establecer la contrasena.
-   */
+  
   function entrar(email, password) {
     var correo = String(email || '').trim().toLowerCase();
     var clave = String(password || '');
@@ -190,8 +169,7 @@
       return rechazar('SIN_NEXUSAPI', 'NexusAPI no esta cargado: falta <script src="nexus-api.js">.');
     }
 
-    // retries: 0 a proposito. Un login fallido no mejora reintentando, y cada
-    // reintento consume cupo del limitador de intentos del servidor.
+
     return global.NexusAPI.post('/auth/login', { email: correo, password: clave }, { ttl: 0, retries: 0 })
       .then(function (r) {
         return guardarSesion(r.data);
@@ -204,13 +182,7 @@
     return Promise.reject(e);
   }
 
-  /**
-   * Alta publica de cliente contra POST /auth/registro.
-   *
-   * Deja la sesion guardada igual que entrar(), asi el resto de la app no
-   * distingue si el usuario acaba de registrarse o de ingresar, y no hay dos
-   * formatos de sesion circulando.
-   */
+  
   function registrar(datos) {
     if (!global.NexusAPI) {
       return rechazar('SIN_NEXUSAPI', 'NexusAPI no esta cargado: falta <script src="nexus-api.js">.');
@@ -221,8 +193,8 @@
       });
   }
 
-  /* ---------- Perfil ---------- */
-  /** Renombra al usuario y refresca la sesion local con el nombre nuevo. */
+  
+  
   function cambiarNombre(nombre) {
     if (!sesion()) return rechazar('SIN_SESION', 'No hay sesion iniciada.');
     return global.NexusAPI.patch('/auth/perfil', { nombre: nombre }, { ttl: 0 })
@@ -233,13 +205,7 @@
       });
   }
 
-  /**
-   * Cambia la contrasena.
-   *
-   * `actual` es opcional SOLO si el usuario todavia no tiene: los migrados de
-   * Firebase no pueden entrar sin establecerse una primero, porque en Firebase
-   * las contrasenas vivian en Firebase Auth y no se migraron.
-   */
+  
   function cambiarPassword(actual, nueva) {
     var cuerpo = { nueva: nueva };
     if (actual !== undefined && actual !== null && actual !== '') cuerpo.actual = actual;
@@ -248,17 +214,14 @@
     });
   }
 
-  /** Perfil del usuario logueado, directo del backend. */
+  
   function perfil() {
     return global.NexusAPI.get('/auth/perfil', undefined, { ttl: 0 }).then(function (r) {
       return r.data;
     });
   }
 
-  /**
-   * Cierra sesion, para el boton de salir de cualquier pagina.
-   * El backend no necesita aviso: el JWT es sin estado y se descarta aca.
-   */
+  
   function cerrarSesion() {
     salir();
     if (global.location) global.location.replace('index.html');
@@ -273,7 +236,7 @@
   global.NexusAuth.mensajeDe = mensajeDe;
   global.NexusAuth.MENSAJES = MENSAJES;
 
-  // Se rehidrata sola al cargar: cualquier pagina que incluya este script queda
+
   // con el token puesto en NexusAPI sin tener que llamar nada.
   rehidratar();
 })(window);

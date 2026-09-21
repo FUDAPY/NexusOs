@@ -11,7 +11,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        // El .catch evita que el error detenga la instalación si falta un archivo
+
         return cache.addAll(urlsToCache).catch(err => console.warn("Cache error no crítico:", err));
       })
   );

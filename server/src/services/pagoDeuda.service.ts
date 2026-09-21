@@ -5,7 +5,7 @@ import { filtroPorId } from '../utils/mongoId.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
 import { recordAudit } from './audit.service.js';
 
-/** 1 punto por cada 1.000 Gs pagados, redondeando abajo. */
+
 const PUNTOS_POR_MIL = 1000;
 
 export interface PagarDeudaInput {
@@ -69,9 +69,7 @@ export const pagarDeudaCliente = async (
   const resultado = await withTransaction(async (session) => {
     const opciones = session ? { session } : {};
 
-    /* El filtro exige deuda suficiente en la MISMA operacion que resta: con leer y
-       despues escribir habria una ventana donde dos cobros simultaneos dejan la deuda
-       en negativo y al cliente con puntos de mas. */
+    
     const actualizado = await User.findOneAndUpdate(
       { ...filtroPorId(id), deuda: { $gte: monto - 1 } },
       { $inc: { deuda: -monto, puntos: puntosOtorgados } },
@@ -99,9 +97,7 @@ export const pagarDeudaCliente = async (
           observacion: '',
           metodoPago,
           estadoPago: 'pagado',
-          /* El POS legacy excluia los abonos del arqueo (ventaValidaParaCierre). Se
-             replica: la plata del abono entra al cajon, pero no se cuenta como venta del
-             turno. Marcarlo aca es lo que mantiene ese criterio en un solo lugar. */
+          
           noAfectaCaja: true,
           motivoNoAfectaCaja: 'Pago de deuda de cliente',
           puntosOtorgados,
@@ -130,11 +126,7 @@ export const pagarDeudaCliente = async (
         ventaId: String(orden._id),
         clienteId: id,
         nombreCliente,
-        /* `totalAntes` es la deuda ANTES del pago. Estaba escrito `deudaActual`, una
-           variable que no existe en ninguna parte del archivo: eso es un ReferenceError
-           DENTRO de la transaccion, asi que no solo rompia la auditoria: revertia el
-           cobro entero. El cliente no podia pagar su deuda.
-           El dato ya estaba a mano: es el `cliente` que se lee antes para validar. */
+        
         totalAntes: Number(cliente.deuda ?? 0),
         totalDespues: Number(actualizado.deuda ?? 0),
         detalle: { ip: context.ip, userAgent: context.userAgent, puntosOtorgados },
@@ -154,7 +146,7 @@ export const pagarDeudaCliente = async (
     };
   });
 
-  // Despues del commit: el dashboard tiene que ver el ingreso ya confirmado.
+
   emitTurnoEvent(resultado.sucursal, 'venta:creada', { turnoId: null });
 
   return {
@@ -187,24 +179,7 @@ export interface AbonoPendienteResult {
   estadoAprobacionCobro: string;
 }
 
-/**
- * Registra el cobro de la deuda SIN aplicarlo, para que lo apruebe un administrador.
- *
- * POR QUE EXISTE
- * Es el flujo del rol COBRADOR: cobra en la calle y no cierra caja. El POS legacy lo hacia
- * con un setDoc a Firestore, que ya no autoriza, asi que el cobro se perdia. Era el ultimo
- * flujo de plata que no se podia guardar.
- *
- * POR QUE NO TOCA LA DEUDA
- * A proposito, y es toda la diferencia con `pagarDeudaCliente`. Aca el cobro queda
- * REGISTRADO y la deuda del cliente sigue igual hasta que un administrador lo apruebe. Si
- * esto restara la deuda, bastaria con que un cobrador registre un cobro para perdonar una
- * deuda sin respaldo.
- *
- * POR QUE NO OTORGA PUNTOS
- * Por lo mismo: los puntos por pagar la deuda (1 por cada 1.000) se otorgan cuando el pago
- * se vuelve real, o sea al aprobarse. Otorgarlos aca premiaria plata que todavia no entro.
- */
+
 export const registrarAbonoPendiente = async (
   clienteId: string,
   input: AbonoPendienteInput,
@@ -222,8 +197,7 @@ export const registrarAbonoPendiente = async (
   if (!cliente) throw new AppError('No existe ese cliente', 404, 'CLIENTE_INEXISTENTE');
 
   const deudaActual = Number(cliente.deuda ?? 0);
-  /* No se puede registrar un cobro mayor a la deuda: al aprobarse quedaria en negativo y
-     el cliente con puntos de mas. Mejor rechazarlo al registrarlo. */
+  
   if (monto > deudaActual) {
     throw new AppError(
       `El cobro supera la deuda del cliente (${deudaActual} Gs)`,
@@ -253,8 +227,7 @@ export const registrarAbonoPendiente = async (
       estadoCocina: 'entregado',
       observacion: String(input.observacion ?? ''),
       metodoPago,
-      /* El cobro todavia NO esta pagado: esta pendiente de aprobacion. Marcarlo 'pagado'
-         lo haria entrar al arqueo como si la plata ya estuviera en el cajon. */
+      
       estadoPago: 'pendiente',
       noAfectaCaja: true,
       motivoNoAfectaCaja: 'Pago de deuda pendiente de aprobacion',
@@ -280,7 +253,7 @@ export const registrarAbonoPendiente = async (
     ventaId: String(orden._id),
     clienteId: id,
     nombreCliente,
-    /* Los dos iguales a proposito: el cobro no movio la deuda. */
+    
     totalAntes: deudaActual,
     totalDespues: deudaActual,
     detalle: { ip: context.ip, userAgent: context.userAgent, pendiente: true },

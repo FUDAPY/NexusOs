@@ -29,7 +29,7 @@ export class AppError extends Error {
 
 type AsyncRequestHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
 
-/** Adapta handlers async a la firma void de Express (evita promesas sin manejar). */
+
 export const asyncHandler =
   (handler: AsyncRequestHandler): RequestHandler =>
   (req, res, next): void => {

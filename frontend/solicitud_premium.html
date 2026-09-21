@@ -8,7 +8,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-1LZVQ05T2E');
-    </script>
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -362,12 +362,7 @@
                     throw new Error('Las contrasenas no coinciden.');
                 }
 
-                /* Alta o entrada POR LA API. Antes usaba Firebase Auth
-                   (setPersistence, signInWithEmailAndPassword,
-                   createUserWithEmailAndPassword), que ya no existe: no se podia enviar
-                   la solicitud. Los dos endpoints ya estaban: /auth/login y /auth/registro.
-                   Se devuelve un objeto con `uid`, que es lo que usa el resto de la pagina
-                   para pedir el perfil. */
+                
                 const sesionDe = (respuesta, emailUsado) => {
                     const datos = (respuesta && respuesta.data) || {};
                     if (datos.token) NexusAPI.token = datos.token;
@@ -380,9 +375,7 @@
                     this.usuarioActual = sesionDe(respLogin, email);
                     return this.usuarioActual;
                 } catch (errorLogin) {
-                    /* Si no se pudo entrar se intenta crear la cuenta. Cualquier error del
-                       alta se propaga tal cual: tragarselo dejaria a la persona creyendo
-                       que envio la solicitud. */
+                    
                     const respRegistro = await NexusAPI.post(
                         '/auth/registro',
                         {
@@ -399,7 +392,7 @@
             },
 
             cargarPerfil: async function(user) {
-                // GET /users/:id (antes: getDoc de Firestore, muerto).
+
                 const respPerfil = await NexusAPI.get('/users/' + encodeURIComponent(user.uid), { ttl: 0, retries: 0 });
                 const perfil = (respPerfil && respPerfil.data) || null;
                 if (!perfil) {
@@ -464,10 +457,7 @@
                 try {
                     const user = await this.asegurarCuentaCliente(payload.correoElectronico);
                     await this.cargarPerfil(user);
-                    /* PATCH /users/:id (antes: dos updateDoc a Firestore, muertos: la
-                       solicitud no se guardaba nunca).
-                       Se manda en UN patch: el segundo update leia el perfil para decidir
-                       el estado, y ese dato ya esta en this.perfilActual. */
+                    
                     await NexusAPI.patch(
                         '/users/' + encodeURIComponent(this.usuarioActual.uid),
                         {
@@ -539,7 +529,7 @@
 
         document.getElementById('form-solicitud').addEventListener('submit', (event) => SolicitudPremium.guardarSolicitud(event));
         onAuthStateChanged(auth, (user) => SolicitudPremium.init(user));
-    </script>
+</script>
 </body>
 
 </html>

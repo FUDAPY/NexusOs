@@ -8,7 +8,7 @@ export interface AuthenticatedRequest extends Request {
   auth?: { userId: string; rol: string; sucursalId: string | null; nombre: string };
 }
 
-/** Restringe endpoints internos por token de servicio (header x-service-token). */
+/* Restringe endpoints internos por token de servicio (header x-service-token). */
 export const requireServiceToken = (req: Request, _res: unknown, next: (error?: unknown) => void): void => {
   const token = req.header('x-service-token');
   if (!token || token !== env.JWT_SECRET) {
@@ -18,7 +18,7 @@ export const requireServiceToken = (req: Request, _res: unknown, next: (error?: 
   next();
 };
 
-/** Cachea respuestas GET en Redis para lecturas calientes del POS. */
+
 export const cacheGet = async (key: string): Promise<string | null> => {
   if (redis.status !== 'ready') return null;
   return redis.get(key);
@@ -35,18 +35,11 @@ export const invalidateCache = async (pattern: string): Promise<void> => {
   if (keys.length > 0) await redis.del(...keys);
 };
 
-/* ------------------------------------------------------------------ */
-/* Autenticacion de usuarios por JWT                                    */
-/* ------------------------------------------------------------------ */
 
-/**
- * Verifica el JWT del header Authorization y deja el usuario en `req.auth`.
- *
- * Reemplaza a lo que hoy hace `firestore.rules`: el rol pasa a validarse en el
- * servidor, que es el unico que puede confiar en su propio dato.
- *
- * El payload del token lo firma auth.service.ts con: sub, rol, sucursal, nombre.
- */
+
+
+
+
 export const requiereAuth = (req: Request, _res: Response, next: NextFunction): void => {
   const header = req.headers.authorization ?? '';
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
@@ -63,7 +56,7 @@ export const requiereAuth = (req: Request, _res: Response, next: NextFunction): 
       rol: String(payload['rol'] ?? ''),
       sucursalId: payload['sucursal'] === undefined ? null : String(payload['sucursal']),
       // El nombre sale del token, no del body: la auditoria tiene que registrar
-      // quien hizo la operacion segun el servidor, no segun el cliente.
+
       nombre: String(payload['nombre'] ?? ''),
     };
     next();
@@ -72,7 +65,7 @@ export const requiereAuth = (req: Request, _res: Response, next: NextFunction): 
   }
 };
 
-/** Exige que el usuario tenga uno de los roles indicados. */
+
 export const requiereRol =
   (...roles: string[]) =>
   (req: Request, _res: Response, next: NextFunction): void => {
