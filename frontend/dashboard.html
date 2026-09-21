@@ -857,7 +857,7 @@
                     if (this.turnoEstaAbierto(turno?.turnoId)) this.turnosDetectadosDesdeVentas.set(sucursalKey, turno);
                 });
                 this.ventasTurnoCache = (this.ventasEscuchadasCache || [])
-                    .filter((venta) => this.turnoEstaAbierto(venta.turnoId))
+                    .filter((venta) => this.ventaEsDelTurnoAbierto(venta))
                     .sort((a, b) => this.normalizarFecha(b.fecha) - this.normalizarFecha(a.fecha));
                 this.ticketsPendientesPersistentesCache = this.obtenerTicketsPendientesPersistentes(this.ventasEscuchadasCache || []);
             },
@@ -882,7 +882,7 @@
             obtenerTicketsPendientesPersistentes: function(ventas = []) {
                 return ventas.filter((venta) => {
                     if (!venta || venta.arqueado === true || venta.marcadoComoAbonado === true) return false;
-                    if (!this.turnoEstaAbierto(venta.turnoId)) return false;
+                    if (!this.ventaEsDelTurnoAbierto(venta)) return false;
                     if (String(venta.estadoPago || '').toLowerCase() !== 'pendiente') return false;
                     if (venta.tipoTransaccion === 'abono_deuda') return false;
                     const metodo = this.normalizarTextoComparacion(venta.metodoPago || venta.metodoPagoSolicitado);
@@ -890,7 +890,34 @@
                 });
             },
             ventaEsDelTurnoAbierto: function(venta) {
-                return this.turnoEstaAbierto(venta?.turnoId);
+                if (this.turnoEstaAbierto(venta?.turnoId)) return true;
+                return this.ventaDelTurnoAbiertoPorSucursalYFecha(venta);
+            },
+            /* Respaldo para "el turno actual": el POS arma el turnoId al abrir la
+               caja, asi que normalmente coincide con el del turno. Pero una caja
+               abierta con una version anterior, o una venta sin turnoId (sin
+               turno asignado), dejaban fuera las ventas que el cajero acaba de
+               hacer y el flujo actual parecia vacio. Se acepta la venta si su
+               sucursal tiene un turno abierto y la venta es posterior a la
+               apertura, y no esta anulada ni arqueada. */
+            ventaDelTurnoAbiertoPorSucursalYFecha: function(venta) {
+                if (!venta || venta.arqueado === true) return false;
+                if (this.normalizarTextoComparacion(venta.estadoPago || '') === 'anulado') return false;
+                if (this.normalizarTextoComparacion(venta.estadoCocina || '') === 'anulado') return false;
+
+                const clave = this.obtenerClaveSucursalVenta(venta);
+                if (!clave) return false;
+
+                const turno = (this.turnosDetectadosDesdeVentas instanceof Map
+                    ? this.turnosDetectadosDesdeVentas.get(clave)
+                    : null) || null;
+                if (!turno) return false;
+
+                const apertura = this.normalizarFecha(turno.fecha).getTime();
+                const fechaVenta = this.obtenerFechaTurnoVenta(venta).getTime();
+                if (!apertura || !fechaVenta) return false;
+
+                return fechaVenta >= apertura;
             },
             actualizarIniciosTurnoDesdeCierres: function(cierres = []) {
                 this.iniciosTurnoPorSucursal = TurnoActual.crearMapaUltimosCierres(cierres);
