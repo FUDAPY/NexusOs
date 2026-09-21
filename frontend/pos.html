@@ -1813,19 +1813,6 @@
                     if (modalPago) { modalPago.classList.add('hidden'); modalPago.classList.remove('flex'); }
                     this.mostrarToast(`Pago registrado. Sumo ${Number(datosAbono.puntosOtorgados || 0)} puntos.`, "success");
                     return;
-                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const nuevaVentaRef = doc(collection(db, rutaPrivada));
-                    batch.set(nuevaVentaRef, {
-                        tipoTransaccion: "abono_deuda",
-                        total: montoAbonado,
-                        sucursal: this.sesion.sucursal,
-                        cajero: this.sesion.nombre,
-                        cliente: this.clienteActual.id,
-                        nombreCliente: this.clienteActual.nombre,
-                        fecha: new Date(),
-                        metodoPago: "Efectivo"
-                    });
-                    await batch.commit();
                     this.clienteActual.deuda -= montoAbonado;
                     this.asignarCliente(this.clienteActual);
                     document.getElementById('modal-pago-deuda').classList.add('hidden');
@@ -3868,71 +3855,6 @@
                             confirmadoPorCaja: true
                         };
 
-                    /* ==================================================================
-                       CODIGO VIEJO (Firestore) COMENTADO - TEMPORAL, NO SE EJECUTA.
-                       Se borra en el commit siguiente a verificar el cobro de mesas.
-                       Queda aca unos dias para poder comparar el comportamiento viejo
-                       con el nuevo sin tener que ir a git. Ojo: el camino nuevo NO
-                       toca Firestore, ni el stock, ni `users`; de todo eso se encarga
-                       el servidor en su propia transaccion.
-                    if(this.idTicketRecuperado) {
-
-                        const ref = doc(db, rutaPrivada, this.idTicketRecuperado);
-                        const ajustesStock = this.calcularAjustesStockTicketRecuperado();
-                        const ajustesProduccion = this.calcularAjustesProduccionTicketRecuperado();
-                        const fechaPagoMeta = new Date();
-                        const payloadUpdate = { estadoPago: "pagado", metodoPago: metodoElegido, puntosOtorgados: puntosGanados, puntosCanjeados, cajeroCobro: this.sesion.nombre, items: itemsCobroGuardado, subtotal: subtotalSinDescuentoPremium, subtotalOriginal: subtotalSinDescuentoPremium, total: totalCobro, premiumDiscountApplied: descuentoPremiumMonto > 0, premiumDiscountPercent: descuentoPremiumPct, discountAmount: descuentoPremiumMonto, observacion: observacionInput, creditoLibreSucursal, sucursalCreditoLibre: creditoLibreSucursal ? this.sesion.sucursal : null, creditoProcesado: creditoYaProcesado || esPagoCredito, requiereConfirmacionCaja: false, confirmadoPorCaja: true, fechaConfirmacionCaja: fechaPagoMeta.toISOString(), fechaMetaPublica: fechaPagoMeta, metaPublicaRegistrada: !esPagoGratis, turnoId: this.obtenerTurnoActualId(), fechaAperturaTurno: this.fechaAperturaSesionTs ? new Date(this.fechaAperturaSesionTs) : new Date(), noAfectaCaja: esPagoGratis, movimientoGratuito: esPagoGratis, ...(esPagoGratis ? { tipoTransaccion: 'producto_gratis', motivoNoAfectaCaja: 'LIN Ticket / canje gratuito' } : {}), ...detalleMonedaEfectivo, ...(esPagoCredito ? autorizacionCreditoPin : {}) };
-                        payloadUpdate.origenCuentaPendiente = Boolean(oldDoc?.origenCuentaPendiente || oldDoc?.metodoPago === 'Por Cobrar' || oldDoc?.estadoPago === 'pendiente');
-                        if (detallesPagoVenta) payloadUpdate.detallesPago = detallesPagoVenta;
-                        if (detalleEfectivo) payloadUpdate.detalleEfectivo = detalleEfectivo;
-                        batch.update(ref, payloadUpdate);
-                        ajustesStock.forEach(ajuste => {
-                            batch.update(doc(db, "products", ajuste.productoId), { stock: increment(ajuste.cantidad) });
-                        });
-                        this.aplicarAjustesProduccionEnBatch(batch, ajustesProduccion, 1);
-                        ventaMetaPublica = {
-                            ...oldDoc,
-                            ...payloadUpdate,
-                            total: totalCobro,
-                            fechaMetaPublica: fechaPagoMeta,
-                            fecha: oldDoc?.fecha || new Date(),
-                            sucursal: oldDoc?.sucursal || this.sesion.sucursal
-                        };
-                        this.ultimaVentaImprimir = { ...oldDoc, items: itemsCobroGuardado, total: totalCobro, metodoPago: metodoElegido, detallesPago: detallesPagoVenta || oldDoc?.detallesPago, detalleEfectivo: detalleEfectivo || oldDoc?.detalleEfectivo, puntosOtorgados: puntosGanados, puntosCanjeados, puntosAcumulados: this.clienteActual ? Math.max(0, (this.clienteActual.puntos || 0) + deltaPuntosCliente) : 0, observacion: observacionInput, creditoLibreSucursal, sucursalCreditoLibre: creditoLibreSucursal ? this.sesion.sucursal : null, origenCuentaPendiente: Boolean(oldDoc?.origenCuentaPendiente || oldDoc?.metodoPago === 'Por Cobrar' || oldDoc?.estadoPago === 'pendiente'), ...(esPagoCredito ? autorizacionCreditoPin : {}) };
-                        if (oldDoc?.tipoTransaccion === 'app_delivery' && oldDoc?.cliente && oldDoc.cliente !== 'ocasional') {
-                            pedidoClienteNotificacion = {
-                                clienteId: oldDoc.cliente,
-                                saleId: oldDoc.id,
-                                titulo: 'Pago confirmado',
-                                mensaje: `Tu pedido fue confirmado en caja como ${metodoElegido}.`
-                            };
-                        }
-                    } else {
-                        const ticketID = "T-" + Math.floor(Math.random() * 1000000);
-                        const ventaPayload = {
-                            ticket_id: ticketID, tipoTransaccion: esPagoGratis ? "producto_gratis" : "venta_comida", subtotal: subtotalSinDescuentoPremium, subtotalOriginal: subtotalSinDescuentoPremium, total: totalCobro, premiumDiscountApplied: descuentoPremiumMonto > 0, premiumDiscountPercent: descuentoPremiumPct, discountAmount: descuentoPremiumMonto, sucursal: this.sesion.sucursal, sucursalId: this.sucursalIdActual || this.obtenerSucursalNormalizada(this.sesion.sucursal).id || null, cajero: this.sesion.nombre,
-                            cliente: this.clienteActual ? this.clienteActual.id : 'ocasional', nombreCliente: this.clienteActual ? this.clienteActual.nombre : 'Ocasional',
-                            items: itemsCobroGuardado, fecha: new Date(), fechaMetaPublica: new Date(), metaPublicaRegistrada: !esPagoGratis, metodoPago: metodoElegido, estadoPago: "pagado", estadoCocina: estadoCocinaFinal, puntosOtorgados: puntosGanados, puntosCanjeados, observacion: observacionInput, creditoLibreSucursal, sucursalCreditoLibre: creditoLibreSucursal ? this.sesion.sucursal : null, turnoId: this.obtenerTurnoActualId(), fechaAperturaTurno: this.fechaAperturaSesionTs ? new Date(this.fechaAperturaSesionTs) : new Date(), noAfectaCaja: esPagoGratis, movimientoGratuito: esPagoGratis, motivoNoAfectaCaja: esPagoGratis ? 'LIN Ticket / canje gratuito' : null, ...detalleMonedaEfectivo, ...(esPagoCredito ? autorizacionCreditoPin : {})
-                        };
-                        if (detallesPagoVenta) ventaPayload.detallesPago = detallesPagoVenta;
-                        if (detalleEfectivo) ventaPayload.detalleEfectivo = detalleEfectivo;
-                        batch.set(nuevaVentaRef, ventaPayload);
-                        ventaMetaPublica = ventaPayload;
-                        this.ultimaVentaImprimir = { ...ventaPayload, puntosAcumulados: this.clienteActual ? Math.max(0, (this.clienteActual.puntos || 0) + deltaPuntosCliente) : 0 };
-                    }
-
-                    if(this.clienteActual) {
-                        const userRef = doc(db, "users", this.clienteActual.id);
-                        if(esPagoCredito && !creditoYaProcesado) batch.update(userRef, { deuda: increment(totalCobro) });
-                        if(deltaPuntosCliente !== 0) batch.update(userRef, { puntos: increment(deltaPuntosCliente) });
-                    }
-                    if(this.clienteActual && creditoLibreSucursal) {
-                        batch.update(doc(db, "users", this.clienteActual.id), { deuda: increment(-totalCobro) });
-                    }
-
-                    });
-                    }
-                    ==================== FIN DEL CODIGO VIEJO COMENTADO ==================== */
                     }
 
                     if (ventaMetaPublica && !esPagoGratis) {

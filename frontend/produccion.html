@@ -621,50 +621,6 @@
                 document.getElementById('input-observacion-lote').value = '';
                 return;
 
-                const batch = writeBatch(db);
-                const configRef = doc(db, 'produccionConfig', this.sucursalActual.key);
-                const loteRef = doc(collection(db, 'produccionLotes'));
-
-                batch.set(loteRef, {
-                    sucursal: this.sucursalActual.nombre,
-                    sucursalKey: this.sucursalActual.key,
-                    tipoInsumo: meta.tipo,
-                    cantidadIngresada: cantidad,
-                    unidad: meta.unidad,
-                    cantidadAcreditada: cantidad,
-                    medallonesGenerados,
-                    panesGenerados,
-                    papasGeneradas,
-                    carneSalteadoGenerada,
-                    carneLomitoGenerada,
-                    panLomitoGenerado,
-                    observacion,
-                    createdAt: serverTimestamp(),
-                    createdBy: this.sesion.uid,
-                    createdByNombre: this.sesion.nombre || 'Usuario'
-                });
-
-                batch.set(configRef, {
-                    sucursal: this.sucursalActual.nombre,
-                    sucursalKey: this.sucursalActual.key,
-                    medallonesDisponibles: increment(medallonesGenerados),
-                    panesDisponibles: increment(panesGenerados),
-                    papasDisponibles: increment(papasGeneradas),
-                    carneSalteadoDisponible: increment(carneSalteadoGenerada),
-                    carneLomitoDisponible: increment(carneLomitoGenerada),
-                    panLomitoDisponible: increment(panLomitoGenerado),
-                    medallonesIngresados: increment(medallonesGenerados),
-                    panesIngresados: increment(panesGenerados),
-                    papasIngresadas: increment(papasGeneradas),
-                    carneSalteadoIngresada: increment(carneSalteadoGenerada),
-                    carneLomitoIngresada: increment(carneLomitoGenerada),
-                    panLomitoIngresado: increment(panLomitoGenerado),
-                    updatedAt: serverTimestamp(),
-                    updatedBy: this.sesion.uid,
-                    updatedByNombre: this.sesion.nombre || 'Usuario'
-                }, { merge: true });
-
-                await batch.commit();
                 document.getElementById('form-lote-produccion').reset();
                 document.getElementById('select-sucursal-lote').value = this.sucursalActual.nombre;
                 this.actualizarPreviewLote();

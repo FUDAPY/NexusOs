@@ -259,56 +259,6 @@
             },
 
             
-            conectarFirebaseEnVivo: function() {
-                const statusEl = document.getElementById('kds-status');
-                statusEl.innerHTML = `<i class="fa-solid fa-satellite-dish text-green-400 animate-pulse"></i> <span class="text-green-400">En Vivo</span>`;
-                statusEl.classList.replace('bg-slate-800', 'bg-green-900/30');
-                statusEl.classList.replace('border-slate-700', 'border-green-800/50');
-                
-                const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-
-
-                const q = query(collection(db, rutaPrivada), 
-                    where("sucursal", "==", this.sesion.sucursal)
-                );
-
-                onSnapshot(q, (snapshot) => {
-                    let nuevosPedidos = [];
-                    let alertasEntrantes = [];
-                    
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        
-                        if (this.pedidoDebeMostrarseEnKDS(data)) {
-                            nuevosPedidos.push({ id: doc.id, ...data });
-                        }
-                    });
-
-
-
-                    if (this.snapshotInicializado) {
-                        snapshot.docChanges().forEach((change) => {
-                            if (change.type !== 'added') return;
-                            const data = change.doc.data();
-                            if (this.pedidoDebeMostrarseEnKDS(data)) {
-                                alertasEntrantes.push({ id: change.doc.id, ...data });
-                            }
-                        });
-                    }
-
-                    nuevosPedidos.sort((a, b) => this.normalizarFecha(a.fecha) - this.normalizarFecha(b.fecha));
-                    this.pedidosEnPantalla = nuevosPedidos;
-                    this.renderizarKDS();
-                    alertasEntrantes.forEach((pedido) => this.mostrarAlertaNuevoPedido(pedido));
-                    this.snapshotInicializado = true;
-                }, (error) => {
-                    console.error("Error en KDS:", error);
-                    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500"></i> <span class="text-red-400">Desconectado</span>`;
-                    statusEl.classList.replace('bg-green-900/30', 'bg-red-900/30');
-                    statusEl.classList.replace('border-green-800/50', 'border-red-800/50');
-                });
-            },
-
             mostrarAlertaNuevoPedido: function(pedido = null) {
                 const toast = document.getElementById('toast');
                 const texto = document.getElementById('toast-message');
