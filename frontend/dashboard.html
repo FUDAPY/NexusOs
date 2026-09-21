@@ -595,29 +595,12 @@
             .toLowerCase();
         const esMetodoCredito = (valor) => normalizarMetodoPago(valor) === 'credito';
 
-        /* ---------------- Sistema viejo (Firestore) ----------------
-           Cada cuanto se le pregunta al backend por el turno abierto del POS viejo. El
-           backend cachea 3-4s, asi que 5s NO significa una lectura de Firestore por pedido.
-           Es mas lento que un webhook y es a proposito: no hace falta inundar nada para que
-           el operador vea la mesa que el cajero acaba de cobrar. */
-        const LEGADO_POLL_MS = 5000;
-        /** Tope de turnos viejos a consultar por ciclo (normalmente hay 1 o 2). */
-        const MAX_TURNOS_LEGADO = 4;
-
         window.DashboardModule = {
             usuarioActual: null,
             datosVentaGestion: null,
             ventasCache: [],
             ventasEscuchadasCache: [],
             ventasTurnoCache: [],
-            /* ---- Puente al sistema viejo (Firestore). Ver iniciarPuenteLegado ---- */
-            legadoTurnos: [],
-            legadoResumenes: [],
-            legadoVentas: [],
-            /** null = todavia no se sabe; false = el servidor no tiene credencial de Firebase. */
-            legadoDisponible: null,
-            legadoPollId: null,
-            legadoEnCurso: false,
             filtroSucursalAutoSeleccionado: false,
             flujoActualCache: [],
             ticketsForzarCierreCache: [],
@@ -821,10 +804,7 @@
             },
             actualizarResumenesTurnoVisibles: function() {
                 this.resumenesTurnoCache = (this.resumenesTurnoBrutosCache || [])
-                    /* Un turno del sistema viejo NO se filtra por "cierre confirmado": el
-                       puente ya pregunto a Firestore y el turno esta `abierto` ahora mismo.
-                       Un cierre viejo de la misma sucursal (migrado de Mongo) no lo cierra. */
-                    .filter((resumen) => resumen?.origenLegado === true || !this.resumenTieneCierreConfirmado(resumen));
+                    .filter((resumen) => !this.resumenTieneCierreConfirmado(resumen));
                 this.poblarFiltroSucursalesVentas();
                 this.actualizarFlujoDesdeResumen();
                 this.actualizarEtiquetaInicioTurno();
@@ -1499,8 +1479,6 @@
                 // Estas dos si dependian de que hubiera sesion: se mantienen.
                 // (iniciarEscuchaEnVivo() ya se llamo mas arriba.)
                 this.iniciarEscuchaAuditoria();
-                /* El POS viejo sigue facturando: este puente trae su turno abierto en vivo. */
-                this.iniciarPuenteLegado();
                 this.cargarVentasTurnoDesdeServidor();
             },
 
@@ -1513,8 +1491,6 @@
                 this.monitorIntervalId = null;
                 if (this.ventasFallbackIntervalId) clearInterval(this.ventasFallbackIntervalId);
                 this.ventasFallbackIntervalId = null;
-                if (this.legadoPollId) clearInterval(this.legadoPollId);
-                this.legadoPollId = null;
                 this.ventasTurnosQueryKey = '';
             },
 
@@ -1674,145 +1650,6 @@
                         aplicarResumen(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
                     }
                 );
-            },
-
-            /* ================= SISTEMA VIEJO (Firestore) =================
-               Los cajeros siguen vendiendo en el POS viejo y esas ventas NO estan en Mongo:
-               viven en Firestore. El backend las expone de solo lectura en /legado/* y aca se
-               mezclan con las de Mongo, para que el turno abierto se vea completo y en vivo
-               sin recargar la pagina.
-
-               POR QUE POLLING Y NO onSnapshot: el onSnapshot del navegador contra Firestore
-               ya no autoriza (era el error de permisos que ensuciaba la consola) y el cliente
-               de Socket.IO no esta conectado en esta pagina. El backend cachea 3-4s, asi que
-               pedir cada 5s NO es una lectura de Firestore por pedido.
-
-               SI EL SERVIDOR NO TIENE CREDENCIAL responde 503 y esto se apaga solo: la pagina
-               sigue funcionando con lo que hay en Mongo, sin ruido en consola. */
-
-            iniciarPuenteLegado: function() {
-                if (this.legadoPollId) window.clearInterval(this.legadoPollId);
-                const refrescar = () => {
-                    // Pestaña de fondo: no se consulta. Al volver se refresca en el acto.
-                    if (document.hidden) return;
-                    void this.refrescarLegado();
-                };
-                void this.refrescarLegado();
-                this.legadoPollId = window.setInterval(refrescar, LEGADO_POLL_MS);
-                document.addEventListener('visibilitychange', () => {
-                    if (!document.hidden) void this.refrescarLegado();
-                });
-            },
-
-            /** Trae el turno abierto del sistema viejo y sus tickets, y los mezcla. */
-            refrescarLegado: async function() {
-                if (this.legadoEnCurso || this.legadoDisponible === false) return;
-                if (!window.NexusAuth || !NexusAuth.sesion()) return;
-                this.legadoEnCurso = true;
-                try {
-                    const respuesta = await NexusAPI.get('/legado/turnos-abiertos', null, { ttl: 0, retries: 1 });
-                    this.legadoDisponible = true;
-                    const turnos = Array.isArray(respuesta?.data?.turnos) ? respuesta.data.turnos : [];
-                    this.legadoTurnos = turnos;
-                    this.legadoResumenes = turnos.map((turno) => this.aResumenLegado(turno));
-
-                    const ventas = [];
-                    for (const turno of turnos.slice(0, MAX_TURNOS_LEGADO)) {
-                        const detalle = await NexusAPI.get('/legado/ventas', { turnoId: turno.turnoId }, { ttl: 0, retries: 1 });
-                        const filas = Array.isArray(detalle?.data?.items) ? detalle.data.items : [];
-                        for (const fila of filas) ventas.push({ ...fila, origenLegado: true });
-                    }
-                    this.legadoVentas = ventas;
-                    this.aplicarLegado();
-                } catch (error) {
-                    const sinConfigurar = error?.code === 'LEGADO_NO_CONFIGURADO' || error?.status === 503;
-                    if (sinConfigurar) {
-                        /* No hay credencial de Firebase en el servidor: se deja de pedir hasta
-                           que se recargue la pagina, y se limpia lo que hubiera quedado. */
-                        const habiaLegado = (this.ventasEscuchadasCache || []).some((v) => v?.origenLegado === true);
-                        this.legadoDisponible = false;
-                        this.legadoTurnos = [];
-                        this.legadoResumenes = [];
-                        this.legadoVentas = [];
-                        if (habiaLegado) this.aplicarLegado(true);
-                        console.warn('El sistema viejo no esta configurado en el servidor: el panel usa solo Mongo.');
-                        return;
-                    }
-                    console.warn('No se pudo leer el sistema viejo; se reintenta en el proximo ciclo.', error);
-                } finally {
-                    this.legadoEnCurso = false;
-                }
-            },
-
-            /**
-             * Un turno del sistema viejo con la forma de un documento de `cashFlows`.
-             *
-             * Es a proposito: asi entra al MISMO pipeline que los de Mongo, y los montos que
-             * muestra el panel salen del resumen que calculo el servidor con la formula del
-             * arqueo (`ventaTotalBruta`, `efectivo`, `tarjetaPOS`, ...), no de una suma hecha
-             * en el navegador.
-             */
-            aResumenLegado: function(turno) {
-                const r = turno?.resumen || {};
-                const numero = (valor) => (Number.isFinite(Number(valor)) ? Number(valor) : 0);
-                return {
-                    id: turno.turnoId,
-                    turnoId: turno.turnoId,
-                    sucursal: turno.sucursal,
-                    sucursalId: turno.sucursalId,
-                    cajero: turno.cajero,
-                    estadoTurno: turno.estadoTurno || 'abierto',
-                    fechaApertura: turno.fechaApertura,
-                    createdAt: turno.fechaApertura,
-                    updatedAt: turno.actualizadoEn,
-                    fondoInicial: numero(turno.fondoInicial),
-                    ventaTotalBruta: numero(r.ventaTotalBruta),
-                    efectivo: numero(r.efectivo),
-                    tarjetaPOS: numero(r.tarjetaPOS),
-                    transferencia: numero(r.transferencia),
-                    credito: numero(r.credito),
-                    totalTickets: numero(r.totalTickets),
-                    totalTicketsFlujo: numero(r.totalTicketsFlujo),
-                    totalTicketsPagados: numero(r.totalTicketsPagados),
-                    totalTicketsPendientes: numero(r.totalTicketsPendientes),
-                    totalProductos: numero(r.totalProductos),
-                    origenLegado: true
-                };
-            },
-
-            /**
-             * Mezcla el sistema viejo con Mongo y vuelve a pasar por el pipeline que ya
-             * existia. No se recalcula nada a mano: los resumenes y las ventas entran con la
-             * MISMA forma que sus equivalentes de Mongo.
-             *
-             * `forzarVacio` es para cuando el turno viejo se cerro o el puente se apago: hay
-             * que VACIAR los tickets, y eso no lo hace `aplicarVentasLeidas` (ignora a
-             * proposito una lectura vacia, para no ocultar el turno activo si una consulta
-             * falla).
-             */
-            aplicarLegado: function(forzarVacio = false) {
-                const resumenesMongo = (this.resumenesTurnoBrutosCache || []).filter((r) => r?.origenLegado !== true);
-                this.resumenesTurnoBrutosCache = [...resumenesMongo, ...this.legadoResumenes];
-                this.actualizarResumenesTurnoVisibles();
-
-                const ventasMongo = (this.ventasEscuchadasCache || []).filter((v) => v?.origenLegado !== true);
-                /* Un ticket del POS viejo que ya fue migrado esta tambien en Mongo: se
-                   prefiere la copia de Mongo para no contarlo dos veces. */
-                const idsMongo = new Set(ventasMongo.map((v) => String(v.id || v.legacyId || '')));
-                const legado = (this.legadoVentas || []).filter((v) => !idsMongo.has(String(v.id || v.legacyId || '')));
-                const ventas = [...ventasMongo, ...legado];
-                const hayLegadoEnCache = (this.ventasEscuchadasCache || []).some((v) => v?.origenLegado === true);
-
-                if (ventas.length === 0 && (forzarVacio === true || hayLegadoEnCache)) {
-                    this.ventasEscuchadasCache = [];
-                    this.actualizarTurnosDesdeVentas();
-                    this.poblarFiltroSucursalesVentas();
-                    this.procesarVentasTurnoActual();
-                    this.actualizarFlujoDesdeResumen();
-                    return;
-                }
-
-                this.aplicarVentasLeidas(ventas, 'legado');
             },
 
             iniciarEscuchaVentasTurno: function(forceBootstrap = false) {
@@ -2254,13 +2091,6 @@
                         tipoTag = `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-blue-200"><i class="fa-solid fa-chair mr-1"></i> Fisico</span>`;
                     } else if (esVirtual) {
                         tipoTag = `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-orange-200"><i class="fa-solid fa-pause mr-1"></i> Virtual</span>`;
-                    }
-
-                    /* Venta del POS viejo: se distingue a proposito. El ticket existe y la
-                       plata entro, pero se cobro en el sistema viejo (Firebase) y todavia no
-                       esta en Mongo: para anularla o marcarla abonada hay que hacerlo alla. */
-                    if (v.origenLegado === true) {
-                        tipoTag += ` <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-indigo-200 shadow-sm" title="Venta cobrada en el sistema viejo (Firebase). No esta en Mongo: para anularla, hacerlo en el POS viejo."><i class="fa-solid fa-clock-rotate-left mr-1"></i> Sistema viejo</span>`;
                     }
 
                     // Badge de Pago (Muestra si esta pendiente o pagado)

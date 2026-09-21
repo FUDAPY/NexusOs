@@ -29,14 +29,7 @@ const envSchema = z.object({
   BCRYPT_ROUNDS: z.coerce.number().int().min(8).max(15).default(12),
 
   FIREBASE_PROJECT_ID: z.string().optional(),
-  /* El service account se puede pasar de DOS formas, porque en produccion cada una
-     resuelve un caso distinto:
-       - PATH: el archivo montado en el contenedor (lo que usa el ETL de migracion).
-       - JSON: el contenido pegado en una variable de entorno de Dokploy, para no
-         tener que montar un volumen solo por esto.
-     Si estan las dos, gana el PATH: es la que ya usa `npm run migrate:firestore`. */
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
-  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   FIREBASE_SALES_PATH: z.string().default('artifacts/erp_lingroup/users/admin_master_001/sales'),
 });
 
