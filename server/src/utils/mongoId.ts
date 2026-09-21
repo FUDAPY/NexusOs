@@ -20,15 +20,14 @@ export const filtroPorId = (id: string, campoLegacy = 'legacyId'): Record<string
   const limpio = id.trim();
   if (limpio === '') return { _id: null };
 
-  /* UN $or ACA ROMPIA LOS FILTROS QUE YA TENIAN $or.
-     Antes esto devolvia { $or: [{ _id }, { legacyId }] }. Cuando ese filtro se combinaba con
-     otro que tambien traia un $or (los del arqueo), el objeto quedaba con DOS claves $or: la
-     segunda pisa a la primera en silencio, y el casteo de Mongoose terminaba mirando un objeto:
-       Valor invalido para el campo "_id": [object Object]
-     No hace falta: `isValidObjectId` ya decide cual de los dos campos usar. Un id de ObjectId
-     va contra _id; un id de Firestore (20 caracteres, no valido) va contra el campo legacy. */
+  /* El $or es A PROPOSITO y lo cubre tests/mongoId.test.ts: un documento puede tener _id y
+     ademas guardar su id viejo de Firestore en legacyId, y hay que encontrarlo por cualquiera
+     de los dos. Intentar "simplificarlo" a un solo campo rompe ese caso (y el test lo atrapa).
+     OJO AL COMBINARLO: si el filtro que lo recibe ya trae un $or, hay que envolver ESTE en un
+     $and. Dos claves $or en el mismo objeto no se suman: la segunda pisa a la primera en
+     silencio, y el casteo termina mirando un objeto (Valor invalido para el campo "_id"). */
   if (mongoose.isValidObjectId(limpio)) {
-    return { _id: limpio };
+    return { $or: [{ _id: limpio }, { [campoLegacy]: limpio }] };
   }
 
   return { [campoLegacy]: limpio };

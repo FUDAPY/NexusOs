@@ -84,7 +84,7 @@ export const cerrarTurno = async (
     const ordenes = await Order.find({
       turnoId: input.turnoId,
       $nor: [{ estadoPago: 'anulado' }],
-      $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }],
+      $and: [{ $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }] }],
     })
       .session(session)
       .lean()
@@ -219,7 +219,7 @@ export const cerrarTurno = async (
       {
         turnoId: input.turnoId,
         $nor: [{ estadoPago: 'anulado' }],
-        $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }],
+        $and: [{ $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }] }],
       },
       { $set: { arqueado: true, fechaArqueo: ahora } },
       opciones,
@@ -341,7 +341,7 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
   const ordenes = await Order.find({
     turnoId: id,
     $nor: [{ estadoPago: 'anulado' }],
-    $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }],
+    $and: [{ $or: [{ noAfectaCaja: false }, { noAfectaCaja: null }] }],
   })
     .lean()
     .exec();
