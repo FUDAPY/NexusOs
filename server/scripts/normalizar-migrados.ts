@@ -34,10 +34,30 @@ import { connectDatabase, disconnectDatabase } from '../src/config/database.js';
 /** Un objeto guardado (Timestamp de Firestore) equivale a "si". */
 const aBooleano = (valor: unknown): boolean => Boolean(valor);
 
-const main = async (): Promise<void> => {
-  const aplicar = process.argv.includes('--aplicar');
+/**
+ * Normaliza valores con forma de Firestore en los documentos migrados.
+ *
+ * Se puede usar de DOS formas:
+ *   1. Como script (CLI):   npx tsx scripts/normalizar-migrados.ts [--aplicar]
+ *   2. Importada desde la API (POST /admin/normalizar-migrados), que es como se corre en
+ *      produccion cuando no hay acceso a una terminal del servidor.
+ *
+ * Por eso `conectar`: cuando la llama la API, la conexion a Mongo YA existe y no hay que
+ * abrir ni cerrar nada.
+ */
+export interface NormalizarResultado {
+  camposRevisados: number;
+  documentosAfectados: number;
+  aplicar: boolean;
+}
 
-  await connectDatabase();
+export const normalizarMigrados = async (
+  opciones: { aplicar?: boolean; conectar?: boolean } = {},
+): Promise<NormalizarResultado> => {
+  const aplicar = opciones.aplicar === true;
+  const conectar = opciones.conectar !== false;
+
+  if (conectar) await connectDatabase();
   const db = mongoose.connection.db;
   if (!db) throw new Error('Sin conexion a Mongo');
 
@@ -131,7 +151,7 @@ const main = async (): Promise<void> => {
   }
 
   console.log(
-    `\n[normalizar] campos booleanos revisados: ${camposRevisados}` +
+    `\n[normalizar] campos revisados: ${camposRevisados}` +
       `\n[normalizar] documentos a corregir: ${documentosAfectados}` +
       (aplicar ? ' (corregidos)' : ' (simulacion: no se toco nada)'),
   );
@@ -139,13 +159,23 @@ const main = async (): Promise<void> => {
   /* El valor real de cada objeto se informa aparte: si algun dia aparece un objeto que
      significa "no" (un Timestamp en cero, por ejemplo), esto lo deja ver antes de aplicar. */
   if (!aplicar && documentosAfectados > 0) {
-    console.log('\n[normalizar] Revisar: los objetos encontrados se interpretan como "si".');
+    console.log(
+      '\n[normalizar] Revisar antes de aplicar: las fechas con objeto se toman como segundos y los booleanos con objeto como "si".',
+    );
   }
 
-  await disconnectDatabase();
+  if (conectar) await disconnectDatabase();
+
+  return { camposRevisados, documentosAfectados, aplicar };
 };
 
-void main().catch((error: unknown) => {
-  console.error('[normalizar] fallo', error);
-  process.exit(1);
-});
+/* CLI: solo cuando el archivo se ejecuta como script. Si lo importa la API, argv[1] apunta al
+   arranque del servidor y esto no corre. */
+const esCli = String(process.argv[1] ?? '').includes('normalizar-migrados');
+
+if (esCli) {
+  void normalizarMigrados({ aplicar: process.argv.includes('--aplicar') }).catch((error: unknown) => {
+    console.error('[normalizar] fallo', error);
+    process.exit(1);
+  });
+}
