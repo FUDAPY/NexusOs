@@ -244,7 +244,11 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        /* Firebase Auth ya no dispara: el callback se ejecuta con un usuario local
+           para que la pantalla arranque (la sesion real la valida __pos_session). */
+        const getAuth = () => ({});
+        const onAuthStateChanged = (_auth, cb) => { Promise.resolve().then(() => cb({ uid: 'local' })); };
+        const signOut = async () => { if (window.NexusAuth) window.NexusAuth.salir(); };
         import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 

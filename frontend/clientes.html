@@ -350,16 +350,16 @@
                     }
                 }
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user || (window.NexusAuth && window.NexusAuth.autenticado())) {
-                        document.getElementById('app-body').classList.remove('opacity-0');
-                        this.configurarVista();
-                        this.cargarSucursales();
-                        this.cargarClientes();
-                    } else {
-                        window.location.replace('index.html');
-                    }
-                });
+                /* Arranque directo: onAuthStateChanged de Firebase ya no dispara y la
+                   pantalla quedaba en blanco/cargando. La sesion se valida arriba. */
+                if (!(window.NexusAuth && window.NexusAuth.autenticado())) {
+                    window.location.replace('index.html');
+                    return;
+                }
+                document.getElementById('app-body').classList.remove('opacity-0');
+                this.configurarVista();
+                this.cargarSucursales();
+                this.cargarClientes();
             },
 
             esAdmin: function() {

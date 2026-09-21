@@ -450,15 +450,16 @@
                 document.getElementById('user-name').innerText = this.usuarioActual.nombre;
                 document.getElementById('user-role').innerText = `Rol: ${this.usuarioActual.rol.toUpperCase()}`;
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user || (window.NexusAuth && window.NexusAuth.autenticado())) { 
-                        document.getElementById('app-body').classList.remove('opacity-0'); 
-                        this.cargarSucursales(); 
-                        this.cargarProductos(); 
-                    } else { 
-                        window.location.replace('index.html'); 
-                    }
-                });
+                /* El arranque NO puede depender de Firebase Auth: onAuthStateChanged
+                   ya no dispara, y la pantalla quedaba en "Cargando catalogo..."
+                   para siempre. La sesion ya se valido arriba con __pos_session. */
+                if (!(window.NexusAuth && window.NexusAuth.autenticado())) {
+                    window.location.replace('index.html');
+                    return;
+                }
+                document.getElementById('app-body').classList.remove('opacity-0');
+                this.cargarSucursales();
+                this.cargarProductos();
             },
 
             mostrarToast: function(mensaje, tipo = 'success') {

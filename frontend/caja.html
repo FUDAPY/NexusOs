@@ -245,7 +245,12 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        /* Firebase Auth ya no dispara (las reglas cambiaron): el callback se ejecuta
+           con un usuario local para que la pantalla arranque. La sesion real sigue
+           validandose con __pos_session / NexusAuth. */
+        const getAuth = () => ({});
+        const onAuthStateChanged = (_auth, cb) => { Promise.resolve().then(() => cb({ uid: 'local' })); };
+        const signOut = async () => { if (window.NexusAuth) window.NexusAuth.salir(); };
         import { initializeFirestore, collection, getDocs, query, where, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
 

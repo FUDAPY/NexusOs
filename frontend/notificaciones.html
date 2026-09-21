@@ -196,12 +196,13 @@
             usuarioActual: null,
 
             init: function() {
-                onAuthStateChanged(auth, (user) => {
-                    if (!user && !(window.NexusAuth && window.NexusAuth.autenticado())) {
-                        window.location.replace("index.html");
-                        return;
-                    }
+                /* Arranque directo: onAuthStateChanged de Firebase ya no dispara. */
+                if (!(window.NexusAuth && window.NexusAuth.autenticado())) {
+                    window.location.replace("index.html");
+                    return;
+                }
 
+                {
                     const sesion = JSON.parse(localStorage.getItem("__pos_session"));
                     if (sesion && (sesion.rol === "admin" || sesion.rol === "cajero")) {
                         this.usuarioActual = sesion;
@@ -212,7 +213,7 @@
                     }
 
                     window.location.replace("index.html");
-                });
+                }
             },
 
             actualizarPreview: function() {

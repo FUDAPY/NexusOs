@@ -200,12 +200,12 @@
             unsubProducts: null,
 
             init() {
-                onAuthStateChanged(auth, user => {
-                    if (!user && !(window.NexusAuth && window.NexusAuth.autenticado())) {
-                        window.location.replace('index.html');
-                        return;
-                    }
-                    const sesionStr = localStorage.getItem('__pos_session');
+                /* Arranque directo: onAuthStateChanged de Firebase ya no dispara. */
+                if (!(window.NexusAuth && window.NexusAuth.autenticado())) {
+                    window.location.replace('index.html');
+                    return;
+                }
+                const sesionStr = localStorage.getItem('__pos_session');
                     const sesion = sesionStr ? JSON.parse(sesionStr) : null;
                     if (!sesion || sesion.rol !== 'admin') {
                         window.location.replace('index.html');
@@ -217,7 +217,6 @@
                     this.escucharSucursales();
                     this.escucharProductos();
                     this.escucharTickets();
-                });
             },
 
             cerrarSesion: async function() {

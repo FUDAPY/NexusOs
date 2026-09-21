@@ -328,11 +328,10 @@
                 this.usuarioActual = JSON.parse(sesionStr);
                 if (this.usuarioActual.rol !== 'admin') return window.location.replace('index.html');
 
-                onAuthStateChanged(auth, (user) => {
-                    if (!user && !(window.NexusAuth && window.NexusAuth.autenticado())) return window.location.replace('index.html');
-                    document.getElementById('app-body').classList.remove('opacity-0');
-                    this.cargarAlertas();
-                });
+                /* Arranque directo: onAuthStateChanged de Firebase ya no dispara. */
+                if (!(window.NexusAuth && window.NexusAuth.autenticado())) return window.location.replace('index.html');
+                document.getElementById('app-body').classList.remove('opacity-0');
+                this.cargarAlertas();
             },
 
             mostrarToast: function(msg, tipo = 'info') {
