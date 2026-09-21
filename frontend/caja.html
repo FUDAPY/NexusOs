@@ -244,28 +244,19 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         /* Firebase Auth ya no dispara (las reglas cambiaron): el callback se ejecuta
            con un usuario local para que la pantalla arranque. La sesion real sigue
            validandose con __pos_session / NexusAuth. */
         const getAuth = () => ({});
         const onAuthStateChanged = (_auth, cb) => { Promise.resolve().then(() => cb({ uid: 'local' })); };
         const signOut = async () => { if (window.NexusAuth) window.NexusAuth.salir(); };
-        import { initializeFirestore, collection, getDocs, query, where, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
+        /* Placeholder: las pantallas pasan `auth` a onAuthStateChanged(auth, ...),
+           y el SDK ya no se carga. El shim de arriba lo ignora. */
+        const auth = {};
 
 
         const __app_id = "erp_lingroup"; 
         const __initial_auth_token = "admin_master_001";
-        const firebaseConfig = { apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg", authDomain: "sys-pos-erp-lingroup.firebaseapp.com", projectId: "sys-pos-erp-lingroup", storageBucket: "sys-pos-erp-lingroup.firebasestorage.app" };
-
-        const app = initializeApp(firebaseConfig); 
-        const auth = getAuth(app); 
-        const db = initializeFirestore(app, {
-            experimentalForceLongPolling: true,
-            useFetchStreams: false
-        });
-        const functions = getFunctions(app, "us-central1");
 
         const normalizarMetodoPago = (valor) => String(valor || '')
             .replaceAll('Ã¡', 'a')
@@ -783,77 +774,6 @@
                     setTimeout(() => window.location.reload(), 1500);
                     return;
 
-                    const batch = writeBatch(db);
-                    
-                    this.transaccionesActivas.forEach(t => {
-                        const ticketRef = doc(db, rutaPrivada, t.id);
-                        batch.update(ticketRef, { arqueado: true, fechaArqueo: fechaCierre, turnoId });
-                    });
-
-                    const cierreRef = doc(collection(db, 'cierresCaja'));
-                    batch.set(cierreRef, {
-                        turnoId,
-                        sucursal: this.sesion.sucursal,
-                        cajeroId: this.sesion.uid || null,
-                        cajero: this.sesion.nombre || 'Cajero',
-                        fechaApertura,
-                        fechaAperturaTexto: this.horaAperturaSesion || this.formatDateTime24(fechaApertura),
-                        fechaCierre,
-                        fechaCierreTexto: this.formatDateTime24(fechaCierre),
-                        fechaOperacionKey: this.obtenerFechaKey(fechaApertura),
-                        fechaCierreKey: this.obtenerFechaKey(fechaCierre),
-                        fondoInicial: Number(this.fondoFijoMemoria || 0),
-                        declaracion: {
-                            efectivo: efectivoDeclarado,
-                            gastos,
-                            tarjeta: tarjetaDeclarada,
-                            transferencia: transferenciaDeclarada,
-                            totalCaja: efectivoDeclarado + tarjetaDeclarada + transferenciaDeclarada
-                        },
-                        sistema: {
-                            ventasEfectivo: efectivoPos,
-                            ventasTarjeta: tarjeta,
-                            ventasTransferencia: transferencia,
-                            ventasCredito: credito,
-                            totalEsperadoEfectivo: efectivoEsperado,
-                            totalEsperado: efectivoEsperado + tarjeta + transferencia,
-                            totalCobradoInmediato: efectivoPos + tarjeta + transferencia,
-                            totalVendido: efectivoPos + tarjeta + transferencia + credito,
-                            diferenciaEfectivo: diferenciaCaja,
-                            diferenciaTarjeta,
-                            diferenciaTransferencia,
-                            diferenciaTotal
-                        },
-                        resumenFinanciero: {
-                            efectivoPos,
-                            efectivoDeclarado,
-                            efectivoEsperado,
-                            posTarjeta: tarjeta,
-                            transferencia,
-                            credito,
-                            gastos,
-                            diferenciaCaja,
-                            diferenciaPosTarjeta: diferenciaTarjeta,
-                            diferenciaTransferencia,
-                            diferenciaTotal,
-                            sobrante: Math.max(diferenciaTotal, 0),
-                            faltante: Math.max(-diferenciaTotal, 0)
-                        },
-                        versionEsquemaFinanciero: 2,
-                        productosVendidos: this.productosVendidos,
-                        ticketsContados: this.transaccionesActivas.length,
-                        ticketsTurnoIds: this.transaccionesActivas.map(ticket => ticket.id),
-                        htmlTicket: this.htmlArqueoMemoria || '',
-                        creadoEn: fechaCierre
-                    });
-                    batch.set(doc(db, 'cashFlows', turnoId), {
-                        estadoTurno: 'cerrado',
-                        cierreCajaId: cierreRef.id,
-                        closedAt: fechaCierre,
-                        updatedAt: fechaCierre
-                    }, { merge: true });
-
-                    await batch.commit();
                     
                     document.getElementById('dec-efectivo').value = ''; 
                     document.getElementById('dec-gastos').value = ''; 

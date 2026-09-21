@@ -252,27 +252,16 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         /* Firebase Auth ya no dispara: el callback se ejecuta con un usuario local
            para que la pantalla arranque (la sesion real la valida __pos_session). */
         const getAuth = () => ({});
         const onAuthStateChanged = (_auth, cb) => { Promise.resolve().then(() => cb({ uid: 'local' })); };
         const signOut = async () => { if (window.NexusAuth) window.NexusAuth.salir(); };
-        import { getFirestore, collection, getDocs, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp, increment, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        /* Placeholder: la pantalla pasa `auth` a onAuthStateChanged(auth, ...) y el
+           SDK ya no se carga; el shim de arriba lo ignora. */
+        const auth = {};
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg",
-            authDomain: "sys-pos-erp-lingroup.firebaseapp.com",
-            projectId: "sys-pos-erp-lingroup",
-            storageBucket: "sys-pos-erp-lingroup.firebasestorage.app",
-            messagingSenderId: "1084603889746",
-            appId: "1:1084603889746:web:822ce55a070dc146b2078b",
-            measurementId: "G-1LZVQ05T2E"
-        };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
 
         window.ProduccionModule = {
             sesion: null,
@@ -639,7 +628,7 @@
             },
 
             cerrarSesion: async function() {
-                await signOut(auth);
+                if (window.NexusAuth) window.NexusAuth.salir();
                 localStorage.removeItem('__pos_session');
                 window.location.replace('index.html');
             }
