@@ -24,8 +24,9 @@ export const filtroPorId = (id: string, campoLegacy = 'legacyId'): Record<string
      ademas guardar su id viejo de Firestore en legacyId, y hay que encontrarlo por cualquiera
      de los dos. Intentar "simplificarlo" a un solo campo rompe ese caso (y el test lo atrapa).
      OJO AL COMBINARLO: si el filtro que lo recibe ya trae un $or, hay que envolver ESTE en un
-     $and. Dos claves $or en el mismo objeto no se suman: la segunda pisa a la primera en
-     silencio, y el casteo termina mirando un objeto (Valor invalido para el campo "_id"). */
+     $and. Dos claves $or en el mismo objeto no se suman: la segunda PISA a la primera en
+     silencio y el filtro devuelve documentos que no corresponden, sin error y sin que nadie se
+     entere. El $and no es cosmetico: es lo unico que hace que las dos condiciones se apliquen. */
   if (mongoose.isValidObjectId(limpio)) {
     return { $or: [{ _id: limpio }, { [campoLegacy]: limpio }] };
   }

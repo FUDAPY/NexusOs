@@ -95,6 +95,20 @@ describe('los filtros propios con operadores castean', () => {
     expect(filtro['$and']).toEqual([{ $or: [{ arqueado: false }, { arqueado: null }] }]);
   });
 
+  it('filtroPorId + un $or propio: el $and deja las DOS condiciones', () => {
+    const id = '65f1c0a1b2c3d4e5f6071829';
+
+    const filtro = castearFiltro(
+      Order.find({ ...filtroPorId(id), $and: [{ $or: [{ arqueado: false }, { arqueado: null }] }] }),
+    );
+    const alternativas = filtro['$or'] as Record<string, unknown>[];
+
+    // Sin el $and, la segunda clave `$or` pisaba a la de filtroPorId y el filtro quedaba SIN el
+    // id: devolvia documentos de mas, sin error.
+    expect(String(alternativas[0]?.['_id'])).toBe(id);
+    expect(filtro['$and']).toEqual([{ $or: [{ arqueado: false }, { arqueado: null }] }]);
+  });
+
   it('rango de fechas de /orders: { fecha: { $gte, $lte } }', () => {
     const desde = new Date('2026-09-01T00:00:00.000Z');
     const hasta = new Date('2026-09-30T23:59:59.999Z');
