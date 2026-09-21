@@ -405,6 +405,10 @@
             <div class="flex-1 overflow-y-auto p-6 bg-slate-200">
                 <div id="grid-mesas-fisicas" class="grid grid-cols-5 gap-4"></div>
             </div>
+            <div class="p-4 bg-white border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Mesas abiertas: <span id="contador-mesas-abiertas" class="font-black text-red-600">0</span> <span class="normal-case font-medium">(fisicas y virtuales de la sucursal)</span></p>
+                <button onclick="PosModule.anularMesasAbiertas()" class="bg-red-600 hover:bg-red-700 text-white text-[11px] font-black px-4 py-3 rounded-xl shadow-lg transition uppercase tracking-wider"><i class="fa-solid fa-broom mr-1"></i> Borrar mesas abiertas</button>
+            </div>
         </div>
     </div>
 
@@ -418,6 +422,31 @@
                 <p class="text-center text-slate-600 font-bold mb-4 text-sm">Ingrese un nombre o detalle para identificar la cuenta.</p>
                 <input type="text" id="input-referencia-mesa" class="w-full px-4 py-4 bg-white border-2 border-slate-300 rounded-xl text-lg font-bold text-center outline-none focus:border-orange-500 transition text-slate-800 mb-6 pointer-events-auto" placeholder="Ej: Remera Roja..." style="user-select: text;">
                 <button id="btn-guardar-pendiente-modal" onclick="PosModule.confirmarGuardadoPendiente()" class="w-full bg-orange-500 hover:bg-orange-600 text-white text-lg font-black py-4 rounded-xl shadow-lg transition">ENVIAR A COCINA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-autorizacion-anulacion" class="fixed inset-0 bg-slate-900/90 hidden justify-center items-center z-[130] backdrop-blur-md">
+        <div class="bg-white w-[440px] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="bg-red-700 text-white p-5 flex justify-between items-center">
+                <h3 class="text-lg font-black flex items-center gap-2"><i class="fa-solid fa-id-card-clip"></i> Autorizacion de anulacion</h3>
+                <button onclick="PosModule.cancelarAutorizacionAnulacion()" class="text-white/80 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 bg-slate-50 flex flex-col gap-4">
+                <p id="anulacion-contexto" class="text-sm font-black text-slate-700 uppercase tracking-wide">Autorizar anulacion</p>
+                <p id="anulacion-aviso-codigo" class="text-xs text-slate-500 leading-relaxed">Pase la tarjeta RFID o escriba el codigo de anulacion.</p>
+                <div id="anulacion-bloque-codigo" class="flex flex-col gap-1">
+                    <label class="text-[11px] font-black text-slate-500 uppercase">Codigo RFID / manual</label>
+                    <input type="password" id="input-anulacion-codigo" autocomplete="off" onkeydown="PosModule.avanzarAutorizacionAnulacion(event)" class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl font-mono text-center text-lg outline-none focus:border-red-600 transition text-slate-800" placeholder="Pase la tarjeta o escriba el codigo">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[11px] font-black text-slate-500 uppercase">Motivo</label>
+                    <input type="text" id="input-anulacion-motivo" autocomplete="off" onkeydown="PosModule.avanzarAutorizacionAnulacion(event)" class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl text-center font-bold outline-none focus:border-red-600 transition text-slate-800" placeholder="Ej: cliente se arrepintio">
+                </div>
+                <div class="flex gap-3 mt-2">
+                    <button onclick="PosModule.cancelarAutorizacionAnulacion()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black py-3 rounded-xl transition">CANCELAR</button>
+                    <button onclick="PosModule.confirmarAutorizacionAnulacion()" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-black py-3 rounded-xl shadow-lg transition"><i class="fa-solid fa-unlock mr-1"></i> AUTORIZAR</button>
+                </div>
             </div>
         </div>
     </div>
@@ -662,6 +691,7 @@
             sesion: null, clientesFirebase: [], clienteActual: null,
             datosSucursal: null, sucursalIdActual: null, sucursalDocId: null, sucursalNombres: [], sucursalIds: [], ultimaVentaImprimir: null, dineroRecibidoTicket: 0, vueltoTicket: 0, htmlTicketMemoria: "",
             listaCuentasPendientes: [], idTicketRecuperado: null, carritoOriginal: [], searchTimeout: null, reservasActivas: {}, reservasProduccionActivas: {}, itemObsEditando: null, rfidModo: null, vistaPendientesActual: 'virtuales',
+            _anulacionRequiereCodigo: null, _anulacionConfirmar: null, _anulacionCancelar: null,
             totalesSistema: { efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0, abonosEfe: 0 }, fondoInicialSesion: 0, horaAperturaSesion: "", fechaAperturaSesionTs: null, turnoActualId: null, productosVendidos: {},
             transaccionEnCurso: false,
             catalogoPizzas: [], pizzaSabor1: null, pizzaSabor2: null,
@@ -2035,34 +2065,125 @@
                 btnConfirmar.classList.toggle('cursor-not-allowed', btnConfirmar.disabled);
             },
 
+            /* El codigo de anulacion lo valida el servidor contra settings/sistema:
+               aca solo se pide (tarjeta RFID o carga manual) y se manda tal cual.
+               Antes se comparaba en el navegador con un dato que llegaba del
+               onSnapshot de Firestore, asi que nunca habia codigo y el POS no
+               dejaba anular nada. */
             pedirAutorizacionAnulacionPos: function(contexto = 'anulacion') {
-                const codigoConfigurado = String(this.configSistemaActual?.codigoRfidAnulacion || '').trim();
-                if (!codigoConfigurado) {
-                    this.mostrarToast('Configura el codigo RFID de anulacion en admin.', 'error');
-                    return null;
-                }
+                const modal = document.getElementById('modal-autorizacion-anulacion');
+                const inputCodigo = document.getElementById('input-anulacion-codigo');
+                const inputMotivo = document.getElementById('input-anulacion-motivo');
+                const bloqueCodigo = document.getElementById('anulacion-bloque-codigo');
+                if (!modal || !inputCodigo || !inputMotivo) return Promise.resolve(null);
 
-                const motivo = window.prompt(`Ingresa el motivo de la ${contexto}:`, '');
-                if (motivo === null) return null;
-                const motivoLimpio = String(motivo || '').trim();
-                if (!motivoLimpio) {
-                    this.mostrarToast('Debes indicar el motivo de la anulacion.', 'error');
-                    return null;
-                }
+                return this.requiereCodigoAnulacion().then((requiereCodigo) => {
+                    const etiqueta = document.getElementById('anulacion-contexto');
+                    if (etiqueta) etiqueta.innerText = `Autorizar ${contexto}`;
+                    const aviso = document.getElementById('anulacion-aviso-codigo');
+                    if (aviso) {
+                        aviso.innerText = requiereCodigo
+                            ? 'Pase la tarjeta RFID o escriba el codigo de anulacion configurado en admin.'
+                            : 'Esta sucursal no tiene codigo RFID configurado: la anulacion queda registrada con su usuario.';
+                    }
+                    if (bloqueCodigo) bloqueCodigo.classList.toggle('hidden', !requiereCodigo);
 
-                const codigoIngresado = window.prompt('Ingresa el codigo RFID de autorizacion:', '');
-                if (codigoIngresado === null) return null;
-                const codigoLimpio = String(codigoIngresado || '').trim();
-                if (!codigoLimpio) {
-                    this.mostrarToast('Debes ingresar el codigo RFID.', 'error');
-                    return null;
-                }
-                if (codigoLimpio !== codigoConfigurado) {
-                    this.mostrarToast('Codigo RFID incorrecto. Anulacion bloqueada.', 'error');
-                    return null;
-                }
+                    inputCodigo.value = '';
+                    inputMotivo.value = '';
 
-                return { motivo: motivoLimpio };
+                    return new Promise((resolve) => {
+                        const cerrar = () => {
+                            this._anulacionConfirmar = null;
+                            this._anulacionCancelar = null;
+                            modal.classList.add('hidden');
+                            modal.classList.remove('flex');
+                        };
+
+                        this._anulacionCancelar = () => {
+                            cerrar();
+                            resolve(null);
+                        };
+
+                        this._anulacionConfirmar = () => {
+                            const codigo = String(inputCodigo.value || '').trim();
+                            const motivo = String(inputMotivo.value || '').trim();
+
+                            if (requiereCodigo && codigo === '') {
+                                this.mostrarToast('Pase la tarjeta o escriba el codigo de anulacion.', 'error');
+                                inputCodigo.focus();
+                                return;
+                            }
+                            if (motivo === '') {
+                                this.mostrarToast('Escriba el motivo de la anulacion.', 'error');
+                                inputMotivo.focus();
+                                return;
+                            }
+
+                            cerrar();
+                            resolve({ codigo, motivo });
+                        };
+
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                        setTimeout(() => {
+                            if (requiereCodigo) inputCodigo.focus();
+                            else inputMotivo.focus();
+                        }, 80);
+                    });
+                });
+            },
+
+            confirmarAutorizacionAnulacion: function() {
+                if (typeof this._anulacionConfirmar === 'function') this._anulacionConfirmar();
+            },
+
+            cancelarAutorizacionAnulacion: function() {
+                if (typeof this._anulacionCancelar === 'function') this._anulacionCancelar();
+            },
+
+            /* Enter: del codigo pasa al motivo; del motivo (o con el motivo ya
+               escrito) autoriza. Es lo que hace comodo el lector RFID, que
+               escribe el UID y manda Enter solo. */
+            avanzarAutorizacionAnulacion: function(event) {
+                if (!event) return;
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    this.cancelarAutorizacionAnulacion();
+                    return;
+                }
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+
+                const inputCodigo = document.getElementById('input-anulacion-codigo');
+                const inputMotivo = document.getElementById('input-anulacion-motivo');
+                if (event.target === inputCodigo && inputMotivo && inputMotivo.value.trim() === '') {
+                    inputMotivo.focus();
+                    return;
+                }
+                this.confirmarAutorizacionAnulacion();
+            },
+
+            /* El servidor dice si esta sucursal usa tarjeta y el resultado se
+               cachea por sesion. Si no se puede consultar, se pide el codigo
+               igual y decide el backend. */
+            requiereCodigoAnulacion: async function() {
+                if (this._anulacionRequiereCodigo !== null && this._anulacionRequiereCodigo !== undefined) {
+                    return this._anulacionRequiereCodigo;
+                }
+                try {
+                    const respuesta = await NexusAPI.get('/orders/anulacion/estado', {}, { ttl: 0, retries: 0 });
+                    const datos = (respuesta && respuesta.data) || {};
+                    this._anulacionRequiereCodigo = Boolean(datos.requerido);
+                } catch (e) {
+                    console.error('No se pudo consultar el estado de la autorizacion de anulacion.', e);
+                    return true;
+                }
+                return this._anulacionRequiereCodigo;
+            },
+
+            mensajeDeErrorApi: function(error, alternativo) {
+                const mensaje = String((error && (error.message || error.error)) || '').trim();
+                return mensaje !== '' ? mensaje : alternativo;
             },
 
             cantidadStockADevolver: function(item, cantidadSolicitada = null) {
@@ -2072,34 +2193,6 @@
                 if (cantidadMarcada > 0) return Math.min(cantidadItem, cantidadMarcada);
                 if (item.stockDescontado === false) return 0;
                 return cantidadItem;
-            },
-
-            registrarAuditoriaAnulacionPosEnBatch: function(batch, payload) {
-                const auditRef = doc(collection(db, "auditoria"));
-                batch.set(auditRef, {
-                    tipo: 'anulacion_ticket',
-                    subtipo: payload.subtipo || 'total',
-                    origen: 'pos',
-                    autorizacionRfid: true,
-                    motivo: payload.motivo || 'Sin motivo',
-                    ticketId: payload.ticketId || null,
-                    ventaId: payload.ventaId || null,
-                    sucursal: this.sesion?.sucursal || '',
-                    clienteId: payload.clienteId || (this.clienteActual?.id || null),
-                    nombreCliente: payload.nombreCliente || (this.clienteActual?.nombre || 'Cliente'),
-                    aliasReferencia: payload.aliasReferencia || '',
-                    metodoPago: payload.metodoPago || '',
-                    estadoPago: payload.estadoPago || '',
-                    totalAntes: Number(payload.totalAntes || 0),
-                    totalDespues: Number(payload.totalDespues || 0),
-                    cajeroId: this.sesion?.uid || this.sesion?.id || null,
-                    cajeroNombre: this.sesion?.nombre || 'POS',
-                    item: payload.item || null,
-                    itemsRestantes: payload.itemsRestantes || [],
-                    itemsOriginales: payload.itemsOriginales || [],
-                    fecha: new Date(),
-                    timestamp: new Date()
-                });
             },
 
             confirmarMesaPendienteActual: function() {
@@ -2237,14 +2330,18 @@
                 if (!this.idTicketRecuperado) return false;
                 if (!confirm('Anular todo este ticket pendiente? Se devolvera el stock controlado y quedara en auditoria.')) return false;
 
-                const autorizacion = this.pedirAutorizacionAnulacionPos('anulacion total desde POS');
+                const autorizacion = await this.pedirAutorizacionAnulacionPos('anulacion total desde POS');
                 if (!autorizacion) return false;
 
                 try {
-                    
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(this.idTicketRecuperado) + '/anular',
-                        { motivo: autorizacion.motivo || 'anulacion total desde POS', tipo: 'total' },
+                        {
+                            motivo: autorizacion.motivo,
+                            tipo: 'total',
+                            // El servidor lo valida contra settings/sistema.
+                            codigo: autorizacion.codigo
+                        },
                         { ttl: 0, retries: 0 }
                     );
                     this.reservasActivas = {};
@@ -2254,7 +2351,7 @@
                     return true;
                 } catch (e) {
                     console.error(e);
-                    this.mostrarToast('No se pudo anular el ticket desde POS.', 'error');
+                    this.mostrarToast(this.mensajeDeErrorApi(e, 'No se pudo anular el ticket desde POS.'), 'error');
                     return false;
                 }
             },
@@ -2263,29 +2360,24 @@
                 if (this.carrito.length === 0) return;
                 if (!confirm('Vaciar la orden actual? Los productos agregados y no guardados se liberaran.')) return;
 
-                const autorizacion = this.pedirAutorizacionAnulacionPos('limpieza del ticket no guardado');
+                const autorizacion = await this.pedirAutorizacionAnulacionPos('limpieza del ticket no guardado');
                 if (!autorizacion) return;
 
-                try {
-                    const batch = writeBatch(db);
-                    this.registrarAuditoriaAnulacionPosEnBatch(batch, {
-                        subtipo: 'ticket_no_guardado',
-                        motivo: autorizacion.motivo,
-                        ticketId: null,
-                        ventaId: null,
-                        clienteId: this.clienteActual?.id || null,
-                        nombreCliente: this.clienteActual?.nombre || 'Cliente ocasional',
-                        aliasReferencia: 'POS sin guardar',
-                        metodoPago: 'Sin cobrar',
-                        estadoPago: 'no_guardado',
-                        totalAntes: Number(this.totalActual || 0),
-                        totalDespues: 0,
-                        itemsOriginales: JSON.parse(JSON.stringify(this.carrito || []))
-                    });
-                    await batch.commit();
-                } catch (e) {
-                    
-                    console.error('No se pudo auditar el vaciado del carrito.', e);
+                /* Esta orden nunca llego al servidor, asi que no hay nada que
+                   anular alla; igual se verifica el codigo para que la limpieza
+                   quede autorizada por la misma tarjeta que las demas. */
+                if (autorizacion.codigo !== '') {
+                    try {
+                        await NexusAPI.post(
+                            '/orders/anulacion/verificar-codigo',
+                            { codigo: autorizacion.codigo },
+                            { ttl: 0, retries: 0 }
+                        );
+                    } catch (e) {
+                        console.error(e);
+                        this.mostrarToast(this.mensajeDeErrorApi(e, 'Codigo de anulacion rechazado.'), 'error');
+                        return;
+                    }
                 }
 
                 this.limpiarPantallaLocal();
@@ -2908,6 +3000,51 @@
                     `;
                 }
                 grid.innerHTML = html;
+
+                const contador = document.getElementById('contador-mesas-abiertas');
+                if (contador) contador.innerText = String((this.listaCuentasPendientes || []).length);
+            },
+
+            /* Borra (anula) TODAS las mesas abiertas de la sucursal: es la
+               limpieza de cuentas pendientes viejas. La orden no se elimina,
+               queda anulada con su auditoria y el stock vuelve al inventario. */
+            anularMesasAbiertas: async function() {
+                const total = (this.listaCuentasPendientes || []).length;
+                const sucursal = (this.sesion && this.sesion.sucursal) || '';
+
+                if (total === 0) {
+                    this.mostrarToast('No hay mesas abiertas en esta sucursal.', 'info');
+                    return;
+                }
+                if (!confirm(`Borrar las ${total} mesas abiertas de ${sucursal}? Se devuelve el stock controlado y todo queda en auditoria.`)) return;
+
+                const autorizacion = await this.pedirAutorizacionAnulacionPos('borrado de mesas abiertas');
+                if (!autorizacion) return;
+
+                try {
+                    const respuesta = await NexusAPI.post(
+                        '/orders/mesas-abiertas/anular',
+                        {
+                            codigo: autorizacion.codigo,
+                            motivo: autorizacion.motivo,
+                            sucursal: sucursal
+                        },
+                        { ttl: 0, retries: 0 }
+                    );
+                    const datos = (respuesta && respuesta.data) || {};
+                    const anuladas = Number(datos.anuladas || 0);
+                    const omitidas = Number(datos.omitidas || 0);
+
+                    if (anuladas === 0 && omitidas === 0) {
+                        this.mostrarToast('No habia mesas abiertas para anular.', 'info');
+                    } else {
+                        this.mostrarToast(`Mesas anuladas: ${anuladas}${omitidas > 0 ? ` (${omitidas} sin anular)` : ''}.`, 'info');
+                    }
+                    this.renderizarMesasFisicas();
+                } catch (e) {
+                    console.error(e);
+                    this.mostrarToast(this.mensajeDeErrorApi(e, 'No se pudieron borrar las mesas abiertas.'), 'error');
+                }
             },
 
             seleccionarMesaFisica: function(nombreMesa) {

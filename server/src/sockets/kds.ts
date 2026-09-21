@@ -50,7 +50,8 @@ export type EventoTurno =
   | 'venta:anulada'
   | 'turno:abierto'
   | 'turno:cerrado'
-  | 'stock:cambiado';
+  | 'stock:cambiado'
+  | 'mesas:anuladas';
 
 export interface PayloadTurno {
   sucursal: string;
@@ -62,6 +63,14 @@ export interface PayloadTurno {
   ticketId?: string | null;
   estadoPago?: string | null;
   productos?: { productoId: string; cantidad: number }[];
+  /** Resumen del borrado masivo de mesas abiertas ('mesas:anuladas'). */
+  mesas?: {
+    anuladas: number;
+    omitidas: number;
+    tickets: string[];
+    totalAnulado: number;
+    motivo: string;
+  };
   emitidoEn: string;
 }
 
@@ -76,6 +85,7 @@ export const emitTurnoEvent = (sucursal: string, evento: EventoTurno, payload: P
     ticketId: payload.ticketId ?? null,
     estadoPago: payload.estadoPago ?? null,
     productos: payload.productos,
+    mesas: payload.mesas,
     emitidoEn: new Date().toISOString(),
   };
 

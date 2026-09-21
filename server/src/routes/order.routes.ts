@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import {
+  anularMesasAbiertas,
   cancel,
   create,
+  estadoAnulacion,
   list,
   marcarAbonado,
   resolverCobroHandler,
   updateKdsState,
+  verificarCodigoAnulacion,
 } from '../controllers/order.controller.js';
 import { actualizarCuenta, cerrarCuenta } from '../controllers/cuentaCierre.controller.js';
 import { asyncHandler } from '../utils/response.js';
@@ -28,7 +31,32 @@ orderRouter.get('/', asyncHandler(list));
 orderRouter.patch('/:id/cocina', asyncHandler(updateKdsState));
 
 
-orderRouter.post('/:id/anular', asyncHandler(cancel));
+/* Autorizacion de anulaciones: tarjeta RFID o codigo cargado a mano.
+   Estas rutas van ANTES de '/:id/anular'; si no, Express toma
+   'mesas-abiertas' (o 'anulacion') como si fuera el :id de una orden. */
+orderRouter.get(
+  '/anulacion/estado',
+  requiereRol('admin', 'supervisor', 'cajero'),
+  asyncHandler(estadoAnulacion),
+);
+
+orderRouter.post(
+  '/anulacion/verificar-codigo',
+  requiereRol('admin', 'supervisor', 'cajero'),
+  asyncHandler(verificarCodigoAnulacion),
+);
+
+orderRouter.post(
+  '/mesas-abiertas/anular',
+  requiereRol('admin', 'supervisor', 'cajero'),
+  asyncHandler(anularMesasAbiertas),
+);
+
+orderRouter.post(
+  '/:id/anular',
+  requiereRol('admin', 'supervisor', 'cajero'),
+  asyncHandler(cancel),
+);
 
 
 orderRouter.post(

@@ -2948,6 +2948,7 @@
                             motivo,
                             tipo: 'parcial',
                             cantidades: { [item.id]: 1 },
+                            codigo: this.configSistemaActual?.codigoRfidAnulacion || '',
                             autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin'
                         },
                         { ttl: 0, retries: 0 }
@@ -3098,7 +3099,12 @@
                        descartan solas. Se borra el bloque cuando esto este verificado. */
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(v.id) + '/anular',
-                        { motivo, tipo: 'total', autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin' },
+                        {
+                            motivo,
+                            tipo: 'total',
+                            codigo: this.configSistemaActual?.codigoRfidAnulacion || '',
+                            autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin'
+                        },
                         { ttl: 0, retries: 0 }
                     );
                     this.mostrarToast('Ticket anulado, stock devuelto y saldo del cliente ajustado.', 'success');

@@ -2,9 +2,22 @@ import type { NextFunction, Request, Response } from 'express';
 import { ESTADOS_COCINA, Order } from '../models/index.js';
 import { createOrderInputSchema, listOrdersQuerySchema } from '../schemas/order.schema.js';
 import { createOrder } from '../services/order.service.js';
-import { cancelOrder } from '../services/orderCierre.service.js';
+import { cancelOrder, cancelarMesasAbiertas } from '../services/orderCierre.service.js';
+import { obtenerCodigosAnulacion, validarCodigoAnulacion } from '../services/anulacionAutorizacion.service.js';
 import { AppError, sendOk } from '../utils/response.js';
 import { marcarComoAbonado, resolverCobro } from '../services/cobro.service.js';
+import type { AuthenticatedRequest } from '../middlewares/auth.js';
+
+/** Autor del token: la auditoria no confia en el `autorizadoPor` del body. */
+const autorizadorDeLaSesion = (
+  req: Request,
+): { autorizadoPor?: string; autorizadoPorNombre?: string } => {
+  const auth = (req as AuthenticatedRequest).auth;
+  return {
+    autorizadoPor: auth !== undefined && auth.userId !== '' ? auth.userId : undefined,
+    autorizadoPorNombre: auth !== undefined && auth.nombre !== '' ? auth.nombre : undefined,
+  };
+};
 
 
 export const resolverCobroHandler = async (
@@ -161,6 +174,8 @@ export const cancel = async (
       motivo?: string;
       tipo?: 'total' | 'parcial';
       cantidades?: Record<string, number>;
+      /** Tarjeta RFID o codigo cargado a mano en el POS. */
+      codigo?: string;
       autorizadoPor?: string;
       autorizadoPorNombre?: string;
     };
@@ -175,14 +190,86 @@ export const cancel = async (
       throw new AppError('La anulacion parcial necesita cantidades', 400, 'MISSING_QUANTITIES');
     }
 
+    const sesion = autorizadorDeLaSesion(req);
+
     const resultado = await cancelOrder(
       {
         orderId: id,
         motivo: body.motivo.trim(),
         tipo,
         cantidades,
-        autorizadoPor: body.autorizadoPor,
-        autorizadoPorNombre: body.autorizadoPorNombre,
+        codigo: typeof body.codigo === 'string' ? body.codigo : undefined,
+        autorizadoPor: sesion.autorizadoPor ?? body.autorizadoPor,
+        autorizadoPorNombre: sesion.autorizadoPorNombre ?? body.autorizadoPorNombre,
+      },
+      { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
+    );
+
+    sendOk(res, resultado);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Estado de la autorizacion de anulaciones.
+ *
+ * El POS lo consulta al abrir el modal para saber si tiene que pedir la tarjeta
+ * o si el codigo todavia no esta configurado. Nunca devuelve los codigos.
+ */
+export const estadoAnulacion = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const codigos = await obtenerCodigosAnulacion();
+    sendOk(res, { requerido: codigos.length > 0, tarjetas: codigos.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Verifica un codigo sin anular nada.
+ *
+ * Lo usa el POS para las acciones que solo limpian la pantalla (cuentas que
+ * nunca se guardaron), donde no hay una orden que anular en el servidor.
+ */
+export const verificarCodigoAnulacion = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const body = req.body as { codigo?: unknown };
+    const autorizacion = await validarCodigoAnulacion(body.codigo);
+    sendOk(res, autorizacion);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Borra (anula, con auditoria y devolucion de stock) las mesas abiertas.
+ *
+ * El codigo es obligatorio: es la tarjeta del encargado la que autoriza, asi
+ * que funciona aunque la caja este abierta con un usuario cajero.
+ */
+export const anularMesasAbiertas = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const body = req.body as { codigo?: unknown; motivo?: unknown; sucursal?: unknown };
+
+    const resultado = await cancelarMesasAbiertas(
+      {
+        codigo: typeof body.codigo === 'string' ? body.codigo : '',
+        motivo: typeof body.motivo === 'string' ? body.motivo : undefined,
+        sucursal: typeof body.sucursal === 'string' ? body.sucursal.trim() : undefined,
+        ...autorizadorDeLaSesion(req),
       },
       { ip: req.ip ?? '', userAgent: String(req.headers['user-agent'] ?? '') },
     );

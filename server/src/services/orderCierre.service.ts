@@ -6,6 +6,8 @@ import { AuditLog, InventoryMovement, Order, OrderItem, Product } from '../model
 import type { IOrder, IOrderItem } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
 import { aplicarSaldoCliente } from './order.service.js';
+import { validarCodigoAnulacion } from './anulacionAutorizacion.service.js';
+import { logger } from '../utils/logger.js';
 
 export interface CancelOrderInput {
   orderId: string;
@@ -14,6 +16,8 @@ export interface CancelOrderInput {
   tipo: 'total' | 'parcial';
   
   cantidades?: Record<string, number>;
+  /** Tarjeta RFID (o codigo cargado a mano) que autoriza la anulacion. */
+  codigo?: string;
   autorizadoPor?: string;
   autorizadoPorNombre?: string;
 }
@@ -37,6 +41,10 @@ export const cancelOrder = async (
   input: CancelOrderInput,
   context: { ip: string; userAgent: string },
 ): Promise<CancelOrderResult> => {
+  // La tarjeta se valida ANTES de abrir la transaccion: si el codigo no es el
+  // configurado en settings/sistema, la orden no se toca ni se devuelve stock.
+  const autorizacion = await validarCodigoAnulacion(input.codigo);
+
   const resultado = await withTransaction(async (session) => {
     const order = await Order.findOne(filtroPorId(input.orderId)).session(session).exec();
     if (!order) {
@@ -220,12 +228,22 @@ export const cancelOrder = async (
         {
           tipo: 'anulacion_ticket',
           subtipo: esTotal ? 'total' : 'parcial',
+          origen: 'api',
           motivo: input.motivo,
           ticketId: order.ticket_id ?? null,
           ventaId: String(order._id),
           sucursal: order.sucursal ?? '',
           clienteId: order.cliente ?? null,
           nombreCliente: order.nombreCliente ?? 'Cliente',
+          adminId: input.autorizadoPor ?? '',
+          adminNombre: input.autorizadoPorNombre ?? 'Sistema',
+          autorizadoPor: input.autorizadoPorNombre ?? 'Sistema',
+          // Se guarda que hubo autorizacion con tarjeta, nunca el codigo.
+          autorizacionRfid: {
+            requerido: autorizacion.requerido,
+            verificado: autorizacion.verificado,
+            contexto: esTotal ? 'anulacion_total' : 'anulacion_parcial',
+          },
           totalAntes: Number(order.total ?? 0),
           totalDespues: esTotal ? 0 : Number(order.total ?? 0),
           ip: context.ip,
@@ -262,4 +280,89 @@ export const cancelOrder = async (
   });
 
   return resultado;
+};
+
+export interface CancelarMesasAbiertasInput {
+  /** Obligatorio: tarjeta RFID (o codigo cargado a mano) que autoriza el borrado. */
+  codigo: string;
+  motivo?: string;
+  /** Sucursal a limpiar. Sin sucursal se limpian todas las mesas pendientes. */
+  sucursal?: string;
+  autorizadoPor?: string;
+  autorizadoPorNombre?: string;
+}
+
+export interface CancelarMesasAbiertasResult {
+  anuladas: number;
+  omitidas: number;
+  tickets: string[];
+  totalAnulado: number;
+}
+
+/**
+ * Borra las mesas abiertas (cuentas pendientes) del POS.
+ *
+ * No se hace un delete: cada mesa se anula con cancelOrder, o sea que devuelve
+ * el stock controlado, revierte la deuda del cliente y queda en audit_logs.
+ * Asi ni el kardex ni el arqueo se descuadran y el borrado es rastreable.
+ *
+ * La tarjeta es obligatoria: sin codigo configurado en admin, o si el codigo no
+ * coincide, no se anula nada.
+ */
+export const cancelarMesasAbiertas = async (
+  input: CancelarMesasAbiertasInput,
+  context: { ip: string; userAgent: string },
+): Promise<CancelarMesasAbiertasResult> => {
+  await validarCodigoAnulacion(input.codigo, { obligatorio: true });
+
+  const filtro: Record<string, unknown> = { estadoPago: 'pendiente' };
+  const sucursal = String(input.sucursal ?? '').trim();
+  if (sucursal !== '') filtro['sucursal'] = sucursal;
+
+  const pendientes = await Order.find(filtro)
+    .select('_id ticket_id total sucursal')
+    .lean()
+    .exec();
+
+  if (pendientes.length === 0) {
+    return { anuladas: 0, omitidas: 0, tickets: [], totalAnulado: 0 };
+  }
+
+  const motivo = String(input.motivo ?? '').trim() || 'Borrado de mesas abiertas desde POS';
+  const tickets: string[] = [];
+  let anuladas = 0;
+  let omitidas = 0;
+  let totalAnulado = 0;
+
+  for (const pendiente of pendientes) {
+    try {
+      await cancelOrder(
+        {
+          orderId: String(pendiente._id),
+          motivo,
+          tipo: 'total',
+          codigo: input.codigo,
+          autorizadoPor: input.autorizadoPor,
+          autorizadoPorNombre: input.autorizadoPorNombre,
+        },
+        context,
+      );
+
+      anuladas += 1;
+      totalAnulado += Number(pendiente.total ?? 0);
+      tickets.push(String(pendiente.ticket_id ?? pendiente._id));
+    } catch (error) {
+      // Una mesa que ya no se puede anular (o que otra caja cobro en el medio)
+      // no corta la limpieza: se registra y se sigue con las demas.
+      omitidas += 1;
+      const detalle = error instanceof Error ? error.message : String(error);
+      logger.warn(`No se pudo anular la mesa abierta ${String(pendiente._id)}: ${detalle}`);
+    }
+  }
+
+  emitTurnoEvent(sucursal !== '' ? sucursal : String(pendientes[0]?.sucursal ?? ''), 'mesas:anuladas', {
+    mesas: { anuladas, omitidas, tickets, totalAnulado, motivo },
+  });
+
+  return { anuladas, omitidas, tickets, totalAnulado };
 };
