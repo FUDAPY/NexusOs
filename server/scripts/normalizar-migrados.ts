@@ -30,6 +30,11 @@
  */
 import mongoose from 'mongoose';
 import { connectDatabase, disconnectDatabase } from '../src/config/database.js';
+/* ESTE IMPORT NO ES DECORATIVO: `mongoose.modelNames()` solo devuelve los modelos que ya
+   estan REGISTRADOS, y registrarlos es lo que hace el indice de modelos. Sin esta linea el
+   bucle no recorre NADA: el script informa "campos revisados: 0" y parece que la base esta
+   limpia, cuando en realidad no miro ni un campo. Es peor que un error, porque tranquiliza. */
+import '../src/models/index.js';
 
 /** Un objeto guardado (Timestamp de Firestore) equivale a "si". */
 const aBooleano = (valor: unknown): boolean => Boolean(valor);
@@ -148,6 +153,15 @@ export const normalizarMigrados = async (
         .collection(coleccion)
         .updateMany(filtro, [{ $set: { [ruta]: true } }]);
     }
+  }
+
+  /* Un cero aca NO es "la base esta limpia": es "no mire nada". Paso exactamente eso cuando
+     faltaba el import de los modelos, y el resultado tranquilizaba en vez de avisar. Se corta
+     con error para que nadie confunda el silencio con un resultado. */
+  if (camposRevisados === 0) {
+    throw new Error(
+      'No se reviso ningun campo: los modelos no estan registrados (falta importar ../src/models/index.js) o el esquema no tiene paths de tipo Boolean ni Date.',
+    );
   }
 
   console.log(
