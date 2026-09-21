@@ -568,12 +568,6 @@
             useFetchStreams: false
         });
         const auth = getAuth(app);
-        const functions = getFunctions(app, "us-central1");
-        const registrarAlertaOperativaFn = httpsCallable(functions, "registrarAlertaOperativa");
-        const reconciliarFlujoTurnoFn = httpsCallable(functions, "reconciliarFlujoTurno");
-        const obtenerVentasFlujoActualFn = httpsCallable(functions, "obtenerVentasFlujoActual");
-        const obtenerTicketsCierreForzadoFn = httpsCallable(functions, "obtenerTicketsCierreForzado");
-        const forzarCierreCajaSucursalFn = httpsCallable(functions, "forzarCierreCajaSucursal");
 
         const normalizarMetodoPago = (valor) => String(valor || '')
             .replaceAll('ÃƒÂ¡', 'a')
@@ -2953,22 +2947,6 @@
                 item.precio = precioUnitario;
                 
                 try {
-                    const batch = writeBatch(db);
-                    const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const ticketRef = doc(db, rutaVentas, v.id);
-
-
-                    const cantidadStockDevolver = this.cantidadStockADevolver(item, v, 1);
-                    if(cantidadStockDevolver > 0) {
-                        const prodRef = doc(db, "products", item.id);
-                        batch.update(prodRef, { stock: increment(cantidadStockDevolver) });
-                    }
-                    const consumoProduccion = this.obtenerConsumoProduccionItem(item, 1, v);
-                    this.restaurarProduccionEnBatch(batch, {
-                        [consumoProduccion.branchKey]: consumoProduccion
-                    });
-
-                    
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(v.id) + '/anular',
                         {
@@ -3101,29 +3079,6 @@
                 btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> REVIRTIENDO TODO...`; btn.disabled = true;
 
                 try {
-                    const batch = writeBatch(db);
-                    const rutaVentas = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const v = this.datosVentaGestion;
-                    
-
-                    if(v.estadoPago === 'pagado' && v.cliente && v.cliente !== 'ocasional') {
-                        const userRef = doc(db, "users", v.cliente);
-                        if(esMetodoCredito(v.metodoPago)) {
-                            batch.update(userRef, { deuda: increment(-Number(v.total)) });
-                        } else if(v.puntosOtorgados > 0) {
-                            batch.update(userRef, { puntos: increment(-Number(v.puntosOtorgados)) });
-                        }
-                    }
-
-                    /* ANULACION TOTAL por la API.
-                       El servidor hace TODO lo que hacia el batch de abajo, en una
-                       transaccion: marca la orden 'anulado' (no la borra: una venta
-                       anulada tiene que quedar para la auditoria, y el arqueo ya
-                       excluye las anuladas), devuelve el stock con su kardex y revierte
-                       la deuda o los puntos del cliente.
-                       El `return` corta el bloque viejo: las escrituras de abajo ya se
-                       habian agregado al batch, pero nunca se commitea, asi que se
-                       descartan solas. Se borra el bloque cuando esto este verificado. */
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(v.id) + '/anular',
                         {
