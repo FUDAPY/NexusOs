@@ -668,16 +668,12 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, getDoc, doc, query, where, increment, writeBatch, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
+        /* El POS ya no usa el SDK de Firebase: todo el dato (catalogo, clientes,
+           config, turnos, stock, produccion, metas) sale de la API sobre Mongo
+           via NexusAPI / NexusData. Los documentos de Firestore se migraron. */
 
         const __app_id = "erp_lingroup";
         const __initial_auth_token = "admin_master_001";
-        const firebaseConfig = { apiKey: "AIzaSyALS7-xIkcvY4MnSvBm44tzFk6cxyS14Eg", authDomain: "sys-pos-erp-lingroup.firebaseapp.com", projectId: "sys-pos-erp-lingroup", storageBucket: "sys-pos-erp-lingroup.firebasestorage.app" };
-
-        const app = initializeApp(firebaseConfig); const db = getFirestore(app); const auth = getAuth(app); const functions = getFunctions(app, "us-central1");
 
 
         const Logger = {
@@ -818,29 +814,29 @@
 
                 await this.cargarContextoSucursal();
 
-                window.addEventListener('beforeunload', (e) => {
-                    if (Object.keys(window.PosModule.reservasActivas).length > 0) {
-                        Object.keys(window.PosModule.reservasActivas).forEach(id => {
-                            updateDoc(doc(db, "products", id), { stock: increment(window.PosModule.reservasActivas[id]) });
-                        });
-                    }
-                    if (Object.keys(window.PosModule.reservasProduccionActivas).length > 0) {
-                        Object.entries(window.PosModule.reservasProduccionActivas).forEach(([branchKey, consumo]) => {
-                            const payload = {};
-                            if (Number(consumo.medallones || 0) > 0) payload.medallonesDisponibles = increment(Number(consumo.medallones));
-                            if (Number(consumo.panes || 0) > 0) payload.panesDisponibles = increment(Number(consumo.panes));
-                            if (Number(consumo.papas || 0) > 0) payload.papasDisponibles = increment(Number(consumo.papas));
-                            if (Number(consumo.carneSalteado || 0) > 0) payload.carneSalteadoDisponible = increment(Number(consumo.carneSalteado));
-                            if (Number(consumo.carneLomito || 0) > 0) payload.carneLomitoDisponible = increment(Number(consumo.carneLomito));
-                            if (Number(consumo.panLomito || 0) > 0) payload.panLomitoDisponible = increment(Number(consumo.panLomito));
-                            if (Object.keys(payload).length > 0) updateDoc(doc(db, "produccionConfig", branchKey), payload);
-                        });
-                    }
+                window.addEventListener('beforeunload', () => {
+                    /* Al cerrar la pestana se devuelven las reservas temporales de
+                       stock y de produccion (best effort: la pagina se va). */
+                    Object.entries({ ...window.PosModule.reservasActivas }).forEach(([id, cantidad]) => {
+                        window.PosModule.ajustarStockProductoApi(id, cantidad, 'Liberacion de reservas al cerrar el POS');
+                    });
+                    Object.entries({ ...window.PosModule.reservasProduccionActivas }).forEach(([branchKey, consumo]) => {
+                        window.PosModule.ajustarProduccionApi(branchKey, consumo.branchName, consumo, 1);
+                    });
                 });
 
-                onAuthStateChanged(auth, async (user) => {
+                /* El arranque de los datos NO puede depender de Firebase Auth.
+                   onAuthStateChanged ya no dispara (Auth y Firestore dejaron de
+                   autorizar), y todo este bloque -- catalogo, clientes, config y
+                   turno -- quedaba esperando para siempre: la pantalla se
+                   quedaba en "Cargando" y no se podia vender nada. */
+                this.iniciarDatosSesion();
+            },
+
+            iniciarDatosSesion: async function() {
+                const haySesion = Boolean(window.NexusAuth && window.NexusAuth.autenticado());
                     
-                    if (user || (window.NexusAuth && window.NexusAuth.autenticado())) {
+                if (haySesion) {
                         try {
                             if (this.unsubscribeProductos) this.unsubscribeProductos();
                             
@@ -893,7 +889,6 @@
                                 this.actualizarEstadoSincronizacion('productos');
                             });
 
-                            const qClientes = query(collection(db, "users"), where("rol", "==", "cliente"), where("estadoBeneficios", "==", "activo"));
                             NexusData.vigilarComoFirestore('users', { where: [['rol', '==', 'cliente'], ['estadoBeneficios', '==', 'activo']], limit: 500 }, (snapshot) => {
                                 const clientesAnteriores = [...this.clientesFirebase];
                                 this.clientesFirebase = [];
@@ -940,18 +935,10 @@
                                 this.actualizarEstadoSincronizacion('clientes');
                             });
 
-                            onSnapshot(doc(db, "config", "sistema"), (configSnap) => {
-                                const config = configSnap.exists() ? (configSnap.data() || {}) : {};
-                                this.configSistemaActual = config;
-                                this.divisas = {
-                                    PYG: 1,
-                                    USD: Number(config.divisas?.USD || 6500),
-                                    ARS: Number(config.divisas?.ARS || 65),
-                                    BRL: Number(config.divisas?.BRL || 1300)
-                                };
-                                this.fechaActualizacionCambio = config.fechaActualizacionCambio || null;
-                                this.actualizarResumenCambioEfectivo();
-                            });
+                            /* Divisas y configuracion global: por la API (Mongo).
+                               Antes venia de un onSnapshot de Firestore que ya no
+                               autoriza, asi que las tasas quedaban en el default. */
+                            this.cargarConfigSistemaDesdeApi();
 
                             this.escucharCuentasPendientes();
                             this.calcularVentasSesion();
@@ -969,7 +956,141 @@
                     } else {
                         this.cerrarSesion();
                     }
-                });
+            },
+
+            /* ---------------- Capa de datos por la API ----------------
+               El POS ya no lee ni escribe Firestore: todo pasa por NexusData /
+               NexusAPI (Mongo). Estos helpers concentran lo que antes eran
+               onSnapshot/getDoc/updateDoc(increment) sueltos por el archivo. */
+
+            cargarConfigSistemaDesdeApi: async function() {
+                try {
+                    const respuesta = await NexusAPI.get('/config/sistema', {}, { ttl: 0, retries: 1 });
+                    this.aplicarConfigSistema((respuesta && respuesta.data) || {});
+                } catch (e) {
+                    Logger.warn('No se pudo leer la configuracion del sistema; se usan las tasas por defecto.', e && e.message);
+                }
+            },
+
+            aplicarConfigSistema: function(config = {}) {
+                this.configSistemaActual = config;
+                const divisas = config.divisas || {};
+                this.divisas = {
+                    PYG: 1,
+                    USD: Number(divisas.USD || 6500),
+                    ARS: Number(divisas.ARS || 65),
+                    BRL: Number(divisas.BRL || 1300)
+                };
+                this.fechaActualizacionCambio = config.fechaActualizacionCambio || null;
+                if (typeof this.actualizarResumenCambioEfectivo === 'function') this.actualizarResumenCambioEfectivo();
+            },
+
+            /* Stock de un producto: lee el actual, escribe el nuevo y deja el
+               movimiento de kardex. Devuelve el stock resultante. */
+            ajustarStockProductoApi: async function(productoId, delta, motivo = 'Ajuste desde POS') {
+                const cantidad = Math.trunc(Number(delta || 0));
+                if (!productoId || cantidad === 0) return null;
+
+                const enMemoria = this.catalogoFirebase.find(p => String(p.id) === String(productoId));
+                let producto = enMemoria || null;
+                let idDoc = enMemoria ? String(enMemoria.uid || enMemoria._id || enMemoria.id) : '';
+
+                if (!producto) {
+                    const fila = await this.obtenerProductoApi(productoId);
+                    if (!fila) return null;
+                    producto = fila;
+                    idDoc = String(fila.uid || fila._id || productoId);
+                }
+
+                const stockAnterior = Number(producto.stock || 0);
+                const stockNuevo = Math.max(0, stockAnterior + cantidad);
+
+                try {
+                    await NexusData.actualizar('products', idDoc || productoId, { stock: stockNuevo });
+                    if (enMemoria) enMemoria.stock = stockNuevo;
+
+                    await NexusData.crear('inventory-movements', {
+                        productoId: String(productoId),
+                        nombreProducto: producto.nombre || '',
+                        sucursal: producto.sucursal || this.sesion?.sucursal || 'Unificado',
+                        tipo: cantidad < 0 ? 'VENTA' : 'AJUSTE',
+                        motivo,
+                        cantidad,
+                        cantidadAnterior: stockAnterior,
+                        cantidadResultante: stockNuevo,
+                        ventaId: this.idTicketRecuperado || null,
+                        turnoId: this.obtenerTurnoActualId(),
+                        usuario: this.sesion?.nombre || 'POS',
+                        usuarioId: this.sesion?.uid || this.sesion?.id || null,
+                        fecha: new Date().toISOString(),
+                        estado: 'aplicado'
+                    });
+                } catch (e) {
+                    Logger.error('No se pudo ajustar el stock del producto', e && e.message);
+                    return null;
+                }
+
+                return stockNuevo;
+            },
+
+            obtenerProductoApi: async function(productoId) {
+                try {
+                    return await NexusData.obtener('products', productoId);
+                } catch (e) {
+                    Logger.warn('No se pudo leer el producto desde la API', e && e.message);
+                    return null;
+                }
+            },
+
+            /* Insumos de produccion: antes 'produccionConfig' en Firestore, hoy
+               'production-config' en Mongo. */
+            obtenerProduccionConfigApi: async function(branchKey) {
+                if (!branchKey) return null;
+                try {
+                    const filas = await NexusData.leer('production-config', { where: [['sucursalKey', '==', branchKey]], limit: 1 });
+                    return (filas && filas[0]) || null;
+                } catch (e) {
+                    Logger.warn('No se pudo leer la produccion configurada', e && e.message);
+                    return null;
+                }
+            },
+
+            ajustarProduccionApi: async function(branchKey, branchName, delta = {}, signo = 1) {
+                if (!branchKey) return;
+                const mapa = {
+                    medallones: 'medallonesDisponibles',
+                    panes: 'panesDisponibles',
+                    papas: 'papasDisponibles',
+                    carneSalteado: 'carneSalteadoDisponible',
+                    carneLomito: 'carneLomitoDisponible',
+                    panLomito: 'panLomitoDisponible'
+                };
+                const consumos = Object.entries(mapa)
+                    .map(([clave, campo]) => ({ campo, valor: Number(delta[clave] || 0) * signo }))
+                    .filter((x) => x.valor !== 0);
+                if (consumos.length === 0) return;
+
+                try {
+                    const actual = await this.obtenerProduccionConfigApi(branchKey);
+                    const cambios = {};
+                    consumos.forEach(({ campo, valor }) => {
+                        const base = Number((actual && actual[campo]) || 0);
+                        cambios[campo] = Math.max(0, base + valor);
+                    });
+
+                    const idDoc = actual ? String(actual.uid || actual._id || '') : '';
+                    if (idDoc) {
+                        await NexusData.actualizar('production-config', idDoc, cambios);
+                    } else {
+                        await NexusData.crear('production-config', {
+                            sucursalKey: branchKey,
+                            sucursal: branchName || this.sesion?.sucursal || '',
+                            ...cambios
+                        });
+                    }
+                } catch (e) {
+                    Logger.warn('No se pudo ajustar la produccion configurada', e && e.message);
+                }
             },
 
             normalizarFecha: function(valor) {
@@ -1199,27 +1320,6 @@
                 });
                 return mapa;
             },
-            aplicarAjustesProduccionEnBatch: function(batch, ajustes = {}, signo = 1) {
-                Object.values(ajustes).forEach((ajuste) => {
-                    const payload = {};
-                    if (Number(ajuste.medallones || 0) > 0) payload.medallonesDisponibles = increment(Number(ajuste.medallones) * signo);
-                    if (Number(ajuste.panes || 0) > 0) payload.panesDisponibles = increment(Number(ajuste.panes) * signo);
-                    if (Number(ajuste.papas || 0) > 0) payload.papasDisponibles = increment(Number(ajuste.papas) * signo);
-                    if (Number(ajuste.carneSalteado || 0) > 0) payload.carneSalteadoDisponible = increment(Number(ajuste.carneSalteado) * signo);
-                    if (Number(ajuste.carneLomito || 0) > 0) payload.carneLomitoDisponible = increment(Number(ajuste.carneLomito) * signo);
-                    if (Number(ajuste.panLomito || 0) > 0) payload.panLomitoDisponible = increment(Number(ajuste.panLomito) * signo);
-                    if (Object.keys(payload).length > 0) {
-                        batch.set(doc(db, "produccionConfig", ajuste.branchKey), {
-                            sucursal: ajuste.branchName,
-                            sucursalKey: ajuste.branchKey,
-                            updatedAt: new Date(),
-                            updatedBy: this.sesion?.uid || this.sesion?.id || null,
-                            updatedByNombre: this.sesion?.nombre || 'POS'
-                        }, { merge: true });
-                        batch.update(doc(db, "produccionConfig", ajuste.branchKey), payload);
-                    }
-                });
-            },
             actualizarReservasProduccionActivas: function(consumo = {}, cantidad = 1) {
                 if (!consumo?.branchKey) return;
                 const actual = this.reservasProduccionActivas[consumo.branchKey] || {
@@ -1244,8 +1344,7 @@
                 const consumo = this.obtenerConsumoProduccionDeItem(item, cantidad);
                 if (consumo.medallones <= 0 && consumo.panes <= 0 && consumo.papas <= 0 && consumo.carneSalteado <= 0 && consumo.carneLomito <= 0 && consumo.panLomito <= 0) return true;
                 try {
-                    const snap = await getDoc(doc(db, "produccionConfig", consumo.branchKey));
-                    const data = snap.exists() ? (snap.data() || {}) : {};
+                    const data = (await this.obtenerProduccionConfigApi(consumo.branchKey)) || {};
                     const faltantes = [];
                     if (consumo.medallones > Number(data.medallonesDisponibles || 0)) faltantes.push(`medallones (${Number(data.medallonesDisponibles || 0)})`);
                     if (consumo.panes > Number(data.panesDisponibles || 0)) faltantes.push(`panes (${Number(data.panesDisponibles || 0)})`);
@@ -1267,28 +1366,14 @@
             descontarProduccionTemporal: async function(item = {}, cantidad = 1) {
                 const consumo = this.obtenerConsumoProduccionDeItem(item, cantidad);
                 if (consumo.medallones <= 0 && consumo.panes <= 0 && consumo.papas <= 0 && consumo.carneSalteado <= 0 && consumo.carneLomito <= 0 && consumo.panLomito <= 0) return true;
-                const payload = {};
-                if (consumo.medallones > 0) payload.medallonesDisponibles = increment(-consumo.medallones);
-                if (consumo.panes > 0) payload.panesDisponibles = increment(-consumo.panes);
-                if (consumo.papas > 0) payload.papasDisponibles = increment(-consumo.papas);
-                if (consumo.carneSalteado > 0) payload.carneSalteadoDisponible = increment(-consumo.carneSalteado);
-                if (consumo.carneLomito > 0) payload.carneLomitoDisponible = increment(-consumo.carneLomito);
-                if (consumo.panLomito > 0) payload.panLomitoDisponible = increment(-consumo.panLomito);
-                await updateDoc(doc(db, "produccionConfig", consumo.branchKey), payload);
+                await this.ajustarProduccionApi(consumo.branchKey, consumo.branchName, consumo, -1);
                 this.actualizarReservasProduccionActivas(consumo, 1);
                 return true;
             },
             liberarProduccionTemporal: async function(item = {}, cantidad = 1) {
                 const consumo = this.obtenerConsumoProduccionDeItem(item, cantidad);
                 if (consumo.medallones <= 0 && consumo.panes <= 0 && consumo.papas <= 0 && consumo.carneSalteado <= 0 && consumo.carneLomito <= 0 && consumo.panLomito <= 0) return;
-                const payload = {};
-                if (consumo.medallones > 0) payload.medallonesDisponibles = increment(consumo.medallones);
-                if (consumo.panes > 0) payload.panesDisponibles = increment(consumo.panes);
-                if (consumo.papas > 0) payload.papasDisponibles = increment(consumo.papas);
-                if (consumo.carneSalteado > 0) payload.carneSalteadoDisponible = increment(consumo.carneSalteado);
-                if (consumo.carneLomito > 0) payload.carneLomitoDisponible = increment(consumo.carneLomito);
-                if (consumo.panLomito > 0) payload.panLomitoDisponible = increment(consumo.panLomito);
-                await updateDoc(doc(db, "produccionConfig", consumo.branchKey), payload);
+                await this.ajustarProduccionApi(consumo.branchKey, consumo.branchName, consumo, 1);
                 this.actualizarReservasProduccionActivas(consumo, -1);
             },
             esMetodoCredito: function(valor) {
@@ -1414,11 +1499,20 @@
                 const cajeroId = String(this.sesion?.uid || this.sesion?.id || this.sesion?.usuarioId || '').trim();
                 if (!sucursal || !cajeroId) return false;
                 try {
-                    const snap = await getDocs(query(collection(db, 'cashFlows'), where('estadoTurno', '==', 'abierto')));
-                    const candidatos = snap.docs
-                        .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }))
-                        .filter((turno) => String(turno.sucursal || '').trim() === sucursal && String(turno.cajeroId || '').trim() === cajeroId)
-                        .sort((a, b) => this.normalizarFecha(b.fechaApertura || b.updatedAt).getTime() - this.normalizarFecha(a.fechaApertura || a.updatedAt).getTime());
+                    /* Turnos abiertos de la sucursal por la API (antes un getDocs de
+                       Firestore). Se toma el del cajero logueado; si el documento
+                       no guarda cajeroId, se compara por nombre. */
+                    const nombreCajero = String(this.sesion?.nombre || '').trim().toLowerCase();
+                    const filas = await NexusData.leer('cash-flows', { where: [['sucursal', '==', sucursal], ['estadoTurno', '==', 'abierto']], limit: 50 });
+                    const candidatos = (filas || [])
+                        .map((turno) => ({ id: String(turno.turnoId || turno.uid || turno._id || ''), ...turno }))
+                        .filter((turno) => {
+                            const idTurno = String(turno.cajeroId || '').trim();
+                            if (idTurno !== '') return idTurno === cajeroId;
+                            const nombreTurno = String(turno.cajero || turno.cajeroNombre || '').trim().toLowerCase();
+                            return nombreTurno !== '' && nombreTurno === nombreCajero;
+                        })
+                        .sort((a, b) => this.normalizarFecha(b.updatedAt || b.fechaApertura).getTime() - this.normalizarFecha(a.updatedAt || a.fechaApertura).getTime());
                     const turno = candidatos[0];
                     if (!turno?.id) return false;
                     const aperturaMs = Number(turno.fechaAperturaMs || 0) || this.normalizarFecha(turno.fechaApertura || turno.updatedAt).getTime();
@@ -1548,41 +1642,49 @@
                 const day = parts.find(part => part.type === 'day')?.value || String(safeDate.getDate()).padStart(2, '0');
                 return `${year}-${month}-${day}`;
             },
-            registrarMetaPublicaEnBatch: function(batch, venta = {}) {
+            /* Meta publica de la sucursal (dailyTotals + monthlyTotal) por la API.
+               Antes era un writeBatch de Firestore con increment(): con las reglas
+               nuevas no autorizaba y la meta no se registraba nunca. */
+            registrarMetaPublica: async function(venta = {}) {
                 const total = Number(venta.total || 0);
                 const sucursal = venta.sucursal || this.sesion?.sucursal || '';
-                if (!batch || total <= 0 || !sucursal) return;
+                if (total <= 0 || !sucursal) return;
 
                 const fechaMeta = venta.fechaMetaPublica || venta.fechaPago || venta.fechaConfirmacionCaja || venta.fecha || new Date();
                 const dateKey = this.obtenerFechaMetaPublica(fechaMeta);
+                const month = dateKey.slice(0, 7);
                 const branchId = this.obtenerIdMetaPublicaSucursal(sucursal);
-                const day = Number(dateKey.slice(-2));
                 const branchName = branchId === 'cafeteria_chicolin'
                     ? 'Cafeteria Chicolin'
                     : branchId === 'mr_lin_restaurante'
                         ? 'Mr Lin Restaurante'
                         : sucursal;
 
-                batch.set(doc(db, 'publicGoals', branchId), {
-                    branchId,
-                    branchName,
-                    dailyGoal: 2000000,
-                    monthlyGoal: 2000000,
-                    month: dateKey.slice(0, 7),
-                    monthlyTotal: increment(total),
-                    dailyTotals: {
-                        [dateKey]: increment(total)
-                    },
-                    updatedAt: new Date(),
-                    lastSaleAt: venta.fecha || new Date(),
-                    lastSaleTotal: total,
-                    lastSaleDay: day
-                }, { merge: true });
-            },
-            registrarMetaPublica: async function(venta = {}) {
-                const batch = writeBatch(db);
-                this.registrarMetaPublicaEnBatch(batch, venta);
-                await batch.commit();
+                try {
+                    const filas = await NexusData.leer('public-goals', { where: [['month', '==', month]], limit: 50 });
+                    const meta = (filas || []).find(m => String(m.branchId || m.sucursalKey || '') === branchId) || null;
+
+                    const dailyTotals = { ...((meta && meta.dailyTotals) || {}) };
+                    dailyTotals[dateKey] = Number(dailyTotals[dateKey] || 0) + total;
+
+                    const cambios = {
+                        branchId,
+                        branchName,
+                        month,
+                        monthlyTotal: Number((meta && meta.monthlyTotal) || 0) + total,
+                        dailyTotals,
+                        updatedAt: new Date().toISOString(),
+                        lastSaleAt: new Date().toISOString(),
+                        lastSaleTotal: total,
+                        lastSaleDay: Number(dateKey.slice(-2))
+                    };
+
+                    const idMeta = meta ? String(meta.uid || meta._id || '') : '';
+                    if (idMeta) await NexusData.actualizar('public-goals', idMeta, cambios);
+                    else await NexusData.crear('public-goals', { dailyGoal: 2000000, monthlyGoal: 2000000, ...cambios });
+                } catch (e) {
+                    console.error('Pago registrado, pero no se pudo actualizar la meta publica', e);
+                }
             },
             reaplicarBeneficiosClienteEnCarrito: function() {
                 this.carrito = this.carrito.map(item => {
@@ -1865,16 +1967,14 @@
 
             registrarSyncLog: async function(tipo, coleccion, detalle = {}) {
                 try {
-                    const batch = writeBatch(db);
-                    batch.set(doc(collection(db, "syncLog")), {
-                        timestamp: new Date(),
+                    await NexusData.crear('sync-logs', {
                         tipo,
                         coleccion,
                         sucursal: this.sesion ? this.sesion.sucursal : null,
                         usuario: this.sesion ? this.sesion.nombre : null,
-                        detalle
+                        detalle,
+                        timestamp: new Date().toISOString()
                     });
-                    await batch.commit();
                 } catch (e) {
                     Logger.warn('No se pudo registrar syncLog', e);
                 }
@@ -1882,14 +1982,17 @@
 
             detectorConflictoStock: async function(productoId, cantidadSolicitada = 1) {
                 try {
-                    const snap = await getDoc(doc(db, "products", productoId));
-                    if (!snap.exists()) {
+                    /* Se mira el catalogo ya cargado (y si no esta, la API). Antes
+                       era un getDoc de Firestore: al fallar por permisos cortaba
+                       la venta con "error en el producto". */
+                    const producto = this.catalogoFirebase.find(p => String(p.id) === String(productoId))
+                        || await this.obtenerProductoApi(productoId);
+                    if (!producto) {
                         this.mostrarToast('Producto no encontrado', 'error');
                         return false;
                     }
-                    const producto = snap.data();
                     const stockActual = Number(producto.stock || 0);
-                    if (producto.controlado && stockActual < cantidadSolicitada) {
+                    if (this.esControlado(producto.controlado) && stockActual < cantidadSolicitada) {
                         this.mostrarToast(`Stock insuficiente. Disponible: ${stockActual}`, 'error');
                         this.mostrarNotificacionSincro(`Conflicto de stock: ${producto.nombre}`, 'error');
                         this.registrarSyncLog('conflicto_stock', 'products', {
@@ -1912,7 +2015,7 @@
                 const reservadas = Number(this.reservasActivas[productoId] || 0);
                 const aLiberar = Math.min(reservadas, cantidad);
                 if (aLiberar <= 0) return;
-                await updateDoc(doc(db, "products", productoId), { stock: increment(aLiberar) });
+                await this.ajustarStockProductoApi(productoId, aLiberar, 'Liberacion de reserva temporal');
                 const restante = reservadas - aLiberar;
                 if (restante > 0) this.reservasActivas[productoId] = restante;
                 else delete this.reservasActivas[productoId];
@@ -1968,43 +2071,6 @@
                     if (!this.esControlado(item?.controlado)) return { ...item, stockDescontado: false, stockDescontadoCantidad: 0 };
                     const cantidad = Math.max(0, Math.floor(Number(item.cantidad || 0)));
                     return { ...item, stockDescontado: cantidad > 0, stockDescontadoCantidad: cantidad };
-                });
-            },
-            aplicarDescuentoStockEnTransaccion: async function(transaction, ajustes = [], ventaId = '') {
-                const lecturas = [];
-                for (const ajuste of ajustes) {
-                    const ref = doc(db, "products", ajuste.productoId);
-                    const snap = await transaction.get(ref);
-                    if (!snap.exists()) throw new Error(`Producto no encontrado: ${ajuste.nombre}`);
-                    lecturas.push({ ajuste, ref, data: snap.data() || {} });
-                }
-                lecturas.forEach(({ ajuste, ref, data }) => {
-                    if (!this.esControlado(data.controlado)) return;
-                    const stockActual = Number(data.stock || 0);
-                    const cantidad = Math.max(0, Math.floor(Number(ajuste.cantidad || 0)));
-                    if (stockActual < cantidad) {
-                        throw new Error(`Stock insuficiente para ${data.nombre || ajuste.nombre}. Disponible: ${stockActual}`);
-                    }
-                    transaction.update(ref, { stock: increment(-cantidad) });
-                    transaction.set(doc(collection(db, "inventoryMovements")), {
-                        productoId: ajuste.productoId,
-                        nombreProducto: data.nombre || ajuste.nombre || '',
-                        sucursal: data.sucursal || this.sesion?.sucursal || 'Unificado',
-                        sucursalId: this.obtenerSucursalNormalizada(data.sucursalId || data.branchId || data.sucursal || this.sesion?.sucursal || '').id || this.sucursalIdActual || null,
-                        tipo: 'VENTA',
-                        cantidadAnterior: stockActual,
-                        cantidad: -cantidad,
-                        cantidadResultante: stockActual - cantidad,
-                        ventaId,
-                        usuario: this.sesion?.nombre || 'POS',
-                        usuarioId: this.sesion?.uid || this.sesion?.id || null,
-                        cajaId: this.obtenerTurnoActualId(),
-                        turnoId: this.obtenerTurnoActualId(),
-                        fecha: serverTimestamp(),
-                        motivo: 'Venta confirmada en POS',
-                        estado: 'aplicado',
-                        idempotencyKey: `${ventaId || 'venta'}::${ajuste.productoId}::VENTA`
-                    });
                 });
             },
             calcularAjustesProduccionTicketRecuperado: function() {
@@ -2310,19 +2376,10 @@
                 this.itemObsEditando = null;
                 this.actualizarUI();
                 for (const [productoId, cantidad] of reservas) {
-                    await updateDoc(doc(db, "products", productoId), { stock: increment(Number(cantidad)) });
+                    await this.ajustarStockProductoApi(productoId, cantidad, 'Vaciado del carrito');
                 }
                 for (const [branchKey, consumo] of reservasProduccion) {
-                    const payload = {};
-                    if (Number(consumo.medallones || 0) > 0) payload.medallonesDisponibles = increment(Number(consumo.medallones));
-                    if (Number(consumo.panes || 0) > 0) payload.panesDisponibles = increment(Number(consumo.panes));
-                    if (Number(consumo.papas || 0) > 0) payload.papasDisponibles = increment(Number(consumo.papas));
-                    if (Number(consumo.carneSalteado || 0) > 0) payload.carneSalteadoDisponible = increment(Number(consumo.carneSalteado));
-                    if (Number(consumo.carneLomito || 0) > 0) payload.carneLomitoDisponible = increment(Number(consumo.carneLomito));
-                    if (Number(consumo.panLomito || 0) > 0) payload.panLomitoDisponible = increment(Number(consumo.panLomito));
-                    if (Object.keys(payload).length > 0) {
-                        await updateDoc(doc(db, "produccionConfig", branchKey), payload);
-                    }
+                    await this.ajustarProduccionApi(branchKey, consumo.branchName, consumo, 1);
                 }
             },
 
@@ -2644,19 +2701,55 @@
                 this.totalesSistema = { efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0, abonosEfe: 0 };
                 this.productosVendidos = {};
                 if (!this.turnoActualId) return;
-                this.unsubscribeResumenTurno = onSnapshot(doc(db, 'cashFlows', this.turnoActualId), (snapshot) => {
-                    const resumen = snapshot.exists() ? (snapshot.data() || {}) : {};
-                    this.totalesSistema = {
-                        efectivo: Number(resumen.efectivo || 0),
-                        tarjeta: Number(resumen.tarjetaPOS || 0),
-                        transferencia: Number(resumen.transferencia || 0),
-                        credito: Number(resumen.credito || 0),
-                        abonosEfe: 0
-                    };
-                }, (error) => {
-                    console.error('No se pudo sincronizar el resumen del turno en POS.', error);
-                    this.mostrarToast('No se pudo actualizar el resumen de caja.', 'error');
+                const sucursal = String(this.sesion?.sucursal || '').trim();
+                const turnoId = String(this.turnoActualId);
+
+                /* El resumen del turno se sigue por la API: se busca el turno
+                   abierto de la sucursal y, si el documento no trae los totales,
+                   se suman las ventas del turno. (Antes: onSnapshot de Firestore,
+                   que fallaba con "Missing or insufficient permissions".) */
+                this.unsubscribeResumenTurno = NexusData.vigilar('cash-flows', { where: [['sucursal', '==', sucursal], ['estadoTurno', '==', 'abierto']], limit: 50 }, (filas) => {
+                    const turno = (filas || []).find(t => String(t.turnoId || t.uid || t._id || '') === turnoId);
+                    if (!turno) return;
+
+                    const traeTotales = ['efectivo', 'tarjetaPOS', 'transferencia', 'credito'].some(c => Number(turno[c] || 0) > 0);
+                    if (traeTotales) {
+                        this.totalesSistema = {
+                            efectivo: Number(turno.efectivo || 0),
+                            tarjeta: Number(turno.tarjetaPOS || 0),
+                            transferencia: Number(turno.transferencia || 0),
+                            credito: Number(turno.credito || 0),
+                            abonosEfe: 0
+                        };
+                        return;
+                    }
+                    this.calcularTotalesTurnoDesdeVentas();
                 });
+            },
+
+            /* Totales de caja del turno sumando las ventas cobradas (sin anuladas
+               ni movimientos gratuitos). */
+            calcularTotalesTurnoDesdeVentas: async function() {
+                if (!this.turnoActualId) return;
+                try {
+                    const filas = await NexusData.leer('orders', { where: [['turnoId', '==', String(this.turnoActualId)]], limit: 500 });
+                    const totales = { efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0, abonosEfe: 0 };
+
+                    (filas || []).forEach((venta) => {
+                        if (this.normalizarTextoComparacion(venta.estadoPago || '') === 'anulado') return;
+                        if (venta.noAfectaCaja === true) return;
+                        const total = Number(venta.total || 0);
+                        const metodo = this.normalizarTextoComparacion(venta.metodoPago || '');
+                        if (metodo === 'efectivo') totales.efectivo += total;
+                        else if (metodo === 'tarjeta' || metodo === 'tarjeta pos') totales.tarjeta += total;
+                        else if (metodo === 'transferencia') totales.transferencia += total;
+                        else if (metodo === 'credito') totales.credito += total;
+                    });
+
+                    this.totalesSistema = totales;
+                } catch (e) {
+                    Logger.warn('No se pudieron sumar las ventas del turno', e && e.message);
+                }
             },
 
             abrirModalCierre: function() {
@@ -2937,8 +3030,6 @@
             },
 
             escucharCuentasPendientes: function() {
-                const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                const q = query(collection(db, rutaPrivada), where("sucursal", "==", this.sesion.sucursal), where("estadoPago", "==", "pendiente"));
                 NexusData.vigilarComoFirestore('orders', { where: [['sucursal', '==', this.sesion.sucursal], ['estadoPago', '==', 'pendiente']], limit: 500 }, (snapshot) => {
                     this.listaCuentasPendientes = [];
                     snapshot.forEach(doc => { this.listaCuentasPendientes.push({ id: doc.id, ...doc.data() }); });
@@ -3624,8 +3715,6 @@
                 const creditoYaProcesado = Boolean(oldDoc?.creditoProcesado);
 
                 try {
-                    const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                    const nuevaVentaRef = this.idTicketRecuperado ? null : doc(collection(db, rutaPrivada));
                     let pedidoClienteNotificacion = null;
                     let ventaMetaPublica = null;
                     if (!this.idTicketRecuperado) {
@@ -3855,8 +3944,18 @@
                     }
                     if (pedidoClienteNotificacion) {
                         try {
-                            const callable = httpsCallable(functions, "notificarEstadoPedidoCliente");
-                            await callable(pedidoClienteNotificacion);
+                            /* Aviso al cliente por la API: antes era una funcion de
+                               Firebase (httpsCallable), que ya no esta disponible. */
+                            await NexusData.crear('notifications', {
+                                autor: this.sesion?.nombre || 'POS',
+                                rolAutor: this.sesion?.rol || 'cajero',
+                                para: pedidoClienteNotificacion.clienteId,
+                                titulo: pedidoClienteNotificacion.titulo,
+                                mensaje: pedidoClienteNotificacion.mensaje,
+                                saleId: pedidoClienteNotificacion.saleId || null,
+                                fecha: new Date().toISOString(),
+                                leida: false
+                            });
                         } catch (pushError) {
                             console.error("No se pudo notificar pago confirmado al cliente", pushError);
                         }
@@ -4384,7 +4483,16 @@
 
                 const leer = () => {
 
-                    NexusData.leer('products', { where: [['estado', '==', 'Activo']], limit: 500 })
+                    const leerProductos = (conEstado) => NexusData.leer(
+                        'products',
+                        conEstado ? { where: [['estado', '==', 'Activo']], limit: 500 } : { limit: 500 }
+                    );
+
+                    /* Si el filtro por estado no devuelve nada (productos viejos
+                       con otro estado o sin estado), se lee todo: es mejor mostrar
+                       el catalogo que dejar la pantalla vacia. */
+                    leerProductos(true)
+                        .then((filas) => (filas && filas.length > 0 ? filas : leerProductos(false)))
                         .then((filas) => {
                             if (!vivo) return;
                             alCambiar({
@@ -4403,7 +4511,7 @@
                 };
             },
 
-            cerrarSesion: async function () { await signOut(auth); localStorage.removeItem('__pos_session'); window.location.replace('index.html'); }
+            cerrarSesion: async function () { if (window.NexusAuth) window.NexusAuth.salir(); localStorage.removeItem('__pos_session'); window.location.replace('index.html'); }
         };
 
         document.addEventListener('DOMContentLoaded', () => PosModule.init());

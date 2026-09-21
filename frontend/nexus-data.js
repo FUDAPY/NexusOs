@@ -18,6 +18,8 @@
     cashFlows: '/cash-shifts',
     cash_shifts: '/cash-shifts',
     cashShifts: '/cash-shifts',
+    'cash-flows': '/cash-shifts',
+    'cash-shifts': '/cash-shifts',
 
 
     cierresCaja: '/cash-closes',
@@ -32,6 +34,8 @@
     production_batches: '/production-batches',
     productionConfig: '/production-config',
     production_config: '/production-config',
+    'production-config': '/production-config',
+    'production-batches': '/production-batches',
 
     linTickets: '/lin-tickets',
     lin_tickets: '/lin-tickets',
@@ -45,10 +49,15 @@
 
     publicGoals: '/public-goals',
     public_goals: '/public-goals',
+    'public-goals': '/public-goals',
     supportAlerts: '/support-alerts',
     support_alerts: '/support-alerts',
     syncLogs: '/sync-logs',
     sync_logs: '/sync-logs',
+    'sync-logs': '/sync-logs',
+    inventoryMovements: '/inventory-movements',
+    inventory_movements: '/inventory-movements',
+    'inventory-movements': '/inventory-movements',
     notifications: '/notifications',
     settings: '/settings',
   };
