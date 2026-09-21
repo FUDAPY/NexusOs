@@ -30,6 +30,9 @@ const envSchema = z.object({
 
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
+  /* El service account tambien se puede pasar por variable (JSON pegado): en un VPS es mas
+     simple que montar un archivo, y la migracion se dispara desde el propio contenedor. */
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   FIREBASE_SALES_PATH: z.string().default('artifacts/erp_lingroup/users/admin_master_001/sales'),
 });
 

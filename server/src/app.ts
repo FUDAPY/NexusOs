@@ -13,6 +13,7 @@ import { productionRouter } from './routes/production.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { configRouter } from './routes/config.routes.js';
 import { uploadRouter } from './routes/upload.routes.js';
+import { adminRouter } from './routes/admin.routes.js';
 import { requiereAuth } from './middlewares/auth.js';
 
 export const buildApp = (): Express => {
@@ -65,6 +66,10 @@ app.use(`${env.API_PREFIX}/production-batches`, requiereAuth, productionRouter);
 
   // generico; las escrituras pasan por aca con control de rol.
   app.use(`${env.API_PREFIX}/config`, configRouter);
+
+  // Tareas de admin: la migracion Firestore -> Mongo corre desde el contenedor, porque Mongo
+  // no esta publicado a internet. Solo rol admin (lo exige el propio router).
+  app.use(`${env.API_PREFIX}/admin`, requiereAuth, adminRouter);
 
   // El resto del CRUD generico (~23 colecciones) exige token.
   app.use(env.API_PREFIX, requiereAuth, resourceRouter);
