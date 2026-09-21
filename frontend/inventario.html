@@ -753,27 +753,34 @@
             
             cerrarModalFormulario: function() { document.getElementById('modal-formulario').classList.add('hidden'); document.getElementById('modal-formulario').classList.remove('flex'); },
 
-            registrarMovimientoInventarioEnBatch: function(batch, { productoId, productoAnterior = null, productoNuevo = {}, tipo = 'AJUSTE_POSITIVO', cantidadAnterior = 0, cantidadResultante = 0 }) {
-                if (!batch || !productoId || productoNuevo.controlado !== true) return;
+            /* Kardex por la API (antes era un batch de Firestore, que con las reglas
+               nuevas no autorizaba y dejaba el movimiento sin registrar). */
+            registrarMovimientoInventario: async function({ productoId, productoAnterior = null, productoNuevo = {}, tipo = 'AJUSTE_POSITIVO', cantidadAnterior = 0, cantidadResultante = 0 }) {
+                if (!productoId || productoNuevo.controlado !== true) return;
                 const cantidad = Number(cantidadResultante || 0) - Number(cantidadAnterior || 0);
                 if (cantidad === 0 && tipo !== 'STOCK_INICIAL') return;
-                batch.set(doc(collection(db, "inventoryMovements")), {
-                    productoId,
-                    nombreProducto: productoNuevo.nombre || productoAnterior?.nombre || '',
-                    sucursal: productoNuevo.sucursal || productoAnterior?.sucursal || 'Unificado',
-                    sucursalId: productoNuevo.sucursalId || productoAnterior?.sucursalId || CierreCajaNormalizer.obtenerSucursalRegistro(productoNuevo || productoAnterior || {}).id || 'unificado',
-                    sucursalNombre: productoNuevo.sucursalNombre || productoNuevo.sucursal || productoAnterior?.sucursalNombre || productoAnterior?.sucursal || 'Unificado',
-                    tipo,
-                    cantidadAnterior: Number(cantidadAnterior || 0),
-                    cantidad,
-                    cantidadResultante: Number(cantidadResultante || 0),
-                    usuario: this.usuarioActual?.nombre || 'Admin',
-                    usuarioId: this.usuarioActual?.uid || this.usuarioActual?.id || null,
-                    fecha: serverTimestamp(),
-                    motivo: tipo === 'STOCK_INICIAL' ? 'Stock inicial desde inventario' : 'Ajuste manual desde inventario',
-                    estado: 'aplicado',
-                    idempotencyKey: `${productoId}::${Date.now()}::${tipo}`
-                });
+
+                try {
+                    await NexusData.crear('inventory-movements', {
+                        productoId,
+                        nombreProducto: productoNuevo.nombre || productoAnterior?.nombre || '',
+                        sucursal: productoNuevo.sucursal || productoAnterior?.sucursal || 'Unificado',
+                        sucursalId: productoNuevo.sucursalId || productoAnterior?.sucursalId || CierreCajaNormalizer.obtenerSucursalRegistro(productoNuevo || productoAnterior || {}).id || 'unificado',
+                        sucursalNombre: productoNuevo.sucursalNombre || productoNuevo.sucursal || productoAnterior?.sucursalNombre || productoAnterior?.sucursal || 'Unificado',
+                        tipo,
+                        cantidadAnterior: Number(cantidadAnterior || 0),
+                        cantidad,
+                        cantidadResultante: Number(cantidadResultante || 0),
+                        usuario: this.usuarioActual?.nombre || 'Admin',
+                        usuarioId: this.usuarioActual?.uid || this.usuarioActual?.id || null,
+                        fecha: new Date().toISOString(),
+                        motivo: tipo === 'STOCK_INICIAL' ? 'Stock inicial desde inventario' : 'Ajuste manual desde inventario',
+                        estado: 'aplicado',
+                        idempotencyKey: `${productoId}::${Date.now()}::${tipo}`
+                    });
+                } catch (e) {
+                    console.warn('No se pudo registrar el movimiento de inventario', e && e.message);
+                }
             },
 
             guardarProducto: async function(event) {
@@ -841,28 +848,28 @@
                     if (codigo) datos.codigo = codigo;
                     if (puntosCanje > 0) datos.puntosCanje = puntosCanje;
                 } else {
-                    datos.imagen = archivoImagen ? imagen : (imagen || deleteField());
-                    datos.codigo = codigo || deleteField();
-                    datos.puntosCanje = puntosCanje > 0 ? puntosCanje : deleteField();
+                    /* null limpia el campo del producto en la API (deleteField era de Firestore). */
+                    datos.imagen = archivoImagen ? imagen : (imagen || null);
+                    datos.codigo = codigo || null;
+                    datos.puntosCanje = puntosCanje > 0 ? puntosCanje : null;
                 }
                 
                 try {
                     if (id === "") {
-                        const nuevoDoc = await addDoc(collection(db, "products"), datos);
+                        const creado = await NexusData.crear('products', datos);
+                        const nuevoId = String((creado && (creado.uid || creado._id)) || '');
                         if (datos.controlado === true && Number(datos.stock || 0) > 0) {
-                            const batch = writeBatch(db);
-                            this.registrarMovimientoInventarioEnBatch(batch, {
-                                productoId: nuevoDoc.id,
+                            await this.registrarMovimientoInventario({
+                                productoId: nuevoId,
                                 productoNuevo: datos,
                                 tipo: 'STOCK_INICIAL',
                                 cantidadAnterior: 0,
                                 cantidadResultante: Number(datos.stock || 0)
                             });
-                            await batch.commit();
                         }
-                        if (archivoImagen) {
-                            const urlImagen = await this.subirImagenProducto(archivoImagen, nuevoDoc.id);
-                            await updateDoc(doc(db, "products", nuevoDoc.id), { imagen: urlImagen });
+                        if (archivoImagen && nuevoId !== '') {
+                            const urlImagen = await this.subirImagenProducto(archivoImagen, nuevoId);
+                            await NexusData.actualizar('products', nuevoId, { imagen: urlImagen });
                         }
                         this.mostrarToast("Producto creado con éxito.");
                     } else {
@@ -870,10 +877,9 @@
                         const productoAnterior = this.productosFirebase.find(p => p.id === id) || null;
                         const stockAnterior = productoAnterior?.controlado === true ? Number(productoAnterior.stock || 0) : 0;
                         const stockNuevo = datos.controlado === true ? Number(datos.stock || 0) : 0;
-                        const batch = writeBatch(db);
-                        batch.update(doc(db, "products", id), datos);
+                        await NexusData.actualizar('products', id, datos);
                         if (stockAnterior !== stockNuevo) {
-                            this.registrarMovimientoInventarioEnBatch(batch, {
+                            await this.registrarMovimientoInventario({
                                 productoId: id,
                                 productoAnterior,
                                 productoNuevo: datos,
@@ -882,7 +888,6 @@
                                 cantidadResultante: stockNuevo
                             });
                         }
-                        await batch.commit();
                         this.mostrarToast("Producto actualizado.");
                     }
                     this.cerrarModalFormulario(); this.cargarProductos();
@@ -981,7 +986,7 @@
                 setTimeout(() => ventana.print(), 250);
             },
 
-            cerrarSesion: async function() { await signOut(auth); localStorage.removeItem('__pos_session'); window.location.replace('index.html'); }
+            cerrarSesion: async function() { if (window.NexusAuth) window.NexusAuth.salir(); localStorage.removeItem('__pos_session'); window.location.replace('index.html'); }
         };
 
         document.addEventListener('DOMContentLoaded', () => InventarioModule.init());

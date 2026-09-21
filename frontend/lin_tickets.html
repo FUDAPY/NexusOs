@@ -479,7 +479,7 @@
                     oneTimePerUser: document.getElementById('ticket-uso-unico').checked,
                     conditions: document.getElementById('ticket-condiciones').value.trim(),
                     imageUrl: document.getElementById('ticket-imagen-url').value.trim(),
-                    updatedAt: serverTimestamp()
+                    updatedAt: new Date().toISOString()
                 };
                 btn.disabled = true;
                 btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
@@ -515,7 +515,7 @@
             async eliminar(id) {
                 if (!confirm('¿Eliminar este LIN Ticket?')) return;
                 try {
-                    await deleteDoc(doc(db, 'linTickets', id));
+                    await NexusData.eliminar('linTickets', id);
                     this.toast('LIN Ticket eliminado.');
                 } catch (error) {
                     console.error(error);

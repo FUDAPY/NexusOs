@@ -183,6 +183,9 @@ resourceRouter.use(
     ordenables: ['name'],
     campoBusqueda: 'name',
     ordenPorDefecto: 'name',
+
+    /* La pantalla de LIN Tickets permite eliminar un ticket. */
+    borrable: true,
   }),
 );
 

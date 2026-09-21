@@ -271,8 +271,6 @@
             },
 
             cargarHistorial: function() {
-                const q = query(collection(db, "notifications"), orderBy("fecha", "desc"), limit(20));
-
                 NexusData.vigilarComoFirestore('notifications', { orderBy: ['fecha', 'desc'], limit: 20 }, (snapshot) => {
                     const lista = document.getElementById("lista-historial");
                     const contador = document.getElementById("contador-historial");

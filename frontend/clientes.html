@@ -1319,8 +1319,6 @@
                     btnSaldar.disabled = true;
 
                     try {
-                        const rutaPrivada = `artifacts/${__app_id}/users/${__initial_auth_token}/sales`;
-                        const ticketRef = doc(collection(db, rutaPrivada));
                         const comprobante = {
                             ticket_id: `AB-${Date.now()}`,
                             tipoTransaccion: "abono_deuda",

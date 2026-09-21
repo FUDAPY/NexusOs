@@ -266,7 +266,6 @@
             useFetchStreams: false
         });
         const functions = getFunctions(app, "us-central1");
-        const registrarAlertaOperativaFn = httpsCallable(functions, "registrarAlertaOperativa");
 
         const normalizarMetodoPago = (valor) => String(valor || '')
             .replaceAll('Ã¡', 'a')
@@ -401,14 +400,14 @@
                 this.alertasOperativasCache[clave] = ahora;
 
                 try {
-                    if (!auth.currentUser) return;
-                    await registrarAlertaOperativaFn({
+                    await NexusData.crear('support-alerts', {
                         origen: 'caja',
                         tipo,
                         nivel,
                         mensaje: mensajeLimpio,
                         sucursal: this.sesion?.sucursal || '',
-                        detalle
+                        detalle,
+                        creadoAt: new Date().toISOString()
                     });
                 } catch (error) {
                     console.error('No se pudo registrar la alerta operativa de caja.', error);
@@ -420,7 +419,7 @@
                 this.ultimoEstadoConexion = 'ok';
                 this.actualizarEstadoVisual();
                 if (veniaConError) {
-                    this.mostrarToast('Conexion con Firestore restablecida.', 'success');
+                    this.mostrarToast('Conexion restablecida.', 'success');
                     this.registrarAlertaOperativa({
                         tipo: 'firestore_reconectado',
                         nivel: 'info',
