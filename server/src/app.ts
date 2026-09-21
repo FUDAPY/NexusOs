@@ -9,6 +9,7 @@ import { errorHandler, notFound } from './middlewares/errorHandler.js';
 import { auditRouter } from './routes/audit.routes.js';
 import { resourceRouter, publicResourceRouter } from './routes/resource.routes.js';
 import { cashShiftRouter } from './routes/cashShift.routes.js';
+import { legadoRouter } from './routes/legado.routes.js';
 import { productionRouter } from './routes/production.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { configRouter } from './routes/config.routes.js';
@@ -62,6 +63,11 @@ export const buildApp = (): Express => {
   // Va ANTES que resourceRouter: necesita resolver POST /cash-shifts/cerrar
   // antes de que el CRUD generico tome el prefijo.
   app.use(`${env.API_PREFIX}/cash-shifts`, requiereAuth, cashShiftRouter);
+
+  /* Puente de solo lectura al sistema viejo (Firestore), para que el dashboard vea el
+     turno que los cajeros estan usando en el POS viejo. Si no hay credencial de
+     Firebase responde 503 y el panel sigue andando con los datos de Mongo. */
+  app.use(`${env.API_PREFIX}/legado`, requiereAuth, legadoRouter);
 
 // Va ANTES que resourceRouter: necesita resolver POST /production-batches/lote, que
 // crea el lote y acredita los contadores de la sucursal en una transaccion.
