@@ -64,7 +64,10 @@ const metodoNormalizado = {
 } as const;
 
 const groupPor = (expresionClave: unknown) => ({
-  clave: expresionClave as Record<string, unknown>,
+  /* `_id` y NO `clave`. Un $group sin `_id` es un error de Mongo ("'$group' requires '_id'")
+     y devolvia 500 en /orders/resumen: el endpoint nunca podia funcionar. El nombre `clave`
+     se aplica despues, al leer el resultado, en aGrupos(). */
+  _id: expresionClave as Record<string, unknown>,
   tickets: { $sum: 1 },
   total: { $sum: { $toDouble: { $ifNull: ['$total', 0] } } },
 });
