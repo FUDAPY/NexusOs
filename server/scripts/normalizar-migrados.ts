@@ -107,6 +107,27 @@ export const normalizarMigrados = async (
         if (!aplicar) continue;
 
         if (textos > 0) {
+          /* ANTES DE CONVERTIR: cuantas quedarian en null.
+             $convert con onError devuelve null para lo que no puede interpretar, y null en una
+             fecha BORRA el dato. Una fecha con formato de pantalla ("11/09/2026, 06:17") cae
+             justo en ese caso. Si hay alguna, NO se toca esa ruta: primero hay que ver que
+             formato tiene. Es la diferencia entre normalizar y perder datos. */
+          const [control] = await db
+            .collection(coleccion)
+            .aggregate([
+              { $match: comoTexto },
+              { $project: { ok: { $convert: { input: `$${ruta}`, to: 'date', onError: null, onNull: null } } } },
+              { $match: { ok: null } },
+              { $count: 'n' },
+            ])
+            .toArray();
+          const ilegibles = Number((control as { n?: number } | undefined)?.n ?? 0);
+          if (ilegibles > 0) {
+            console.error(
+              `  !! ${coleccion}.${ruta}: ${ilegibles} con formato que NO se puede interpretar como fecha. NO se toca: convertirlas las borraria.`,
+            );
+            continue;
+          }
           await db.collection(coleccion).updateMany(comoTexto, [
             { $set: { [ruta]: { $convert: { input: `$${ruta}`, to: 'date', onError: null, onNull: null } } } },
           ]);
