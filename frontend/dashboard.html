@@ -703,28 +703,11 @@
                     }
                 });
             },
-            verificarEstadoTurno: function(ventas = []) {
-                const abiertasSucursal = (Array.isArray(ventas) ? ventas : []).filter((venta) =>
-                    venta &&
-                    venta.arqueado !== true &&
-                    venta.estadoPago === 'pagado' &&
-                    venta.tipoTransaccion !== 'abono_deuda' &&
-                    this.ventaCorrespondeASucursalFiltro(venta)
-                );
-                const enRecuperacion = !this.esSucursalGlobal() && !this.turnoActualId && abiertasSucursal.length > 0;
-                if (enRecuperacion && !this.modoRecuperacionTurno) {
-                    this.modoRecuperacionTurno = true;
-                    this.mostrarToast('Sin turno local. Dashboard operando en modo recuperacion por sucursal.', 'info');
-                    this.registrarAlertaOperativa({
-                        tipo: 'turno_recuperado_por_sucursal',
-                        nivel: 'warning',
-                        mensaje: 'Dashboard sin turno local. Se activo el modo recuperacion por sucursal.',
-                        detalle: { ventasAbiertas: abiertasSucursal.length },
-                        dedupeMs: 900000
-                    });
-                    return;
-                }
-                if (!enRecuperacion) this.modoRecuperacionTurno = false;
+            verificarEstadoTurno: function() {
+                /* Ya no hay "modo recuperacion": antes, si no habia turno local pero si ventas
+                   sin arquear, el panel se inventaba un turno abierto y mostraba esos tickets y
+                   montos. Si el servidor no dice que el turno esta abierto, no hay turno. */
+                this.modoRecuperacionTurno = false;
             },
             instalarMonitoreoOperativo: function() {
                 if (this.monitorIntervalId) clearInterval(this.monitorIntervalId);
@@ -800,6 +783,10 @@
             actualizarResumenesTurnoVisibles: function() {
                 this.resumenesTurnoCache = (this.resumenesTurnoBrutosCache || [])
                     .filter((resumen) => !this.resumenTieneCierreConfirmado(resumen));
+                this.refrescarTurnosAbiertos();
+                /* Al cerrarse una caja, su turno sale de `resumenesTurnoCache`: hay que volver a
+                   filtrar las ventas AHORA, o el flujo actual seguiria mostrando sus tickets. */
+                this.actualizarTurnosDesdeVentas();
                 this.poblarFiltroSucursalesVentas();
                 this.actualizarFlujoDesdeResumen();
                 this.actualizarEtiquetaInicioTurno();
@@ -827,54 +814,50 @@
                 const registro = CierreCajaNormalizer.obtenerSucursalRegistro(venta);
                 return registro?.id || this.normalizarTextoComparacion(venta.sucursal || venta.sucursalId || '');
             },
-            obtenerFechaReferenciaVenta: function(venta = {}) {
-                return this.normalizarFecha(venta.fechaAperturaTurno || venta.fechaConfirmacionCaja || venta.fecha);
-            },
-            detectarTurnosActivosDesdeVentas: function(ventas = []) {
-                const grupos = new Map();
-                ventas.forEach((venta) => {
-                    if (!venta || venta.marcadoComoAbonado === true) return;
-                    if (venta.tipoTransaccion === 'abono_deuda' || venta.cancelado === true || venta.anulado === true) return;
-                    const estadoPago = this.normalizarTextoComparacion(venta.estadoPago);
-                    const esPendiente = estadoPago === 'pendiente' && (Boolean(venta.origenCuentaPendiente) || this.normalizarTextoComparacion(venta.metodoPago || venta.metodoPagoSolicitado) === 'por cobrar');
-                    if (venta.arqueado === true && !esPendiente) return;
-                    const turnoId = String(venta.turnoId || '').trim();
-                    const sucursalKey = this.obtenerClaveSucursalVenta(venta);
-                    if (!turnoId || !sucursalKey) return;
-                    const claveGrupo = `${sucursalKey}|${turnoId}`;
-                    const fecha = this.obtenerFechaReferenciaVenta(venta);
-                    const actual = grupos.get(claveGrupo);
-                    if (!actual || fecha.getTime() > actual.fecha.getTime()) {
-                        grupos.set(claveGrupo, {
-                            turnoId,
-                            sucursalKey,
-                            sucursal: String(venta.sucursal || venta.sucursalId || '').trim(),
-                            fecha
-                        });
-                    }
-                });
-                const activos = new Map();
-                Array.from(grupos.values()).forEach((grupo) => {
-                    const actual = activos.get(grupo.sucursalKey);
-                    if (!actual || grupo.fecha.getTime() > actual.fecha.getTime()) activos.set(grupo.sucursalKey, grupo);
-                });
-                return activos;
-            },
-            actualizarTurnosDesdeVentas: function() {
-                const detectadosPorCliente = this.detectarTurnosActivosDesdeVentas(this.ventasEscuchadasCache || []);
-                this.turnosDetectadosDesdeVentas = new Map(this.turnosServidorDetectados || []);
-                detectadosPorCliente.forEach((turno, sucursalKey) => {
-                    this.turnosDetectadosDesdeVentas.set(sucursalKey, turno);
-                });
-                const idsResumenAbierto = new Set((this.resumenesTurnoCache || [])
+            /* ---------------------------------------------------------------
+               REGLA: sin turno ABIERTO no hay tickets ni montos.
+               El turno abierto es el que dice el SERVIDOR (`cash-shifts` con
+               estadoTurno abierto). No se deduce de las ventas: una venta vieja de un turno
+               ya cerrado volvia a "descubrir" ese turno y reaparecian sus tickets y sus
+               montos en el flujo actual (y en el contador de sucursales activas).
+               --------------------------------------------------------------- */
+            refrescarTurnosAbiertos: function() {
+                this.idsTurnoAbierto = new Set((this.resumenesTurnoCache || [])
+                    .filter((resumen) => this.normalizarTextoComparacion(resumen?.estadoTurno || 'abierto') === 'abierto')
                     .map((resumen) => String(resumen.turnoId || '').trim())
                     .filter(Boolean));
-                const idsTurnoActivo = new Set([
-                    ...idsResumenAbierto,
-                    ...Array.from(this.turnosDetectadosDesdeVentas.values()).map((item) => item.turnoId)
-                ]);
+                return this.idsTurnoAbierto;
+            },
+            turnoEstaAbierto: function(turnoId) {
+                const id = String(turnoId || '').trim();
+                if (!id) return false;
+                const abiertos = this.idsTurnoAbierto instanceof Set ? this.idsTurnoAbierto : this.refrescarTurnosAbiertos();
+                return abiertos.has(id);
+            },
+            actualizarTurnosDesdeVentas: function() {
+                this.refrescarTurnosAbiertos();
+                /* Los turnos "detectados" son los que el servidor reporta abiertos, con los
+                   datos de sucursal que ya trae el resumen. Antes aca se agregaban los turnos
+                   que aparecian en las ventas leidas, que es justo lo que hacia saltar
+                   tickets de cajas ya cerradas. */
+                this.turnosDetectadosDesdeVentas = new Map();
+                (this.resumenesTurnoCache || []).forEach((resumen) => {
+                    const turnoId = String(resumen?.turnoId || '').trim();
+                    if (!turnoId || !this.turnoEstaAbierto(turnoId)) return;
+                    const sucursalKey = this.obtenerClaveSucursalVenta(resumen);
+                    if (!sucursalKey) return;
+                    this.turnosDetectadosDesdeVentas.set(sucursalKey, {
+                        turnoId,
+                        sucursalKey,
+                        sucursal: String(resumen.sucursal || resumen.sucursalId || '').trim(),
+                        fecha: this.normalizarFecha(resumen.fechaApertura || resumen.updatedAt)
+                    });
+                });
+                (this.turnosServidorDetectados || new Map()).forEach((turno, sucursalKey) => {
+                    if (this.turnoEstaAbierto(turno?.turnoId)) this.turnosDetectadosDesdeVentas.set(sucursalKey, turno);
+                });
                 this.ventasTurnoCache = (this.ventasEscuchadasCache || [])
-                    .filter((venta) => idsTurnoActivo.has(String(venta.turnoId || '').trim()))
+                    .filter((venta) => this.turnoEstaAbierto(venta.turnoId))
                     .sort((a, b) => this.normalizarFecha(b.fecha) - this.normalizarFecha(a.fecha));
                 this.ticketsPendientesPersistentesCache = this.obtenerTicketsPendientesPersistentes(this.ventasEscuchadasCache || []);
             },
@@ -894,18 +877,12 @@
                 return ventasLimpias.length > 0;
             },
             ventaPerteneceATurnoDetectado: function(venta = {}) {
-                const turnoId = String(venta.turnoId || '').trim();
-                const sucursalKey = this.obtenerClaveSucursalVenta(venta);
-                const turnoDetectado = this.turnosDetectadosDesdeVentas.get(sucursalKey);
-                if (turnoId && turnoDetectado && turnoDetectado.turnoId === turnoId) return true;
-                return Array.from(this.turnosDetectadosDesdeVentas.values()).some((turno) =>
-                    turnoId && turno?.turnoId === turnoId &&
-                    this.normalizarTextoComparacion(turno.sucursal) === this.normalizarTextoComparacion(venta.sucursal)
-                );
+                return this.turnoEstaAbierto(venta?.turnoId);
             },
             obtenerTicketsPendientesPersistentes: function(ventas = []) {
                 return ventas.filter((venta) => {
                     if (!venta || venta.arqueado === true || venta.marcadoComoAbonado === true) return false;
+                    if (!this.turnoEstaAbierto(venta.turnoId)) return false;
                     if (String(venta.estadoPago || '').toLowerCase() !== 'pendiente') return false;
                     if (venta.tipoTransaccion === 'abono_deuda') return false;
                     const metodo = this.normalizarTextoComparacion(venta.metodoPago || venta.metodoPagoSolicitado);
@@ -913,7 +890,7 @@
                 });
             },
             ventaEsDelTurnoAbierto: function(venta) {
-                return this.ventaPerteneceATurnoDetectado(venta) || TurnoActual.ticketPerteneceAlTurno(venta, this.iniciosTurnoPorSucursal);
+                return this.turnoEstaAbierto(venta?.turnoId);
             },
             actualizarIniciosTurnoDesdeCierres: function(cierres = []) {
                 this.iniciosTurnoPorSucursal = TurnoActual.crearMapaUltimosCierres(cierres);
@@ -989,8 +966,12 @@
                 }
             },
             obtenerVentasFiltradasPorSucursal: function() {
-                const ventasActuales = (this.ventasTurnoCache || []).filter((venta) => this.ventaCorrespondeASucursalFiltro(venta));
-                const pendientes = (this.ticketsPendientesPersistentesCache || []).filter((venta) => this.ventaCorrespondeASucursalFiltro(venta));
+                const ventasActuales = (this.ventasTurnoCache || []).filter((venta) =>
+                    this.ventaCorrespondeASucursalFiltro(venta) && this.ventaEsDelTurnoAbierto(venta)
+                );
+                const pendientes = (this.ticketsPendientesPersistentesCache || []).filter((venta) =>
+                    this.ventaCorrespondeASucursalFiltro(venta) && this.ventaEsDelTurnoAbierto(venta)
+                );
                 return Array.from(new Map([...ventasActuales, ...pendientes].map((venta) => [venta.id, venta])).values());
             },
             aplicarFiltroSucursalVentas: function() {
@@ -1016,7 +997,7 @@
             actualizarFlujoDesdeResumen: function() {
                 const resumenes = this.obtenerResumenesFiltrados();
                 const ventasRespaldo = (this.ventasTurnoCache || []).filter((venta) => {
-                    if (!venta || (venta.arqueado === true && !this.ventaPerteneceATurnoDetectado(venta)) || venta.estadoPago !== 'pagado') return false;
+                    if (!venta || venta.arqueado === true || venta.estadoPago !== 'pagado') return false;
                     if (venta.tipoTransaccion === 'abono_deuda' || venta.tipoTransaccion === 'producto_gratis' || venta.noAfectaCaja === true) return false;
                     return this.ventaCorrespondeASucursalFiltro(venta) && this.ventaEsDelTurnoAbierto(venta);
                 });
@@ -1208,7 +1189,7 @@
                         venta.arqueado !== true &&
                         venta.tipoTransaccion !== 'abono_deuda' &&
                         this.ventaCorrespondeASucursalFiltro(venta) &&
-                        String(venta.turnoId || '').trim()
+                        this.turnoEstaAbierto(venta.turnoId)
                     )
                     .sort((a, b) => this.obtenerFechaTurnoVenta(b) - this.obtenerFechaTurnoVenta(a));
 
@@ -1247,7 +1228,7 @@
             ventaEsContableEnFlujo: function(venta) {
                 if (!venta) return false;
                 if (venta.marcadoComoAbonado === true) return false;
-                if (venta.arqueado === true && !this.ventaPerteneceATurnoDetectado(venta)) return false;
+                if (venta.arqueado === true) return false;
                 if (venta.estadoPago !== 'pagado') return false;
                 if (venta.tipoTransaccion === 'abono_deuda') return false;
                 if (venta.tipoTransaccion === 'producto_gratis' || venta.noAfectaCaja === true || venta.metodoPago === 'Gratis') return false;
@@ -1269,8 +1250,7 @@
                 const esMesaVirtual = origenPendiente && !esMesaFisica;
                 if (!origenPendiente && !esMesaVirtual) return false;
                 if (!this.ventaCorrespondeASucursalFiltro(venta)) return false;
-                if (this.ventaEsDelTurnoAbierto(venta)) return true;
-                return (this.ticketsPendientesPersistentesCache || []).some((item) => String(item.id || '') === String(venta.id || ''));
+                return this.ventaEsDelTurnoAbierto(venta);
             },
 
             obtenerDistribucionPago: function(venta) {
