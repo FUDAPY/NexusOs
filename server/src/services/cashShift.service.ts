@@ -1,5 +1,5 @@
 import { AppError } from '../utils/response.js';
-import { sumarAportes, type TotalesCierre, type VentaCruda } from '../utils/cashFlow.js';
+import { fechaHoraTexto, sumarAportes, type TotalesCierre, type VentaCruda } from '../utils/cashFlow.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { AuditLog, CashClose, CashShift, Order } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
@@ -137,7 +137,11 @@ export const cerrarTurno = async (
           cajero: input.cajero,
 
           fechaApertura: turno.fechaApertura ?? null,
+          /* Legible para el ticket de cierre: antes quedaba vacio y el ticket
+             imprimia "Apertura: No registrada". */
+          fechaAperturaTexto: fechaHoraTexto(turno.fechaApertura ?? ahora),
           fechaCierre: ahora,
+          fechaCierreTexto: fechaHoraTexto(ahora),
           fondoInicial,
 
           declaracion: {

@@ -508,6 +508,15 @@
                 `;
             },
 
+            /* Fecha y hora de apertura del turno para el ticket de cierre: usa el
+               dato guardado por el servidor y, si falta, la fecha cruda. */
+            textoAperturaCierre(cierre) {
+                const guardado = String(cierre?.fechaAperturaTexto || '').trim();
+                if (guardado !== '') return guardado;
+                const fechaApertura = this.fecha(cierre?.fechaApertura);
+                return fechaApertura.getTime() ? DateTime24.formatDateTime24(fechaApertura) : 'No registrada';
+            },
+
             generarHtmlTicketCierre(cierre, calc) {
                 const fecha = this.fecha(cierre.fechaCierre);
                 return `
@@ -515,7 +524,8 @@
                         <div style="text-align:center;font-weight:900;">CIERRE DE CAJA</div>
                         <div style="text-align:center;font-size:11px;">${this.esc(cierre.sucursal || '')}</div>
                         <hr>
-                        <div>Fecha: ${fecha.getTime() ? DateTime24.formatDateTime24(fecha) : (cierre.fechaCierreKey || '')}</div>
+                        <div>Apertura: ${this.esc(this.textoAperturaCierre(cierre))}</div>
+                        <div>Cierre: ${fecha.getTime() ? DateTime24.formatDateTime24(fecha) : (cierre.fechaCierreKey || '')}</div>
                         <div>Cajero: ${this.esc(cierre.cajero || cierre.creadoPorNombre || '')}</div>
                         <div>Correccion admin: ${this.esc(this.usuarioActual?.nombre || 'Admin')}</div>
                         <hr>

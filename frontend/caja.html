@@ -792,7 +792,13 @@
                 } catch(e) { console.error(e); alert("Fallo al cerrar turno. Revise su conexion."); }
             },
 
-            abrirPreviewArqueo: function() {
+            abrirPreviewArqueo: async function() {
+                /* La apertura sale SIEMPRE del turno del servidor. Antes salia de
+                   localStorage: si se cerraba desde otro equipo, o el navegador
+                   se limpiaba, el ticket imprimia "Apertura: No registrada". */
+                if (!this.fechaAperturaSesionTs || !this.turnoActualId) {
+                    await this.recuperarTurnoPersistido();
+                }
                 const decEfe = this.limpiarMoneda(document.getElementById('dec-efectivo').value);
                 const decGastos = this.limpiarMoneda(document.getElementById('dec-gastos').value);
                 const decTar = this.limpiarMoneda(document.getElementById('dec-tarjeta').value);
@@ -836,7 +842,14 @@
                 const difTotalTexto = formatDif(difTotal);
 
                 const fechaCierre = this.formatDateTime24(new Date());
-                const fechaApertura = this.horaAperturaSesion;
+                /* Fecha y hora reales de la apertura del turno (server). */
+                const aperturaMs = Number(this.fechaAperturaSesionTs || 0) || 0;
+                const fechaApertura = aperturaMs > 0
+                    ? this.formatDateTime24(new Date(aperturaMs))
+                    : (this.horaAperturaSesion && this.horaAperturaSesion !== 'No registrada'
+                        ? this.horaAperturaSesion
+                        : 'No registrada');
+                const fondoInicialApertura = Number(this.fondoFijoMemoria || 0);
 
 
                 let listaProdHTML = '';
@@ -861,6 +874,7 @@
                     </style></head><body>
                         <div class="title">REPORTE Z (AUDITORIA)</div>
                         <div class="center">Apertura: ${fechaApertura}</div>
+                        <div class="center">Fondo Inicial: Gs. ${this.formatoMoneda(fondoInicialApertura)}</div>
                         <div class="center">Cierre: ${fechaCierre}</div>
                         <div class="center">Sucursal: ${this.sesion.sucursal}</div>
                         <hr>

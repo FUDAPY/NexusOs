@@ -3,6 +3,7 @@ import { withTransaction } from '../utils/withTransaction.js';
 import {
   agruparCierreForzado,
   agruparProductos,
+  fechaHoraTexto,
   fechaKey,
   sumarAportes,
   texto,
@@ -241,7 +242,12 @@ const escribirCierre = async (e: EscrituraCierre): Promise<ForzarCierreResult> =
         cajeroId: null,
         cajero: 'Cierre forzado por admin',
         fechaApertura: e.base.fechaApertura,
+        /* Se guarda legible porque es lo que imprime el ticket de cierre
+           ("Apertura: dd/mm/yyyy hh:mm"). Antes quedaba vacio y el ticket
+           mostraba "No registrada". */
+        fechaAperturaTexto: fechaHoraTexto(e.base.fechaApertura),
         fechaCierre: e.cierreDate,
+        fechaCierreTexto: fechaHoraTexto(e.cierreDate),
         fechaOperacionKey: fechaKey(e.base.fechaApertura),
         fechaCierreKey: fechaKey(e.cierreDate),
         fondoInicial: n.fondoInicial,

@@ -1153,10 +1153,12 @@
                     const cierre = await this.buscarCierreCajaGuardado(fechaStr, sucursal);
                     if (cierre) {
                         this.aplicarCierreCajaGuardado(cierre);
+                        await this.cargarAperturaTurnoParaTicket(sucursal);
                         return;
                     }
                     this.cierreCajaSeleccionado = null;
                     this.htmlCierreCajaMemoria = "";
+                    await this.cargarAperturaTurnoParaTicket(sucursal);
                     if (estado) {
                         estado.className = 'rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700';
                         estado.innerText = 'No encontre un cierre guardado para esa fecha y sucursal. Puedes reconstruirlo manualmente si es un cierre viejo.';
@@ -1169,6 +1171,47 @@
                         estado.innerText = 'No se pudo leer el cierre guardado.';
                     }
                 }
+            },
+
+            /* Apertura real del turno (fecha, hora y fondo) para la linea APERTURA
+               del ticket de cierre. Antes la apertura salia del primer movimiento
+               de ventas, o directamente "No registrada". */
+            cargarAperturaTurnoParaTicket: async function(sucursal) {
+                const cierre = this.cierreCajaSeleccionado;
+                const delCierre = cierre?.fechaAperturaTexto
+                    || (cierre?.fechaApertura ? DateTime24.formatDateTime24(this.normalizarFecha(cierre.fechaApertura)) : '');
+                if (delCierre) {
+                    this.aperturaTurnoCache = {
+                        texto: delCierre,
+                        fondoInicial: Number(cierre?.fondoInicial || 0),
+                        origen: 'cierre'
+                    };
+                    return this.aperturaTurnoCache;
+                }
+
+                try {
+                    const respTurnos = await NexusAPI.get('/cash-shifts', { limit: 100 }, { ttl: 0, retries: 0 });
+                    const filasTurnos = (respTurnos && respTurnos.data && respTurnos.data.items) || [];
+                    const objetivo = CierreCajaNormalizer.normalizarSucursal(sucursal || '').id;
+                    const candidatos = filasTurnos
+                        .map((turno) => ({ ...turno, id: String(turno._id || turno.id || '') }))
+                        .filter((turno) => !objetivo || CierreCajaNormalizer.normalizarSucursal(turno.sucursal).id === objetivo)
+                        .sort((a, b) => this.normalizarFecha(b.fechaApertura || b.updatedAt).getTime() - this.normalizarFecha(a.fechaApertura || a.updatedAt).getTime());
+                    const turno = candidatos[0];
+                    const fechaApertura = this.normalizarFecha(turno?.fechaApertura);
+                    this.aperturaTurnoCache = fechaApertura
+                        ? {
+                            texto: DateTime24.formatDateTime24(fechaApertura),
+                            fondoInicial: Number(turno?.fondoInicial || 0),
+                            origen: 'turno'
+                        }
+                        : { texto: '', fondoInicial: 0, origen: 'sin-datos' };
+                } catch (error) {
+                    console.error('No se pudo leer la apertura del turno para el ticket de cierre.', error);
+                    this.aperturaTurnoCache = this.aperturaTurnoCache || { texto: '', fondoInicial: 0, origen: 'error' };
+                }
+
+                return this.aperturaTurnoCache;
             },
 
             abrirModalCierreCaja: function() {
@@ -1236,7 +1279,17 @@
                 }
                 if (listaProdHTML === '') listaProdHTML = '<tr><td colspan="3" class="center">Sin ventas registradas</td></tr>';
 
-                const fechaApertura = resumen.primerMovimiento ? DateTime24.formatDateTime24(resumen.primerMovimiento) : 'No disponible';
+                /* APERTURA: primero la fecha/hora real del turno (cierre guardado o
+                   turno de caja del servidor) y el fondo inicial; recien despues el
+                   primer movimiento de ventas como respaldo. */
+                const aperturaCache = this.aperturaTurnoCache || {};
+                const cierreActual = this.cierreCajaSeleccionado || {};
+                const aperturaGuardada = cierreActual.fechaAperturaTexto
+                    || (cierreActual.fechaApertura ? DateTime24.formatDateTime24(this.normalizarFecha(cierreActual.fechaApertura)) : '');
+                const fechaApertura = aperturaGuardada
+                    || aperturaCache.texto
+                    || (resumen.primerMovimiento ? DateTime24.formatDateTime24(resumen.primerMovimiento) : 'No disponible');
+                const fondoInicialApertura = Number(declaracion.fondoInicial || 0) || Number(aperturaCache.fondoInicial || 0);
                 const fechaCierre = resumen.ultimoArqueo ? DateTime24.formatDateTime24(resumen.ultimoArqueo) : 'No disponible';
                 const sucursal = document.getElementById('select-sucursal-cierre').value || 'Todas las Sucursales';
                 const notaModo = resumen.modoReconstruido
@@ -1258,6 +1311,7 @@
                         <div class="center" style="font-size:13px; font-weight: 900; border-bottom:2px solid black; padding-bottom: 3px; margin-bottom: 5px;">REPORTE Z (CIERRE)</div>
                         ${notaModo}
                         <div><span style="font-size: 9px;">Apertura: ${fechaApertura}</span></div>
+                        <div><span style="font-size: 9px;">Fondo Inicial: Gs. ${this.formatoMoneda(fondoInicialApertura)}</span></div>
                         <div><span style="font-size: 9px;">Cierre: &nbsp;&nbsp;${fechaCierre}</span></div>
                         <div><span style="font-size: 9px;">Sucursal: ${sucursal}</span></div>
                         <div><span style="font-size: 9px;">Tickets: &nbsp;&nbsp;${resumen.ticketsContados}</span></div>

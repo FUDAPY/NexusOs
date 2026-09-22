@@ -62,6 +62,25 @@ export const fechaKey = (valor: unknown, zona: string = TZ_NEGOCIO): string => {
 };
 
 
+/* Fecha y hora legible (dd/mm/yyyy HH:mm) para los tickets de caja: es el dato
+   que se imprime en la linea de APERTURA del cierre. */
+export const fechaHoraTexto = (valor: unknown, zona: string = TZ_NEGOCIO): string => {
+  const fecha = resolverFecha(valor);
+  if (!fecha) return '';
+  const partes = new Intl.DateTimeFormat('en-GB', {
+    timeZone: zona,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(fecha);
+  const busca = (tipo: string): string => partes.find((p) => p.type === tipo)?.value ?? '00';
+  return `${busca('day')}/${busca('month')}/${busca('year')} ${busca('hour')}:${busca('minute')}`;
+};
+
+
 export type VentaCruda = Record<string, unknown>;
 
 export interface AporteFlujo {
