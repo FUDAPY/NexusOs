@@ -211,7 +211,26 @@ const migrateCollection = async (
     const operations: BulkOperation[] = snapshot.docs.map((doc) => {
       const { _id, legacyId } = resolveId(doc.id);
       const payload = toMongoValue(doc.data()) as MongoDoc;
-      const document: MongoDoc = legacyId ? { ...payload, _id, legacyId } : { ...payload, _id };
+
+      /* Cuando el id de Firestore NO es un ObjectId, el `_id` se genera nuevo en
+         cada corrida: filtrar por `_id` hacia que cada migracion volviera a
+         insertar TODO y la coleccion terminara duplicada (paso con products).
+         En ese caso el upsert va por `legacyId`, que si es estable. */
+      if (legacyId) {
+        const cuerpo: Record<string, unknown> = { ...payload };
+        delete cuerpo['_id'];
+        delete cuerpo['legacyId'];
+
+        return {
+          updateOne: {
+            filter: { legacyId },
+            update: { $set: cuerpo, $setOnInsert: { legacyId } },
+            upsert: true,
+          },
+        };
+      }
+
+      const document: MongoDoc = { ...payload, _id };
       return { replaceOne: { filter: { _id }, replacement: document, upsert: true } };
     });
 
