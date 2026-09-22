@@ -121,6 +121,8 @@
                     <option value="Todos">Todas las Sucursales</option>
                 </select>
 
+                <span id="contador-productos" class="self-center text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-2 rounded-lg whitespace-nowrap" title="Productos visibles de los que devolvio la API">-- de --</span>
+
                 <button onclick="InventarioModule.imprimirInventario()" class="bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 px-5 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-print"></i> Imprimir
                 </button>
@@ -433,16 +435,38 @@
                 document.getElementById('user-name').innerText = this.usuarioActual.nombre;
                 document.getElementById('user-role').innerText = `Rol: ${this.usuarioActual.rol.toUpperCase()}`;
 
-                /* El arranque NO puede depender de Firebase Auth: onAuthStateChanged
-                   ya no dispara, y la pantalla quedaba en "Cargando catalogo..."
-                   para siempre. La sesion ya se valido arriba con __pos_session. */
-                if (!(window.NexusAuth && window.NexusAuth.autenticado())) {
-                    window.location.replace('index.html');
-                    return;
+                /* Arranque directo (sin Firebase Auth) + diagnostico visible: si falta
+                   el token o la sesion se dice en pantalla, no se rebota en silencio. */
+                if (window.NexusAPI && window.NexusAuth && typeof NexusAuth.rehidratar === 'function') {
+                    NexusAuth.rehidratar();
                 }
                 document.getElementById('app-body').classList.remove('opacity-0');
+
+                const problemaSesion = this.describirProblemaSesion();
+                if (problemaSesion) {
+                    console.error('[inventario] ' + problemaSesion);
+                    this.mostrarToast(problemaSesion, 'error');
+                    return;
+                }
+
                 this.cargarSucursales();
                 this.cargarProductos();
+            },
+
+            /* Motivo por el que la pantalla no puede consultar la API (null = todo ok). */
+            describirProblemaSesion: function() {
+                if (!window.NexusAuth || typeof NexusAuth.sesion !== 'function') {
+                    return 'No se cargo nexus-auth.js: recarga con Ctrl+Shift+R.';
+                }
+                const sesion = NexusAuth.sesion();
+                if (!sesion) return 'No hay sesion guardada: volve a entrar al sistema.';
+                if (typeof NexusAuth.token === 'function' && NexusAuth.token() === null) {
+                    return `Hay sesion (rol "${sesion.rol}") pero falta el token: es una sesion del login viejo, volve a entrar.`;
+                }
+                if (sesion.rol !== 'admin') {
+                    return `El rol de la sesion es "${sesion.rol}" y esta pantalla pide "admin".`;
+                }
+                return null;
             },
 
             mostrarToast: function(mensaje, tipo = 'success') {
@@ -519,29 +543,59 @@
                         snap.forEach(doc => { this.productosFirebase.push({ id: doc.id, ...doc.data() }); });
                         this.aplicarFiltros();
                         spinner.classList.add('hidden'); spinner.classList.remove('flex');
+                        if (this.productosFirebase.length === 0) {
+                            console.warn('[inventario] la API respondio 0 productos');
+                            this.mostrarToast('La API respondio sin productos (catalogo vacio o sin permiso de verlos).', 'alert');
+                        } else {
+                            console.info('[inventario] productos cargados:', this.productosFirebase.length);
+                        }
                     }, (error) => {
                         console.error(error);
                         this.mostrarToast("Error leyendo BD.", "error");
                         spinner.classList.add('hidden'); spinner.classList.remove('flex');
                     });
                 } catch (error) {
-                    console.error(error);
-                    this.mostrarToast("Error leyendo BD.", "error");
+                    console.error('[inventario] no se pudieron leer los productos', error);
+                    const estado = Number((error && error.status) || 0);
+                    const mensaje = estado === 401 || estado === 403
+                        ? `La sesion no autoriza la lectura (${estado}). Volve a entrar al sistema.`
+                        : (error && error.message) || 'Error leyendo BD.';
+                    this.mostrarToast(mensaje, 'error');
                     spinner.classList.add('hidden'); spinner.classList.remove('flex');
                 }
             },
 
             aplicarFiltros: function() {
-                const txt = document.getElementById('filtro-texto').value.toLowerCase();
-                const suc = document.getElementById('filtro-sucursal-tabla').value;
+                const inputTexto = document.getElementById('filtro-texto');
+                const txt = String(inputTexto ? inputTexto.value : '').toLowerCase().trim();
+                const selectSucursal = document.getElementById('filtro-sucursal-tabla');
+                const suc = String((selectSucursal && selectSucursal.value) || 'Todos');
 
-                this.productosVisibles = this.productosFirebase.filter(p => {
-                    const matchTexto = p.nombre.toLowerCase().includes(txt) || (p.categoria && p.categoria.toLowerCase().includes(txt));
-                    const productoSucursal = CierreCajaNormalizer.obtenerSucursalRegistro(p);
-                    const matchSucursal = (suc === 'Todos') || (p.sucursal === 'Unificado') || (p.sucursalId === 'unificado') || (productoSucursal.id && productoSucursal.id === suc);
+                this.productosVisibles = (this.productosFirebase || []).filter(p => {
+                    if (!p) return false;
+
+                    /* Sin nombre no se puede buscar: se usa cadena vacia para que el
+                       filtro no explote (antes p.nombre.toLowerCase() tiraba TypeError
+                       y la tabla quedaba vacia). */
+                    const nombre = String(p.nombre || '').toLowerCase();
+                    const categoria = String(p.categoria || '').toLowerCase();
+                    const matchTexto = txt === '' || nombre.includes(txt) || categoria.includes(txt);
+
+                    const productoSucursal = CierreCajaNormalizer.obtenerSucursalRegistro(p) || {};
+                    const claveProducto = String(productoSucursal.id || p.sucursalId || p.sucursal || 'unificado').toLowerCase();
+                    const esUnificado = String(p.sucursal || '').toLowerCase() === 'unificado'
+                        || String(p.sucursalId || '').toLowerCase() === 'unificado'
+                        || String(p.visibilidad || '').toLowerCase() === 'unificado';
+                    const matchSucursal = suc === 'Todos' || esUnificado || claveProducto === suc.toLowerCase() || claveProducto.includes(suc.toLowerCase());
+
                     return matchTexto && matchSucursal;
                 });
                 this.renderizarTabla();
+
+                const contador = document.getElementById('contador-productos');
+                if (contador) {
+                    contador.innerText = `${this.productosVisibles.length} de ${(this.productosFirebase || []).length}`;
+                }
             },
 
             renderizarTabla: function() {
