@@ -60,21 +60,54 @@ export const cancelOrder = async (
     const aDevolver = new Map<string, number>();
     let unidadesDevueltas = 0;
 
+    /* La anulacion parcial llega con las cantidades indexadas por id de producto,
+       pero el cliente puede mandar el id del item de la venta o el _id del propio
+       OrderItem. Se prueban las tres claves: si no coincidia ninguna, antes el
+       servicio respondia OK sin devolver stock (la anulacion "no hacia nada"). */
+    const cantidadPedidaPara = (item: {
+      productoId?: unknown;
+      id?: unknown;
+      _id?: unknown;
+    }, productoId: string): number => {
+      const claves = [
+        productoId,
+        String(item.id ?? ''),
+        String(item._id ?? ''),
+      ].filter((clave) => clave !== '');
+
+      for (const clave of claves) {
+        const valor = Number(input.cantidades?.[clave] ?? 0);
+        if (valor > 0) return valor;
+      }
+
+      return 0;
+    };
+
     for (const item of items) {
       const productoId = String(item.productoId ?? '');
       if (productoId === '') continue;
       if (item.controlado !== true) continue;
-      
+
       if (!Types.ObjectId.isValid(productoId)) continue;
 
       const cantidadOrden = Number(item.cantidad ?? 0);
       const pedida =
-        input.tipo === 'total' ? cantidadOrden : Number(input.cantidades?.[productoId] ?? 0);
+        input.tipo === 'total' ? cantidadOrden : cantidadPedidaPara(item, productoId);
       const cantidad = Math.max(0, Math.min(Math.trunc(pedida), cantidadOrden));
       if (cantidad <= 0) continue;
 
       aDevolver.set(productoId, (aDevolver.get(productoId) ?? 0) + cantidad);
       unidadesDevueltas += cantidad;
+    }
+
+    /* Antes esto se guardaba igual y el panel mostraba exito sin haber devuelto
+       nada. Ahora la parcial falla de forma explicita y el usuario ve el motivo. */
+    if (input.tipo === 'parcial' && unidadesDevueltas === 0) {
+      throw new AppError(
+        'Ninguna unidad de esta venta coincide con lo pedido (producto no controlado, ya devuelto o id incorrecto)',
+        409,
+        'PARTIAL_NOTHING_TO_REVERSE',
+      );
     }
 
 

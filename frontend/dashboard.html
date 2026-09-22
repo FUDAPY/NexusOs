@@ -3030,18 +3030,33 @@
                 item.nombre = this.obtenerNombreItem(item);
                 item.precio = precioUnitario;
                 
+                /* El backend devuelve stock buscando la clave de cantidades que
+                   coincide con el id del producto del item. Antes se mandaba solo
+                   item.id y si no coincidia respondia OK sin devolver nada: por eso
+                   la anulacion parcial parecia no estar permitida. */
+                const idProductoAnular = String(item.productoId || item.id || item._id || '');
+                if (!idProductoAnular) {
+                    this.mostrarToast('No se pudo identificar el producto de este item. Anulacion cancelada.', 'error');
+                    return;
+                }
+
                 try {
-                    await NexusAPI.post(
+                    const respuestaAnulacion = await NexusAPI.post(
                         '/orders/' + encodeURIComponent(v.id) + '/anular',
                         {
                             motivo,
                             tipo: 'parcial',
-                            cantidades: { [item.id]: 1 },
+                            cantidades: { [idProductoAnular]: 1 },
                             codigo: this.configSistemaActual?.codigoRfidAnulacion || '',
                             autorizadoPorNombre: this.usuarioActual?.nombre || 'Admin'
                         },
                         { ttl: 0, retries: 0 }
                     );
+                    const cuerpoAnulacion = respuestaAnulacion?.data ?? respuestaAnulacion;
+                    if (Number(cuerpoAnulacion?.unidadesDevueltas ?? 0) <= 0) {
+                        this.mostrarToast('La venta no tiene unidades anulables de ese producto. No se cambio nada.', 'error');
+                        return;
+                    }
                     this.mostrarToast('Unidad anulada: stock devuelto y ticket ajustado.', 'success');
                     this.cerrarModalGestor();
                     return;
@@ -3149,7 +3164,8 @@
 
                 } catch(e) {
                     console.error("Error al restar producto:", e);
-                    this.mostrarToast("Error de conexion al modificar ticket.", "error");
+                    const detalleAnulacion = e?.message || e?.error || 'error desconocido';
+                    this.mostrarToast("No se pudo anular: " + detalleAnulacion, "error");
                 }
             },
 
