@@ -51,6 +51,10 @@ resourceRouter.use(
     ordenables: ['nombre', 'precio', 'stock'],
     campoBusqueda: 'nombre',
     ordenPorDefecto: 'nombre',
+    /* Habilitar el CRUD completo: crear, modificar (POST/PATCH) y eliminar
+       (DELETE /products/:id). Sin `borrable` el DELETE ni existia: 404. */
+    borrable: true,
+    rolesBorrado: ['admin', 'supervisor'],
   }),
 );
 
