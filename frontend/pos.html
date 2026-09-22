@@ -4455,8 +4455,26 @@
 
                 leer();
 
+                /* Refresco automatico: antes el catalogo se leia UNA sola vez al
+                   entrar, asi que una edicion de producto desde el panel no se veia
+                   en el POS hasta recargar la pantalla. Ahora se relee cada 15s y
+                   tambien al volver a la pestana. */
+                const INTERVALO_REFRESCO_MS = 15000;
+                const intervaloRefresco = window.setInterval(() => {
+                    if (vivo && !document.hidden) leer();
+                }, INTERVALO_REFRESCO_MS);
+
+                const alVolverALaPestana = () => {
+                    if (vivo && !document.hidden) leer();
+                };
+                document.addEventListener('visibilitychange', alVolverALaPestana);
+                window.addEventListener('focus', alVolverALaPestana);
+
                 return function detener() {
                     vivo = false;
+                    window.clearInterval(intervaloRefresco);
+                    document.removeEventListener('visibilitychange', alVolverALaPestana);
+                    window.removeEventListener('focus', alVolverALaPestana);
                 };
             },
 
