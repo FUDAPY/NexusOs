@@ -234,7 +234,7 @@
                     this.branches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     this.renderSucursalSelect();
                     this.render();
-                });
+                })(snap);
             },
 
             async escucharTickets() {
@@ -245,7 +245,7 @@
                 ((snap) => {
                     this.tickets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     this.render();
-                });
+                })(snap);
             },
 
             async escucharProductos() {
@@ -256,7 +256,7 @@
                 ((snap) => {
                     this.products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     this.renderProductoSelect();
-                });
+                })(snap);
             },
 
             renderSucursalSelect() {

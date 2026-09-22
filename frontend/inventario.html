@@ -535,25 +535,20 @@
                     
                     const respProductos = await NexusAPI.get('/products', { limit: 500 }, { ttl: 0, retries: 0 });
                     const filasProductos = (respProductos && respProductos.data && respProductos.data.items) || [];
-                    const snap = {
-                        forEach: (fn) => filasProductos.forEach((d) => fn({ id: String(d._id || d.id || ''), data: () => d }))
-                    };
-                    ((snap) => {
-                        this.productosFirebase = [];
-                        snap.forEach(doc => { this.productosFirebase.push({ id: doc.id, ...doc.data() }); });
-                        this.aplicarFiltros();
-                        spinner.classList.add('hidden'); spinner.classList.remove('flex');
-                        if (this.productosFirebase.length === 0) {
-                            console.warn('[inventario] la API respondio 0 productos');
-                            this.mostrarToast('La API respondio sin productos (catalogo vacio o sin permiso de verlos).', 'alert');
-                        } else {
-                            console.info('[inventario] productos cargados:', this.productosFirebase.length);
-                        }
-                    }, (error) => {
-                        console.error(error);
-                        this.mostrarToast("Error leyendo BD.", "error");
-                        spinner.classList.add('hidden'); spinner.classList.remove('flex');
-                    });
+
+                    /* OJO: antes esto era ((snap) => { ... }, (error) => { ... }), o sea el
+                       OPERADOR COMA: la funcion nunca se ejecutaba, asi que no se pintaban
+                       los productos y el spinner quedaba para siempre ("Cargando..."). */
+                    this.productosFirebase = filasProductos.map((d) => ({ id: String(d._id || d.id || ''), ...d }));
+                    this.aplicarFiltros();
+                    spinner.classList.add('hidden'); spinner.classList.remove('flex');
+
+                    if (this.productosFirebase.length === 0) {
+                        console.warn('[inventario] la API respondio 0 productos');
+                        this.mostrarToast('La API respondio sin productos (catalogo vacio o sin permiso de verlos).', 'alert');
+                    } else {
+                        console.info('[inventario] productos cargados:', this.productosFirebase.length);
+                    }
                 } catch (error) {
                     console.error('[inventario] no se pudieron leer los productos', error);
                     const estado = Number((error && error.status) || 0);

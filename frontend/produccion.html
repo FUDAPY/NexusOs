@@ -436,7 +436,7 @@
                     document.getElementById('input-stock-carne-lomito').value = carneLomitoDisponible > 0 ? carneLomitoDisponible : 0;
                     document.getElementById('input-stock-pan-lomito').value = panLomitoDisponible > 0 ? panLomitoDisponible : 0;
                     this.actualizarPreviewLote();
-                });
+                })(snap);
             },
 
             escucharLotes: async function() {
@@ -507,7 +507,7 @@
                             </div>
                         `;
                     });
-                });
+                })(snap);
             },
 
             actualizarPreviewLote: function() {
