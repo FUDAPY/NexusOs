@@ -771,18 +771,10 @@
                     if (cierreMismoTurno) return true;
                 }
 
-                /* Señas de cierre por TURNO (no por sucursal).
-                   Antes, cualquier cierre de la misma sucursal posterior a la apertura
-                   marcaba el turno como cerrado: en sucursales con varias cajas (o con
-                   muchos cierres historicos) TODOS los turnos abiertos quedaban
-                   descartados y el flujo actual decia "No se encontraron tickets".
-                   Solo queda el descarte por antiguedad: un turno que dice "abierto"
-                   pero no se movio en 24 h es un cierre que quedo sin marcar. */
-                const ultimaActividad = this.normalizarFecha(resumen.updatedAt || resumen.cerradoEn || resumen.fechaApertura);
-                if (ultimaActividad.getTime() > 0) {
-                    const horas = (Date.now() - ultimaActividad.getTime()) / 3600000;
-                    if (horas > 24) return true;
-                }
+                /* REGLA DEL NEGOCIO: el turno empieza cuando se carga el fondo inicial y
+                   termina cuando se da el cierre de caja. Un turno que sigue marcado
+                   'abierto' sigue abierto aunque lleve dias: NO se descarta por
+                   antiguedad ni por cierres de otras cajas de la misma sucursal. */
                 return false;
             },
             actualizarResumenesTurnoVisibles: function() {
@@ -874,43 +866,50 @@
                tickets" aunque hubiera ventas y mesas pendientes de hoy. */
             completarTurnosDesdeVentasRecientes: function() {
                 if ((this.turnosDetectadosDesdeVentas || new Map()).size > 0) return;
-                const ventas = this.ventasEscuchadasCache || [];
+                const ventas = (this.ventasEscuchadasCache || []).filter((venta) =>
+                    venta && venta.arqueado !== true
+                    && this.normalizarTextoComparacion(venta.estadoPago || '') !== 'anulado'
+                    && String(venta.turnoId || '').trim() !== ''
+                );
                 if (ventas.length === 0) return;
 
-                const LIMITE_MS = 24 * 3600 * 1000;
-                const ahora = Date.now();
-                let agregados = 0;
-
+                /* Para cada sucursal se toma el turnoId MAS RECIENTE de las ventas (el turno
+                   que el POS tiene abierto) y se usa la venta mas antigua de ESE turno como
+                   inicio, asi todas sus ventas entran en el rango. Sin ventana de tiempo: el
+                   turno sigue abierto hasta que se da el cierre de caja, aunque lleve dias. */
+                const porSucursal = new Map();
                 ventas.forEach((venta) => {
-                    if (!venta || venta.arqueado === true) return;
-                    if (this.normalizarTextoComparacion(venta.estadoPago || '') === 'anulado') return;
-
-                    const fecha = this.normalizarFecha(venta.fechaAperturaTurno || venta.fecha);
-                    if (!fecha.getTime() || (ahora - fecha.getTime()) > LIMITE_MS) return;
-
                     const clave = this.obtenerClaveSucursalVenta(venta);
                     if (!clave) return;
-
-                    const existente = this.turnosDetectadosDesdeVentas.get(clave);
-                    if (existente) {
-                        /* Se guarda la venta MAS ANTIGUA del dia como inicio del turno:
-                           asi todas las ventas de hoy quedan dentro del rango. */
-                        if (fecha.getTime() < this.normalizarFecha(existente.fecha).getTime()) existente.fecha = fecha;
-                        return;
+                    const fecha = this.normalizarFecha(venta.fechaAperturaTurno || venta.fecha);
+                    const turnoId = String(venta.turnoId || '').trim();
+                    const previo = porSucursal.get(clave);
+                    if (!previo || fecha.getTime() > previo.fecha.getTime()) {
+                        porSucursal.set(clave, { turnoId, sucursal: String(venta.sucursal || ''), fecha });
                     }
+                });
+
+                let agregados = 0;
+                porSucursal.forEach((ref, clave) => {
+                    const inicioTurno = ventas
+                        .filter((venta) => String(venta.turnoId || '').trim() === ref.turnoId && this.obtenerClaveSucursalVenta(venta) === clave)
+                        .reduce((min, venta) => {
+                            const fecha = this.normalizarFecha(venta.fechaAperturaTurno || venta.fecha);
+                            return fecha.getTime() > 0 && fecha.getTime() < min ? fecha.getTime() : min;
+                        }, ref.fecha.getTime());
 
                     this.turnosDetectadosDesdeVentas.set(clave, {
-                        turnoId: String(venta.turnoId || '').trim(),
+                        turnoId: ref.turnoId,
                         sucursalKey: clave,
-                        sucursal: String(venta.sucursal || ''),
-                        fecha: this.normalizarFecha(venta.fechaAperturaTurno || venta.fecha),
-                        origen: 'ventas_recientes'
+                        sucursal: ref.sucursal,
+                        fecha: new Date(inicioTurno || ref.fecha.getTime()),
+                        origen: 'ventas'
                     });
                     agregados += 1;
                 });
 
                 if (agregados > 0) {
-                    console.warn('[flujo] El servidor no reporto turnos abiertos: se usa el respaldo de ventas de las ultimas 24 h.', Array.from(this.turnosDetectadosDesdeVentas.keys()));
+                    console.warn('[flujo] El servidor no reporto turnos abiertos: se usa el turno mas reciente de las ventas por sucursal.', Array.from(this.turnosDetectadosDesdeVentas.keys()));
                 }
             },
             aplicarVentasLeidas: function(ventas = [], origen = 'firestore') {
@@ -1821,16 +1820,22 @@
 
             iniciarRespaldoLecturaVentas: function() {
                 if (this.ventasFallbackIntervalId) clearInterval(this.ventasFallbackIntervalId);
-                const cargarSiFalta = async () => {
-                    if (!this.ventasEscuchadasCache?.length) {
-                        await this.cargarVentasTurnoUnaVez();
+
+                /* Refresco EN VIVO para no dependerde eventos de socket ni de recargar la
+                   pagina: cada pocos segundos se vuelven a leer el turno abierto y las
+                   ultimas ventas, y el panel repinta tickets y montos solo. */
+                const refrescar = async () => {
+                    if (!window.NexusAuth || !NexusAuth.sesion()) return;
+                    try {
+                        this.iniciarEscuchaResumenTurno();
                         await this.cargarVentasTurnoDesdeServidor();
-                        return;
+                    } catch (error) {
+                        console.warn('[flujo] no se pudo refrescar el flujo en vivo', error && error.message);
                     }
-                    if ((Date.now() - this.ultimoRespaldoServidorAt) > 60000) await this.cargarVentasTurnoDesdeServidor();
                 };
-                window.setTimeout(cargarSiFalta, 2000);
-                this.ventasFallbackIntervalId = window.setInterval(cargarSiFalta, 30000);
+
+                window.setTimeout(refrescar, 1500);
+                this.ventasFallbackIntervalId = window.setInterval(refrescar, 6000);
             },
 
             iniciarEscuchaAuditoria: function() {
