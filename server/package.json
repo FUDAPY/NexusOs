@@ -30,6 +30,7 @@
     "auth:pass": "tsx scripts/establecer-password.ts",
     "caja:cerrar": "tsx scripts/cerrar-caja.ts",
     "productos:reset": "tsx scripts/reset-productos.ts",
+    "productos:restaurar": "tsx scripts/restaurar-productos.ts",
     "productos:duplicados": "tsx scripts/reportar-duplicados.ts",
     "limpiar:datos": "tsx scripts/limpiar-datos.ts"
   },
