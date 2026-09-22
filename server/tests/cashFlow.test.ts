@@ -4,6 +4,7 @@ import {
   agruparProductos,
   calcularAporte,
   esCandidatoCierreForzado,
+  fechaHoraTexto,
   normalizar,
   sumarAportes,
 } from '../src/utils/cashFlow.js';
@@ -218,3 +219,17 @@ describe('agruparProductos', () => {
     expect(productos['Producto']).toEqual({ cant: 1, total: 100 });
   });
 });
+
+describe('fechaHoraTexto: linea APERTURA del ticket de cierre', () => {
+  it('formatea dd/mm/yyyy hh:mm en la hora del negocio', () => {
+    // 08:30 en Asuncion (UTC-3) equivale a 11:30 UTC.
+    expect(fechaHoraTexto(new Date('2026-09-19T11:30:00.000Z'))).toBe('19/09/2026 08:30');
+  });
+
+  it('devuelve vacio cuando no hay fecha usable', () => {
+    expect(fechaHoraTexto(null)).toBe('');
+    expect(fechaHoraTexto(undefined)).toBe('');
+    expect(fechaHoraTexto('no-es-fecha')).toBe('');
+  });
+});
+
