@@ -861,10 +861,57 @@
                 (this.turnosServidorDetectados || new Map()).forEach((turno, sucursalKey) => {
                     if (this.turnoEstaAbierto(turno?.turnoId)) this.turnosDetectadosDesdeVentas.set(sucursalKey, turno);
                 });
+                this.completarTurnosDesdeVentasRecientes();
                 this.ventasTurnoCache = (this.ventasEscuchadasCache || [])
                     .filter((venta) => this.ventaEsDelTurnoAbierto(venta))
                     .sort((a, b) => this.normalizarFecha(b.fecha) - this.normalizarFecha(a.fecha));
                 this.ticketsPendientesPersistentesCache = this.obtenerTicketsPendientesPersistentes(this.ventasEscuchadasCache || []);
+            },
+            /* Respaldo: si el servidor no reporta NINGUN turno abierto (documentos de
+               cash-shifts viejos, sin turnoId o con la fecha de apertura caducada), se
+               toman los turnos de las ventas de las ultimas 24 h para no dejar el flujo
+               actual vacio. Sin este respaldo el panel mostraba "No se encontraron
+               tickets" aunque hubiera ventas y mesas pendientes de hoy. */
+            completarTurnosDesdeVentasRecientes: function() {
+                if ((this.turnosDetectadosDesdeVentas || new Map()).size > 0) return;
+                const ventas = this.ventasEscuchadasCache || [];
+                if (ventas.length === 0) return;
+
+                const LIMITE_MS = 24 * 3600 * 1000;
+                const ahora = Date.now();
+                let agregados = 0;
+
+                ventas.forEach((venta) => {
+                    if (!venta || venta.arqueado === true) return;
+                    if (this.normalizarTextoComparacion(venta.estadoPago || '') === 'anulado') return;
+
+                    const fecha = this.normalizarFecha(venta.fechaAperturaTurno || venta.fecha);
+                    if (!fecha.getTime() || (ahora - fecha.getTime()) > LIMITE_MS) return;
+
+                    const clave = this.obtenerClaveSucursalVenta(venta);
+                    if (!clave) return;
+
+                    const existente = this.turnosDetectadosDesdeVentas.get(clave);
+                    if (existente) {
+                        /* Se guarda la venta MAS ANTIGUA del dia como inicio del turno:
+                           asi todas las ventas de hoy quedan dentro del rango. */
+                        if (fecha.getTime() < this.normalizarFecha(existente.fecha).getTime()) existente.fecha = fecha;
+                        return;
+                    }
+
+                    this.turnosDetectadosDesdeVentas.set(clave, {
+                        turnoId: String(venta.turnoId || '').trim(),
+                        sucursalKey: clave,
+                        sucursal: String(venta.sucursal || ''),
+                        fecha: this.normalizarFecha(venta.fechaAperturaTurno || venta.fecha),
+                        origen: 'ventas_recientes'
+                    });
+                    agregados += 1;
+                });
+
+                if (agregados > 0) {
+                    console.warn('[flujo] El servidor no reporto turnos abiertos: se usa el respaldo de ventas de las ultimas 24 h.', Array.from(this.turnosDetectadosDesdeVentas.keys()));
+                }
             },
             aplicarVentasLeidas: function(ventas = [], origen = 'firestore') {
                 const ventasLimpias = Array.isArray(ventas) ? ventas.filter(Boolean) : [];
