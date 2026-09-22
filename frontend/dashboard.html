@@ -760,19 +760,30 @@
                 return new Date(0);
             },
             resumenTieneCierreConfirmado: function(resumen = {}) {
-                if (String(resumen.estadoTurno || '').toLowerCase() === 'cerrado' || resumen.cierreCajaId) return true;
+                if (String(resumen.estadoTurno || '').toLowerCase() === 'cerrado') return true;
+                if (resumen.cierreCajaId) return true;
+
                 const turnoId = String(resumen.turnoId || resumen.id || '').trim();
-                const cierrePorTurno = (this.cierresTurnoCache || []).find((cierre) =>
-                    String(cierre.turnoId || '').trim() === turnoId
-                );
-                if (cierrePorTurno) return true;
-                const apertura = this.normalizarFecha(resumen.fechaApertura || resumen.createdAt);
-                const sucursal = this.normalizarTextoComparacion(resumen.sucursal);
-                return (this.cierresTurnoCache || []).some((cierre) => {
-                    if (this.normalizarTextoComparacion(cierre.sucursal) !== sucursal) return false;
-                    const fechaCierre = this.obtenerFechaRegistroCierre(cierre);
-                    return apertura.getTime() > 0 && fechaCierre.getTime() >= apertura.getTime();
-                });
+                if (turnoId !== '') {
+                    const cierreMismoTurno = (this.cierresTurnoCache || []).find((cierre) =>
+                        String(cierre.turnoId || '').trim() === turnoId
+                    );
+                    if (cierreMismoTurno) return true;
+                }
+
+                /* Señas de cierre por TURNO (no por sucursal).
+                   Antes, cualquier cierre de la misma sucursal posterior a la apertura
+                   marcaba el turno como cerrado: en sucursales con varias cajas (o con
+                   muchos cierres historicos) TODOS los turnos abiertos quedaban
+                   descartados y el flujo actual decia "No se encontraron tickets".
+                   Solo queda el descarte por antiguedad: un turno que dice "abierto"
+                   pero no se movio en 24 h es un cierre que quedo sin marcar. */
+                const ultimaActividad = this.normalizarFecha(resumen.updatedAt || resumen.cerradoEn || resumen.fechaApertura);
+                if (ultimaActividad.getTime() > 0) {
+                    const horas = (Date.now() - ultimaActividad.getTime()) / 3600000;
+                    if (horas > 24) return true;
+                }
+                return false;
             },
             actualizarResumenesTurnoVisibles: function() {
                 this.resumenesTurnoCache = (this.resumenesTurnoBrutosCache || [])
@@ -1185,6 +1196,27 @@
 
                 this.flujoActualCache.sort((a, b) => this.normalizarFecha(b.fecha) - this.normalizarFecha(a.fecha));
                 this.ventasCache = ventasFiltradas.slice(0, 300);
+
+                /* Diagnostico: si no hay NADA visible pero si ventas leidas, se explica
+                   por que (turno no abierto, sucursal distinta, estado no pagado). */
+                if (this.flujoActualCache.length === 0 && (this.ventasEscuchadasCache || []).length > 0) {
+                    const muestra = (this.ventasEscuchadasCache || []).slice(0, 10).map((venta) => ({
+                        ticket: venta.ticket_id || venta.id || '',
+                        turnoId: venta.turnoId || null,
+                        sucursal: venta.sucursal || null,
+                        estadoPago: venta.estadoPago || null,
+                        metodoPago: venta.metodoPago || null,
+                        turnoAbierto: this.turnoEstaAbierto(venta.turnoId),
+                        sucursalOk: this.ventaCorrespondeASucursalFiltro(venta),
+                        contable: this.ventaEsContableEnFlujo(venta)
+                    }));
+                    console.warn(
+                        '[flujo] Sin tickets visibles. Ventas leidas: ' + (this.ventasEscuchadasCache || []).length
+                        + ' | Turnos abiertos: ' + JSON.stringify(Array.from(this.idsTurnoAbierto || []))
+                        + ' | Turnos detectados: ' + JSON.stringify(Array.from((this.turnosDetectadosDesdeVentas || new Map()).keys()))
+                    );
+                    console.table(muestra);
+                }
 
                 this.renderizarTabla(this.flujoActualCache);
                 this.actualizarEtiquetaInicioTurno();
