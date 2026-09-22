@@ -3017,24 +3017,51 @@
             },
 
             escucharCuentasPendientes: function() {
-                NexusData.vigilarComoFirestore('orders', { where: [['sucursal', '==', this.sesion.sucursal], ['estadoPago', '==', 'pendiente']], limit: 500 }, (snapshot) => {
-                    this.listaCuentasPendientes = [];
-                    snapshot.forEach(doc => { this.listaCuentasPendientes.push({ id: doc.id, ...doc.data() }); });
-                    const badge = document.getElementById('badge-pendientes');
-                    if(badge) {
-                        if(this.listaCuentasPendientes.length > 0) { badge.innerText = this.listaCuentasPendientes.length; badge.classList.remove('hidden'); }
-                        else { badge.classList.add('hidden'); }
-                    }
+                const opciones = { where: [['sucursal', '==', this.sesion.sucursal], ['estadoPago', '==', 'pendiente']], limit: 500 };
 
-                    const modalMesas = document.getElementById('modal-mesas-fisicas');
-                    if(modalMesas && !modalMesas.classList.contains('hidden')) {
-                        this.renderizarMesasFisicas();
-                    }
-                    const modalPendientes = document.getElementById('modal-pendientes');
-                    if(modalPendientes && !modalPendientes.classList.contains('hidden')) {
-                        this.renderizarPendientes();
-                    }
+                /* Respaldo en vivo: el socket puede no emitir a este canal, asi que las
+                   mesas pendientes se releen cada 5 s. El cajero ve el contador y las
+                   mesas (fisicas y virtuales) sin recargar la pagina. */
+                if (this.timerCuentasPendientes) clearInterval(this.timerCuentasPendientes);
+                this.timerCuentasPendientes = setInterval(() => {
+                    NexusData.leer('orders', opciones)
+                        .then((filas) => this.aplicarCuentasPendientes(filas))
+                        .catch(() => {});
+                }, 5000);
+
+                NexusData.vigilarComoFirestore('orders', opciones, (snapshot) => {
+                    const filas = [];
+                    snapshot.forEach(doc => { filas.push({ id: doc.id, ...doc.data() }); });
+                    this.aplicarCuentasPendientes(filas);
                 });
+            },
+
+            /* Pinta las mesas pendientes: lista, contador rojo y, si estan abiertos, el mapa
+               de mesas fisicas y la lista de cuentas pendientes. Se usa tanto para el canal
+               en vivo como para la relectura periodica. */
+            aplicarCuentasPendientes: function(filas = []) {
+                this.listaCuentasPendientes = Array.isArray(filas) ? filas : [];
+
+                const badge = document.getElementById('badge-pendientes');
+                if (badge) {
+                    badge.innerText = String(this.listaCuentasPendientes.length);
+                    badge.classList.toggle('hidden', this.listaCuentasPendientes.length === 0);
+                }
+
+                const modalMesas = document.getElementById('modal-mesas-fisicas');
+                if (modalMesas && !modalMesas.classList.contains('hidden')) this.renderizarMesasFisicas();
+
+                const modalPendientes = document.getElementById('modal-pendientes');
+                if (modalPendientes && !modalPendientes.classList.contains('hidden')) this.renderizarPendientes();
+            },
+
+            /* Relectura inmediata (por ejemplo al enviar una mesa a cocina), para que el
+               contador de pendientes se actualice sin esperar el ciclo de 5 s. */
+            refrescarCuentasPendientes: function() {
+                if (!this.sesion || !this.sesion.sucursal) return Promise.resolve();
+                return NexusData.leer('orders', { where: [['sucursal', '==', this.sesion.sucursal], ['estadoPago', '==', 'pendiente']], limit: 500 })
+                    .then((filas) => this.aplicarCuentasPendientes(filas))
+                    .catch((error) => console.warn('[mesas] no se pudieron refrescar las cuentas pendientes', error && error.message));
             },
 
             abrirModalMesasFisicas: function() {
