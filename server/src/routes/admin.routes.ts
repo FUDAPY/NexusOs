@@ -7,6 +7,7 @@ import {
   type MigracionEvento,
   type MigracionResumen,
 } from '../services/migracionFirestore.service.js';
+import { reporteDuplicadosProductos, resetProductos } from '../services/resetProductos.service.js';
 
 /**
  * Tareas de administracion que no son CRUD.
@@ -40,10 +41,12 @@ export const adminRouter: Router = Router();
 adminRouter.use(requiereRol('admin'));
 
 /**
- * POST /admin/migrar-firestore  { aplicar?: boolean }
+ * POST /admin/migrar-firestore  { aplicar?: boolean, only?: string[] }
  *
- * Lanza la migracion COMPLETA de Firestore a Mongo (idempotente: upsert por `_id`/`legacyId`).
- * Responde 202 enseguida y sigue en segundo plano: son 24 colecciones y puede tardar minutos.
+ * Lanza la migracion de Firestore a Mongo (idempotente: upsert por `_id`/`legacyId`).
+ * Con `only: ['products']` migra SOLO los productos (es lo que se usa al
+ * re-migrar despues de vaciar la coleccion).
+ * Responde 202 enseguida y sigue en segundo plano.
  * Sin `aplicar: true` es simulacion: lee Firestore y no escribe nada.
  *
  * El progreso se mira con GET /admin/migrar-firestore.
@@ -55,7 +58,13 @@ adminRouter.post(
       throw new AppError('Ya hay una migracion en curso', 409, 'MIGRACION_EN_CURSO');
     }
 
-    const aplicar = (req.body as { aplicar?: unknown } | undefined)?.aplicar === true;
+    const bodyMigracion = (req.body ?? {}) as { aplicar?: unknown; only?: unknown };
+    const aplicar = bodyMigracion.aplicar === true;
+    const only = Array.isArray(bodyMigracion.only)
+      ? bodyMigracion.only
+          .map((valor) => String(valor).trim())
+          .filter((valor) => valor.length > 0)
+      : [];
     estado.enCurso = true;
     estado.iniciadoEn = new Date().toISOString();
     estado.terminadoEn = null;
@@ -65,6 +74,7 @@ adminRouter.post(
 
     void migrarFirestore({
       aplicar,
+      only,
       alProgreso: (evento) => {
         estado.eventos.push(evento);
       },
@@ -90,5 +100,40 @@ adminRouter.get(
   '/migrar-firestore',
   asyncHandler(async (_req, res) => {
     sendOk(res, estado);
+  }),
+);
+
+/**
+ * POST /admin/reset-productos  { confirmar: 'BORRAR-PRODUCTOS', aplicar?: boolean }
+ *
+ * Vacia SOLO la coleccion `products` para volver a migrarla desde Firestore.
+ * NO toca ventas ni inventario; antes de borrar guarda todo en `backups_limpieza`.
+ * Sin `aplicar: true` solo informa cuantos productos hay.
+ */
+adminRouter.post(
+  '/reset-productos',
+  asyncHandler(async (req, res) => {
+    const body = (req.body ?? {}) as { confirmar?: unknown; aplicar?: unknown };
+
+    if (String(body.confirmar ?? '') !== 'BORRAR-PRODUCTOS') {
+      throw new AppError(
+        'Falta la confirmacion. Envia { "confirmar": "BORRAR-PRODUCTOS" }',
+        400,
+        'CONFIRMACION_REQUERIDA',
+      );
+    }
+
+    const resultado = await resetProductos({ aplicar: body.aplicar === true });
+    logger.warn({ resultado }, 'Reset de productos solicitado por admin');
+    sendOk(res, resultado);
+  }),
+);
+
+/** GET /admin/productos/duplicados -> productos repetidos por codigo y por nombre. */
+adminRouter.get(
+  '/productos/duplicados',
+  asyncHandler(async (_req, res) => {
+    const reporte = await reporteDuplicadosProductos();
+    sendOk(res, reporte);
   }),
 );

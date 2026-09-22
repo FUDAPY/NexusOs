@@ -29,6 +29,7 @@
     "mongo:normalizar": "tsx scripts/mantener-mongo.ts --normalizar",
     "auth:pass": "tsx scripts/establecer-password.ts",
     "caja:cerrar": "tsx scripts/cerrar-caja.ts",
+    "productos:reset": "tsx scripts/reset-productos.ts",
     "limpiar:datos": "tsx scripts/limpiar-datos.ts"
   },
   "dependencies": {
