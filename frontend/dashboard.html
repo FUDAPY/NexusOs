@@ -3163,6 +3163,10 @@
                 btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> REVIRTIENDO TODO...`; btn.disabled = true;
 
                 try {
+                    /* v es la venta en gestion. Estaba declarada dentro del bloque del batch
+                       viejo que se limpio, y al borrarlo quedo sin definir: de ahi el
+                       "ReferenceError: v is not defined" al anular desde el panel. */
+                    const v = this.datosVentaGestion;
                     await NexusAPI.post(
                         '/orders/' + encodeURIComponent(v.id) + '/anular',
                         {
