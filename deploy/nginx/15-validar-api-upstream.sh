@@ -53,22 +53,7 @@ esac
 
 host="${valor%%:*}"
 if resuelve "$host"; then
-  ip_resuelta=$( (getent hosts "$host" 2>/dev/null || nslookup "$host" 2>/dev/null) | awk '/^[0-9]/{print $1; exit}')
-  echo "[web] API_UPSTREAM=$valor (resuelve a ${ip_resuelta:-?})"
-
-  # Prueba de alcance real: si el nombre resuelve pero NO contesta /health, el
-  # nombre esta apuntando a un contenedor viejo/detenido (o el API todavia no
-  # arranco). Sin esto, el log no avisaba nada y todo se veia como un 502 opaco.
-  if command -v curl >/dev/null 2>&1; then
-    if curl -fsS --max-time 4 -o /dev/null "http://$valor/health"; then
-      echo "[web] API alcanzable: http://$valor/health responde OK"
-    else
-      echo "[web] ATENCION: $valor resuelve a ${ip_resuelta:-?} pero /health NO responde." >&2
-      echo "[web] => Si el API ya esta arriba, ese nombre apunta a un contenedor viejo/detenido." >&2
-      echo "[web] => Revisar: docker ps -a | grep -i api   (eliminar el contenedor fantasma)" >&2
-      echo "[web] => o poner API_UPSTREAM con el NOMBRE del contenedor del API que si responde." >&2
-    fi
-  fi
+  echo "[web] API_UPSTREAM=$valor (resuelve OK)"
 else
   echo "[web] API_UPSTREAM=$valor: todavia no resuelve; nginx reintentara cada 10 s con el resolver de Docker."
 fi
