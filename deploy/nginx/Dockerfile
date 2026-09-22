@@ -26,16 +26,11 @@ COPY frontend/ /usr/share/nginx/html/
 #   /etc/nginx/templates/*.template --envsubst--> /etc/nginx/conf.d/default.conf
 COPY deploy/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 
-# Valida API_UPSTREAM antes de generar la config (ver el comentario del script).
-# El numero 15 garantiza que corre antes de 20-envsubst-on-templates.sh.
-COPY deploy/nginx/15-validar-api-upstream.sh /docker-entrypoint.d/15-validar-api-upstream.sh
-
 # chmod explicito: COPY conserva los permisos del origen, y el usuario nginx
 # (uid 101) tiene que poder leer y atravesar todo. a+rX = lectura para todos y
 # bit de ejecucion SOLO en directorios.
 RUN chmod -R a+rX /usr/share/nginx/html && \
-    chmod a+r /etc/nginx/templates/default.conf.template && \
-    chmod +x /docker-entrypoint.d/15-validar-api-upstream.sh
+    chmod a+r /etc/nginx/templates/default.conf.template
 
 # bash: alpine trae solo sh y la terminal web de Dokploy invoca bash.
 # curl: permite diagnosticar desde dentro del contenedor (curl -I localhost).
