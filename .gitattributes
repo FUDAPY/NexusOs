@@ -2,3 +2,6 @@
 # con CRLF el do se lee como do\r y el script muere con exit 2 (error de sintaxis).
 # Esta regla fuerza LF en el repo, aunque se edite en Windows.
 *.sh text eol=lf
+
+deploy/nginx/*.sh text eol=lf
+
