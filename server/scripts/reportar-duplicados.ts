@@ -16,13 +16,20 @@ const main = async (): Promise<void> => {
   const reporte = await reporteDuplicadosProductos();
 
   console.log(`Total de productos en Mongo: ${reporte.total}`);
+  console.log(`Duplicados REALES (mismo nombre y misma sucursal): ${reporte.reales.length}`);
+  console.log(`Mismo nombre en sucursales distintas (informativo): ${reporte.porNombre.length}`);
   console.log(`Repetidos por codigo: ${reporte.porCodigo.length}`);
-  console.log(`Repetidos por nombre: ${reporte.porNombre.length}`);
 
+  if (reporte.reales.length > 0) {
+    console.log('--- DUPLICADOS REALES ---');
+    console.log(JSON.stringify(reporte.reales, null, 2));
+  }
   if (reporte.porCodigo.length > 0) {
+    console.log('--- REPETIDOS POR CODIGO ---');
     console.log(JSON.stringify(reporte.porCodigo, null, 2));
   }
-  if (reporte.porNombre.length > 0) {
+  if (reporte.porNombre.length > 0 && reporte.reales.length === 0) {
+    console.log('--- MISMO NOMBRE EN SUCURSALES DISTINTAS ---');
     console.log(JSON.stringify(reporte.porNombre, null, 2));
   }
 
