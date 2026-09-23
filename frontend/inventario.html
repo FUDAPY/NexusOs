@@ -200,11 +200,12 @@
                         <i class="fa-solid fa-eye mr-1"></i> ¿Quién puede comprar esto?
                     </label>
                     <select id="prod-visibilidad" required class="w-full border-2 border-purple-300 rounded-xl p-3 focus:border-purple-500 outline-none bg-white font-bold text-slate-700 transition">
-                        <option value="publico">Público General (App Cliente + POS)</option>
-                        <option value="interno">Solo Interno/Funcionarios (Solo POS)</option>
+                        <option value="Unificado">Público General (App Cliente + POS)</option>
+                        <option value="Sucursal">Solo esta sucursal (Solo POS)</option>
                     </select>
                     <p class="text-xs text-purple-600 mt-2 ml-1 leading-tight">
-                        * Si marcas <strong>"Solo Interno"</strong>, este producto será invisible en la App de clientes. 
+                        * Los valores que guarda el servidor son <strong>Unificado</strong> o <strong>Sucursal</strong>
+                        (los viejos "publico"/"interno" ya no son validos y hacian fallar el guardado).
                     </p>
                 </div>
 
@@ -611,10 +612,10 @@
                     if (p.permiteProductoGratis === true) badgesProduccion.push(`<span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-emerald-200 mt-1.5"><i class="fa-solid fa-ticket text-[9px]"></i>LIN Ticket gratis</span>`);
                     const badgeProduccion = badgesProduccion.join('');
                     
-                    const esInterno = p.visibilidad === 'interno';
-                    const badgeVisibilidad = esInterno 
-                        ? `<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-purple-200 ml-2"><i class="fa-solid fa-eye-slash"></i> Interno</span>` 
-                        : `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-green-200 ml-2"><i class="fa-solid fa-users"></i> Público</span>`;
+                    const esSoloSucursal = p.visibilidad === 'Sucursal';
+                    const badgeVisibilidad = esSoloSucursal
+                        ? `<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-purple-200 ml-2"><i class="fa-solid fa-eye-slash"></i> Solo sucursal</span>` 
+                        : `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-green-200 ml-2"><i class="fa-solid fa-users"></i> Unificado</span>`;
 
                     const sucursalProducto = CierreCajaNormalizer.obtenerSucursalRegistro(p);
                     const nombreSucursalProducto = sucursalProducto.nombre || p.sucursalNombre || p.sucursal || 'Unificado';
@@ -724,7 +725,7 @@
                 document.getElementById('prod-carne-lomito-por-unidad').value = 0;
                 document.getElementById('prod-usa-pan-lomito').checked = false;
                 document.getElementById('prod-pan-lomito-por-unidad').value = 0;
-                document.getElementById('prod-visibilidad').value = "publico";
+                document.getElementById('prod-visibilidad').value = "Unificado";
                 document.getElementById('prod-permite-gratis').checked = false;
                 document.getElementById('prod-imagen').value = "";
                 document.getElementById('prod-imagen-file').value = "";
@@ -747,7 +748,13 @@
                 const sucursalProducto = CierreCajaNormalizer.obtenerSucursalRegistro(p);
                 document.getElementById('prod-sucursal').value = p.sucursal === 'Unificado' || p.sucursalId === 'unificado' ? 'Unificado' : (sucursalProducto.id || p.sucursal || 'Unificado');
                 document.getElementById('prod-puntos').value = p.puntosCanje || ""; 
-                document.getElementById('prod-visibilidad').value = p.visibilidad || "publico";
+                /* El enum del servidor es Unificado/Sucursal: si el producto trae un
+                   valor viejo (publico/interno) se muestra Unificado en vez de romper
+                   el guardado con un 422. */
+                const visibilidadValida = ['Unificado', 'Sucursal'].includes(String(p.visibilidad || ''))
+                    ? p.visibilidad
+                    : (String(p.visibilidad || '').toLowerCase() === 'interno' ? 'Sucursal' : 'Unificado');
+                document.getElementById('prod-visibilidad').value = visibilidadValida;
                 document.getElementById('prod-descuento').value = p.descuento || "0";
                 document.getElementById('prod-promocion-bogo').checked = p.promocionBogo || false;
                 document.getElementById('prod-permite-gratis').checked = p.permiteProductoGratis || false;
