@@ -577,12 +577,25 @@
                     const categoria = String(p.categoria || '').toLowerCase();
                     const matchTexto = txt === '' || nombre.includes(txt) || categoria.includes(txt);
 
+                    /* El filtro de sucursal mira SOLO la sucursal del producto.
+                       Antes tambien daba por valido cualquier producto con
+                       `visibilidad === 'unificado'`, y como casi todos los productos
+                       migrados tienen esa visibilidad, elegir una sucursal no filtraba
+                       nada. Ahora se compara contra la sucursal del producto (por clave
+                       normalizada, por nombre y por id). */
                     const productoSucursal = CierreCajaNormalizer.obtenerSucursalRegistro(p) || {};
-                    const claveProducto = String(productoSucursal.id || p.sucursalId || p.sucursal || 'unificado').toLowerCase();
-                    const esUnificado = String(p.sucursal || '').toLowerCase() === 'unificado'
-                        || String(p.sucursalId || '').toLowerCase() === 'unificado'
-                        || String(p.visibilidad || '').toLowerCase() === 'unificado';
-                    const matchSucursal = suc === 'Todos' || esUnificado || claveProducto === suc.toLowerCase() || claveProducto.includes(suc.toLowerCase());
+                    const sucursalProducto = String(p.sucursal || '').toLowerCase().trim();
+                    const claveProducto = String(productoSucursal.id || p.sucursalId || p.sucursal || '').toLowerCase();
+                    const claveNormalizada = String(
+                        (CierreCajaNormalizer.normalizarSucursal(p.sucursal || p.sucursalNombre || '') || {}).id || ''
+                    ).toLowerCase();
+                    const elegida = suc.toLowerCase();
+                    const esGlobal = sucursalProducto === '' || sucursalProducto === 'unificado';
+                    const matchSucursal = elegida === 'todos'
+                        || esGlobal
+                        || claveProducto === elegida
+                        || claveNormalizada === elegida
+                        || sucursalProducto === elegida;
 
                     return matchTexto && matchSucursal;
                 });
