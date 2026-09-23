@@ -797,7 +797,16 @@
                         productoId,
                         nombreProducto: productoNuevo.nombre || productoAnterior?.nombre || '',
                         sucursal: productoNuevo.sucursal || productoAnterior?.sucursal || 'Unificado',
-                        sucursalId: productoNuevo.sucursalId || productoAnterior?.sucursalId || CierreCajaNormalizer.obtenerSucursalRegistro(productoNuevo || productoAnterior || {}).id || 'unificado',
+                        /* Mismo cuidado que en el producto: el movimiento tambien guarda
+                           `sucursalId` como ObjectId, asi que una clave de sucursal se
+                           manda como null. */
+                        sucursalId: (() => {
+                            const candidato = productoNuevo.sucursalId
+                                || productoAnterior?.sucursalId
+                                || CierreCajaNormalizer.obtenerSucursalRegistro(productoNuevo || productoAnterior || {}).id
+                                || '';
+                            return /^[a-f\d]{24}$/i.test(String(candidato)) ? candidato : null;
+                        })(),
                         sucursalNombre: productoNuevo.sucursalNombre || productoNuevo.sucursal || productoAnterior?.sucursalNombre || productoAnterior?.sucursal || 'Unificado',
                         tipo,
                         cantidadAnterior: Number(cantidadAnterior || 0),
@@ -850,7 +859,14 @@
                     icono: document.getElementById('prod-icono').value, 
                     estado: document.getElementById('prod-estado').value,
                     sucursal: sucursalSeleccionadaNombre,
-                    sucursalId: sucursalSeleccionadaId === 'Unificado' ? 'unificado' : sucursalSeleccionadaId,
+                    /* El backend valida que `sucursalId` sea un ObjectId. El selector de
+                       sucursal entrega una clave ('unificado', 'mr_lin_restaurante'), no un
+                       ObjectId: se manda null y la sucursal real viaja en `sucursal` y
+                       `sucursalNombre`. Antes esto hacia fallar el PATCH con 400
+                       ("Valor invalido para el campo sucursalId"). */
+                    sucursalId: /^[a-f\d]{24}$/i.test(String(sucursalSeleccionadaId || ''))
+                        ? sucursalSeleccionadaId
+                        : null,
                     sucursalNombre: sucursalSeleccionadaNombre,
                     visibilidad: document.getElementById('prod-visibilidad').value,
                     controlado: esControlado,
