@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { filtroPorId } from '../utils/mongoId.js';
-import { AuditLog, InventoryMovement, Order, Product } from '../models/index.js';
+import { AuditLog, InventoryMovement, Order, OrderItem, Product } from '../models/index.js';
 import type { IOrder, IOrderItem } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
 import { aplicarSaldoCliente } from './order.service.js';
