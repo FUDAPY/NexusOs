@@ -2952,7 +2952,28 @@
                     this.htmlTicketMemoria = htmlZ;
                     this.confirmarImpresionReal();
                     setTimeout(() => window.location.reload(), 4000);
-                } catch(e) { this.cierreEnCurso = false; console.error(e); this.mostrarToast("Error al cerrar turno.", "error"); }
+                } catch(e) {
+                    /* 409 = el turno ya estaba cerrado en el servidor (cierre forzado
+                       previo, doble clic, etc). No es un error del cajero: se limpia la
+                       sesion local y se recarga para poder abrir un turno nuevo. */
+                    const estadoCierre = Number((e && e.status) || 0);
+                    if (estadoCierre === 409) {
+                        localStorage.removeItem('__pos_fondo_fijo');
+                        localStorage.removeItem('__pos_hora_apertura');
+                        localStorage.removeItem('__pos_apertura_ts');
+                        localStorage.removeItem('__pos_turno_id');
+                        this.fondoInicialSesion = 0;
+                        this.horaAperturaSesion = "";
+                        this.fechaAperturaSesionTs = null;
+                        this.turnoActualId = null;
+                        this.cierreEnCurso = false;
+                        this.cerrarModalCierre();
+                        this.mostrarToast("El turno ya estaba cerrado en el servidor. Se limpio la caja: podes abrir un turno nuevo.", "success");
+                        setTimeout(() => window.location.reload(), 2500);
+                        return;
+                    }
+                    this.cierreEnCurso = false; console.error(e); this.mostrarToast("Error al cerrar turno.", "error");
+                }
             },
 
             formatearFondo: function(input) { if(!input) return; let val = this.limpiarMoneda(input.value); input.value = val === 0 && input.value.trim() === '' ? '' : this.formatoMoneda(val); },

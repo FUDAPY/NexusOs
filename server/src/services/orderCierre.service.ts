@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { filtroPorId } from '../utils/mongoId.js';
-import { AuditLog, InventoryMovement, Order, OrderItem, Product } from '../models/index.js';
+import { AuditLog, InventoryMovement, Order, Product } from '../models/index.js';
 import type { IOrder, IOrderItem } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
 import { aplicarSaldoCliente } from './order.service.js';
@@ -54,7 +54,31 @@ export const cancelOrder = async (
       throw new AppError('La orden ya estaba anulada', 409, 'ORDER_ALREADY_CANCELLED');
     }
 
-    const items = await OrderItem.find({ orderId: order._id }).session(session).exec();
+    /* Los items viven EMBEBIDOS en la orden (`order.items`). La coleccion
+       `order_items` ya no se usa: consultarla devolvia [] y por eso ni la
+       anulacion parcial ni la total devolvian stock. */
+    const items = (order.items ?? []) as unknown as {
+      productoId?: unknown;
+      id?: unknown;
+      _id?: unknown;
+      cantidad?: unknown;
+      controlado?: unknown;
+      subtotal?: unknown;
+    }[];
+
+    /* El flag `controlado` manda desde el producto: los items viejos pueden no
+       traerlo, y con `controlado !== true` se saltaban y no devolvian stock. */
+    const idsProductos = items
+      .map((item) => String(item.productoId ?? item.id ?? item._id ?? ''))
+      .filter((id) => Types.ObjectId.isValid(id));
+    const productosDeLaOrden = await Product.find({ _id: { $in: idsProductos } })
+      .select('_id controlado')
+      .session(session)
+      .lean()
+      .exec();
+    const catalogoControlados = new Map(
+      productosDeLaOrden.map((p) => [String(p._id), p.controlado === true]),
+    );
 
     // Cantidad a devolver por producto: total = todo; parcial = lo indicado.
     const aDevolver = new Map<string, number>();
@@ -84,9 +108,11 @@ export const cancelOrder = async (
     };
 
     for (const item of items) {
-      const productoId = String(item.productoId ?? '');
+      const productoId = String(item.productoId ?? item.id ?? item._id ?? '');
       if (productoId === '') continue;
-      if (item.controlado !== true) continue;
+
+      const controlado = item.controlado === true || catalogoControlados.get(productoId) === true;
+      if (!controlado) continue;
 
       if (!Types.ObjectId.isValid(productoId)) continue;
 
