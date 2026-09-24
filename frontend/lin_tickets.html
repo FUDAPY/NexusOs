@@ -19,6 +19,7 @@
     <script src="nexus-api.js"></script>
     <script src="nexus-auth.js"></script>
     <script src="nexus-data.js"></script>
+    <script src="sucursal_filtro.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -327,13 +328,33 @@
             render() {
                 const grid = document.getElementById('tickets-grid');
                 const empty = document.getElementById('empty-state');
-                const activos = this.tickets.filter(t => t.active !== false).length;
-                const puntos = this.tickets.map(t => Number(t.pointsValue || t.points || 0)).filter(n => n > 0);
+
+                /* Filtro de sucursal compartido (por defecto "Todas las sucursales").
+                   Se monta una sola vez en el header y la seleccion se recuerda entre
+                   modulos. Los tickets guardan `branchId`, asi que se traduce a nombre
+                   para comparar con la misma clave que usa el resto del panel. */
+                if (window.SucursalFiltro && !document.getElementById('filtro-sucursal-lin-tickets')) {
+                    SucursalFiltro.montar({
+                        id: 'filtro-sucursal-lin-tickets',
+                        alCambiar: () => this.render()
+                    }).catch((error) => console.error('[lin-tickets] no se pudo montar el filtro de sucursal', error));
+                }
+
+                const nombreSucursalDeTicket = (ticket) => ticket.branchId === 'all'
+                    ? 'Todas las sucursales'
+                    : (this.branches.find(b => b.id === ticket.branchId)?.nombre || ticket.branchName || '');
+
+                const ticketsVisibles = window.SucursalFiltro
+                    ? this.tickets.filter((ticket) => SucursalFiltro.aplica({ sucursal: nombreSucursalDeTicket(ticket) }))
+                    : this.tickets;
+
+                const activos = ticketsVisibles.filter(t => t.active !== false).length;
+                const puntos = ticketsVisibles.map(t => Number(t.pointsValue || t.points || 0)).filter(n => n > 0);
                 document.getElementById('metric-activos').innerText = activos;
-                document.getElementById('metric-total').innerText = this.tickets.length;
+                document.getElementById('metric-total').innerText = ticketsVisibles.length;
                 document.getElementById('metric-menor').innerText = puntos.length ? `${Math.min(...puntos).toLocaleString('es-PY')} pts` : '0 pts';
-                empty.classList.toggle('hidden', this.tickets.length > 0);
-                grid.innerHTML = this.tickets.map(ticket => {
+                empty.classList.toggle('hidden', ticketsVisibles.length > 0);
+                grid.innerHTML = ticketsVisibles.map(ticket => {
                     const branchName = ticket.branchId === 'all' ? 'Todas las sucursales' : (this.branches.find(b => b.id === ticket.branchId)?.nombre || ticket.branchName || 'Sucursal');
                     const active = ticket.active !== false;
                     return `
