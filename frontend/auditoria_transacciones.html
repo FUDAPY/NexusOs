@@ -301,7 +301,12 @@
           document.getElementById("header-admin-name").innerText =
             s.nombre || "Admin";
           document.getElementById("user-role").innerText = "Rol: ADMIN";
-          document.getElementById("fecha").value = this.fechaKey(new Date());
+          /* Arranca mostrando el ultimo mes (antes arrancaba en "hoy" y la pantalla
+           quedaba vacia si no habia movimientos de ese dia). Desde ahi el filtro
+           de arriba permite elegir la fecha de inicio. */
+        const haceUnMes = new Date();
+        haceUnMes.setDate(haceUnMes.getDate() - 30);
+        document.getElementById("fecha").value = this.fechaKey(haceUnMes);
           this.cargarSucursales();
           this.cargar();
         },
@@ -386,9 +391,12 @@
           const f =
               document.getElementById("fecha").value ||
               this.fechaKey(new Date()),
+            /* Desde la fecha elegida hasta HOY. Antes auditaba un solo dia (por
+               defecto hoy) y la pantalla se veia vacia si no habia movimientos de
+               esa fecha. */
             ini = new Date(f + "T00:00:00"),
-            fin = new Date(ini);
-          fin.setDate(fin.getDate() + 1);
+            fin = new Date();
+          fin.setHours(23, 59, 59, 999);
           const ruta =
             "artifacts/" +
             __app_id +
