@@ -217,7 +217,11 @@
                 document.getElementById('header-admin-name').innerText = sesion.nombre || 'Admin';
                 document.getElementById('user-role').innerText = 'Rol: ADMIN';
                 const hoy = this.fechaKey(new Date());
-                document.getElementById('fecha-desde').value = hoy;
+                /* Rango por defecto AMPLIO (un año). Antes era "hoy -> hoy" y la
+                   pantalla parecia vacia cuando no habia cierres del dia. */
+                const haceUnAnio = new Date();
+                haceUnAnio.setFullYear(haceUnAnio.getFullYear() - 1);
+                document.getElementById('fecha-desde').value = this.fechaKey(haceUnAnio);
                 document.getElementById('fecha-hasta').value = hoy;
                 this.cargarSucursales();
                 this.cargar();
