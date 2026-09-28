@@ -2968,8 +2968,12 @@
                         this.turnoActualId = null;
                         this.cierreEnCurso = false;
                         this.cerrarModalCierre();
-                        this.mostrarToast("El turno ya estaba cerrado en el servidor. Se limpio la caja: podes abrir un turno nuevo.", "success");
-                        setTimeout(() => window.location.reload(), 2500);
+                        /* El cajero SIEMPRE tiene que quedarse con su papel: aunque
+                           el servidor responda 409, se imprime el cierre ya generado. */
+                        this.htmlTicketMemoria = htmlZ;
+                        this.confirmarImpresionReal();
+                        this.mostrarToast("El turno ya estaba cerrado en el servidor. Se reimprimio el ticket y se limpio la caja: podes abrir un turno nuevo.", "success");
+                        setTimeout(() => window.location.reload(), 3500);
                         return;
                     }
                     this.cierreEnCurso = false; console.error(e); this.mostrarToast("Error al cerrar turno.", "error");

@@ -67,9 +67,11 @@ export const cerrarTurno = async (
     if (!turno) {
       throw new AppError(`No existe el turno ${input.turnoId}`, 404, 'SHIFT_NOT_FOUND');
     }
-    if (turno.estadoTurno === 'cerrado') {
-      throw new AppError('El turno ya estaba cerrado', 409, 'SHIFT_ALREADY_CLOSED');
-    }
+    /* Cierre IDEMPOTENTE. El cajero puede cerrar dos veces (doble clic, reintento
+       o un turnoId viejo en el navegador) y antes se devolvia 409: el POS no
+       imprimia el ticket y los montos que el cajero cargo no quedaban registrados.
+       Ahora se reemplaza el cierre previo de ese turno y se responde OK. */
+    const yaCerrado = turno.estadoTurno === 'cerrado';
     sucursalTurno = turno.sucursal ?? '';
 
 
@@ -126,6 +128,10 @@ export const cerrarTurno = async (
     const difTransferencia = redondear(declTransferencia - esperadoTransferencia);
     const difTotal = redondear(declaradoTotal - esperadoTotal);
     const ahora = new Date();
+
+    if (yaCerrado) {
+      await CashClose.deleteMany({ turnoId: input.turnoId }, opciones);
+    }
 
     const [cierre] = await CashClose.create(
       [
