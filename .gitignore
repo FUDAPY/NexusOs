@@ -126,6 +126,10 @@ desktop.ini
 # ===================================================================
 # SOLO README.md COMO MARKDOWN (regla del proyecto)
 # Comentar estas 2 lineas si necesitas subir otros .md
+# Excepcion: SPEC.md y tasks/ documentan el estado del proyecto y
+# deben versionarse para estar disponibles en cualquier clon.
 # ===================================================================
 *.md
 !README.md
+!SPEC.md
+!tasks/*.md
