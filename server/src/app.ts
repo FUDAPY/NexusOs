@@ -14,6 +14,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { configRouter } from './routes/config.routes.js';
 import { uploadRouter } from './routes/upload.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
+import { integrationRouter } from './routes/integration.routes.js';
 import { requiereAuth } from './middlewares/auth.js';
 
 export const buildApp = (): Express => {
@@ -71,6 +72,10 @@ app.use(`${env.API_PREFIX}/production-batches`, requiereAuth, productionRouter);
   // no esta publicado a internet. Solo rol admin (lo exige el propio router).
   app.use(`${env.API_PREFIX}/admin`, requiereAuth, adminRouter);
 
+/* Integraciones externas (OrbitaOs). Va antes del CRUD generico porque este
+     ultimo exige JWT de usuario y el token de servicio no lo es. El propio
+     router se protege con requireServiceToken. */
+  app.use(`${env.API_PREFIX}/integrations`, integrationRouter);
   // El resto del CRUD generico (~23 colecciones) exige token.
   app.use(env.API_PREFIX, requiereAuth, resourceRouter);
 

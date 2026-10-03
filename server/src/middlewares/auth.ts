@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { redis } from '../config/redis.js';
 import { env } from '../config/env.js';
@@ -8,13 +9,27 @@ export interface AuthenticatedRequest extends Request {
   auth?: { userId: string; rol: string; sucursalId: string | null; nombre: string };
 }
 
-/* Restringe endpoints internos por token de servicio (header x-service-token). */
+/* Restringe endpoints internos por token de servicio (header x-service-token).
+
+   La comparacion es en tiempo constante: comparar con `!` filtra el valor
+   mediendo cuanto tarda la respuesta, y un token se adivina midiendo. */
 export const requireServiceToken = (req: Request, _res: unknown, next: (error?: unknown) => void): void => {
-  const token = req.header('x-service-token');
-  if (!token || token !== env.JWT_SECRET) {
+  const recibido = req.header('x-service-token');
+  const esperado = env.INTEGRATION_TOKEN;
+
+  if (!recibido || !esperado) {
     next(new AppError('Token de servicio invalido', 401, 'UNAUTHORIZED'));
     return;
   }
+
+  const a = Buffer.from(recibido);
+  const b = Buffer.from(esperado);
+
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    next(new AppError('Token de servicio invalido', 401, 'UNAUTHORIZED'));
+    return;
+  }
+
   next();
 };
 

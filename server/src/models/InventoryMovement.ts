@@ -27,6 +27,11 @@ export interface IInventoryMovement {
   estado?: string;
   idempotencyKey?: string;
   legacyId?: string;
+
+  /* Resultado de cada producto ajustado en la llamada. Con esto un reintento
+     con la misma idempotencyKey devuelve la misma respuesta, sin volver a
+     mover el stock. */
+  detalle?: unknown;
 }
 
 export type InventoryMovementDocument = HydratedDocument<IInventoryMovement>;
@@ -58,6 +63,7 @@ const inventoryMovementSchema = new Schema<IInventoryMovement, Model<IInventoryM
     estado: { type: String, default: 'aplicado' },
     idempotencyKey: { type: String, default: null },
     legacyId: { type: String, index: true },
+    detalle: { type: Schema.Types.Mixed, default: null },
   },
   {
     timestamps: { createdAt: 'creadoEn', updatedAt: 'actualizadoEn' },

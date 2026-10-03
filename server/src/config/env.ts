@@ -28,6 +28,12 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('12h'),
   BCRYPT_ROUNDS: z.coerce.number().int().min(8).max(15).default(12),
 
+  /* Credencial de los sistemas externos (OrbitaOs). Deliberadamente separada de
+     JWT_SECRET: si se filtra el token de integracion, el alcance se limita a
+     escribir en las colecciones expuestas por la API, no a firmar JWT de
+     administrador. */
+  INTEGRATION_TOKEN: z.string().min(32, 'INTEGRATION_TOKEN debe tener al menos 32 caracteres').optional(),
+
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
   /* El service account tambien se puede pasar por variable (JSON pegado): en un VPS es mas
