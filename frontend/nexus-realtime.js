@@ -41,6 +41,12 @@
     'turno:abierto': 'turno:abierto',
     'turno:cerrado': 'turno:cerrado',
     'stock:cambiado': 'stock:cambiado',
+    /* El servidor ya emitia estos tres y el cliente no los escuchaba, asi que
+       los pedidos nuevos y el borrado de mesas solo llegaban por el sondeo
+       periodico de cada pagina. */
+    'order:new': 'order:new',
+    'order:updated': 'order:updated',
+    'mesas:anuladas': 'mesas:anuladas',
   };
 
   var state = {
@@ -182,6 +188,9 @@
     onTurnoAbierto: function (cb) { return on('turno:abierto', cb); },
     onTurnoCerrado: function (cb) { return on('turno:cerrado', cb); },
     onStockCambiado: function (cb) { return on('stock:cambiado', cb); },
+    onOrderNew: function (cb) { return on('order:new', cb); },
+    onOrderUpdated: function (cb) { return on('order:updated', cb); },
+    onMesasAnuladas: function (cb) { return on('mesas:anuladas', cb); },
 
     
     reconectar: function () {

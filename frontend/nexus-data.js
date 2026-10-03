@@ -227,10 +227,38 @@
   }
 
   
+  /* Varias suscripciones suelen pedir la misma coleccion con los mismos
+     filtros en el mismo instante: al llegar un evento, todas consultan a la
+     vez. Antes cada una abria su propia peticion y la API recibia decenas de
+     lecturas identicas por venta, lo que producia retardo. Ahora las
+     peticiones identicas y simultaneas comparten una sola, que se descarta
+     al resolverse para no servir datos viejos en la siguiente. */
+  var lecturasEnVuelo = {};
+
+  function claveDeLectura(coleccion, opciones) {
+    var ruta;
+    try {
+      ruta = JSON.stringify(opciones || {});
+    } catch (e) {
+      ruta = '';
+    }
+    return String(coleccion) + '|' + ruta;
+  }
+
   function leer(coleccion, opciones) {
-    return leerPagina(coleccion, opciones).then(function (pagina) {
+    var clave = claveDeLectura(coleccion, opciones);
+    var compartida = lecturasEnVuelo[clave];
+    if (compartida) return compartida;
+
+    var peticion = leerPagina(coleccion, opciones).then(function (pagina) {
       return pagina.items;
     });
+
+    lecturasEnVuelo[clave] = peticion;
+    function liberar() { delete lecturasEnVuelo[clave]; }
+    peticion.then(liberar, liberar);
+
+    return peticion;
   }
 
   
