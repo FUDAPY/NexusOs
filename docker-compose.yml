@@ -202,6 +202,10 @@ services:
       JWT_SECRET: "${JWT_SECRET:?definir JWT_SECRET en Environment (minimo 32 caracteres)}"
       JWT_EXPIRES_IN: "12h"
       BCRYPT_ROUNDS: "12"
+      # Credencial de los sistemas externos (OrbitaOs). El valor llega desde
+      # Environment; aqui no se escribe. Opcional a proposito: si falta, el API
+      # arranca igual y solo las rutas de integracion responden 401.
+      INTEGRATION_TOKEN: "${INTEGRATION_TOKEN:-}"
       # El frontend se sirve desde el MISMO origen, asi que no hay CORS que
       # resolver. Vacio = acepta cualquier origen.
       CORS_ORIGINS: "${CORS_ORIGINS:-}"
