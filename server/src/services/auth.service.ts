@@ -294,3 +294,16 @@ export const perfil = async (identificador: string): Promise<SesionUsuario> => {
   if (!user) throw new AppError('Usuario no encontrado', 404, 'USUARIO_NO_ENCONTRADO');
   return aSesion(user as unknown as IUser & { _id?: unknown }, (user.passwordHash ?? '') !== '');
 };
+
+/* Emite un token nuevo para una sesion ya autenticada. Permite al cliente
+   renovarse antes de expirar y evitar el cierre de sesion, sin alargar la
+   vida del token: sigue fazendo falta un token vigente para renovar. */
+export const renovarToken = async (
+  identificador: string,
+): Promise<{ token: string; expiraEn: string; usuario: SesionUsuario }> => {
+  const user = await buscarUsuario(identificador).lean().exec();
+  if (!user) throw new AppError('Usuario no encontrado', 404, 'USUARIO_NO_ENCONTRADO');
+
+  const usuario = aSesion(user as unknown as IUser & { _id?: unknown }, (user.passwordHash ?? '') !== '');
+  return { token: firmarToken(usuario), expiraEn: env.JWT_EXPIRES_IN, usuario };
+};

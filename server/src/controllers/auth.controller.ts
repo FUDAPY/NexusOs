@@ -3,8 +3,9 @@ import {
   cambiarNombre,
   cambiarPassword,
   login,
-  perfil,
+perfil,
   registrar,
+  renovarToken,
   resetearPassword,
 } from '../services/auth.service.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.js';
@@ -82,6 +83,17 @@ export const registrarCliente = async (req: Request, res: Response, next: NextFu
 export const verPerfil = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     sendOk(res, await perfil(identificadorDe(req)));
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/* Renueva el token de una sesion vigente. El cliente lo llama antes de que
+   expire para no perder la sesion. */
+export const renovarSesion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    sendOk(res, await renovarToken(identificadorDe(req)));
   } catch (error) {
     next(error);
   }

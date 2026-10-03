@@ -96,6 +96,7 @@
     escribirClave(CLAVE_SESION, JSON.stringify(s));
     escribirClave(CLAVE_TOKEN, respuesta.token);
     if (global.NexusAPI) global.NexusAPI.token = respuesta.token;
+    programarRenovacion();
     return s;
   }
 
@@ -103,10 +104,90 @@
   function rehidratar() {
     var t = token();
     if (t !== null && global.NexusAPI) global.NexusAPI.token = t;
+    /* Al volver a una pestana ya abierta se retoma la renovacion: sin esto,
+       una pestana abierta por largo tiempo volveria a perder la sesion. */
+    if (autenticado()) programarRenovacion();
     return autenticado();
   }
 
+  /* --- Renovacion silenciosa -------------------------------------------
+     El token tiene vigencia corta a proposito: si se pierde o se roba,
+     deja de servir a los 12 h. Lo que evita el cierre de sesion no es
+     alargar esa vigencia sino renovar antes de que venza, mientras la
+     sesion sigue activa. Un token vencido ya no alcanza para renovar,
+     por eso la renovacion es preventiva y no reactiva.
+
+     El exp se lee del propio JWT solo para programar el momento; la
+     validez la decide el servidor en cada peticion. */
+
+  var RENOVAR_ANTES_DE_MS = 5 * 60 * 1000;
+  var MARGEN_MINIMO_MS = 30 * 1000;
+  var temporizadorRenovacion = null;
+  var renovandoEnCurso = false;
+
+  function expiracionDe(jwtTexto) {
+    try {
+      var partes = String(jwtTexto || '').split('.');
+      if (partes.length !== 3) return null;
+      var carga = JSON.parse(atob(partes[1].replace(/-/g, '+').replace(/_/g, '/')));
+      var exp = Number(carga.exp);
+      if (!isFinite(exp) || exp <= 0) return null;
+      return exp * 1000;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function renovar() {
+    if (renovandoEnCurso) return Promise.resolve(null);
+    if (!token() || !global.NexusAPI) return Promise.resolve(null);
+
+    renovandoEnCurso = true;
+    return global.NexusAPI.post('/auth/refresh', {}, { ttl: 0, retries: 0 })
+      .then(function (r) {
+        var datos = r && r.data ? r.data : null;
+        if (!datos || !datos.token) return null;
+        escribirClave(CLAVE_TOKEN, datos.token);
+        global.NexusAPI.token = datos.token;
+        programarRenovacion();
+        return datos.token;
+      })
+      .catch(function () {
+        /* Si falla, no se cierra la sesion a proposito: un corte de red no
+           invalida las credenciales. Se reintenta en el proximo ciclo. */
+        return null;
+      })
+      .then(function (resultado) {
+        renovandoEnCurso = false;
+        return resultado;
+      });
+  }
+
+  function programarRenovacion() {
+    if (temporizadorRenovacion) {
+      clearTimeout(temporizadorRenovacion);
+      temporizadorRenovacion = null;
+    }
+    var expira = expiracionDe(token());
+    if (expira === null) return;
+
+    var faltan = expira - Date.now() - RENOVAR_ANTES_DE_MS;
+    if (faltan < MARGEN_MINIMO_MS) faltan = MARGEN_MINIMO_MS;
+
+    temporizadorRenovacion = setTimeout(function () {
+      renovar();
+    }, faltan);
+  }
+
+  function detenerRenovacion() {
+    if (temporizadorRenovacion) {
+      clearTimeout(temporizadorRenovacion);
+      temporizadorRenovacion = null;
+    }
+  }
+
   function salir() {
+    detenerRenovacion();
     borrarClave(CLAVE_SESION);
     borrarClave(CLAVE_TOKEN);
     if (global.NexusAPI) {
@@ -126,6 +207,7 @@
     autenticado: autenticado,
     rehidratar: rehidratar,
     salir: salir,
+    renovar: renovar,
     aSesionLocal: aSesionLocal,
   };
 

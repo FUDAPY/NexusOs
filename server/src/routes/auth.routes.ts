@@ -3,7 +3,8 @@ import {
   cambiarClave,
   editarPerfil,
   entrar,
-  registrarCliente,
+registrarCliente,
+  renovarSesion,
   resetearClaveDeUsuario,
   verPerfil,
 } from '../controllers/auth.controller.js';
@@ -41,6 +42,11 @@ authRouter.post(
 
 authRouter.get('/perfil', requiereAuth, verPerfil);
 authRouter.patch('/perfil', requiereAuth, editarPerfil);
+
+/* Renovacion silenciosa: el cliente la invoca antes de que el token venza.
+   Exige un token vigente, asi que no extiende la vida de una sesion robada
+   mas alla de la vigencia normal. */
+authRouter.post('/refresh', requiereAuth, renovarSesion);
 authRouter.post(
   '/password',
   requiereAuth,
