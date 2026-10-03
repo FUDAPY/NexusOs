@@ -3662,12 +3662,24 @@
                 if(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
             },
 
-            cargarCuentaParaCobrar: function(docId) {
+            cargarCuentaParaCobrar: async function(docId) {
                 const ticket = this.listaCuentasPendientes.find(x => x.id === docId);
                 if(!ticket) return;
-                PosModule.vaciarCarrito();
-                this.carrito = JSON.parse(JSON.stringify(ticket.items));
-                this.carritoOriginal = JSON.parse(JSON.stringify(ticket.items));
+
+                /* La liberacion de reservas debe terminar antes de repoblar el
+                   carrito. Sin esta espera, las reservas se devuelven sobre
+                   productos que ya no pertenecen a la cuenta recien cargada. */
+                await this.vaciarCarrito();
+
+                /* Los items guardados no traen uniqueId: es un identificador de la
+                   vista, asignado al agregar al carrito. Sin el, los botones de
+                   quitar y de observacion reciben undefined y editan cualquier
+                   item, no el que corresponde. */
+                const items = JSON.parse(JSON.stringify(ticket.items || []));
+                items.forEach(item => { item.uniqueId = Date.now() + Math.random(); });
+                this.carrito = items;
+                this.carritoOriginal = JSON.parse(JSON.stringify(items));
+
                 this.clienteActual = ticket.cliente !== 'ocasional' ? this.clientesFirebase.find(c => c.id === ticket.cliente) : null;
                 this.idTicketRecuperado = docId;
 
