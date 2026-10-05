@@ -970,12 +970,17 @@
                 const btn = document.getElementById('btn-confirmar-eliminar'); btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
                 try {
                     
+                    /* Baja logica con `estado`, no con `agotado`. `agotado` es un campo
+                       derivado de (controlado, stock) y ahora se recalcula en el servidor
+                       en cada escritura, asi que marcarlo a mano duraba hasta el proximo
+                       ajuste de stock. `estado: 'Inactivo'` es lo que el select "Inactivo
+                       (Oculto)" ya manejaba y lo que el POS filtra (pos.html:1865). */
                     await NexusAPI.patch(
                         '/products/' + encodeURIComponent(this.idEliminar),
-                        { agotado: true },
+                        { estado: 'Inactivo' },
                         { ttl: 0, retries: 0 }
                     );
-                    this.mostrarToast("Producto dado de baja (no se borra: queda el historial).");
+                    this.mostrarToast("Producto dado de baja: no se borra (queda el historial) y ya no aparece en el POS.");
                     this.cerrarModalEliminar();
                     this.cargarProductos();
                 }

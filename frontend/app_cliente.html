@@ -2582,7 +2582,7 @@
             renderizarMenu: function() {
                 const grid = document.getElementById('grid-productos-movil');
                 const ptsUsuario = this.perfilVIP.puntos || 0;
-                const listaVisible = this.catalogoFiltrado.filter(p => p.visibilidad !== 'interno');
+                const listaVisible = this.catalogoFiltrado.filter(p => p.visibilidad !== 'interno' && (p.estado || 'Activo') === 'Activo');
                 const estadoSucursal = this.calcularEstadoSucursal(this.sucursalActual || this.obtenerSucursalSeleccionada());
                 const categorias = this.obtenerCategoriasDisponibles();
                 this.renderizarCategorias(categorias);

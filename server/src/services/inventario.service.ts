@@ -168,9 +168,10 @@ export const ajustarStock = async (
         );
       }
 
-      /* agotado se recalcula aca: el hook pre('save') del modelo no corre en
-         findOneAndUpdate, y el CRUD generico tampoco lo hace. Sin esto el POS
-         seguiria ofreciendo un producto ya agotado. */
+      /* El hook pre('findOneAndUpdate') de Product.ts ya rederiva `agotado` en toda
+         escritura que toque stock o controlado, pero se recalcula aca igual: este
+         valor tambien se devuelve en la respuesta del ajuste, y asi no dependemos
+         de que el hook corra para informarle al cliente. Es el mismo numero. */
       const agotado = producto.controlado === true && stockResultante <= 0;
 
       const actualizado = await Product.findOneAndUpdate(

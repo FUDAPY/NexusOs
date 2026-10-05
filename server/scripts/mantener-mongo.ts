@@ -16,6 +16,10 @@ interface DefinicionIndice {
   coleccion: string;
   campos: Record<string, 1 | -1>;
   nombre: string;
+  /** Solo para indices unicos (ej: products.codigo). */
+  unico?: boolean;
+  /** Solo para indices unicos que no deben cubrir documentos sin valor. */
+  filtroParcial?: Record<string, unknown>;
 }
 
 const INDICES: DefinicionIndice[] = [
@@ -37,6 +41,16 @@ const INDICES: DefinicionIndice[] = [
   { coleccion: 'products', nombre: 'categoria', campos: { categoria: 1 } },
   { coleccion: 'products', nombre: 'controlado', campos: { controlado: 1 } },
   { coleccion: 'products', nombre: 'nombre', campos: { nombre: 1 } },
+  /* Unico y PARCIAL: solo entra si el codigo es un string no vacio, para que los
+     productos sin codigo (null o '') no se peleen entre si. Es el indice que hace
+     que `codigo` sirva como clave de producto para la integracion. */
+  {
+    coleccion: 'products',
+    nombre: 'codigo_unico',
+    campos: { codigo: 1 },
+    unico: true,
+    filtroParcial: { codigo: { $type: 'string', $gt: '' } },
+  },
 
 
   { coleccion: 'cash_shifts', nombre: 'sucursal_estado', campos: { sucursal: 1, estadoTurno: 1 } },
@@ -78,7 +92,11 @@ const crearIndices = async (): Promise<void> => {
     try {
       const existentes = await col.indexes();
       const ya = existentes.some((i) => i.name === def.nombre);
-      await col.createIndex(def.campos, { name: def.nombre });
+      await col.createIndex(def.campos, {
+        name: def.nombre,
+        ...(def.unico === true ? { unique: true } : {}),
+        ...(def.filtroParcial !== undefined ? { partialFilterExpression: def.filtroParcial } : {}),
+      });
       if (ya) {
         yaExistian++;
         linea(`  = ${def.coleccion.padEnd(22)} ${def.nombre}`);
@@ -88,7 +106,11 @@ const crearIndices = async (): Promise<void> => {
       }
     } catch (e) {
       fallidos++;
-      linea(`  ! ${def.coleccion.padEnd(22)} ${def.nombre}  -> ${(e as Error).message}`);
+      const mensaje = (e as Error).message;
+      const ayuda = def.unico === true
+        ? '  -> indice unico: revisar repetidos con `npm run productos:duplicados` y volver a correr'
+        : '';
+      linea(`  ! ${def.coleccion.padEnd(22)} ${def.nombre}  -> ${mensaje}${ayuda}`);
     }
   }
 

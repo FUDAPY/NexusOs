@@ -123,6 +123,11 @@ si eso pasara dentro del arranque, tumbaría el deploy entero. Como está, el de
 
 > Antes de correrlo la primera vez hay que limpiar los `turnoId` duplicados. Ver Fase 5.2 y 5.3 en
 > [`docs/ROADMAP-ADMIN.md`](../docs/ROADMAP-ADMIN.md).
+>
+> Para el índice único `products.codigo_unico`, corré **primero** `npm run productos:duplicados`.
+> Si dos productos repiten el código, `createIndex` falla con `E11000` y ese índice no se crea; el
+> script lo informa en la columna `fallidos` sin cortar el resto del listado. Mientras no esté
+> creado, `codigo` sigue sin proteger en producción.
 
 ## Respaldos
 

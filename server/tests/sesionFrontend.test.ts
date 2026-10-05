@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 /**
  * Renovacion silenciosa del JWT.
@@ -19,6 +19,15 @@ const TOPE_SET_TIMEOUT = 2147483647; // 2^31 - 1, el maximo que acepta el navega
 const ESPERA_MAXIMA_MS = 24 * 24 * 60 * 60 * 1000;
 const REINTENTO_TRAS_FALLO_MS = 5 * 60 * 1000;
 const RENOVAR_ANTES_DE_MS = 5 * 60 * 1000;
+
+/* Reloj congelado justo al inicio de un segundo. El script calcula
+   `exp*1000 - Date.now()` y este archivo arma `exp` con
+   `Math.floor(Date.now()/1000)`, asi que con el reloj de verdad el resultado
+   dependia de en que centesima del segundo corria la prueba: el residuo llega a
+   999 ms y `toBeCloseTo(.., -3)` dejaba solo 500 ms de margen, con lo que el
+   test fallaba 1 de cada 2 corridas. Solo se frena el `Date`; los timers reales
+   siguen andando, porque `esperar()` espera promesas y no plazos. */
+const AHORA_MS = 1_700_000_000_000;
 
 type Timer = { id: number; fn: () => void; delay: number };
 
@@ -132,6 +141,15 @@ function crearEntorno(): Entorno {
 }
 
 describe('renovacion del JWT en el front', () => {
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(AHORA_MS);
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   it('programa dentro del limite de setTimeout con un token de 30 dias', () => {
     const entorno = crearEntorno();
     entorno.autenticar(Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60);
