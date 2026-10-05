@@ -111,17 +111,25 @@
   }
 
   /* --- Renovacion silenciosa -------------------------------------------
-     El token tiene vigencia corta a proposito: si se pierde o se roba,
-     deja de servir a los 12 h. Lo que evita el cierre de sesion no es
-     alargar esa vigencia sino renovar antes de que venza, mientras la
-     sesion sigue activa. Un token vencido ya no alcanza para renovar,
-     por eso la renovacion es preventiva y no reactiva.
+     El token tiene vigencia limitada a proposito: si se pierde o se roba,
+     deja de servir cuando venza (JWT_EXPIRES_IN). Lo que evita el cierre de
+     sesion no es alargar esa vigencia sino renovar antes de que venza, mientras
+     la sesion sigue activa. Un token vencido ya no alcanza para renovar, por eso
+     la renovacion es preventiva y no reactiva.
 
      El exp se lee del propio JWT solo para programar el momento; la
      validez la decide el servidor en cada peticion. */
 
   var RENOVAR_ANTES_DE_MS = 5 * 60 * 1000;
   var MARGEN_MINIMO_MS = 30 * 1000;
+  /* setTimeout admite como tope 2^31-1 ms (unos 24,8 dias). Por encima, el
+     navegador lo recorta y dispara el callback de inmediato: con un JWT de
+     30 dias eso convertiria la renovacion en una llamada seguida a
+     /auth/refresh. Se limita la espera a 24 dias y se vuelve a programar
+     cuando se cumple. */
+  var ESPERA_MAXIMA_MS = 24 * 24 * 60 * 60 * 1000;
+  /* Espera antes de reintentar una renovacion que fallo. */
+  var REINTENTO_TRAS_FALLO_MS = 5 * 60 * 1000;
   var temporizadorRenovacion = null;
   var renovandoEnCurso = false;
 
@@ -154,16 +162,26 @@
       })
       .catch(function () {
         /* Si falla, no se cierra la sesion a proposito: un corte de red no
-           invalida las credenciales. Se reintenta en el proximo ciclo. */
+           invalida las credenciales. */
         return null;
       })
       .then(function (resultado) {
         renovandoEnCurso = false;
+        /* Sin token nuevo el temporizador quedaria caido y la sesion se
+           cortaria al vencimiento, asi que se reprograma el reintento. Si el
+           token ya vencio no hay nada con que renovar y se deja de insistir. */
+        if (resultado === null) reprogramarTrasFallo();
         return resultado;
       });
   }
 
-  function programarRenovacion() {
+  function reprogramarTrasFallo() {
+    var expira = expiracionDe(token());
+    if (expira !== null && expira <= Date.now()) return;
+    programarRenovacion(REINTENTO_TRAS_FALLO_MS);
+  }
+
+  function programarRenovacion(esperaSugeridaMs) {
     if (temporizadorRenovacion) {
       clearTimeout(temporizadorRenovacion);
       temporizadorRenovacion = null;
@@ -171,8 +189,11 @@
     var expira = expiracionDe(token());
     if (expira === null) return;
 
-    var faltan = expira - Date.now() - RENOVAR_ANTES_DE_MS;
+    var faltan = typeof esperaSugeridaMs === 'number'
+      ? esperaSugeridaMs
+      : expira - Date.now() - RENOVAR_ANTES_DE_MS;
     if (faltan < MARGEN_MINIMO_MS) faltan = MARGEN_MINIMO_MS;
+    if (faltan > ESPERA_MAXIMA_MS) faltan = ESPERA_MAXIMA_MS;
 
     temporizadorRenovacion = setTimeout(function () {
       renovar();
@@ -184,6 +205,18 @@
       clearTimeout(temporizadorRenovacion);
       temporizadorRenovacion = null;
     }
+  }
+
+  /* Una pestana abierta dias seguidos tiene que seguir renovando: al volver a
+     ser visible se reprograma el temporizador, que puede haberse perdido si el
+     equipo durmio o el navegador suspendio los timers en segundo plano. */
+  function alVolverALaPestana() {
+    if (global.document && global.document.hidden) return;
+    if (autenticado()) programarRenovacion();
+  }
+  if (global.document && global.document.addEventListener) {
+    global.document.addEventListener('visibilitychange', alVolverALaPestana);
+    if (global.addEventListener) global.addEventListener('focus', alVolverALaPestana);
   }
 
   function salir() {
