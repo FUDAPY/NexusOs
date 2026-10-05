@@ -200,7 +200,10 @@ services:
       REDIS_URL: "redis://default:${REDIS_PASSWORD:?definir REDIS_PASSWORD en Environment}@redis:6379/0"
       REDIS_STOCK_LOCK_TTL_MS: "5000"
       JWT_SECRET: "${JWT_SECRET:?definir JWT_SECRET en Environment (minimo 32 caracteres)}"
-      JWT_EXPIRES_IN: "12h"
+      # Vigencia del token. El cliente renueva solo antes de expirar, asi que con
+      # uso continuo la sesion no se corta. Un valor alto cubre ademas el caso de
+      # una tablet que queda apagada varios dias.
+      JWT_EXPIRES_IN: "${JWT_EXPIRES_IN:-12h}"
       BCRYPT_ROUNDS: "12"
       # Credencial de los sistemas externos (OrbitaOs). El valor llega desde
       # Environment; aqui no se escribe. Opcional a proposito: si falta, el API
