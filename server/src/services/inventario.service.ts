@@ -211,8 +211,7 @@ export const ajustarStock = async (
       });
     }
 
-    /* El primer movimiento ancla la clave de idempotencia; guarda el detalle
-       completo para poder devolverlo tal cual ante un reintento.
+    /* El primer movimiento ancla la clave de idempotencia.
 
        La sesion va como opcion de create(), nunca dentro del documento: el
        esquema es strict:false, asi que Mongoose intentaria persistirla y
@@ -220,7 +219,7 @@ export const ajustarStock = async (
     const creados = await InventoryMovement.create(
       movimientos.map((m, indice) => ({
         ...m,
-        ...(clave !== '' && indice === 0 ? { idempotencyKey: clave, detalle: aplicados } : {}),
+        ...(clave !== '' && indice === 0 ? { idempotencyKey: clave } : {}),
       })),
       opciones,
     );
@@ -229,6 +228,16 @@ export const ajustarStock = async (
       const aplicado = aplicados[indice];
       if (aplicado) aplicado.movimientoId = String(mov._id);
     });
+
+    /* El detalle se guarda recien cuando los ids ya existen: si se guardara
+       antes, la respuesta ante un reintento devolveria movimientoId vacio. */
+    if (clave !== '' && aplicados.length > 0) {
+      await InventoryMovement.updateOne(
+        { idempotencyKey: clave },
+        { $set: { detalle: aplicados } },
+        opciones,
+      ).exec();
+    }
 
     return aplicados;
   });
