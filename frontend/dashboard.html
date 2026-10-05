@@ -808,8 +808,14 @@
                 return this.ventaCorrespondeASucursalSesion(venta);
             },
             obtenerClaveSucursalVenta: function(venta = {}) {
+                /* La clave es SIEMPRE el nombre normalizado. Antes devolvia el
+                   ObjectId de la sucursal cuando esta se resolvia, y el nombre
+                   cuando no: el mismo mapa quedaba indexado con dos formatos y
+                   la busqueda por sucursal fallaba segun el caso, dejando el
+                   turno en null aunque la caja estuviera abierta. */
                 const registro = CierreCajaNormalizer.obtenerSucursalRegistro(venta);
-                return registro?.id || this.normalizarTextoComparacion(venta.sucursal || venta.sucursalId || '');
+                const nombre = registro && registro.nombre ? registro.nombre : venta.sucursal;
+                return this.normalizarTextoComparacion(nombre || venta.sucursalId || '');
             },
             /* ---------------------------------------------------------------
                REGLA: sin turno ABIERTO no hay tickets ni montos.
@@ -1788,18 +1794,37 @@
                     const respuesta = await NexusAPI.get('/orders', { limit: 200 }, { ttl: 0, retries: 0 });
                     const filas = (respuesta && respuesta.data && respuesta.data.items) || [];
                     const ventas = filas.map((orden) => ({ id: String(orden._id || orden.id || ''), ...orden }));
-                    const resumenes = [];
+
+                    /* Los turnos abiertos los declara cash-shifts, no las ventas.
+                       Antes esta lista se quedaba vacia y el bloque siguiente
+                       nunca se ejecutaba, con lo que el dashboard terminaba
+                       siempre en el respaldo por ventas y perdia los turnos que
+                       el servidor si conocia. */
+                    let resumenes = [];
+                    try {
+                        const turnosRespuesta = await NexusAPI.get(
+                            '/cash-shifts',
+                            { estadoTurno: 'abierto', limit: 200 },
+                            { ttl: 0, retries: 0 },
+                        );
+                        const turnos = (turnosRespuesta && turnosRespuesta.data && turnosRespuesta.data.items) || [];
+                        resumenes = turnos.filter((turno) => String(turno.estadoTurno || '') === 'abierto');
+                    } catch (turnosError) {
+                        console.warn('[flujo] No se pudieron leer los turnos abiertos.', turnosError);
+                    }
+
                     const leyoVentas = this.aplicarVentasLeidas(ventas, 'api');
                     if (resumenes.length) {
                         this.resumenesServidorFlujo = resumenes;
                         this.turnosServidorDetectados = new Map(resumenes
-                            .filter((resumen) => resumen?.turnoId && resumen?.sucursalId)
-                            .map((resumen) => [String(resumen.sucursalId), {
+                            .filter((resumen) => resumen && resumen.turnoId)
+                            .map((resumen) => [this.obtenerClaveSucursalVenta(resumen), {
                                 turnoId: String(resumen.turnoId),
-                                sucursalKey: String(resumen.sucursalId),
-                                sucursal: String(resumen.sucursal || resumen.sucursalId),
-                                fecha: this.normalizarFecha(resumen.updatedAt)
-                            }]));
+                                sucursalKey: this.obtenerClaveSucursalVenta(resumen),
+                                sucursal: String(resumen.sucursal || resumen.sucursalId || ''),
+                                fecha: this.normalizarFecha(resumen.fechaApertura || resumen.updatedAt)
+                            }])
+                            .filter(([clave]) => clave !== ''));
                         this.actualizarTurnosDesdeVentas();
                         this.poblarFiltroSucursalesVentas();
                         this.procesarVentasTurnoActual();
