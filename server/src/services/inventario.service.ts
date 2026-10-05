@@ -212,11 +212,14 @@ export const ajustarStock = async (
     }
 
     /* El primer movimiento ancla la clave de idempotencia; guarda el detalle
-       completo para poder devolverlo tal cual ante un reintento. */
+       completo para poder devolverlo tal cual ante un reintento.
+
+       La sesion va como opcion de create(), nunca dentro del documento: el
+       esquema es strict:false, asi que Mongoose intentaria persistirla y
+       ClientSession tiene referencias circulares, que BSON no serializa. */
     const creados = await InventoryMovement.create(
       movimientos.map((m, indice) => ({
         ...m,
-        ...opciones,
         ...(clave !== '' && indice === 0 ? { idempotencyKey: clave, detalle: aplicados } : {}),
       })),
       opciones,
