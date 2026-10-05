@@ -1,5 +1,9 @@
 # NexusOS · POS / ERP / CRM
 
+<p align="center">
+  <img src="nexusos-banner.jpeg" alt="NexusOS · Open Source POS / ERP / CRM" width="100%" />
+</p>
+
 **NexusOS** es una plataforma unificada de código abierto diseñada para centralizar y escalar operaciones comerciales. Combina un punto de venta (POS) táctil, un back-office administrativo y financiero, gestión de clientes (CRM) y un monitor de producción (KDS), operando sobre una robusta API propia multi-sucursal.
 
 Diseñado bajo estándares estrictos de concurrencia y transaccionalidad, NexusOS garantiza integridad de datos en tiempo real y puede desplegarse tanto en web como en dispositivos móviles nativos.
