@@ -1,8 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import type { Query } from 'mongoose';
 import { env } from '../config/env.js';
 import { AuditLog, User } from '../models/index.js';
-import type { IUser, UserRol } from '../models/index.js';
+import type { IUser, UserDocument, UserRol } from '../models/index.js';
 import { AppError } from '../utils/response.js';
 import { aTexto } from '../utils/texto.js';
 
@@ -173,7 +174,7 @@ const ID_MONGO = /^[a-f0-9]{24}$/i;
 
 const buscarUsuario = (
   identificador: string,
-): ReturnType<typeof User.findOne> =>
+): Query<UserDocument | null, UserDocument> =>
   User.findOne({
     $or: [{ uid: identificador }, ...(ID_MONGO.test(identificador) ? [{ _id: identificador }] : [])],
   }).select('+passwordHash');
@@ -295,7 +296,8 @@ export const resetearPassword = async (
 export const perfil = async (identificador: string): Promise<SesionUsuario> => {
   const user = await buscarUsuario(identificador).lean().exec();
   if (!user) throw new AppError('Usuario no encontrado', 404, 'USUARIO_NO_ENCONTRADO');
-  return aSesion(user as unknown as IUser & { _id?: unknown }, (user.passwordHash ?? '') !== '');
+  const plano = user as unknown as IUser & { _id?: unknown };
+  return aSesion(plano, (plano.passwordHash ?? '') !== '');
 };
 
 /* Emite un token nuevo para una sesion ya autenticada. Permite al cliente
@@ -307,6 +309,7 @@ export const renovarToken = async (
   const user = await buscarUsuario(identificador).lean().exec();
   if (!user) throw new AppError('Usuario no encontrado', 404, 'USUARIO_NO_ENCONTRADO');
 
-  const usuario = aSesion(user as unknown as IUser & { _id?: unknown }, (user.passwordHash ?? '') !== '');
+  const plano = user as unknown as IUser & { _id?: unknown };
+  const usuario = aSesion(plano, (plano.passwordHash ?? '') !== '');
   return { token: firmarToken(usuario), expiraEn: env.JWT_EXPIRES_IN, usuario };
 };

@@ -1,7 +1,6 @@
 import { Setting } from '../models/index.js';
 import { aTexto } from '../utils/texto.js';
 import { filtroPorId } from '../utils/mongoId.js';
-import { aTexto } from '../utils/texto.js';
 import { AppError } from '../utils/response.js';
 
 /**
