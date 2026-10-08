@@ -6,6 +6,7 @@ import { AuditLog, InventoryMovement, Order, OrderItem, Product } from '../model
 import type { IOrder, IOrderItem } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
 import { aplicarSaldoCliente } from './order.service.js';
+import { aTexto } from '../utils/texto.js';
 import { validarCodigoAnulacion } from './anulacionAutorizacion.service.js';
 import { logger } from '../utils/logger.js';
 
@@ -69,7 +70,7 @@ export const cancelOrder = async (
     /* El flag `controlado` manda desde el producto: los items viejos pueden no
        traerlo, y con `controlado !== true` se saltaban y no devolvian stock. */
     const idsProductos = items
-      .map((item) => String(item.productoId ?? item.id ?? item._id ?? ''))
+      .map((item) => aTexto(item.productoId ?? item.id ?? item._id))
       .filter((id) => Types.ObjectId.isValid(id));
     const productosDeLaOrden = await Product.find({ _id: { $in: idsProductos } })
       .select('_id controlado')
@@ -95,8 +96,8 @@ export const cancelOrder = async (
     }, productoId: string): number => {
       const claves = [
         productoId,
-        String(item.id ?? ''),
-        String(item._id ?? ''),
+        aTexto(item.id),
+        aTexto(item._id),
       ].filter((clave) => clave !== '');
 
       for (const clave of claves) {
@@ -108,7 +109,7 @@ export const cancelOrder = async (
     };
 
     for (const item of items) {
-      const productoId = String(item.productoId ?? item.id ?? item._id ?? '');
+      const productoId = aTexto(item.productoId ?? item.id ?? item._id);
       if (productoId === '') continue;
 
       const controlado = item.controlado === true || catalogoControlados.get(productoId) === true;
@@ -193,9 +194,9 @@ export const cancelOrder = async (
     ).exec();
 
     /* - a credito: se le devuelve lo anulado; */
-    const clienteSaldo = String(order.cliente ?? '').trim();
+    const clienteSaldo = aTexto(order.cliente).trim();
     if (order.estadoPago === 'pagado' && clienteSaldo !== '' && clienteSaldo !== 'ocasional') {
-      const metodo = String(order.metodoPago ?? '');
+      const metodo = aTexto(order.metodoPago);
       const esCredito = metodo === 'Credito' || metodo === 'Crédito';
       const totalOrden = Number(order.total ?? 0);
 
@@ -203,7 +204,7 @@ export const cancelOrder = async (
       let montoAnulado = esTotal ? totalOrden : 0;
       if (!esTotal) {
         for (const item of items) {
-          const productoId = String(item.productoId ?? '');
+          const productoId = aTexto(item.productoId);
           const cantidad = aDevolver.get(productoId) ?? 0;
           if (cantidad <= 0) continue;
           const cantItem = Math.max(1, Number(item.cantidad ?? 1));

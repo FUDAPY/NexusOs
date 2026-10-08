@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler, sendOk } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 import { requireServiceToken } from '../middlewares/auth.js';
 import {
   ajustarStock,
@@ -18,8 +19,8 @@ integrationRouter.use(requireServiceToken);
 integrationRouter.get(
   '/inventory/stock',
   asyncHandler(async (req, res) => {
-    const producto = String(req.query['producto'] ?? '').trim();
-    const sucursal = String(req.query['sucursal'] ?? '').trim();
+    const producto = aTexto(req.query['producto']).trim();
+    const sucursal = aTexto(req.query['sucursal']).trim();
 
     sendOk(res, await consultarStock(producto, sucursal));
   }),
@@ -35,19 +36,19 @@ integrationRouter.post(
       ajustes: crudos.map((crudo): AjusteSolicitado => {
         const item = (crudo ?? {}) as Record<string, unknown>;
         return {
-          producto: String(item['producto'] ?? ''),
-          codigo: item['codigo'] === undefined ? undefined : String(item['codigo']),
+          producto: aTexto(item['producto']),
+          codigo: item['codigo'] === undefined ? undefined : aTexto(item['codigo']),
           cantidad: Number(item['cantidad'] ?? 0),
-          modo: (item['modo'] === undefined ? undefined : String(item['modo'])) as ModoAjuste | undefined,
-          motivo: item['motivo'] === undefined ? undefined : String(item['motivo']),
+          modo: (item['modo'] === undefined ? undefined : aTexto(item['modo'])) as ModoAjuste | undefined,
+          motivo: item['motivo'] === undefined ? undefined : aTexto(item['motivo']),
         };
       }),
-      sucursal: body['sucursal'] === undefined ? undefined : String(body['sucursal']),
-      origen: body['origen'] === undefined ? undefined : String(body['origen']),
-      usuario: body['usuario'] === undefined ? undefined : String(body['usuario']),
-      usuarioRol: body['usuarioRol'] === undefined ? undefined : String(body['usuarioRol']),
-      canal: body['canal'] === undefined ? undefined : String(body['canal']),
-      idempotencyKey: String(req.header('Idempotency-Key') ?? '').trim() || undefined,
+      sucursal: body['sucursal'] === undefined ? undefined : aTexto(body['sucursal']),
+      origen: body['origen'] === undefined ? undefined : aTexto(body['origen']),
+      usuario: body['usuario'] === undefined ? undefined : aTexto(body['usuario']),
+      usuarioRol: body['usuarioRol'] === undefined ? undefined : aTexto(body['usuarioRol']),
+      canal: body['canal'] === undefined ? undefined : aTexto(body['canal']),
+      idempotencyKey: aTexto(req.header('Idempotency-Key')).trim() || undefined,
     };
 
     sendOk(res, await ajustarStock(solicitud, {

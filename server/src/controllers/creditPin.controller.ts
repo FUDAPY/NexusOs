@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { establecerPinCredito, validarPinCredito } from '../services/creditPin.service.js';
 import { AppError, sendOk } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 
 const contextoDe = (req: Request): { ip: string; userAgent: string } => ({
   ip: req.ip ?? '',
@@ -16,7 +17,7 @@ export const crearPin = async (req: Request, res: Response, next: NextFunction):
     }
 
     const body = req.body as { pin?: unknown };
-    sendOk(res, await establecerPinCredito(id, String(body.pin ?? ''), contextoDe(req)));
+    sendOk(res, await establecerPinCredito(id, aTexto(body.pin), contextoDe(req)));
   } catch (error) {
     next(error);
   }
@@ -26,12 +27,12 @@ export const crearPin = async (req: Request, res: Response, next: NextFunction):
 export const validarPin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as { clienteId?: unknown; pin?: unknown };
-    const clienteId = String(body.clienteId ?? '');
+    const clienteId = aTexto(body.clienteId).trim();
     if (clienteId === '') {
       throw new AppError('Falta el cliente', 400, 'MISSING_CLIENTE');
     }
 
-    const resultado = await validarPinCredito(clienteId, String(body.pin ?? ''), contextoDe(req));
+    const resultado = await validarPinCredito(clienteId, aTexto(body.pin), contextoDe(req));
 
     if (resultado.valido) {
       sendOk(res, resultado);

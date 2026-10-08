@@ -1,5 +1,6 @@
 import { AuditLog, CashShift } from '../models/index.js';
 import { AppError } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 import { claveDoc } from '../utils/cashFlow.js';
 
 export interface AbrirTurnoInput {
@@ -35,12 +36,12 @@ const aResultado = (
 ): AbrirTurnoResult => {
   const fecha = turno['fechaApertura'] instanceof Date ? (turno['fechaApertura'] as Date) : new Date();
   return {
-    turnoId: String(turno['turnoId'] ?? ''),
-    sucursal: String(turno['sucursal'] ?? ''),
-    estadoTurno: String(turno['estadoTurno'] ?? 'abierto'),
+    turnoId: aTexto(turno['turnoId']),
+    sucursal: aTexto(turno['sucursal']),
+    estadoTurno: aTexto(turno['estadoTurno'], 'abierto'),
     fondoInicial: Number(turno['fondoInicial'] ?? 0),
-    cajeroId: turno['cajeroId'] === undefined || turno['cajeroId'] === null ? null : String(turno['cajeroId']),
-    cajeroNombre: String(turno['cajeroNombre'] ?? ''),
+    cajeroId: turno['cajeroId'] === undefined || turno['cajeroId'] === null ? null : aTexto(turno['cajeroId']),
+    cajeroNombre: aTexto(turno['cajeroNombre']),
     fechaApertura: fecha,
     fechaAperturaMs: fecha.getTime(),
     creado,
@@ -52,7 +53,7 @@ export const abrirTurno = async (
   input: AbrirTurnoInput,
   context: { ip: string; userAgent: string },
 ): Promise<AbrirTurnoResult> => {
-  const sucursal = String(input.sucursal ?? '').trim();
+  const sucursal = aTexto(input.sucursal).trim();
   if (sucursal === '') {
     throw new AppError('Falta la sucursal', 400, 'MISSING_SUCURSAL');
   }
@@ -68,8 +69,8 @@ export const abrirTurno = async (
   }
 
   const ahora = new Date();
-  const turnoId = String(input.turnoId ?? '').trim() || generarTurnoId(sucursal, ahora);
-  const cajeroNombre = String(input.cajero ?? '').trim();
+  const turnoId = aTexto(input.turnoId).trim() || generarTurnoId(sucursal, ahora);
+  const cajeroNombre = aTexto(input.cajero).trim();
 
   let creado;
   try {

@@ -1,6 +1,7 @@
 import type { PipelineStage } from 'mongoose';
 import { Order } from '../models/index.js';
 import { AppError } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 
 /**
  * Resumen financiero agregado de ventas.
@@ -78,8 +79,8 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
     noAfectaCaja: { $ne: true },
   };
 
-  const desde = String(input.desde ?? '').trim();
-  const hasta = String(input.hasta ?? '').trim();
+  const desde = aTexto(input.desde).trim();
+  const hasta = aTexto(input.hasta).trim();
   const rangoFecha: Record<string, Date> = {};
   if (desde !== '') {
     const fecha = new Date(desde);
@@ -97,7 +98,7 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
   }
   if (Object.keys(rangoFecha).length > 0) match.fecha = rangoFecha;
 
-  const sucursal = String(input.sucursal ?? '').trim();
+  const sucursal = aTexto(input.sucursal).trim();
   if (sucursal !== '') match.sucursal = sucursal;
 
   const monto = { $toDouble: { $ifNull: ['$total', 0] } };
@@ -159,7 +160,7 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
 
   const aGrupos = (filas: { _id: unknown; tickets: number; total: number }[] | undefined): ResumenGrupo[] =>
     (filas ?? []).map((fila) => ({
-      clave: String(fila._id ?? ''),
+      clave: aTexto(fila._id),
       tickets: Number(fila.tickets ?? 0),
       total: Number(fila.total ?? 0),
     }));

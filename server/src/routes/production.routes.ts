@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { registrarLote } from '../services/production.service.js';
 import { asyncHandler, sendOk } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 import { requiereAuth, requiereRol } from '../middlewares/auth.js';
 
 
@@ -20,9 +21,9 @@ productionRouter.post(
       res,
       await registrarLote(
         {
-          sucursalKey: String(body['sucursalKey'] ?? ''),
+          sucursalKey: aTexto(body['sucursalKey']),
           sucursal: typeof body['sucursal'] === 'string' ? body['sucursal'] : '',
-          tipoInsumo: String(body['tipoInsumo'] ?? ''),
+          tipoInsumo: aTexto(body['tipoInsumo']),
           cantidad: Number(body['cantidad'] ?? 0),
           unidad: typeof body['unidad'] === 'string' ? body['unidad'] : 'unidades',
           observacion: typeof body['observacion'] === 'string' ? body['observacion'] : '',

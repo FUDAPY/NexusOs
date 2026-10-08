@@ -9,6 +9,7 @@ import {
   fechaKey,
   type VentaCruda,
 } from '../src/utils/cashFlow.js';
+import { aTexto } from '../src/utils/texto.js';
 
 const args = process.argv.slice(2);
 const bandera = (nombre: string): boolean => args.includes(`--${nombre}`);
@@ -16,7 +17,7 @@ const bandera = (nombre: string): boolean => args.includes(`--${nombre}`);
 const valor = (nombre: string): string => {
   const i = args.indexOf(`--${nombre}`);
   const v = i >= 0 ? args[i + 1] : undefined;
-  return v === undefined || v.startsWith('--') ? '' : String(v);
+  return v === undefined || v.startsWith('--') ? '' : aTexto(v);
 };
 
 const numero = (nombre: string): number => {

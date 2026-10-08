@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Product } from '../models/index.js';
 import { logger } from '../utils/logger.js';
+import { aTexto } from '../utils/texto.js';
 
 export interface ResetProductosResultado {
   ok: true;
@@ -86,7 +87,7 @@ export interface ReporteDuplicados {
 }
 
 const normalizarClave = (valor: unknown): string =>
-  String(valor ?? '')
+  aTexto(valor)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ')
@@ -137,12 +138,12 @@ export const reporteDuplicadosProductos = async (): Promise<ReporteDuplicados> =
 
       actual.cantidad += 1;
       actual.ids.push(String(producto._id));
-      actual.nombres.push(String(producto.nombre ?? ''));
-      actual.sucursales.push(String(producto.sucursal ?? ''));
+      actual.nombres.push(aTexto(producto.nombre));
+      actual.sucursales.push(aTexto(producto.sucursal));
       actual.precios.push(Number(producto.precio ?? 0));
       actual.stocks.push(Number(producto.stock ?? 0));
       actual.controlados.push(producto.controlado === true);
-      actual.visibilidades.push(String(producto.visibilidad ?? ''));
+      actual.visibilidades.push(aTexto(producto.visibilidad));
       grupos.set(clave, actual);
     }
 
@@ -151,9 +152,9 @@ export const reporteDuplicadosProductos = async (): Promise<ReporteDuplicados> =
 
   return {
     total: productos.length,
-    reales: agrupar((p) => `${String(p.nombre ?? '')}|${String(p.sucursal ?? '')}`),
-    porNombre: agrupar((p) => String(p.nombre ?? '')),
-    porCodigo: agrupar((p) => String(p.codigo ?? '')),
+    reales: agrupar((p) => `${aTexto(p.nombre)}|${aTexto(p.sucursal)}`),
+    porNombre: agrupar((p) => aTexto(p.nombre)),
+    porCodigo: agrupar((p) => aTexto(p.codigo)),
   };
 };
 

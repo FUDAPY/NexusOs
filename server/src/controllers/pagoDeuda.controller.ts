@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { pagarDeudaCliente, registrarAbonoPendiente } from '../services/pagoDeuda.service.js';
 import { AppError, sendOk } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 
 
 export const pagarDeuda = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -15,7 +16,7 @@ export const pagarDeuda = async (req: Request, res: Response, next: NextFunction
       nombreCliente?: unknown;
     };
 
-    const clienteId = String(body.clienteId ?? '').trim();
+    const clienteId = aTexto(body.clienteId).trim();
     if (clienteId === '') {
       throw new AppError('Falta el cliente', 400, 'MISSING_CLIENTE');
     }
@@ -54,7 +55,7 @@ export const registrarAbono = async (req: Request, res: Response, next: NextFunc
       observacion?: unknown;
     };
 
-    const clienteId = String(body.clienteId ?? '').trim();
+    const clienteId = aTexto(body.clienteId).trim();
     if (clienteId === '') {
       throw new AppError('Falta el cliente', 400, 'MISSING_CLIENTE');
     }

@@ -5,6 +5,7 @@ import { createOrder } from '../services/order.service.js';
 import { cancelOrder, cancelarMesasAbiertas } from '../services/orderCierre.service.js';
 import { obtenerCodigosAnulacion, validarCodigoAnulacion } from '../services/anulacionAutorizacion.service.js';
 import { AppError, sendOk } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 import { marcarComoAbonado, resolverCobro } from '../services/cobro.service.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.js';
 
@@ -27,7 +28,7 @@ export const resolverCobroHandler = async (
 ): Promise<void> => {
   try {
     const body = req.body as { accion?: unknown; autorizadoPor?: string; autorizadoPorNombre?: string };
-    const accion = String(body.accion ?? '');
+    const accion = aTexto(body.accion);
 
     if (accion !== 'aprobar' && accion !== 'rechazar') {
       throw new AppError("`accion` tiene que ser 'aprobar' o 'rechazar'", 422, 'ACCION_INVALIDA');

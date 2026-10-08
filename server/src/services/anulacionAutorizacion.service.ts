@@ -1,5 +1,7 @@
 import { Setting } from '../models/index.js';
+import { aTexto } from '../utils/texto.js';
 import { filtroPorId } from '../utils/mongoId.js';
+import { aTexto } from '../utils/texto.js';
 import { AppError } from '../utils/response.js';
 
 /**
@@ -22,14 +24,14 @@ export const SETTING_SISTEMA = 'sistema';
  */
 export const normalizarCodigo = (valor: unknown): string => {
   if (valor === null || valor === undefined) return '';
-  return String(valor)
+  return aTexto(valor)
     .replace(/[^0-9a-zA-Z]/g, '')
     .toLowerCase();
 };
 
 /** Parte la configuracion en codigos: uno por linea, coma o punto y coma. */
 export const separarCodigos = (valor: unknown): string[] => {
-  const crudos = String(valor ?? '')
+  const crudos = aTexto(valor)
     .split(/[\n\r,;]+/)
     .map((codigo) => codigo.trim())
     .filter((codigo) => normalizarCodigo(codigo) !== '');

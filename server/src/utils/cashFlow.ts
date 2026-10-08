@@ -4,9 +4,9 @@
 /* Zona horaria del negocio. Define que "dia" es para el arqueo. */
 export const TZ_NEGOCIO = 'America/Asuncion';
 
+import { aTexto } from './texto.js';
 
-export const texto = (valor: unknown, max = 400): string =>
-  String(valor ?? '').trim().slice(0, max);
+export const texto = (valor: unknown, max = 400): string => aTexto(valor).trim().slice(0, max);
 
 
 export const aNumero = (valor: unknown, porDefecto = 0): number => {
@@ -16,7 +16,7 @@ export const aNumero = (valor: unknown, porDefecto = 0): number => {
 
 
 export const normalizar = (valor: unknown): string =>
-  String(valor ?? '')
+  aTexto(valor)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ')
@@ -25,7 +25,7 @@ export const normalizar = (valor: unknown): string =>
 
 
 export const claveDoc = (valor: unknown): string =>
-  String(valor ?? '')
+  aTexto(valor)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, '_')

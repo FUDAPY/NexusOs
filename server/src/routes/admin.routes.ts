@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requiereRol } from '../middlewares/auth.js';
 import { AppError, asyncHandler, sendOk } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 import { logger } from '../utils/logger.js';
 import {
   migrarFirestore,
@@ -62,7 +63,7 @@ adminRouter.post(
     const aplicar = bodyMigracion.aplicar === true;
     const only = Array.isArray(bodyMigracion.only)
       ? bodyMigracion.only
-          .map((valor) => String(valor).trim())
+          .map((valor) => aTexto(valor).trim())
           .filter((valor) => valor.length > 0)
       : [];
     estado.enCurso = true;
@@ -115,7 +116,7 @@ adminRouter.post(
   asyncHandler(async (req, res) => {
     const body = (req.body ?? {}) as { confirmar?: unknown; aplicar?: unknown };
 
-    if (String(body.confirmar ?? '') !== 'BORRAR-PRODUCTOS') {
+    if (aTexto(body.confirmar) !== 'BORRAR-PRODUCTOS') {
       throw new AppError(
         'Falta la confirmacion. Envia { "confirmar": "BORRAR-PRODUCTOS" }',
         400,

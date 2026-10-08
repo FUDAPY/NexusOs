@@ -1,6 +1,7 @@
 import { Order, OrderItem } from '../models/index.js';
 import { AppError } from '../utils/response.js';
 import { withTransaction } from '../utils/withTransaction.js';
+import { aTexto } from '../utils/texto.js';
 import { filtroPorId } from '../utils/mongoId.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
 import { recordAudit } from './audit.service.js';
@@ -39,7 +40,7 @@ export const cerrarCuentaPendiente = async (
   input: CerrarCuentaInput,
   context: { ip: string; userAgent: string },
 ): Promise<CerrarCuentaResult> => {
-  if (String(input.metodoPago ?? '').trim() === '') {
+  if (aTexto(input.metodoPago).trim() === '') {
     throw new AppError('Falta el metodo de pago', 400, 'MISSING_METODO_PAGO');
   }
   if (!Array.isArray(input.items) || input.items.length === 0) {
@@ -91,7 +92,7 @@ export const cerrarCuentaPendiente = async (
     if (input.detalleEfectivo) {
       const d = input.detalleEfectivo;
       orden.detalleEfectivo = {
-        monedaCobro: String(d['monedaCobro'] ?? 'PYG'),
+        monedaCobro: aTexto(d['monedaCobro'], 'PYG'),
         tasaCambioAplicada: Number(d['tasaCambioAplicada'] ?? 1),
         montoRecibidoMoneda: Number(d['montoRecibidoMoneda'] ?? 0),
         montoRecibidoGs: Number(d['montoRecibidoGs'] ?? 0),

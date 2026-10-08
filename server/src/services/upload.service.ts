@@ -1,6 +1,7 @@
 import { UploadModel } from '../models/Upload.js';
 import { AppError } from '../utils/response.js';
 import { filtroPorId } from '../utils/mongoId.js';
+import { aTexto } from '../utils/texto.js';
 
 
 const MIMES_PERMITIDOS = [
@@ -37,7 +38,7 @@ export const guardarImagen = async (
   input: GuardarImagenInput,
   prefijoApi: string,
 ): Promise<ImagenGuardada> => {
-  const mime = String(input.mime ?? '').trim().toLowerCase();
+  const mime = aTexto(input.mime).trim().toLowerCase();
   if (!MIMES_PERMITIDOS.includes(mime)) {
     throw new AppError(
       `Formato no permitido (${mime || 'sin tipo'}). Se aceptan imagenes: ${MIMES_PERMITIDOS.join(', ')}`,
@@ -46,7 +47,7 @@ export const guardarImagen = async (
     );
   }
 
-  const base64 = String(input.datosBase64 ?? '');
+  const base64 = aTexto(input.datosBase64);
   if (base64 === '') throw new AppError('Falta la imagen', 400, 'MISSING_DATOS');
 
   
@@ -63,12 +64,12 @@ export const guardarImagen = async (
   }
 
   const subida = await UploadModel.create({
-    carpeta: String(input.carpeta ?? 'general'),
-    nombre: String(input.nombre ?? ''),
+    carpeta: aTexto(input.carpeta, 'general'),
+    nombre: aTexto(input.nombre),
     mime,
     tamano: datos.length,
     datos,
-    subidoPor: String(input.subidoPor ?? ''),
+    subidoPor: aTexto(input.subidoPor),
   });
 
   const id = String(subida._id);
@@ -77,7 +78,7 @@ export const guardarImagen = async (
 
 
 export const obtenerImagen = async (id: string) => {
-  const limpio = String(id ?? '').trim();
+  const limpio = aTexto(id).trim();
   if (limpio === '') throw new AppError('Falta la imagen', 400, 'MISSING_ID');
 
   

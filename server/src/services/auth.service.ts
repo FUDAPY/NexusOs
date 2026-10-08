@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { AuditLog, User } from '../models/index.js';
 import type { IUser, UserRol } from '../models/index.js';
 import { AppError } from '../utils/response.js';
+import { aTexto } from '../utils/texto.js';
 
 export interface SesionUsuario {
   id: string;
@@ -24,7 +25,7 @@ export interface LoginResult {
 
 const idDe = (user: IUser & { _id?: unknown }): string => {
   const uid = typeof user.uid === 'string' ? user.uid.trim() : '';
-  return uid !== '' ? uid : String(user._id ?? '');
+  return uid !== '' ? uid : aTexto(user._id);
 };
 
 /* Datos publicos del usuario: nunca sale passwordHash. */
