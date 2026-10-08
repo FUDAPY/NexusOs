@@ -64,7 +64,7 @@ const metodoNormalizado = {
   },
 } as const;
 
-const groupPor = (expresionClave: unknown) => ({
+const groupPor = (expresionClave: unknown): Record<string, unknown> => ({
   
   _id: expresionClave as Record<string, unknown>,
   tickets: { $sum: 1 },
@@ -102,7 +102,7 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
   if (sucursal !== '') match.sucursal = sucursal;
 
   const monto = { $toDouble: { $ifNull: ['$total', 0] } };
-  const sumarSi = (metodo: string) => ({ $sum: { $cond: [{ $eq: [metodoNormalizado, metodo] }, monto, 0] } });
+  const sumarSi = (metodo: string): Record<string, unknown> => ({ $sum: { $cond: [{ $eq: [metodoNormalizado, metodo] }, monto, 0] } });
 
   const [resultado] = await Order.aggregate([
     { $match: match },

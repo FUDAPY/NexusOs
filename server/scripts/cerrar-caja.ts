@@ -9,6 +9,7 @@ import {
   fechaKey,
   type VentaCruda,
 } from '../src/utils/cashFlow.js';
+import type { GrupoCierreForzado } from '../src/utils/cashFlow.js';
 import { aTexto } from '../src/utils/texto.js';
 
 const args = process.argv.slice(2);
@@ -28,7 +29,9 @@ const numero = (nombre: string): number => {
 const plata = (n: number): string => n.toLocaleString('es-PY');
 
 
-const pendientesDe = async (sucursal: string) => {
+const pendientesDe = async (
+  sucursal: string,
+): Promise<{ candidatas: { id: string; venta: VentaCruda }[]; grupo: GrupoCierreForzado | null }> => {
   const docs = await Order.find({ sucursal, arqueado: { $ne: true } }).limit(5000).lean().exec();
   const ventas = docs.map((d) => ({ id: String(d._id), venta: d as unknown as VentaCruda }));
   return {

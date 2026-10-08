@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import request from 'supertest';
+import request, { type Test } from 'supertest';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { buildApp } from '../src/app.js';
@@ -72,7 +72,7 @@ describe('resumen de ventas (/orders/resumen)', () => {
       expiresIn: '5m',
     });
 
-  const pedirCon = (token: string) =>
+  const pedirCon = (token: string): Test =>
     request(app).get(ruta).set('Authorization', `Bearer ${token}`);
 
   it('sin token responde 401', async () => {

@@ -11,6 +11,7 @@ import {
 import { buildApp } from '../src/app.js';
 import { env } from '../src/config/env.js';
 import { redis } from '../src/config/redis.js';
+import type * as Modelos from '../src/models/index.js';
 
 /**
  * La autorizacion de anulaciones vive en settings/sistema y la valida el
@@ -21,7 +22,7 @@ import { redis } from '../src/config/redis.js';
 const estado = vi.hoisted(() => ({ setting: null as Record<string, unknown> | null }));
 
 vi.mock('../src/models/index.js', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../src/models/index.js')>();
+  const real = await importOriginal<Modelos>();
   return {
     ...real,
     Setting: {

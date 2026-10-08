@@ -171,7 +171,9 @@ export const registrar = async (
 const ID_MONGO = /^[a-f0-9]{24}$/i;
 
 
-const buscarUsuario = (identificador: string) =>
+const buscarUsuario = (
+  identificador: string,
+): ReturnType<typeof User.findOne> =>
   User.findOne({
     $or: [{ uid: identificador }, ...(ID_MONGO.test(identificador) ? [{ _id: identificador }] : [])],
   }).select('+passwordHash');

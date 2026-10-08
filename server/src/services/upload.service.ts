@@ -1,4 +1,4 @@
-import { UploadModel } from '../models/Upload.js';
+import { UploadModel, type UploadDoc } from '../models/Upload.js';
 import { AppError } from '../utils/response.js';
 import { filtroPorId } from '../utils/mongoId.js';
 import { aTexto } from '../utils/texto.js';
@@ -77,7 +77,7 @@ export const guardarImagen = async (
 };
 
 
-export const obtenerImagen = async (id: string) => {
+export const obtenerImagen = async (id: string): Promise<UploadDoc> => {
   const limpio = aTexto(id).trim();
   if (limpio === '') throw new AppError('Falta la imagen', 400, 'MISSING_ID');
 

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Request } from 'express';
-import mongoose from 'mongoose';
+import mongoose, { type FilterQuery } from 'mongoose';
 import { Order, Product, Setting, User } from '../src/models/index.js';
 import { construirFiltroAuditoria } from '../src/routes/audit.routes.js';
 import { construirFiltro } from '../src/utils/resource.factory.js';
@@ -151,7 +151,7 @@ describe('los filtros propios con operadores castean', () => {
 
 describe('el borde sigue defendido: un query param no puede inyectar operadores', () => {
   
-  const filtroDelCrud = (query: Record<string, unknown>) =>
+  const filtroDelCrud = (query: Record<string, unknown>): FilterQuery<unknown> =>
     construirFiltro<unknown>(query as unknown as Request['query'], {
       filtros: ['rol', 'sucursal'],
       campoBusqueda: 'nombre',
