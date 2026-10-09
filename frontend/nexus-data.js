@@ -215,13 +215,35 @@
   }
 
   
+  function normalizarFilaId(fila) {
+    if (!fila || typeof fila !== 'object') return fila;
+    var id = String(fila.id || fila._id || fila.uid || '');
+    if (id) {
+      if (!fila.id) fila.id = id;
+      if (!fila._id) fila._id = id;
+    }
+    return fila;
+  }
+
+  function normalizarFilas(filas) {
+    if (!Array.isArray(filas)) return [];
+    for (var i = 0; i < filas.length; i += 1) {
+      normalizarFilaId(filas[i]);
+    }
+    return filas;
+  }
+
   function leerPagina(coleccion, opciones) {
     var opts = opciones || {};
     var api = conTtl(opts, apiOptions(opts));
     return global.NexusAPI.get(rutaDe(coleccion), aQuery(opts), api).then(function (r) {
       var d = r.data;
-      if (d && Array.isArray(d.items)) return d;
+      if (d && Array.isArray(d.items)) {
+        normalizarFilas(d.items);
+        return d;
+      }
       var suelto = Array.isArray(d) ? d : [];
+      normalizarFilas(suelto);
       return { items: suelto, total: suelto.length, limit: null, offset: 0 };
     });
   }
@@ -276,7 +298,7 @@
   function obtener(coleccion, id, opciones) {
     var api = apiOptions(opciones || {});
     return global.NexusAPI.get(rutaDe(coleccion) + '/' + encodeURIComponent(id), undefined, api)
-      .then(function (r) { return r.data; });
+      .then(function (r) { return normalizarFilaId(r.data); });
   }
 
   

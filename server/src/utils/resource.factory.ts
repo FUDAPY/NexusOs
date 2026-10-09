@@ -145,7 +145,12 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
         opts.modelo.countDocuments(filtro).exec(),
       ]);
 
-      sendOk(res, { items: datos, total, limit, offset, coleccion: opts.coleccion });
+      const datosConId = datos.map((doc: any) => ({
+        id: String(doc?._id ?? ''),
+        ...doc,
+      }));
+
+      sendOk(res, { items: datosConId, total, limit, offset, coleccion: opts.coleccion });
     }),
   );
 
@@ -159,7 +164,7 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
       if (doc === null) {
         throw new AppError(`No existe el documento ${String(req.params.id)} en ${opts.coleccion}`, 404, 'NOT_FOUND');
       }
-      sendOk(res, doc);
+      sendOk(res, { id: String((doc as any)?._id ?? ''), ...doc });
     }),
   );
 

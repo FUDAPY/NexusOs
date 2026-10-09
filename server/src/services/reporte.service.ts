@@ -64,11 +64,20 @@ const metodoNormalizado = {
   },
 } as const;
 
+/**
+ * Convierte $total a double de forma defensiva.
+ * $toDouble propaga NaN cuando el campo tiene un valor numerico invalido (herencia Firestore).
+ * $convert con onError:0 + onNull:0 garantiza que cada documento aporte 0 en lugar de
+ * contaminar el $sum y producir null en la respuesta JSON.
+ */
+const montoSeguro = {
+  $convert: { input: { $ifNull: ['$total', 0] }, to: 'double', onError: 0, onNull: 0 },
+};
+
 const groupPor = (expresionClave: unknown): Record<string, unknown> => ({
-  
   _id: expresionClave as Record<string, unknown>,
   tickets: { $sum: 1 },
-  total: { $sum: { $toDouble: { $ifNull: ['$total', 0] } } },
+  total: { $sum: montoSeguro },
 });
 
 export const obtenerResumenVentas = async (input: ResumenInput): Promise<ResumenReporte> => {
@@ -101,8 +110,7 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
   const sucursal = aTexto(input.sucursal).trim();
   if (sucursal !== '') match.sucursal = sucursal;
 
-  const monto = { $toDouble: { $ifNull: ['$total', 0] } };
-  const sumarSi = (metodo: string): Record<string, unknown> => ({ $sum: { $cond: [{ $eq: [metodoNormalizado, metodo] }, monto, 0] } });
+  const sumarSi = (metodo: string): Record<string, unknown> => ({ $sum: { $cond: [{ $eq: [metodoNormalizado, metodo] }, montoSeguro, 0] } });
 
   const [resultado] = await Order.aggregate([
     { $match: match },
@@ -113,7 +121,7 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
             $group: {
               _id: null,
               tickets: { $sum: 1 },
-              ventaTotal: { $sum: monto },
+              ventaTotal: { $sum: montoSeguro },
               efectivo: sumarSi('efectivo'),
               tarjeta: sumarSi('tarjeta'),
               transferencia: sumarSi('transferencia'),
@@ -131,7 +139,7 @@ export const obtenerResumenVentas = async (input: ResumenInput): Promise<Resumen
               ...(sucursal !== '' ? { sucursal } : {}),
             },
           },
-          { $group: { _id: null, ticketsAnulados: { $sum: 1 }, totalAnulado: { $sum: monto } } },
+          { $group: { _id: null, ticketsAnulados: { $sum: 1 }, totalAnulado: { $sum: montoSeguro } } },
         ],
         porDia: [
           {

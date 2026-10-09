@@ -3066,7 +3066,10 @@
                de mesas fisicas y la lista de cuentas pendientes. Se usa tanto para el canal
                en vivo como para la relectura periodica. */
             aplicarCuentasPendientes: function(filas = []) {
-                this.listaCuentasPendientes = Array.isArray(filas) ? filas : [];
+                this.listaCuentasPendientes = (Array.isArray(filas) ? filas : []).map(f => {
+                    const id = String(f.id || f._id || f.uid || '');
+                    return { ...f, id: id, _id: id };
+                });
 
                 const badge = document.getElementById('badge-pendientes');
                 if (badge) {
@@ -3090,6 +3093,28 @@
                     .catch((error) => console.warn('[mesas] no se pudieron refrescar las cuentas pendientes', error && error.message));
             },
 
+            cerrarModalMesasFisicas: function() {
+                const modal = document.getElementById('modal-mesas-fisicas');
+                if(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+            },
+
+            abrirMesaOcupada: async function(ticketId) {
+                this.cerrarModalMesasFisicas();
+
+                if (this.idTicketRecuperado && String(this.idTicketRecuperado) === String(ticketId)) {
+                    this.mostrarToast("Esta mesa ya esta cargada en pantalla.", "info");
+                    return;
+                }
+
+                if (this.carrito.length > 0 && !this.idTicketRecuperado) {
+                    if (!confirm("Tienes productos en el ticket actual sin guardar. Deseas descartarlos para abrir la mesa seleccionada?")) {
+                        return;
+                    }
+                }
+
+                await this.cargarCuentaParaCobrar(ticketId);
+            },
+
             abrirModalMesasFisicas: function() {
                 this.renderizarMesasFisicas();
                 const modal = document.getElementById('modal-mesas-fisicas');
@@ -3104,7 +3129,8 @@
                 for(let i=1; i<=25; i++) {
                     const nombreMesa = `Fisico ${i}`;
                     const ticketOcupado = this.listaCuentasPendientes.find(t => t.aliasReferencia === nombreMesa);
-                    const esMesaActual = this.idTicketRecuperado && ticketOcupado && ticketOcupado.id === this.idTicketRecuperado;
+                    const ticketId = ticketOcupado ? String(ticketOcupado.id || ticketOcupado._id || '') : '';
+                    const esMesaActual = Boolean(this.idTicketRecuperado && ticketOcupado && (ticketId === String(this.idTicketRecuperado)));
 
                     let bgBtn = "bg-white border-green-500 text-green-700 hover:bg-green-50";
                     let iconBtn = "fa-chair";
@@ -3114,12 +3140,13 @@
                     if (esMesaActual) {
                         bgBtn = "bg-orange-100 border-orange-500 text-orange-700 ring-4 ring-orange-200";
                         subt = "Tu cuenta actual";
+                        onclick = `onclick="PosModule.cerrarModalMesasFisicas()"`;
                     }
                     else if (ticketOcupado) {
-                        bgBtn = "bg-red-50 border-red-500 text-red-700 opacity-60 cursor-not-allowed";
-                        iconBtn = "fa-ban";
-                        onclick = `onclick="PosModule.mostrarToast('Esta mesa ya esta ocupada.', 'error')"`;
-                        subt = "Ocupada";
+                        bgBtn = "bg-red-50 border-red-500 text-red-700 hover:bg-red-100 cursor-pointer shadow-sm";
+                        iconBtn = "fa-chair";
+                        onclick = `onclick="PosModule.abrirMesaOcupada('${ticketId}')"`;
+                        subt = `Ocupada · Gs. ${this.formatoMoneda(ticketOcupado.total || 0)}`;
                     }
 
                     html += `
@@ -3591,7 +3618,15 @@
             },
 
             abrirModalPendientes: function() {
-                this.vistaPendientesActual = this.vistaPendientesActual || 'virtuales';
+                const totalFisicas = (this.listaCuentasPendientes || []).filter(t => this.esCuentaFisica(t)).length;
+                const totalVirtuales = (this.listaCuentasPendientes || []).filter(t => !this.esCuentaFisica(t)).length;
+                if (!this.vistaPendientesActual) {
+                    this.vistaPendientesActual = (totalVirtuales === 0 && totalFisicas > 0) ? 'fisicas' : 'virtuales';
+                } else if (this.vistaPendientesActual === 'virtuales' && totalVirtuales === 0 && totalFisicas > 0) {
+                    this.vistaPendientesActual = 'fisicas';
+                } else if (this.vistaPendientesActual === 'fisicas' && totalFisicas === 0 && totalVirtuales > 0) {
+                    this.vistaPendientesActual = 'virtuales';
+                }
                 this.renderizarPendientes();
                 const modal = document.getElementById('modal-pendientes');
                 if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
@@ -3610,15 +3645,24 @@
                 const cont = document.getElementById('lista-pendientes-container');
                 if(!cont) return;
 
+                const totalFisicas = (this.listaCuentasPendientes || []).filter(t => this.esCuentaFisica(t)).length;
+                const totalVirtuales = (this.listaCuentasPendientes || []).filter(t => !this.esCuentaFisica(t)).length;
+
                 const vista = this.vistaPendientesActual === 'fisicas' ? 'fisicas' : 'virtuales';
                 const tabFisicas = document.getElementById('tab-pendientes-fisicas');
                 const tabVirtuales = document.getElementById('tab-pendientes-virtuales');
-                if (tabFisicas) tabFisicas.className = vista === 'fisicas'
-                    ? 'px-5 py-2 rounded-xl text-sm font-black transition bg-slate-900 text-white shadow'
-                    : 'px-5 py-2 rounded-xl text-sm font-black transition text-slate-500 hover:text-slate-900';
-                if (tabVirtuales) tabVirtuales.className = vista === 'virtuales'
-                    ? 'px-5 py-2 rounded-xl text-sm font-black transition bg-slate-900 text-white shadow'
-                    : 'px-5 py-2 rounded-xl text-sm font-black transition text-slate-500 hover:text-slate-900';
+                if (tabFisicas) {
+                    tabFisicas.innerHTML = `<i class="fa-solid fa-chair mr-1.5"></i> Fisicas (${totalFisicas})`;
+                    tabFisicas.className = vista === 'fisicas'
+                        ? 'px-5 py-2 rounded-xl text-sm font-black transition bg-slate-900 text-white shadow'
+                        : 'px-5 py-2 rounded-xl text-sm font-black transition text-slate-500 hover:text-slate-900';
+                }
+                if (tabVirtuales) {
+                    tabVirtuales.innerHTML = `<i class="fa-solid fa-layer-group mr-1.5"></i> Virtuales (${totalVirtuales})`;
+                    tabVirtuales.className = vista === 'virtuales'
+                        ? 'px-5 py-2 rounded-xl text-sm font-black transition bg-slate-900 text-white shadow'
+                        : 'px-5 py-2 rounded-xl text-sm font-black transition text-slate-500 hover:text-slate-900';
+                }
 
                 const cuentasFiltradas = this.listaCuentasPendientes.filter(t => {
                     const fisica = this.esCuentaFisica(t);
@@ -3637,6 +3681,7 @@
                         const nombreVisual = t.aliasReferencia || t.nombreCliente;
                         const isDelivery = t.tipoTransaccion === 'app_delivery';
                         const isFisica = this.esCuentaFisica(t);
+                        const ticketId = String(t.id || t._id || '');
                         const tagDelivery = isDelivery
                             ? `<span class="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-[10px] font-black uppercase border border-green-200"><i class="fa-solid fa-motorcycle"></i> Delivery App</span>`
                             : (isFisica
@@ -3653,7 +3698,7 @@
                             ? `<p class="text-xs font-bold text-blue-700 mt-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2"><i class="fa-solid fa-building-columns mr-1"></i>${t.detallesPago.banco || 'Ueno Bank'} · ${t.detallesPago.titular || 'Jose Lin'} · ${t.detallesPago.alias || '3.453.075'}</p>`
                             : '';
                         const observacion = t.observacion ? `<p class="text-xs font-bold text-amber-700 mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2"><i class="fa-solid fa-note-sticky mr-1"></i>${t.observacion}</p>` : '';
-                        return `<button onclick="PosModule.cargarCuentaParaCobrar('${t.id}')" class="w-full bg-white border-2 border-slate-200 hover:border-orange-400 p-5 rounded-[28px] transition shadow-sm group text-left h-full"><div class="flex items-start justify-between gap-4"><div><div class="mb-3">${tagDelivery}</div><p class="font-black text-slate-800 text-2xl leading-tight group-hover:text-orange-600 transition">${nombreVisual}</p><p class="text-xs text-slate-400 font-bold mt-2 uppercase tracking-[0.18em]"><i class="fa-regular fa-clock mr-1"></i>Abierta a las ${hora}</p>${pagoPedido}</div><div class="text-right"><p class="font-black text-green-500 text-2xl font-mono">Gs. ${this.formatoMoneda(t.total)}</p><p class="text-[10px] uppercase font-bold text-slate-400 mt-2">Tocar para operar</p></div></div>${transferenciaInfo}${observacion}</button>`;
+                        return `<button onclick="PosModule.cargarCuentaParaCobrar('${ticketId}')" class="w-full bg-white border-2 border-slate-200 hover:border-orange-400 p-5 rounded-[28px] transition shadow-sm group text-left h-full"><div class="flex items-start justify-between gap-4"><div><div class="mb-3">${tagDelivery}</div><p class="font-black text-slate-800 text-2xl leading-tight group-hover:text-orange-600 transition">${nombreVisual}</p><p class="text-xs text-slate-400 font-bold mt-2 uppercase tracking-[0.18em]"><i class="fa-regular fa-clock mr-1"></i>Abierta a las ${hora}</p>${pagoPedido}</div><div class="text-right"><p class="font-black text-green-500 text-2xl font-mono">Gs. ${this.formatoMoneda(t.total)}</p><p class="text-[10px] uppercase font-bold text-slate-400 mt-2">Tocar para operar</p></div></div>${transferenciaInfo}${observacion}</button>`;
                     }).join('');
                 }
             },
@@ -3663,8 +3708,13 @@
             },
 
             cargarCuentaParaCobrar: async function(docId) {
-                const ticket = this.listaCuentasPendientes.find(x => x.id === docId);
-                if(!ticket) return;
+                const idBuscado = String(docId || '');
+                const ticket = this.listaCuentasPendientes.find(x => String(x.id || x._id || '') === idBuscado);
+                if(!ticket) {
+                    console.warn('[mesas] Ticket no encontrado para id:', docId, this.listaCuentasPendientes);
+                    this.mostrarToast('No se encontro la orden pendiente seleccionada.', 'error');
+                    return;
+                }
 
                 /* La liberacion de reservas debe terminar antes de repoblar el
                    carrito. Sin esta espera, las reservas se devuelven sobre
@@ -3680,8 +3730,10 @@
                 this.carrito = items;
                 this.carritoOriginal = JSON.parse(JSON.stringify(items));
 
-                this.clienteActual = ticket.cliente !== 'ocasional' ? this.clientesFirebase.find(c => c.id === ticket.cliente) : null;
-                this.idTicketRecuperado = docId;
+                this.clienteActual = (ticket.cliente && ticket.cliente !== 'ocasional')
+                    ? this.clientesFirebase.find(c => String(c.id || c._id || '') === String(ticket.cliente))
+                    : null;
+                this.idTicketRecuperado = String(ticket.id || ticket._id || docId);
 
                 const obsInput = document.getElementById('input-observacion');
                 if(obsInput) obsInput.value = ticket.observacion || '';
@@ -3690,6 +3742,7 @@
                     this.asignarCliente(this.clienteActual, false);
                 } else {
                     const esDeliveryApp = ticket.tipoTransaccion === 'app_delivery';
+                    const esFisica = this.esCuentaFisica(ticket);
                     const nombreEl = document.getElementById('cliente-nombre');
                     const estadoEl = document.getElementById('cliente-estado');
                     const btnCredito = document.getElementById('btn-metodo-credito');
@@ -3697,11 +3750,16 @@
                     if(nombreEl) nombreEl.innerText = esDeliveryApp ? (ticket.nombreCliente || ticket.aliasReferencia || "Pedido App") : (ticket.aliasReferencia || ticket.nombreCliente || "Consumidor Final");
                     if(estadoEl) estadoEl.innerHTML = esDeliveryApp
                         ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded font-bold text-xs"><i class="fa-solid fa-motorcycle"></i> DELIVERY APP · ${(ticket.metodoPagoSolicitado || ticket.metodoPago || 'PENDIENTE').toUpperCase()}</span>`
-                        : `<span class="bg-orange-100 text-orange-600 px-2 py-1 rounded font-bold text-xs"><i class="fa-solid fa-lock"></i> VIRTUAL RECUPERADA</span>`;
+                        : (esFisica
+                            ? `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold text-xs"><i class="fa-solid fa-chair"></i> MESA RECUPERADA</span>`
+                            : `<span class="bg-orange-100 text-orange-600 px-2 py-1 rounded font-bold text-xs"><i class="fa-solid fa-lock"></i> VIRTUAL RECUPERADA</span>`);
                     if(btnCredito) btnCredito.disabled = true;
                     if(msgCredito) msgCredito.classList.remove('hidden');
                 }
-                this.cerrarModalPendientes(); this.actualizarUI();
+                this.cerrarModalPendientes();
+                this.cerrarModalMesasFisicas();
+                this.actualizarUI();
+                this.mostrarToast(`Cuenta abierta: ${ticket.aliasReferencia || ticket.nombreCliente || 'Mesa'} (${this.carrito.length} items)`, 'info');
             },
 
             ejecutarPago: function(metodoElegido, detallesPago = null) {

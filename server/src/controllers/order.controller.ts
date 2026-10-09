@@ -131,7 +131,12 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
       Order.countDocuments(filter).exec(),
     ]);
 
-    sendOk(res, { items, total, page, limit, offset: salto });
+    const itemsConId = items.map((doc) => ({
+      id: String(doc._id),
+      ...doc,
+    }));
+
+    sendOk(res, { items: itemsConId, total, page, limit, offset: salto });
   } catch (error) {
     next(error);
   }
