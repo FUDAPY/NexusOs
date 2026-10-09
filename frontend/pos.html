@@ -4510,6 +4510,12 @@
             },
 
             reiniciarPOS: function() {
+                const tieneItems = this.carrito && this.carrito.length > 0;
+                if (tieneItems) {
+                    const n = this.carrito.length;
+                    const label = n === 1 ? '1 producto' : n + ' productos';
+                    if (!confirm('Hay ' + label + ' en el carrito.\n\xbfDescartar y abrir nueva orden?')) return;
+                }
                 PosModule.limpiarPantallaLocal();
                 const m1 = document.getElementById('modal-exito');
                 if(m1) { m1.classList.add('hidden'); m1.classList.remove('flex'); }

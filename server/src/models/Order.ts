@@ -240,6 +240,9 @@ orderSchema.index({ cajero: 1, fecha: -1 });
 orderSchema.index({ estadoCocina: 1, sucursal: 1, fecha: -1 });
 orderSchema.index({ tipoTransaccion: 1, fecha: -1 });
 orderSchema.index({ estadoPago: 1, noAfectaCaja: 1, fecha: -1 });
+/* Reporte: filtro combinado anulado/cancelado/noAfectaCaja + sucursal + fecha */
+orderSchema.index({ anulado: 1, cancelado: 1, noAfectaCaja: 1, sucursal: 1, fecha: -1 });
+orderSchema.index({ estado: 1, sucursal: 1, fecha: -1 });
 
 export const Order = model<IOrder, Model<IOrder>>('Order', orderSchema);
 
