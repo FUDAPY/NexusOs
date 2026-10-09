@@ -60,6 +60,18 @@ describe('calcularAporte: metodo de pago', () => {
   it('un total negativo no se propaga', () => {
     expect(calcularAporte('o1', ventaBase({ total: -5_000 }))?.efectivo).toBe(0);
   });
+
+  it('reconoce alias de tarjeta y transferencia', () => {
+    expect(calcularAporte('o1', ventaBase({ metodoPago: 'POS Tarjeta' }))?.tarjetaPOS).toBe(100_000);
+    expect(calcularAporte('o1', ventaBase({ metodoPago: 'Debito' }))?.tarjetaPOS).toBe(100_000);
+    expect(calcularAporte('o1', ventaBase({ metodoPago: 'Transferencia bancaria' }))?.transferencia).toBe(100_000);
+  });
+
+  it('una venta pagada con metodo desconocido no suma cero', () => {
+    const aporte = calcularAporte('o1', ventaBase({ metodoPago: 'QR' }));
+    expect(aporte?.efectivo).toBe(100_000);
+    expect(aporte?.ventaTotalBruta).toBe(100_000);
+  });
 });
 
 describe('calcularAporte: que NO aporta', () => {

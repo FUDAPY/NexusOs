@@ -145,7 +145,7 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
         opts.modelo.countDocuments(filtro).exec(),
       ]);
 
-      const datosConId = datos.map((doc: any) => ({
+      const datosConId = datos.map((doc) => ({
         id: String(doc?._id ?? ''),
         ...doc,
       }));
@@ -164,7 +164,7 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
       if (doc === null) {
         throw new AppError(`No existe el documento ${String(req.params.id)} en ${opts.coleccion}`, 404, 'NOT_FOUND');
       }
-      sendOk(res, { id: String((doc as any)?._id ?? ''), ...doc });
+      sendOk(res, { id: String((doc as Record<string, unknown>)?._id ?? ''), ...doc });
     }),
   );
 

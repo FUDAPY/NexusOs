@@ -153,16 +153,20 @@ export const calcularAporte = (saleId: string, venta: VentaCruda): AporteFlujo |
 
   if (esPagado && metodoPago === 'mixto' && detalles) {
     efectivo = Math.max(0, aNumero(detalles['efectivo'], 0));
-    tarjetaPOS = Math.max(0, aNumero(detalles['tarjeta'], 0));
+    tarjetaPOS = Math.max(0, aNumero(detalles['tarjeta'] ?? detalles['posTarjeta'] ?? detalles['pos'], 0));
     transferencia = Math.max(0, aNumero(detalles['transferencia'], 0));
-  } else if (esPagado && metodoPago === 'efectivo') {
+    credito = Math.max(0, aNumero(detalles['credito'], 0));
+  } else if (esPagado && ['efectivo', 'cash'].includes(metodoPago)) {
     efectivo = total;
-  } else if (esPagado && ['tarjeta', 'pos', 'tarjeta pos'].includes(metodoPago)) {
+  } else if (esPagado && ['tarjeta', 'pos', 'tarjeta pos', 'pos tarjeta', 'debito', 'credito tarjeta'].includes(metodoPago)) {
     tarjetaPOS = total;
-  } else if (esPagado && metodoPago === 'transferencia') {
+  } else if (esPagado && ['transferencia', 'transferencia bancaria'].includes(metodoPago)) {
     transferencia = total;
   } else if (esPagado && esMetodoCredito(metodoPago)) {
     credito = total;
+  }
+  if (esPagado && total > 0 && efectivo + tarjetaPOS + transferencia + credito <= 0) {
+    efectivo = total;
   }
 
   const totalInmediato = efectivo + tarjetaPOS + transferencia;

@@ -4333,7 +4333,15 @@
                     const inputEl = document.getElementById('search-input');
                     if(!inputEl) return;
                     const txt = inputEl.value.toLowerCase();
-                    this.productosVisibles = this.catalogoFirebase.filter(p => (this.categoriaActual === 'Todos' || p.categoria === this.categoriaActual) && p.nombre.toLowerCase().includes(txt));
+                    const coincide = (p) => {
+                        const t = txt;
+                        if (!t) return true;
+                        if ((p.nombre || '').toLowerCase().includes(t)) return true;
+                        if ((p.categoria || '').toLowerCase().includes(t)) return true;
+                        if ((p.codigo || '').toLowerCase().includes(t)) return true;
+                        return false;
+                    };
+                    this.productosVisibles = this.catalogoFirebase.filter(p => (this.categoriaActual === 'Todos' || p.categoria === this.categoriaActual) && coincide(p));
                     this.renderizarProductos();
                     inputEl.focus();
                 }, 150);

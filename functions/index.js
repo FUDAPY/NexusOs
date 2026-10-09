@@ -753,16 +753,20 @@ function buildCashFlowContribution(saleId, saleData = {}) {
 
   if (esPagado && metodoPago === "mixto" && saleData.detallesPago) {
     efectivo = Math.max(0, cleanNumber(saleData.detallesPago.efectivo, 0));
-    tarjetaPOS = Math.max(0, cleanNumber(saleData.detallesPago.tarjeta, 0));
+    tarjetaPOS = Math.max(0, cleanNumber(saleData.detallesPago.tarjeta ?? saleData.detallesPago.posTarjeta ?? saleData.detallesPago.pos, 0));
     transferencia = Math.max(0, cleanNumber(saleData.detallesPago.transferencia, 0));
-  } else if (esPagado && metodoPago === "efectivo") {
+    credito = Math.max(0, cleanNumber(saleData.detallesPago.credito, 0));
+  } else if (esPagado && ["efectivo", "cash"].includes(metodoPago)) {
     efectivo = total;
-  } else if (esPagado && ["tarjeta", "pos", "tarjeta pos"].includes(metodoPago)) {
+  } else if (esPagado && ["tarjeta", "pos", "tarjeta pos", "pos tarjeta", "debito", "credito tarjeta"].includes(metodoPago)) {
     tarjetaPOS = total;
-  } else if (esPagado && metodoPago === "transferencia") {
+  } else if (esPagado && ["transferencia", "transferencia bancaria"].includes(metodoPago)) {
     transferencia = total;
   } else if (esPagado && isCreditMethod(metodoPago)) {
     credito = total;
+  }
+  if (esPagado && total > 0 && efectivo + tarjetaPOS + transferencia + credito <= 0) {
+    efectivo = total;
   }
 
   const totalInmediato = efectivo + tarjetaPOS + transferencia;

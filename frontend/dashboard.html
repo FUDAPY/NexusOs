@@ -1374,6 +1374,8 @@
                 if (['tarjeta', 'pos', 'pos tarjeta', 'tarjeta pos', 'debito', 'credito tarjeta'].includes(metodo)) return { efectivo: 0, tarjeta: monto, transferencia: 0, credito: 0 };
                 if (metodo === 'transferencia' || metodo === 'transferencia bancaria') return { efectivo: 0, tarjeta: 0, transferencia: monto, credito: 0 };
                 if (esMetodoCredito(metodo)) return { efectivo: 0, tarjeta: 0, transferencia: 0, credito: monto };
+                // Venta cobrada con metodo no catalogado: no se pierde, va a efectivo.
+                if (String(venta?.estadoPago || '').toLowerCase() === 'pagado' && monto > 0) return { efectivo: monto, tarjeta: 0, transferencia: 0, credito: 0 };
                 return { efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0 };
             },
 
