@@ -1,5 +1,9 @@
 import { AppError } from '../utils/response.js';
-import { fechaHoraTexto, sumarAportes, type TotalesCierre, type VentaCruda } from '../utils/cashFlow.js';
+import {
+  calcularAporte,
+  fechaHoraTexto,
+  type VentaCruda,
+} from '../utils/cashFlow.js';
 import { withTransaction } from '../utils/withTransaction.js';
 import { AuditLog, CashClose, CashShift, Order } from '../models/index.js';
 import { emitTurnoEvent } from '../sockets/kds.js';
@@ -274,17 +278,24 @@ export const cerrarTurno = async (
   return resultado;
 };
 
+export interface ResumenTurno {
+  ventaTotalBruta: number;
+  efectivo: number;
+  tarjetaPOS: number;
+  transferencia: number;
+  credito: number;
+  totalTicketsFlujo: number;
+  totalTicketsPagados: number;
+}
+
 export interface ReconciliarTurnoResult {
   turnoId: string;
   sucursal: string;
-  
-  summary: TotalesCierre;
-  
+  summary: ResumenTurno;
   differences: Record<string, number>;
 }
 
-
-const CAMPOS_RESUMEN = [
+const CAMPOS_RESUMEN: (keyof ResumenTurno)[] = [
   'ventaTotalBruta',
   'efectivo',
   'tarjetaPOS',
@@ -292,7 +303,38 @@ const CAMPOS_RESUMEN = [
   'credito',
   'totalTicketsFlujo',
   'totalTicketsPagados',
-] as const;
+];
+
+/* Resumen calculado desde las ordenes reales del turno, con el mismo
+   criterio de aporte que el cierre (utils/cashFlow.calcularAporte). */
+const resumirOrdenesDelTurno = (ordenes: readonly unknown[]): ResumenTurno => {
+  const resumen: ResumenTurno = {
+    ventaTotalBruta: 0,
+    efectivo: 0,
+    tarjetaPOS: 0,
+    transferencia: 0,
+    credito: 0,
+    totalTicketsFlujo: 0,
+    totalTicketsPagados: 0,
+  };
+  for (const orden of ordenes) {
+    const cruda = orden as VentaCruda;
+    const aporte = calcularAporte(String(cruda['_id'] ?? ''), {
+      ...cruda,
+      arqueado: cruda['arqueado'] === true,
+      noAfectaCaja: cruda['noAfectaCaja'] === true,
+    });
+    if (!aporte) continue;
+    resumen.ventaTotalBruta += Math.max(0, aporte.ventaTotalBruta);
+    resumen.efectivo += Math.max(0, aporte.efectivo);
+    resumen.tarjetaPOS += Math.max(0, aporte.tarjetaPOS);
+    resumen.transferencia += Math.max(0, aporte.transferencia);
+    resumen.credito += Math.max(0, aporte.credito);
+    resumen.totalTicketsFlujo += aporte.totalTicketsFlujo;
+    resumen.totalTicketsPagados += aporte.totalTicketsPagados;
+  }
+  return resumen;
+};
 
 
 export const reconciliarFlujoTurno = async (turnoId: string): Promise<ReconciliarTurnoResult> => {
@@ -320,23 +362,21 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
     .lean()
     .exec();
 
-  const summary = sumarAportes(
-    ordenes.map((orden) => ({
-      id: String(orden._id),
-      
-      venta: {
-        ...(orden as unknown as VentaCruda),
-        arqueado: orden.arqueado === true,
-        noAfectaCaja: orden.noAfectaCaja === true,
-      } as VentaCruda,
-    })),
-  );
+  const summary = resumirOrdenesDelTurno(ordenes);
 
-  
-  const guardado = ((turno as unknown as { resumen?: Record<string, unknown> }).resumen ?? {}) as Record<
-    string,
-    unknown
-  >;
+  /* Los campos del turno son planos (efectivo, tarjetaPOS, ...), no existe
+     un subdocumento `resumen`: antes se comparaba contra turno.resumen,
+     que siempre era {}, y el calculo NUNCA se guardaba, asi que el
+     dashboard seguia viendo cero. Ahora se persiste el resumen. */
+  const guardado: Record<string, unknown> = {
+    ventaTotalBruta: turno.ventaTotalBruta,
+    efectivo: turno.efectivo,
+    tarjetaPOS: turno.tarjetaPOS,
+    transferencia: turno.transferencia,
+    credito: turno.credito,
+    totalTicketsFlujo: turno.totalTicketsFlujo,
+    totalTicketsPagados: turno.totalTicketsPagados,
+  };
 
   const differences: Record<string, number> = {};
   const calculado = summary as unknown as Record<string, number>;
@@ -345,6 +385,11 @@ export const reconciliarFlujoTurno = async (turnoId: string): Promise<Reconcilia
     const viejo = Number(guardado[campo] ?? 0);
     if (nuevo !== viejo) differences[campo] = nuevo - viejo;
   }
+
+  await CashShift.updateOne(
+    { turnoId: id },
+    { $set: { ...summary, updatedAt: new Date() } },
+  ).exec();
 
   return { turnoId: id, sucursal: String(turno.sucursal ?? ''), summary, differences };
 };
