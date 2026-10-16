@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { asyncHandler, sendOk } from '../utils/response.js';
+import { AppError, asyncHandler, sendOk } from '../utils/response.js';
 import { aTexto } from '../utils/texto.js';
 import { requireServiceToken } from '../middlewares/auth.js';
 import {
@@ -9,6 +9,8 @@ import {
   type AjusteSolicitud,
   type ModoAjuste,
 } from '../services/inventario.service.js';
+import { crearPedidoWeb } from '../services/ordenIntegracion.service.js';
+import { createWebOrderInputSchema } from '../schemas/orderIntegration.schema.js';
 
 export const integrationRouter: Router = Router();
 
@@ -55,5 +57,31 @@ integrationRouter.post(
       ip: req.ip ?? '',
       userAgent: String(req.headers['user-agent'] ?? ''),
     }));
+  }),
+);
+
+/* Pedido cargado desde la web publica del restaurante.
+
+   Entra por aca y no por `POST /orders` porque quien pide es un cliente desde el
+   navegador, sin sesion: no hay JWT que exigir. La autenticacion es el token de
+   servicio, que agrega el nginx de la web del lado del servidor y que NUNCA
+   llega al navegador. El resto del camino es el mismo que una venta del POS:
+   `crearPedidoWeb` resuelve el catalogo, valida y llama a `createOrder`, asi que
+   el pedido aparece en caja y en el KDS por Socket.IO sin intervencion humana. */
+integrationRouter.post(
+  '/orders',
+  asyncHandler(async (req, res) => {
+    const parsed = createWebOrderInputSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      const detalle = parsed.error.issues.map((issue) => issue.message).join(' | ');
+      throw new AppError(detalle, 422, 'VALIDATION_ERROR');
+    }
+
+    const pedido = await crearPedidoWeb(parsed.data, {
+      ip: req.ip ?? '',
+      userAgent: String(req.headers['user-agent'] ?? ''),
+    });
+
+    sendOk(res, pedido, 201);
   }),
 );
