@@ -1080,23 +1080,24 @@
             },
             actualizarFlujoDesdeResumen: function() {
                 const resumenes = this.obtenerResumenesFiltrados();
-                const ventasRespaldo = (this.ventasTurnoCache || []).filter((venta) => {
-                    if (!venta || venta.arqueado === true || venta.estadoPago !== 'pagado') return false;
-                    if (venta.tipoTransaccion === 'abono_deuda' || venta.tipoTransaccion === 'producto_gratis' || venta.noAfectaCaja === true) return false;
-                    return this.ventaCorrespondeASucursalFiltro(venta) && this.ventaEsDelTurnoAbierto(venta);
-                });
+                /* Mismas ventas que pinta la lista: cuando el turno no trae importes
+                   guardados, las tarjetas se suman con esta misma fuente. */
+                const ventasRespaldo = (this.ventasTurnoCache || []).filter((venta) =>
+                    this.ventaEsContableEnFlujo(venta) || this.ventaEsMesaPendienteTurnoActual(venta));
+                /* Solo se confia en los importes GUARDADOS en el turno: un turno recien
+                   abierto (o sin reconciliar) guarda 0 en efectivo/tarjeta/transferencia
+                   aunque ya tenga tickets cobrados. Antes esta rama ganaba porque la
+                   condicion tambien miraba los contadores de tickets, y las tarjetas
+                   quedaban en Gs. 0 mientras la lista mostraba los tickets cobrados.
+                   Sin importes en el turno, los totales salen de las ventas reales. */
                 const resumenTieneDatos = (resumen = {}) => [
                     resumen.ventaTotalBruta,
                     resumen.efectivo,
                     resumen.tarjetaPOS,
                     resumen.transferencia,
-                    resumen.credito,
-                    resumen.totalTicketsFlujo,
-                    resumen.totalTicketsPagados
+                    resumen.credito
                 ].some((valor) => Number(valor || 0) > 0);
-                const usarLecturaDirecta = ventasRespaldo.length > 0 && (
-                    resumenes.length === 0 || resumenes.every((resumen) => !resumenTieneDatos(resumen))
-                );
+                const usarLecturaDirecta = !resumenes.some(resumenTieneDatos);
                 const sucursalesActivas = new Set([
                     ...(this.resumenesTurnoCache || []).map((item) => this.obtenerClaveSucursalVenta(item)),
                     ...Array.from(this.turnosDetectadosDesdeVentas.keys())
@@ -1123,7 +1124,7 @@
                     }, { total: 0, efectivo: 0, tarjeta: 0, transferencia: 0, tickets: 0 });
 
                 const estado = document.getElementById('flujo-resumen-status');
-                if (!usarLecturaDirecta && !resumenes.length && !ventasRespaldo.length) {
+                if (!resumenes.length && !ventasRespaldo.length) {
                     ['stat-total-global', 'stat-efectivo', 'stat-tarjeta', 'stat-transferencia'].forEach((id) => {
                         const elemento = document.getElementById(id);
                         if (elemento) elemento.innerText = 'Sin turno abierto';
@@ -1272,6 +1273,34 @@
 
                 this.renderizarTabla(this.flujoActualCache);
                 this.actualizarEtiquetaInicioTurno();
+
+                /* Red de seguridad contra el "Gs. 0": si las tarjetas quedaron vacias o
+                   en cero con tickets ya visibles en la lista, se pintan con los MISMOS
+                   totales de la lista. Si el turno ya trae importes guardados NO se toca
+                   nada: `ventaTotalBruta` del resumen incluye el credito y la lista no,
+                   asi que pisarla cambiaria el numero que muestra "Venta Total Bruta". */
+                const tarjetaVacia = (id) => {
+                    const elemento = document.getElementById(id);
+                    if (!elemento) return true;
+                    const soloDigitos = String(elemento.innerText || '').replace(/[^0-9]/g, '');
+                    return soloDigitos === '' || Number(soloDigitos) === 0;
+                };
+                const tarjetasEnCero = [
+                    'stat-total-global',
+                    'stat-efectivo',
+                    'stat-tarjeta',
+                    'stat-transferencia'
+                ].every(tarjetaVacia);
+                if (this.flujoActualCache.length > 0 && tarjetasEnCero) {
+                    this.animarNumero('stat-total-global', totGlobal, true);
+                    this.animarNumero('stat-efectivo', totEfe, true);
+                    this.animarNumero('stat-tarjeta', totTar, true);
+                    this.animarNumero('stat-transferencia', totTrans, true);
+                    const estadoFlujo = document.getElementById('flujo-resumen-status');
+                    if (estadoFlujo) {
+                        estadoFlujo.innerHTML = `<i class="fa-solid fa-cash-register"></i> ${this.flujoActualCache.length} tickets · actualizado ${this.formatTime24(new Date())}`;
+                    }
+                }
 
                 console.info('Dashboard de turno sincronizado', {
                     ventasTurno: this.ventasTurnoCache.length,

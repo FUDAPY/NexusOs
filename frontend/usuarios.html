@@ -175,6 +175,9 @@
                             <option value="cocina">Personal: Cocinero (KDS)</option>
                             <option value="cobrador">Personal: Cobrador (CMR)</option>
                             <option value="produccion">Personal: Produccion</option>
+                            <!-- Administrativos: la pagina ya exige sesion admin y el API valida el rol (camposProtegidos de /users). -->
+                            <option value="admin">Administrador (acceso total)</option>
+                            <option value="supervisor">Supervisor (cierre de caja y reportes)</option>
                             <option value="cliente" class="font-bold text-orange-600">Cliente (Para App/POS)</option>
                         </select>
                     </div>
@@ -430,6 +433,7 @@
                 tbody.innerHTML = lista.map(usr => {
                     let rolEstilo = ""; let icono = "fa-user";
                     if(usr.rol === 'admin') { rolEstilo = "bg-purple-100 text-purple-700"; icono = "fa-crown"; }
+                    if(usr.rol === 'supervisor') { rolEstilo = "bg-indigo-100 text-indigo-700"; icono = "fa-user-shield"; }
                     if(usr.rol === 'cajero') { rolEstilo = "bg-blue-100 text-blue-700"; icono = "fa-cash-register"; }
                     if(usr.rol === 'delivery') { rolEstilo = "bg-yellow-100 text-yellow-700"; icono = "fa-motorcycle"; }
                     if(usr.rol === 'cobrador') { rolEstilo = "bg-emerald-100 text-emerald-700"; icono = "fa-file-invoice-dollar"; }
@@ -443,7 +447,8 @@
 
                     // duplicarlo obligaba a tocar las tres.
                     const btnPassword = `<button onclick="UsuariosModule.abrirModalPassword('${usr.id}')" title="Cambiar contrasena" class="w-8 h-8 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-500 hover:text-white transition shadow-sm border border-orange-100 mr-2"><i class="fa-solid fa-key"></i></button><button onclick="UsuariosModule.definirPinCredito('${usr.id}')" title="PIN de credito" class="w-8 h-8 bg-violet-50 text-violet-600 rounded-lg hover:bg-violet-600 hover:text-white transition shadow-sm border border-violet-100 mr-2"><i class="fa-solid fa-lock"></i></button>`;
-                    let accionHtml = `${btnPassword}<button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><i class="fa-solid fa-trash"></i></button>`;
+                    const btnRol = `<button onclick="UsuariosModule.cambiarRol('${usr.id}', '${usr.rol}')" title="Cambiar rol" class="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition shadow-sm border border-indigo-100 mr-2"><i class="fa-solid fa-user-shield"></i></button>`;
+                    let accionHtml = `${btnPassword}${btnRol}<button onclick="UsuariosModule.eliminarUsuario('${usr.id}')" class="w-8 h-8 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><i class="fa-solid fa-trash"></i></button>`;
 
                     if(usr.rol === 'cliente') {
                         if(usr.estadoBeneficios === 'pendiente') {
@@ -643,6 +648,31 @@
                 } catch(e) {
                     console.error(e);
                     this.mostrarToast(window.NexusAuth ? NexusAuth.mensajeDe(e) : "Error al aprobar.", "error");
+                }
+            },
+
+            cambiarRol: async function(id, rolActual) {
+                const ROLES_ASIGNABLES = ['admin', 'supervisor', 'cajero', 'cocina', 'delivery', 'cobrador', 'produccion', 'cliente'];
+                const elegido = window.prompt(
+                    'Rol para este usuario (' + ROLES_ASIGNABLES.join(', ') + '):',
+                    rolActual || ''
+                );
+                if (elegido === null) return;
+
+                const rol = String(elegido).trim().toLowerCase();
+                if (!ROLES_ASIGNABLES.includes(rol)) {
+                    this.mostrarToast('Rol invalido. Opciones: ' + ROLES_ASIGNABLES.join(', '), 'error');
+                    return;
+                }
+                if (rol === String(rolActual || '').trim().toLowerCase()) return;
+
+                try {
+                    await NexusData.actualizar('users', id, { rol: rol });
+                    this.mostrarToast('Rol actualizado a ' + rol + '.');
+                    this.cargarUsuarios();
+                } catch (e) {
+                    console.error(e);
+                    this.mostrarToast(window.NexusAuth ? NexusAuth.mensajeDe(e) : 'No se pudo cambiar el rol.', 'error');
                 }
             },
 

@@ -108,6 +108,10 @@ resourceRouter.use(
     ordenPorDefecto: 'nombre',
     excluir: ['passwordHash', 'password', 'pin', 'tokenFcm', 'resetToken'],
     noEscribible: ['passwordHash', 'password', 'pin', 'puntos', 'deuda', 'saldo', 'legacyId'],
+    /* El rol de personal es privilegio de un admin: sin esta regla, cualquier
+       usuario con token podia mandar POST/PATCH /users con rol "admin" y
+       ascenderse (o ascender a otro). */
+    camposProtegidos: [{ campo: 'rol', valores: ['admin', 'supervisor'], roles: ['admin'] }],
     
     borrable: true,
   }),

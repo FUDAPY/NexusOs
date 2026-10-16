@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import type { Model, FilterQuery, SortOrder } from 'mongoose';
 import { AppError, asyncHandler, sendOk } from './response.js';
 import { filtroPorId } from './mongoId.js';
-import { requiereRol } from '../middlewares/auth.js';
+import { requiereRol, type AuthenticatedRequest } from '../middlewares/auth.js';
 
 
 export interface OpcionesRecurso<TDoc> {
@@ -30,6 +30,17 @@ export interface OpcionesRecurso<TDoc> {
   borrable?: boolean;
   
   rolesBorrado?: readonly string[];
+  /* Campo cuyo VALOR queda reservado a ciertos roles (ej: rol "admin"). */
+  camposProtegidos?: readonly CampoProtegido[];
+}
+
+export interface CampoProtegido {
+  /* Campo del cuerpo que se vigila (ej: 'rol'). */
+  campo: string;
+  /* Valores de ese campo que solo pueden fijar los roles de `roles`. */
+  valores: readonly string[];
+  /* Roles autorizados a fijar esos valores. */
+  roles: readonly string[];
 }
 
 const LIMITE_POR_DEFECTO = 50;
@@ -107,6 +118,25 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
   const router = Router();
   const limiteMaximo = opts.limiteMaximo ?? LIMITE_MAXIMO_POR_DEFECTO;
 
+  /* Un valor reservado (ej. rol "admin") solo lo escribe quien tiene el rol
+     autorizado: el cuerpo del request no alcanza para elevar privilegios. */
+  const validarCamposProtegidos = (req: Request): void => {
+    const reglas = opts.camposProtegidos ?? [];
+    if (reglas.length === 0) return;
+    const cuerpo = (req.body ?? {}) as Record<string, unknown>;
+    const rolPeticion = String((req as AuthenticatedRequest).auth?.rol ?? '').trim().toLowerCase();
+    for (const regla of reglas) {
+      const valor = String(cuerpo[regla.campo] ?? '').trim().toLowerCase();
+      if (valor === '' || !regla.valores.includes(valor)) continue;
+      if (regla.roles.includes(rolPeticion)) continue;
+      throw new AppError(
+        `Solo ${regla.roles.join(', ')} puede asignar ${regla.campo} = "${valor}"`,
+        403,
+        'SIN_PERMISO',
+      );
+    }
+  };
+
   // Proyeccion de exclusion: '-passwordHash -otroCampo'. Si no hay, se
 
   const proyeccion = (opts.excluir ?? []).map((c) => `-${c}`).join(' ');
@@ -172,6 +202,7 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
     router.post(
       '/',
       asyncHandler(async (req: Request, res: Response) => {
+        validarCamposProtegidos(req);
         const creado = await opts.modelo.create(limpiarCuerpo(req.body));
         // toObject() antes de ocultar: el documento de Mongoose no se puede
 
@@ -182,6 +213,7 @@ export const crearRecurso = <TDoc>(opts: OpcionesRecurso<TDoc>): Router => {
     router.patch(
       '/:id',
       asyncHandler(async (req: Request, res: Response) => {
+        validarCamposProtegidos(req);
         const actualizado = await opts.modelo
           .findOneAndUpdate(
             filtroPorId(String(req.params.id)),

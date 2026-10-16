@@ -783,3 +783,84 @@ describe('guardar una cuenta abierta sin cobrarla (PATCH /orders/:id/cuenta-pend
 });
 
 
+
+/* El rol de personal es privilegio de un admin. Antes, cualquier token valido
+   alcanzaba el CRUD generico y un POST/PATCH /users con rol "admin" se guardaba
+   tal cual: el cuerpo del request servia para elevar privilegios. La regla vive
+   en resource.factory.ts (camposProtegidos) y se decide ANTES de tocar Mongo,
+   asi que estos casos se fijan sin base de datos. */
+describe('escalada de privilegios por el CRUD generico (/users)', () => {
+  const url = `${env.API_PREFIX}/users`;
+  const idUsuario = '507f1f77bcf86cd799439011';
+  const cuerpo = (rol: string): Record<string, string> => ({
+    nombre: 'Nuevo',
+    email: 'nuevo@y.z',
+    rol,
+  });
+
+  it('un cajero NO puede crear un admin (403 SIN_PERMISO)', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send(cuerpo('admin'));
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('un cajero NO puede ascender a otro usuario (PATCH 403 SIN_PERMISO)', async () => {
+    const res = await request(app)
+      .patch(`${url}/${idUsuario}`)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ rol: 'admin' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SIN_PERMISO');
+  });
+
+  it('"supervisor" tambien esta reservado: un cajero no lo asigna', async () => {
+    const res = await request(app)
+      .post(url)
+      .set('Authorization', 'Bearer ' + tokenDe('supervisor'))
+      .send(cuerpo('supervisor'));
+    expect(res.status).toBe(403);
+  });
+
+  it('el valor reservado no se burla con mayusculas ni espacios', async () => {
+    for (const rol of [' Admin ', 'ADMIN', 'Admin']) {
+      const res = await request(app)
+        .post(url)
+        .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+        .send(cuerpo(rol));
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('SIN_PERMISO');
+    }
+  });
+
+  it('los roles NO reservados siguen pasando el guard (nunca 403)', async () => {
+    for (const rol of ['cajero', 'cocina', 'cliente', 'delivery', 'cobrador']) {
+      const res = await request(app)
+        .post(url)
+        .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+        .send(cuerpo(rol));
+      // Sin Mongo la escritura falla, pero el guard no puede cortar por rol.
+      expect(res.status).not.toBe(403);
+    }
+  });
+
+  it('un body sin rol no se rechaza por esta regla', async () => {
+    const res = await request(app)
+      .patch(`${url}/${idUsuario}`)
+      .set('Authorization', 'Bearer ' + tokenDe('cajero'))
+      .send({ nombre: 'Renombrado' });
+    expect(res.status).not.toBe(403);
+  });
+
+  it('un admin SI puede asignar admin y supervisor', async () => {
+    for (const rol of ['admin', 'supervisor']) {
+      const res = await request(app)
+        .post(url)
+        .set('Authorization', 'Bearer ' + tokenValido)
+        .send(cuerpo(rol));
+      expect(res.status).not.toBe(403);
+    }
+  });
+});
